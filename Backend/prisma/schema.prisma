@@ -1,0 +1,393 @@
+// Prisma schema for Student Management System
+// PostgreSQL + Prisma (UUID-based, production ready)
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum StudentStatus {
+  Active
+  Inactive
+}
+
+enum UserRole {
+  ADMIN
+  STUDENT
+  TEACHER
+}
+
+enum AttendanceStatus {
+  Present
+  Absent
+}
+
+enum FeeStatus {
+  Paid
+  Unpaid
+}
+
+enum Gender {
+  Male
+  Female
+  Other
+}
+
+enum RegistrationStatus {
+  Pending
+  Validated
+  Rejected
+  Paid
+  Finished
+}
+
+//
+// =======================
+// STUDENT
+// =======================
+//
+
+model Student {
+  student_id String @id @default(uuid()) @db.Uuid
+
+  first_name    String @db.VarChar(100)
+  last_name     String @db.VarChar(100)
+  date_of_birth DateTime?
+
+  gender Gender?
+
+  phone_number    String? @db.VarChar(35)
+  email           String? @db.VarChar(100)
+  secondary_email String? @db.VarChar(100)
+
+  address     String?
+  nationality String? @db.VarChar(50)
+  language    String?
+
+  education_level String? @db.VarChar(100)
+  study_location  String? @db.VarChar(100)
+
+  status StudentStatus @default(Active)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  enrollments Enrollment[]
+  attendance  Attendance[]
+  results     Result[]
+  fees        Fee[]
+  permissions StudentPermission[]
+  documents   Document[]
+  user        User?
+
+  group_id String? @db.Uuid
+  group    Group?  @relation(fields: [group_id], references: [group_id])
+}
+
+//
+// =======================
+// TEACHER
+// =======================
+//
+
+model Teacher {
+  teacher_id String @id @default(uuid()) @db.Uuid
+
+  first_name   String @db.VarChar(100)
+  last_name    String @db.VarChar(100)
+  email        String? @db.VarChar(100)
+  phone_number String? @db.VarChar(35)
+
+  created_at DateTime @default(now())
+
+  courses  Course[]
+  sessions Session[]
+  user     User?
+}
+
+//
+// =======================
+// COURSE
+// =======================
+//
+
+model Course {
+  course_id String @id @default(uuid()) @db.Uuid
+
+  course_code String? @unique @db.VarChar(20)
+  course_name String  @db.VarChar(100)
+  credits     Int?
+
+  teacher_id String?  @db.Uuid
+  teacher    Teacher? @relation(fields: [teacher_id], references: [teacher_id])
+
+  enrollments Enrollment[]
+  exams       Exam[]
+  sessions    Session[]
+}
+
+//
+// =======================
+// DEPARTMENT & GROUP
+// =======================
+//
+
+model Department {
+  department_id String @id @default(uuid()) @db.Uuid
+
+  name        String @unique @db.VarChar(100)
+  description String?
+
+  created_at DateTime @default(now())
+
+  groups Group[]
+}
+
+model Group {
+  group_id String @id @default(uuid()) @db.Uuid
+
+  name          String @db.VarChar(50)
+  academic_year String?
+
+  department_id String @db.Uuid
+  department    Department @relation(fields: [department_id], references: [department_id])
+
+  students Student[]
+  sessions Session[]
+}
+
+//
+// =======================
+// ENROLLMENT
+// =======================
+//
+
+model Enrollment {
+  enrollment_id String @id @default(uuid()) @db.Uuid
+
+  student_id String @db.Uuid
+  course_id  String @db.Uuid
+
+  enrollment_date DateTime @default(now())
+
+  level      String?
+  status     String?
+  start_date DateTime?
+  end_date   DateTime?
+
+  registration_status RegistrationStatus @default(Pending)
+
+  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  course  Course  @relation(fields: [course_id], references: [course_id])
+
+  fees     Fee[]
+  history  RegistrationHistory[]
+
+  @@unique([student_id, course_id])
+}
+
+//
+// =======================
+// SESSION
+// =======================
+//
+
+model Session {
+  session_id String @id @default(uuid()) @db.Uuid
+
+  course_id  String @db.Uuid
+  teacher_id String @db.Uuid
+  group_id   String @db.Uuid
+
+  session_date DateTime
+  topic        String?
+
+  course  Course  @relation(fields: [course_id], references: [course_id])
+  teacher Teacher @relation(fields: [teacher_id], references: [teacher_id])
+  group   Group   @relation(fields: [group_id], references: [group_id])
+
+  attendance Attendance[]
+}
+
+//
+// =======================
+// ATTENDANCE
+// =======================
+//
+
+model Attendance {
+  attendance_id String @id @default(uuid()) @db.Uuid
+
+  session_id String @db.Uuid
+  student_id String @db.Uuid
+  status     AttendanceStatus
+
+  session Session @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
+  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@unique([session_id, student_id])
+}
+
+//
+// =======================
+// EXAMS & RESULTS
+// =======================
+//
+
+model Exam {
+  exam_id String @id @default(uuid()) @db.Uuid
+
+  course_id String @db.Uuid
+  exam_name String?
+  exam_date DateTime
+  max_marks Int
+
+  course  Course  @relation(fields: [course_id], references: [course_id])
+  results Result[]
+}
+
+model Result {
+  result_id String @id @default(uuid()) @db.Uuid
+
+  exam_id    String @db.Uuid
+  student_id String @db.Uuid
+  marks_obtained Int
+  grade String?
+
+  exam    Exam    @relation(fields: [exam_id], references: [exam_id], onDelete: Cascade)
+  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@unique([exam_id, student_id])
+}
+
+//
+// =======================
+// FEES
+// =======================
+//
+
+model Fee {
+  fee_id String @id @default(uuid()) @db.Uuid
+
+  student_id    String @db.Uuid
+  enrollment_id String? @db.Uuid   // ✅ THIS WAS MISSING
+
+  amount     Decimal @db.Decimal(10, 2)
+  due_date   DateTime
+  status     FeeStatus
+
+  payment_method String? @db.VarChar(30)
+  reference_code String? @db.VarChar(100)
+  paid_at DateTime?
+
+  student    Student     @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  enrollment Enrollment? @relation(fields: [enrollment_id], references: [enrollment_id])
+}
+//
+// =======================
+// DOCUMENTS
+// =======================
+//
+
+model Document {
+  document_id String @id @default(uuid()) @db.Uuid
+
+  student_id String @db.Uuid
+  type       String @db.VarChar(50)
+  file_path  String
+
+  uploaded_at DateTime @default(now())
+
+  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+}
+
+//
+// =======================
+// PERMISSIONS
+// =======================
+//
+
+model Permission {
+  permission_id String @id @default(uuid()) @db.Uuid
+  name          String @unique
+  description   String?
+
+  students StudentPermission[]
+}
+
+model StudentPermission {
+  student_id    String @db.Uuid
+  permission_id String @db.Uuid
+
+  student    Student    @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  permission Permission @relation(fields: [permission_id], references: [permission_id], onDelete: Cascade)
+
+  @@id([student_id, permission_id])
+}
+
+//
+// =======================
+// REGISTRATION HISTORY
+// =======================
+//
+
+model RegistrationHistory {
+  history_id String @id @default(uuid()) @db.Uuid
+
+  enrollment_id String @db.Uuid
+  old_status RegistrationStatus
+  new_status RegistrationStatus
+
+  changed_at DateTime @default(now())
+  changed_by String?
+
+  enrollment Enrollment @relation(fields: [enrollment_id], references: [enrollment_id], onDelete: Cascade)
+}
+
+//
+// =======================
+// USER (AUTH)
+// =======================
+//
+
+model User {
+  user_id String @id @default(uuid()) @db.Uuid
+
+  email    String @unique @db.VarChar(100)
+  password String?
+
+  role UserRole @default(STUDENT)
+  is_active Boolean @default(true)
+
+  google_id     String? @unique
+  google_email  String?
+  google_avatar String?
+
+  student_id String? @unique @db.Uuid
+  teacher_id String? @unique @db.Uuid
+
+  student Student? @relation(fields: [student_id], references: [student_id])
+  teacher Teacher? @relation(fields: [teacher_id], references: [teacher_id])
+
+  created_at DateTime @default(now())
+
+  refresh_tokens RefreshToken[]
+}
+
+
+model RefreshToken {
+  token_id   String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  token      String   @unique
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
+}
