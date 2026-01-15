@@ -55,11 +55,12 @@ import {
   markFeeAsPaidController,
 
   /* ================= ENROLLMENTS ================= */
-  createEnrollmentController,
   getAllEnrollmentsController,
-  getEnrollmentsByStudentController,
-  updateEnrollmentController,
-  deleteEnrollmentController,
+  getEnrollmentByIdController,
+  validateEnrollmentController,
+  finishEnrollmentController,
+  markEnrollmentPaidController,
+  rejectEnrollmentController,
 
   /* ================= SESSIONS ================= */
   createSessionController,
@@ -95,9 +96,22 @@ import {
 
   /* ================= DASHBOARD ================= */
   getAdminDashboardStatsController,
+  deleteDocumentController,
+  getAllDocumentsController,
+  getDocumentByIdController,
+  addStudentToGroupController,
+  removeStudentFromGroupController,
+  getStudentsReportController,
+  getAttendanceReportController,
+  getEnrollmentsReportController,
+  getGroupsReportController,
+  getPaymentsReportController,
 } from "../../controllers/admin/admin.controller";
+import { reviewDocumentController } from "../../controllers/admin/document.controller";
 
 const adminRoutes = Router();
+
+adminRoutes.patch("/documents/:id/review", reviewDocumentController);
 
 /* ======================================================
    USERS
@@ -333,6 +347,20 @@ adminRoutes.delete(
   deleteGroupController
 );
 
+adminRoutes.post(
+  "/groups/:groupId/students/:studentId",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_CLASSES]),
+  addStudentToGroupController
+);
+
+adminRoutes.delete(
+  "/groups/:groupId/students/:studentId",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_CLASSES]),
+  removeStudentFromGroupController
+);
+
 /* ======================================================
    FEES
 ====================================================== */
@@ -383,13 +411,6 @@ adminRoutes.delete(
    ENROLLMENTS
 ====================================================== */
 
-adminRoutes.post(
-  "/enrollments",
-  authMiddleware,
-  roleGuard([Permissions.MANAGE_ENROLLMENTS]),
-  createEnrollmentController
-);
-
 adminRoutes.get(
   "/enrollments",
   authMiddleware,
@@ -398,24 +419,63 @@ adminRoutes.get(
 );
 
 adminRoutes.get(
-  "/students/:studentId/enrollments",
-  authMiddleware,
-  roleGuard([Permissions.MANAGE_ENROLLMENTS]),
-  getEnrollmentsByStudentController
-);
-
-adminRoutes.put(
   "/enrollments/:enrollmentId",
   authMiddleware,
   roleGuard([Permissions.MANAGE_ENROLLMENTS]),
-  updateEnrollmentController
+  getEnrollmentByIdController
+);
+
+adminRoutes.patch(
+  "/enrollments/:enrollmentId/validate",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ENROLLMENTS]),
+  validateEnrollmentController
+);
+
+adminRoutes.patch(
+  "/enrollments/:enrollmentId/reject",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ENROLLMENTS]),
+  rejectEnrollmentController
+);
+
+adminRoutes.patch(
+  "/enrollments/:enrollmentId/mark-paid",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ENROLLMENTS]),
+  markEnrollmentPaidController
+);
+
+adminRoutes.patch(
+  "/enrollments/:enrollmentId/finish",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ENROLLMENTS]),
+  finishEnrollmentController
+);
+
+/* ======================================================
+   DOCUMENTS
+====================================================== */
+
+adminRoutes.get(
+  "/documents",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_DOCUMENTS]),
+  getAllDocumentsController
+);
+
+adminRoutes.get(
+  "/documents/:documentId",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_DOCUMENTS]),
+  getDocumentByIdController
 );
 
 adminRoutes.delete(
-  "/enrollments/:enrollmentId",
+  "/documents/:documentId",
   authMiddleware,
-  roleGuard([Permissions.MANAGE_ENROLLMENTS]),
-  deleteEnrollmentController
+  roleGuard([Permissions.MANAGE_DOCUMENTS]),
+  deleteDocumentController
 );
 
 /* ======================================================
@@ -597,6 +657,45 @@ adminRoutes.get(
   authMiddleware,
   roleGuard([Permissions.VIEW_REPORTS]),
   getAdminDashboardStatsController
+);
+
+/* ======================================================
+   REPORTS
+====================================================== */
+
+adminRoutes.get(
+  "/reports/students",
+  authMiddleware,
+  roleGuard([Permissions.VIEW_REPORTS]),
+  getStudentsReportController
+);
+
+adminRoutes.get(
+  "/reports/groups",
+  authMiddleware,
+  roleGuard([Permissions.VIEW_REPORTS]),
+  getGroupsReportController
+);
+
+adminRoutes.get(
+  "/reports/payments",
+  authMiddleware,
+  roleGuard([Permissions.VIEW_REPORTS]),
+  getPaymentsReportController
+);
+
+adminRoutes.get(
+  "/reports/attendance",
+  authMiddleware,
+  roleGuard([Permissions.VIEW_REPORTS]),
+  getAttendanceReportController
+);
+
+adminRoutes.get(
+  "/reports/enrollments",
+  authMiddleware,
+  roleGuard([Permissions.VIEW_REPORTS]),
+  getEnrollmentsReportController
 );
 
 export default adminRoutes;

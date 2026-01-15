@@ -1,5 +1,6 @@
-// Prisma schema for Student Management System
-// PostgreSQL + Prisma (UUID-based, production ready)
+// =======================
+// GENERATOR & DATASOURCE
+// =======================
 
 generator client {
   provider = "prisma-client-js"
@@ -9,6 +10,10 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// =======================
+// ENUMS
+// =======================
 
 enum StudentStatus {
   Active
@@ -45,6 +50,14 @@ enum RegistrationStatus {
   Finished
 }
 
+enum Level {
+  A1
+  A2
+  B1
+  B2
+  C1
+}
+
 //
 // =======================
 // STUDENT
@@ -54,11 +67,13 @@ enum RegistrationStatus {
 model Student {
   student_id String @id @default(uuid()) @db.Uuid
 
-  first_name    String @db.VarChar(100)
-  last_name     String @db.VarChar(100)
+  first_name    String    @db.VarChar(100)
+  last_name     String    @db.VarChar(100)
   date_of_birth DateTime?
 
   gender Gender?
+
+  user_id String @unique @db.Uuid
 
   phone_number    String? @db.VarChar(35)
   email           String? @db.VarChar(100)
@@ -76,14 +91,14 @@ model Student {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  // Relations
   enrollments Enrollment[]
   attendance  Attendance[]
   results     Result[]
   fees        Fee[]
   permissions StudentPermission[]
-  documents   Document[]
-  user        User?
+  documents   Document[]          @relation("StudentDocuments")
+
+  user User?
 
   group_id String? @db.Uuid
   group    Group?  @relation(fields: [group_id], references: [group_id])
@@ -98,8 +113,8 @@ model Student {
 model Teacher {
   teacher_id String @id @default(uuid()) @db.Uuid
 
-  first_name   String @db.VarChar(100)
-  last_name    String @db.VarChar(100)
+  first_name   String  @db.VarChar(100)
+  last_name    String  @db.VarChar(100)
   email        String? @db.VarChar(100)
   phone_number String? @db.VarChar(35)
 
@@ -140,7 +155,7 @@ model Course {
 model Department {
   department_id String @id @default(uuid()) @db.Uuid
 
-  name        String @unique @db.VarChar(100)
+  name        String  @unique @db.VarChar(100)
   description String?
 
   created_at DateTime @default(now())
@@ -151,14 +166,15 @@ model Department {
 model Group {
   group_id String @id @default(uuid()) @db.Uuid
 
-  name          String @db.VarChar(50)
+  name          String  @db.VarChar(50)
   academic_year String?
 
-  department_id String @db.Uuid
+  department_id String     @db.Uuid
   department    Department @relation(fields: [department_id], references: [department_id])
 
-  students Student[]
-  sessions Session[]
+  students    Student[]
+  sessions    Session[]
+  enrollments Enrollment[]
 }
 
 //
@@ -170,13 +186,15 @@ model Group {
 model Enrollment {
   enrollment_id String @id @default(uuid()) @db.Uuid
 
-  student_id String @db.Uuid
-  course_id  String @db.Uuid
+  student_id String  @db.Uuid
+  course_id  String  @db.Uuid
+  group_id   String? @db.Uuid
 
   enrollment_date DateTime @default(now())
 
-  level      String?
-  status     String?
+  level  Level?
+  status String?
+
   start_date DateTime?
   end_date   DateTime?
 
@@ -184,9 +202,10 @@ model Enrollment {
 
   student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
   course  Course  @relation(fields: [course_id], references: [course_id])
+  group   Group?  @relation(fields: [group_id], references: [group_id])
 
-  fees     Fee[]
-  history  RegistrationHistory[]
+  fees    Fee[]
+  history RegistrationHistory[]
 
   @@unique([student_id, course_id])
 }
@@ -223,8 +242,8 @@ model Session {
 model Attendance {
   attendance_id String @id @default(uuid()) @db.Uuid
 
-  session_id String @db.Uuid
-  student_id String @db.Uuid
+  session_id String           @db.Uuid
+  student_id String           @db.Uuid
   status     AttendanceStatus
 
   session Session @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
@@ -242,22 +261,22 @@ model Attendance {
 model Exam {
   exam_id String @id @default(uuid()) @db.Uuid
 
-  course_id String @db.Uuid
+  course_id String   @db.Uuid
   exam_name String?
   exam_date DateTime
   max_marks Int
 
-  course  Course  @relation(fields: [course_id], references: [course_id])
+  course  Course   @relation(fields: [course_id], references: [course_id])
   results Result[]
 }
 
 model Result {
   result_id String @id @default(uuid()) @db.Uuid
 
-  exam_id    String @db.Uuid
-  student_id String @db.Uuid
+  exam_id        String  @db.Uuid
+  student_id     String  @db.Uuid
   marks_obtained Int
-  grade String?
+  grade          String?
 
   exam    Exam    @relation(fields: [exam_id], references: [exam_id], onDelete: Cascade)
   student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
@@ -274,20 +293,21 @@ model Result {
 model Fee {
   fee_id String @id @default(uuid()) @db.Uuid
 
-  student_id    String @db.Uuid
-  enrollment_id String? @db.Uuid   // ✅ THIS WAS MISSING
+  student_id    String  @db.Uuid
+  enrollment_id String? @db.Uuid
 
-  amount     Decimal @db.Decimal(10, 2)
-  due_date   DateTime
-  status     FeeStatus
+  amount   Decimal   @db.Decimal(10, 2)
+  due_date DateTime
+  status   FeeStatus
 
-  payment_method String? @db.VarChar(30)
-  reference_code String? @db.VarChar(100)
-  paid_at DateTime?
+  payment_method String?   @db.VarChar(30)
+  reference_code String?   @db.VarChar(100)
+  paid_at        DateTime?
 
   student    Student     @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
   enrollment Enrollment? @relation(fields: [enrollment_id], references: [enrollment_id])
 }
+
 //
 // =======================
 // DOCUMENTS
@@ -295,15 +315,17 @@ model Fee {
 //
 
 model Document {
-  document_id String @id @default(uuid()) @db.Uuid
+  document_id String @id @default(uuid())
+  student_id  String @db.Uuid // ✅ هذا هو السطر الحاسم
+  type        String
+  file_path   String
 
-  student_id String @db.Uuid
-  type       String @db.VarChar(50)
-  file_path  String
+  status      String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewed_at DateTime?
+  reviewed_by String?
 
   uploaded_at DateTime @default(now())
-
-  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  student     Student  @relation("StudentDocuments", fields: [student_id], references: [student_id])
 }
 
 //
@@ -313,8 +335,8 @@ model Document {
 //
 
 model Permission {
-  permission_id String @id @default(uuid()) @db.Uuid
-  name          String @unique
+  permission_id String  @id @default(uuid()) @db.Uuid
+  name          String  @unique
   description   String?
 
   students StudentPermission[]
@@ -339,9 +361,9 @@ model StudentPermission {
 model RegistrationHistory {
   history_id String @id @default(uuid()) @db.Uuid
 
-  enrollment_id String @db.Uuid
-  old_status RegistrationStatus
-  new_status RegistrationStatus
+  enrollment_id String             @db.Uuid
+  old_status    RegistrationStatus
+  new_status    RegistrationStatus
 
   changed_at DateTime @default(now())
   changed_by String?
@@ -351,18 +373,18 @@ model RegistrationHistory {
 
 //
 // =======================
-// USER (AUTH)
+// USER & AUTH
 // =======================
 //
 
 model User {
   user_id String @id @default(uuid()) @db.Uuid
 
-  email    String @unique @db.VarChar(100)
+  email    String  @unique @db.VarChar(100)
   password String?
 
-  role UserRole @default(STUDENT)
-  is_active Boolean @default(true)
+  role      UserRole @default(STUDENT)
+  is_active Boolean  @default(true)
 
   google_id     String? @unique
   google_email  String?
@@ -378,7 +400,6 @@ model User {
 
   refresh_tokens RefreshToken[]
 }
-
 
 model RefreshToken {
   token_id   String   @id @default(uuid()) @db.Uuid

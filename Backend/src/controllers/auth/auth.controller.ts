@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../../prisma/client";
 import { config } from "../../config/app.config";
-import { Roles, RoleType } from "../../enums/role.enum";
+import { Roles } from "../../enums/role.enum";
 import { hashPassword, verifyPassword } from "../../utils/password.util";
 import { JwtUser } from "../../middlewares/auth.middleware";
 
@@ -13,22 +13,15 @@ import { JwtUser } from "../../middlewares/auth.middleware";
  */
 export const registerUserController = async (req: Request, res: Response) => {
   try {
-    const { email, password, role } = req.body as {
+    const { email, password } = req.body as {
       email: string;
       password: string;
-      role?: RoleType;
     };
 
     if (!email || !password) {
       return res
         .status(400)
         .json({ message: "Email and password are required" });
-    }
-
-    if (role === Roles.ADMIN) {
-      return res
-        .status(403)
-        .json({ message: "Admin registration is not allowed" });
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -41,14 +34,33 @@ export const registerUserController = async (req: Request, res: Response) => {
 
     const hashedPassword = await hashPassword(password);
 
-    const userRole = role === Roles.TEACHER ? Roles.TEACHER : Roles.STUDENT;
+    // 🔐 TRANSACTION
+    const user = await prisma.$transaction(async (tx) => {
+      // 1️⃣ Create USER (STUDENT by default)
+      const createdUser = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          role: Roles.STUDENT,
+        },
+      });
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        role: userRole,
-      },
+      // 2️⃣ Create STUDENT profile
+      const student = await tx.student.create({
+        data: {
+          user_id: createdUser.user_id, // ✅ الآن صحيح
+          first_name: "",
+          last_name: "",
+        },
+      });
+
+      // 3️⃣ Link USER ↔ STUDENT
+      await tx.user.update({
+        where: { user_id: createdUser.user_id },
+        data: { student_id: student.student_id },
+      });
+
+      return createdUser;
     });
 
     const token = jwt.sign(
@@ -66,7 +78,8 @@ export const registerUserController = async (req: Request, res: Response) => {
         role: user.role,
       },
     });
-  } catch {
+  } catch (error) {
+    console.error(error);
     return res.status(500).json({ message: "Registration failed" });
   }
 };
@@ -133,10 +146,16 @@ export const loginController = async (req: Request, res: Response) => {
  * =========================
  * Stateless JWT → handled on frontend
  */
-export const logOutController = async (_req: Request, res: Response) => {
-  return res.status(200).json({
-    message: "Logged out successfully",
-  });
+export const logOutController = async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
+
+  if (refreshToken) {
+    await prisma.refreshToken.deleteMany({
+      where: { token: refreshToken },
+    });
+  }
+
+  return res.status(200).json({ message: "Logged out successfully" });
 };
 
 /**

@@ -5,6 +5,7 @@ import { roleGuard } from "../utils/roleGuard";
 import { Permissions } from "../enums/role.enum";
 import teacherRoutes from "./Teacher/teacher.route";
 import adminRoutes from "./admin/admin.route";
+import studentRoutes from "./student/student.route";
 
 const mainRoute: Router = Router();
 
@@ -17,6 +18,14 @@ mainRoute.use(
     Permissions.MANAGE_USERS,
   ]),
   adminRoutes
+);
+
+/* ================= STUDENT ================= */
+mainRoute.use(
+  "/students",
+  authMiddleware,
+  roleGuard([Permissions.VIEW_OWN_PROFILE]),
+  studentRoutes
 );
 
 mainRoute.use(

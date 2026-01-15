@@ -5,7 +5,9 @@ const auth_middleware_1 = require("../../middlewares/auth.middleware");
 const roleGuard_1 = require("../../utils/roleGuard");
 const role_enum_1 = require("../../enums/role.enum");
 const admin_controller_1 = require("../../controllers/admin/admin.controller");
+const document_controller_1 = require("../../controllers/admin/document.controller");
 const adminRoutes = (0, express_1.Router)();
+adminRoutes.patch("/documents/:id/review", document_controller_1.reviewDocumentController);
 /* ======================================================
    USERS
 ====================================================== */
@@ -54,6 +56,8 @@ adminRoutes.get("/groups", auth_middleware_1.authMiddleware, (0, roleGuard_1.rol
 adminRoutes.get("/groups/:groupId", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_CLASSES]), admin_controller_1.getGroupByIdController);
 adminRoutes.put("/groups/:groupId", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_CLASSES]), admin_controller_1.updateGroupController);
 adminRoutes.delete("/groups/:groupId", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_CLASSES]), admin_controller_1.deleteGroupController);
+adminRoutes.post("/groups/:groupId/students/:studentId", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_CLASSES]), admin_controller_1.addStudentToGroupController);
+adminRoutes.delete("/groups/:groupId/students/:studentId", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_CLASSES]), admin_controller_1.removeStudentFromGroupController);
 /* ======================================================
    FEES
 ====================================================== */
@@ -66,11 +70,18 @@ adminRoutes.delete("/fees/:feeId", auth_middleware_1.authMiddleware, (0, roleGua
 /* ======================================================
    ENROLLMENTS
 ====================================================== */
-adminRoutes.post("/enrollments", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_ENROLLMENTS]), admin_controller_1.createEnrollmentController);
 adminRoutes.get("/enrollments", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_ENROLLMENTS]), admin_controller_1.getAllEnrollmentsController);
-adminRoutes.get("/students/:studentId/enrollments", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_ENROLLMENTS]), admin_controller_1.getEnrollmentsByStudentController);
-adminRoutes.put("/enrollments/:enrollmentId", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_ENROLLMENTS]), admin_controller_1.updateEnrollmentController);
-adminRoutes.delete("/enrollments/:enrollmentId", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_ENROLLMENTS]), admin_controller_1.deleteEnrollmentController);
+adminRoutes.get("/enrollments/:enrollmentId", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_ENROLLMENTS]), admin_controller_1.getEnrollmentByIdController);
+adminRoutes.patch("/enrollments/:enrollmentId/validate", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_ENROLLMENTS]), admin_controller_1.validateEnrollmentController);
+adminRoutes.patch("/enrollments/:enrollmentId/reject", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_ENROLLMENTS]), admin_controller_1.rejectEnrollmentController);
+adminRoutes.patch("/enrollments/:enrollmentId/mark-paid", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_ENROLLMENTS]), admin_controller_1.markEnrollmentPaidController);
+adminRoutes.patch("/enrollments/:enrollmentId/finish", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_ENROLLMENTS]), admin_controller_1.finishEnrollmentController);
+/* ======================================================
+   DOCUMENTS
+====================================================== */
+adminRoutes.get("/documents", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_DOCUMENTS]), admin_controller_1.getAllDocumentsController);
+adminRoutes.get("/documents/:documentId", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_DOCUMENTS]), admin_controller_1.getDocumentByIdController);
+adminRoutes.delete("/documents/:documentId", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.MANAGE_DOCUMENTS]), admin_controller_1.deleteDocumentController);
 /* ======================================================
    SESSIONS
 ====================================================== */
@@ -109,5 +120,13 @@ adminRoutes.delete("/students/:studentId/permissions/:permissionId", auth_middle
    DASHBOARD
 ====================================================== */
 adminRoutes.get("/dashboard/stats", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.VIEW_REPORTS]), admin_controller_1.getAdminDashboardStatsController);
+/* ======================================================
+   REPORTS
+====================================================== */
+adminRoutes.get("/reports/students", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.VIEW_REPORTS]), admin_controller_1.getStudentsReportController);
+adminRoutes.get("/reports/groups", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.VIEW_REPORTS]), admin_controller_1.getGroupsReportController);
+adminRoutes.get("/reports/payments", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.VIEW_REPORTS]), admin_controller_1.getPaymentsReportController);
+adminRoutes.get("/reports/attendance", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.VIEW_REPORTS]), admin_controller_1.getAttendanceReportController);
+adminRoutes.get("/reports/enrollments", auth_middleware_1.authMiddleware, (0, roleGuard_1.roleGuard)([role_enum_1.Permissions.VIEW_REPORTS]), admin_controller_1.getEnrollmentsReportController);
 exports.default = adminRoutes;
 //# sourceMappingURL=admin.route.js.map

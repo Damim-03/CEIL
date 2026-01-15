@@ -16,16 +16,11 @@ const password_util_1 = require("../../utils/password.util");
  */
 const registerUserController = async (req, res) => {
     try {
-        const { email, password, role } = req.body;
+        const { email, password } = req.body;
         if (!email || !password) {
             return res
                 .status(400)
                 .json({ message: "Email and password are required" });
-        }
-        if (role === role_enum_1.Roles.ADMIN) {
-            return res
-                .status(403)
-                .json({ message: "Admin registration is not allowed" });
         }
         const existingUser = await client_1.prisma.user.findUnique({
             where: { email },
@@ -34,13 +29,30 @@ const registerUserController = async (req, res) => {
             return res.status(409).json({ message: "User already exists" });
         }
         const hashedPassword = await (0, password_util_1.hashPassword)(password);
-        const userRole = role === role_enum_1.Roles.TEACHER ? role_enum_1.Roles.TEACHER : role_enum_1.Roles.STUDENT;
-        const user = await client_1.prisma.user.create({
-            data: {
-                email,
-                password: hashedPassword,
-                role: userRole,
-            },
+        // 🔐 TRANSACTION
+        const user = await client_1.prisma.$transaction(async (tx) => {
+            // 1️⃣ Create USER (STUDENT by default)
+            const createdUser = await tx.user.create({
+                data: {
+                    email,
+                    password: hashedPassword,
+                    role: role_enum_1.Roles.STUDENT,
+                },
+            });
+            // 2️⃣ Create STUDENT profile
+            const student = await tx.student.create({
+                data: {
+                    user_id: createdUser.user_id, // ✅ الآن صحيح
+                    first_name: "",
+                    last_name: "",
+                },
+            });
+            // 3️⃣ Link USER ↔ STUDENT
+            await tx.user.update({
+                where: { user_id: createdUser.user_id },
+                data: { student_id: student.student_id },
+            });
+            return createdUser;
         });
         const token = jsonwebtoken_1.default.sign({ user_id: user.user_id, role: user.role }, app_config_1.config.SESSION_SECRET, { expiresIn: "1d" });
         return res.status(201).json({
@@ -53,7 +65,8 @@ const registerUserController = async (req, res) => {
             },
         });
     }
-    catch {
+    catch (error) {
+        console.error(error);
         return res.status(500).json({ message: "Registration failed" });
     }
 };
@@ -71,9 +84,7 @@ const loginController = async (req, res) => {
                 .status(400)
                 .json({ message: "Email and password are required" });
         }
-        const user = await client_1.prisma.user.findUnique({
-            where: { email },
-        });
+        const user = await client_1.prisma.user.findUnique({ where: { email } });
         if (!user || !user.password) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
@@ -81,10 +92,16 @@ const loginController = async (req, res) => {
         if (!isValid) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
-        const token = jsonwebtoken_1.default.sign({ user_id: user.user_id, role: user.role }, app_config_1.config.SESSION_SECRET, { expiresIn: "1d" });
+        // 🔐 ACCESS TOKEN (short-lived)
+        const accessToken = jsonwebtoken_1.default.sign({ user_id: user.user_id, role: user.role }, app_config_1.config.SESSION_SECRET, { expiresIn: "15m" });
+        // 🔁 REFRESH TOKEN (long-lived) — IMPORTANT
+        const refreshToken = jsonwebtoken_1.default.sign({ user_id: user.user_id, role: user.role }, app_config_1.config.REFRESH_SECRET, // ✅ MUST be this
+        { expiresIn: "7d" });
+        // ✅ DEV / POSTMAN RESPONSE
         return res.json({
             message: "Login successful",
-            token,
+            token: accessToken,
+            refreshToken, // 👈 THIS is what you paste into /auth/refresh
             user: {
                 user_id: user.user_id,
                 email: user.email,
@@ -92,7 +109,7 @@ const loginController = async (req, res) => {
             },
         });
     }
-    catch {
+    catch (error) {
         return res.status(500).json({ message: "Login failed" });
     }
 };
@@ -103,10 +120,14 @@ exports.loginController = loginController;
  * =========================
  * Stateless JWT → handled on frontend
  */
-const logOutController = async (_req, res) => {
-    return res.status(200).json({
-        message: "Logged out successfully",
-    });
+const logOutController = async (req, res) => {
+    const { refreshToken } = req.body;
+    if (refreshToken) {
+        await client_1.prisma.refreshToken.deleteMany({
+            where: { token: refreshToken },
+        });
+    }
+    return res.status(200).json({ message: "Logged out successfully" });
 };
 exports.logOutController = logOutController;
 /**
@@ -179,11 +200,12 @@ const refreshController = async (req, res) => {
         return res.status(401).json({ message: "Refresh token required" });
     }
     try {
-        const payload = jsonwebtoken_1.default.verify(refreshToken, app_config_1.config.REFRESH_SECRET);
-        const accessToken = jsonwebtoken_1.default.sign({ user_id: payload.user_id, role: payload.role }, app_config_1.config.SESSION_SECRET, { expiresIn: "15m" });
-        return res.json({ token: accessToken });
+        const payload = jsonwebtoken_1.default.verify(refreshToken, app_config_1.config.REFRESH_SECRET // ✅ MUST match login
+        );
+        const newAccessToken = jsonwebtoken_1.default.sign({ user_id: payload.user_id, role: payload.role }, app_config_1.config.SESSION_SECRET, { expiresIn: "15m" });
+        return res.json({ token: newAccessToken });
     }
-    catch {
+    catch (error) {
         return res.status(403).json({ message: "Invalid refresh token" });
     }
 };
