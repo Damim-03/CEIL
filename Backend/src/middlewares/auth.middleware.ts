@@ -17,19 +17,15 @@ export const authMiddleware = async (
   res: Response,
   next: NextFunction
 ) => {
-  const authHeader = req.headers.authorization;
+  const token = req.cookies.accessToken;
 
-  if (!authHeader?.startsWith("Bearer ")) {
+  if (!token) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  const token = authHeader.split(" ")[1];
-
   try {
-    // 1️⃣ Verify JWT
     const decoded = jwt.verify(token, config.SESSION_SECRET) as JwtUser;
 
-    // 2️⃣ Fetch user from DB
     const user = await prisma.user.findUnique({
       where: { user_id: decoded.user_id },
       select: {
@@ -39,22 +35,13 @@ export const authMiddleware = async (
       },
     });
 
-    // 3️⃣ Validate user
     if (!user || !user.is_active) {
       return res.status(403).json({
         message: "Account is disabled or does not exist",
       });
     }
 
-    // (Optional but strong security)
-    if (decoded.role !== user.role) {
-      return res.status(401).json({
-        message: "Invalid token",
-      });
-    }
-
-    // 4️⃣ Attach user to request
-    (req as AuthenticatedRequest).user = {
+    (req as any).user = {
       user_id: user.user_id,
       role: user.role,
     };

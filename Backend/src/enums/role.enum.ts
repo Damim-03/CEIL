@@ -87,6 +87,8 @@ export const RolePermissions: Record<RoleType, PermissionType[]> = {
     Permissions.MANAGE_FEES,
     Permissions.MANAGE_PERMISSIONS,
 
+    Permissions.MANAGE_DOCUMENTS,
+
     Permissions.VIEW_REPORTS,
   ],
 

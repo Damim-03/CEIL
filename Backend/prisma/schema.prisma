@@ -58,6 +58,12 @@ enum Level {
   C1
 }
 
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 //
 // =======================
 // STUDENT
@@ -82,6 +88,8 @@ model Student {
   address     String?
   nationality String? @db.VarChar(50)
   language    String?
+
+  avatar_url String?
 
   education_level String? @db.VarChar(100)
   study_location  String? @db.VarChar(100)
@@ -315,14 +323,16 @@ model Fee {
 //
 
 model Document {
-  document_id String @id @default(uuid())
-  student_id  String @db.Uuid // ✅ هذا هو السطر الحاسم
+  document_id String  @id @default(uuid())
+  student_id  String  @db.Uuid
   type        String
   file_path   String
+  public_id   String?
 
-  status      String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  status      DocumentStatus @default(PENDING)
   reviewed_at DateTime?
-  reviewed_by String?
+  reviewed_by String?        @db.Uuid // 🔥 هذا السطر المهم
+  reviewer    User?          @relation(fields: [reviewed_by], references: [user_id])
 
   uploaded_at DateTime @default(now())
   student     Student  @relation("StudentDocuments", fields: [student_id], references: [student_id])
@@ -399,6 +409,7 @@ model User {
   created_at DateTime @default(now())
 
   refresh_tokens RefreshToken[]
+  documents      Document[]
 }
 
 model RefreshToken {

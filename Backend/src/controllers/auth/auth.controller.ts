@@ -13,15 +13,21 @@ import { JwtUser } from "../../middlewares/auth.middleware";
  */
 export const registerUserController = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body as {
-      email: string;
-      password: string;
-    };
+    const {
+      email,
+      password,
+      first_name,
+      last_name,
+      gender,
+      phone_number,
+      nationality,
+      education_level,
+    } = req.body;
 
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+    if (!email || !password || !first_name || !last_name) {
+      return res.status(400).json({
+        message: "Email, password, first name and last name are required",
+      });
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -34,53 +40,70 @@ export const registerUserController = async (req: Request, res: Response) => {
 
     const hashedPassword = await hashPassword(password);
 
-    // 🔐 TRANSACTION
     const user = await prisma.$transaction(async (tx) => {
-      // 1️⃣ Create USER (STUDENT by default)
       const createdUser = await tx.user.create({
         data: {
           email,
           password: hashedPassword,
           role: Roles.STUDENT,
+          is_active: true,
         },
       });
 
-      // 2️⃣ Create STUDENT profile
       const student = await tx.student.create({
         data: {
-          user_id: createdUser.user_id, // ✅ الآن صحيح
-          first_name: "",
-          last_name: "",
+          user_id: createdUser.user_id,
+          first_name,
+          last_name,
+          gender,
+          phone_number,
+          nationality,
+          education_level,
+          email,
         },
       });
 
-      // 3️⃣ Link USER ↔ STUDENT
       await tx.user.update({
         where: { user_id: createdUser.user_id },
-        data: { student_id: student.student_id },
+        data: {
+          student_id: student.student_id,
+        },
       });
 
       return createdUser;
     });
 
-    const token = jwt.sign(
+    // 🔐 AUTO LOGIN (same as loginController)
+    const accessToken = jwt.sign(
       { user_id: user.user_id, role: user.role },
       config.SESSION_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "15m" },
     );
+
+    const refreshToken = jwt.sign(
+      { user_id: user.user_id, role: user.role },
+      config.REFRESH_SECRET,
+      { expiresIn: "7d" },
+    );
+
+    const cookieOptions = {
+      httpOnly: true,
+      sameSite: "lax" as const,
+      secure: config.NODE_ENV === "production",
+      path: "/",
+    };
+
+    res.cookie("accessToken", accessToken, cookieOptions);
+    res.cookie("refreshToken", refreshToken, cookieOptions);
 
     return res.status(201).json({
       message: "User registered successfully",
-      token,
-      user: {
-        user_id: user.user_id,
-        email: user.email,
-        role: user.role,
-      },
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Registration failed" });
+    console.error("REGISTER ERROR:", error);
+    return res.status(500).json({
+      message: "Registration failed",
+    });
   }
 };
 
@@ -90,54 +113,46 @@ export const registerUserController = async (req: Request, res: Response) => {
  * =========================
  */
 export const loginController = async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
-    }
-
-    const user = await prisma.user.findUnique({ where: { email } });
-
-    if (!user || !user.password) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    const isValid = await verifyPassword(password, user.password);
-    if (!isValid) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    // 🔐 ACCESS TOKEN (short-lived)
-    const accessToken = jwt.sign(
-      { user_id: user.user_id, role: user.role },
-      config.SESSION_SECRET,
-      { expiresIn: "15m" }
-    );
-
-    // 🔁 REFRESH TOKEN (long-lived) — IMPORTANT
-    const refreshToken = jwt.sign(
-      { user_id: user.user_id, role: user.role },
-      config.REFRESH_SECRET, // ✅ MUST be this
-      { expiresIn: "7d" }
-    );
-
-    // ✅ DEV / POSTMAN RESPONSE
-    return res.json({
-      message: "Login successful",
-      token: accessToken,
-      refreshToken, // 👈 THIS is what you paste into /auth/refresh
-      user: {
-        user_id: user.user_id,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({ message: "Login failed" });
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
   }
+
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  if (!user || !user.password || !user.is_active) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+
+  const isValid = await verifyPassword(password, user.password);
+  if (!isValid) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+
+  const accessToken = jwt.sign(
+    { user_id: user.user_id, role: user.role },
+    config.SESSION_SECRET,
+    { expiresIn: "15m" },
+  );
+
+  const refreshToken = jwt.sign(
+    { user_id: user.user_id, role: user.role },
+    config.REFRESH_SECRET,
+    { expiresIn: "7d" },
+  );
+
+  const cookieOptions = {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: config.NODE_ENV === "production",
+    path: "/",
+  };
+
+  res.cookie("accessToken", accessToken, cookieOptions);
+  res.cookie("refreshToken", refreshToken, cookieOptions);
+
+  return res.json({ message: "Login successful" });
 };
 
 /**
@@ -146,16 +161,18 @@ export const loginController = async (req: Request, res: Response) => {
  * =========================
  * Stateless JWT → handled on frontend
  */
-export const logOutController = async (req: Request, res: Response) => {
-  const { refreshToken } = req.body;
+export const logOutController = async (_req: Request, res: Response) => {
+  const cookieOptions = {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: config.NODE_ENV === "production",
+    path: "/",
+  };
 
-  if (refreshToken) {
-    await prisma.refreshToken.deleteMany({
-      where: { token: refreshToken },
-    });
-  }
+  res.clearCookie("accessToken", cookieOptions);
+  res.clearCookie("refreshToken", cookieOptions);
 
-  return res.status(200).json({ message: "Logged out successfully" });
+  return res.json({ message: "Logged out" });
 };
 
 /**
@@ -163,63 +180,56 @@ export const logOutController = async (req: Request, res: Response) => {
  * GOOGLE LOGIN CALLBACK
  * =========================
  */
-export const googleLoginCallback = async (req: any, res: Response) => {
+export const googleLoginCallback = async (req: Request, res: Response) => {
   try {
-    const googleUser = req.user;
+    // 1️⃣ user جاي من passport
+    const passportUser = req.user as any;
 
-    if (!googleUser) {
+    if (!passportUser) {
       return res.redirect(
-        `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=failure`
+        `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=failure`,
       );
     }
 
-    const { id, email, avatar } = googleUser;
+    const { user_id, email, role } = passportUser;
 
-    let user = await prisma.user.findFirst({
-      where: {
-        OR: [{ google_id: id }, ...(email ? [{ email }] : [])],
-      },
+    // 2️⃣ إنشاء JWTs
+    const accessToken = jwt.sign({ user_id, role }, config.SESSION_SECRET, {
+      expiresIn: "15m",
     });
 
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email,
-          google_id: id,
-          google_avatar: avatar,
-          role: Roles.STUDENT,
-        },
-      });
-    }
+    const refreshToken = jwt.sign({ user_id, role }, config.REFRESH_SECRET, {
+      expiresIn: "7d",
+    });
 
-    if (user && !user.google_id) {
-      user = await prisma.user.update({
-        where: { user_id: user.user_id },
-        data: {
-          google_id: id,
-          google_avatar: avatar,
-        },
-      });
-    }
+    // 3️⃣ وضع Access Token في Cookie
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === "production", // false في localhost
+      sameSite: "lax",
+      path: "/",
+    });
 
-    const token = jwt.sign(
-      { user_id: user.user_id, role: user.role },
-      config.SESSION_SECRET,
-      { expiresIn: "1d" }
-    );
+    // 4️⃣ وضع Refresh Token في Cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+    });
 
+    // 5️⃣ Redirect نظيف للفرونت (بدون token في URL)
+    return res.redirect(config.FRONTEND_GOOGLE_CALLBACK_URL);
+  } catch (error) {
+    console.error("Google login callback error:", error);
     return res.redirect(
-      `${config.FRONTEND_GOOGLE_CALLBACK_URL}?token=${token}&status=success`
-    );
-  } catch {
-    return res.redirect(
-      `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=failure`
+      `${config.FRONTEND_GOOGLE_CALLBACK_URL}?status=failure`,
     );
   }
 };
 
 export const meController = async (req: Request, res: Response) => {
-  const jwtUser = (req as Request & { user?: JwtUser }).user;
+  const jwtUser = (req as any).user;
 
   if (!jwtUser) {
     return res.status(401).json({ message: "Unauthorized" });
@@ -231,38 +241,40 @@ export const meController = async (req: Request, res: Response) => {
       user_id: true,
       email: true,
       role: true,
+      google_avatar: true,
       created_at: true,
     },
   });
-
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
-  }
 
   return res.json(user);
 };
 
 export const refreshController = async (req: Request, res: Response) => {
-  const { refreshToken } = req.body;
+  const refreshToken = req.cookies.refreshToken; // ✅ من الكوكي
 
   if (!refreshToken) {
     return res.status(401).json({ message: "Refresh token required" });
   }
 
   try {
-    const payload = jwt.verify(
-      refreshToken,
-      config.REFRESH_SECRET // ✅ MUST match login
-    ) as JwtUser;
+    const payload = jwt.verify(refreshToken, config.REFRESH_SECRET) as JwtUser;
 
     const newAccessToken = jwt.sign(
       { user_id: payload.user_id, role: payload.role },
       config.SESSION_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "1h" },
     );
 
-    return res.json({ token: newAccessToken });
-  } catch (error) {
+    // 🔥 مهم جدًا: نعيد حفظه في cookie
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: config.NODE_ENV === "production",
+      path: "/",
+    });
+
+    return res.json({ message: "Access token refreshed" });
+  } catch {
     return res.status(403).json({ message: "Invalid refresh token" });
   }
 };

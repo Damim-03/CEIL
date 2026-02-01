@@ -14,10 +14,8 @@ mainRoute.use("/auth", authRoutes);
 mainRoute.use(
   "/admin",
   authMiddleware,
-  roleGuard([
-    Permissions.MANAGE_USERS,
-  ]),
-  adminRoutes
+  roleGuard([Permissions.MANAGE_USERS]),
+  adminRoutes,
 );
 
 /* ================= STUDENT ================= */
@@ -25,14 +23,14 @@ mainRoute.use(
   "/students",
   authMiddleware,
   roleGuard([Permissions.VIEW_OWN_PROFILE]),
-  studentRoutes
+  studentRoutes,
 );
 
 mainRoute.use(
   "/teacher",
   authMiddleware,
   roleGuard([Permissions.VIEW_ASSIGNED_COURSES]),
-  teacherRoutes
+  teacherRoutes,
 );
 
 export default mainRoute;

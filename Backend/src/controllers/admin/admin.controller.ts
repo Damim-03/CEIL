@@ -2,14 +2,46 @@ import { Request, Response } from "express";
 import { prisma } from "../../prisma/client";
 import { Roles, RoleType } from "../../enums/role.enum";
 import { JwtUser } from "../../middlewares/auth.middleware";
+import streamifier from "streamifier";
 import {
   AttendanceStatus,
   FeeStatus,
   RegistrationStatus,
   StudentStatus,
+  UserRole,
 } from "../../../generated/prisma/client";
 import path from "path";
 import fs from "fs";
+import cloudinary from "../../middlewares/cloudinary";
+
+export const uploadToCloudinary = (
+  file: Express.Multer.File,
+  folder: string,
+): Promise<{ secure_url: string; public_id: string }> => {
+  return new Promise((resolve, reject) => {
+    const isPdf = file.mimetype === "application/pdf";
+    const isImage = file.mimetype.startsWith("image/");
+
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: isPdf || isImage ? "image" : "raw",
+      },
+      (error, result) => {
+        if (error || !result) {
+          reject(error);
+        } else {
+          resolve({
+            secure_url: result.secure_url,
+            public_id: result.public_id,
+          });
+        }
+      },
+    );
+
+    streamifier.createReadStream(file.buffer).pipe(stream);
+  });
+};
 
 /* ================= STUDENTS ================= */
 
@@ -87,6 +119,13 @@ export const getAllStudentsController = async (req: Request, res: Response) => {
     skip: (page - 1) * limit,
     take: limit,
     include: {
+      user: {
+        select: {
+          user_id: true,
+          email: true,
+          google_avatar: true,
+        },
+      },
       group: true,
       enrollments: {
         include: { course: true },
@@ -116,6 +155,13 @@ export const getStudentByIdController = async (req: Request, res: Response) => {
   const student = await prisma.student.findUnique({
     where: { student_id: studentId },
     include: {
+      user: {
+        select: {
+          user_id: true,
+          email: true,
+          google_avatar: true,
+        },
+      },
       group: true,
       enrollments: { include: { course: true } },
       attendance: true,
@@ -159,7 +205,7 @@ export const updateStudentController = async (req: Request, res: Response) => {
   ];
 
   const data = Object.fromEntries(
-    Object.entries(req.body).filter(([key]) => allowedFields.includes(key))
+    Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
   );
 
   const updatedStudent = await prisma.student.update({
@@ -274,7 +320,7 @@ export const updateTeacherController = async (req: Request, res: Response) => {
   const allowedFields = ["first_name", "last_name", "email", "phone_number"];
 
   const data = Object.fromEntries(
-    Object.entries(req.body).filter(([key]) => allowedFields.includes(key))
+    Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
   );
 
   const updatedTeacher = await prisma.teacher.update({
@@ -332,108 +378,145 @@ export const getUserByIdController = async (req: Request, res: Response) => {
 };
 
 export const changeUserRoleController = async (req: Request, res: Response) => {
-  const { role } = req.body as { role: RoleType };
-  const admin = (req as Request & { user?: JwtUser }).user;
-  const { userId } = req.params;
+  try {
+    const { role } = req.body as { role: UserRole };
+    const { userId } = req.params;
+    const admin = (req as Request & { user?: JwtUser }).user;
 
-  if (!role || !Object.values(Roles).includes(role)) {
-    return res.status(400).json({ message: "Invalid role value" });
-  }
+    /* ================= VALIDATION ================= */
 
-  if (admin?.user_id === userId) {
-    return res.status(403).json({
-      message: "You cannot change your own role",
-    });
-  }
+    if (!Object.values(UserRole).includes(role)) {
+      return res.status(400).json({ message: "Invalid role value" });
+    }
 
-  const user = await prisma.user.findUnique({
-    where: { user_id: userId },
-    include: { student: true, teacher: true },
-  });
-
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
-  }
-
-  if (user.role === role) {
-    return res.json({ message: "Role already assigned", user });
-  }
-
-  const updatedUser = await prisma.$transaction(async (tx) => {
-    /**
-     * ➜ TEACHER
-     */
-    if (role === Roles.TEACHER) {
-      let teacherId = user.teacher_id;
-
-      if (!teacherId) {
-        const teacher = await tx.teacher.create({
-          data: {
-            first_name: user.student?.first_name ?? "Teacher",
-            last_name: user.student?.last_name ?? "User",
-            email: user.email,
-          },
-        });
-
-        teacherId = teacher.teacher_id;
-      }
-
-      return tx.user.update({
-        where: { user_id: userId },
-        data: {
-          role: Roles.TEACHER,
-          teacher_id: teacherId,
-        },
+    if (admin?.user_id === userId) {
+      return res.status(403).json({
+        message: "You cannot change your own role",
       });
     }
 
-    /**
-     * ➜ STUDENT
-     */
-    if (role === Roles.STUDENT) {
-      let studentId = user.student_id;
+    const user = await prisma.user.findUnique({
+      where: { user_id: userId },
+      include: {
+        student: true,
+        teacher: true,
+      },
+    });
 
-      if (!studentId) {
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.role === role) {
+      return res.json({
+        message: "Role already assigned",
+        user,
+      });
+    }
+
+    /* ================= TRANSACTION ================= */
+
+    const updatedUser = await prisma.$transaction(async (tx) => {
+      let first_name: string | null = null;
+      let last_name: string | null = null;
+
+      // 1️⃣ extract data from current role
+      if (user.student) {
+        first_name = user.student.first_name;
+        last_name = user.student.last_name;
+      }
+
+      if (user.teacher) {
+        first_name = user.teacher.first_name;
+        last_name = user.teacher.last_name;
+      }
+
+      // 2️⃣ remove old role record
+      if (user.student && role !== UserRole.STUDENT) {
+        await tx.student.delete({
+          where: { student_id: user.student.student_id },
+        });
+      }
+
+      if (user.teacher && role !== UserRole.TEACHER) {
+        await tx.teacher.delete({
+          where: { teacher_id: user.teacher.teacher_id },
+        });
+      }
+
+      // 3️⃣ assign new role
+      if (role === UserRole.STUDENT) {
         const student = await tx.student.create({
           data: {
-            user_id: user.user_id, // ✅ REQUIRED
-            first_name: user.teacher?.first_name ?? "Student",
-            last_name: user.teacher?.last_name ?? "User",
+            user_id: user.user_id,
+            first_name: first_name ?? "Unknown",
+            last_name: last_name ?? "User",
             email: user.email,
           },
         });
 
-        studentId = student.student_id;
+        await tx.user.update({
+          where: { user_id: userId },
+          data: {
+            role: UserRole.STUDENT,
+            student_id: student.student_id,
+            teacher_id: null,
+          },
+        });
       }
 
-      return tx.user.update({
+      if (role === UserRole.TEACHER) {
+        const teacher = await tx.teacher.create({
+          data: {
+            first_name: first_name ?? "Unknown",
+            last_name: last_name ?? "User",
+            email: user.email,
+          },
+        });
+
+        await tx.user.update({
+          where: { user_id: userId },
+          data: {
+            role: UserRole.TEACHER,
+            teacher_id: teacher.teacher_id,
+            student_id: null,
+          },
+        });
+      }
+
+      if (role === UserRole.ADMIN) {
+        await tx.user.update({
+          where: { user_id: userId },
+          data: {
+            role: UserRole.ADMIN,
+            student_id: null,
+            teacher_id: null,
+          },
+        });
+      }
+
+      // 4️⃣ return fresh user
+      return tx.user.findUnique({
         where: { user_id: userId },
-        data: {
-          role: Roles.STUDENT,
-          student_id: studentId,
+        include: {
+          student: true,
+          teacher: true,
         },
       });
-    }
+    });
 
-    /**
-     * ➜ ADMIN
-     */
-    if (role === Roles.ADMIN) {
-      return tx.user.update({
-        where: { user_id: userId },
-        data: {
-          role: Roles.ADMIN,
-        },
-      });
-    }
+    /* ================= RESPONSE ================= */
 
-    throw new Error("Unsupported role");
-  });
-
-  return res.json({
-    message: "User role updated successfully",
-    user: updatedUser,
-  });
+    return res.json({
+      message: "User role updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Change role error:", error);
+    return res.status(500).json({
+      message: "Failed to change user role",
+    });
+  }
 };
 
 export const enableUserController = async (req: Request, res: Response) => {
@@ -558,7 +641,7 @@ export const updateCourseController = async (req: Request, res: Response) => {
   const allowedFields = ["course_name", "course_code", "credits", "teacher_id"];
 
   const data = Object.fromEntries(
-    Object.entries(req.body).filter(([key]) => allowedFields.includes(key))
+    Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
   );
 
   const updatedCourse = await prisma.course.update({
@@ -581,7 +664,7 @@ export const deleteCourseController = async (req: Request, res: Response) => {
 
 export const createDepartmentController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const { name, description } = req.body;
 
@@ -616,7 +699,7 @@ export const createDepartmentController = async (
 
 export const getAllDepartmentsController = async (
   _: Request,
-  res: Response
+  res: Response,
 ) => {
   const departments = await prisma.department.findMany({
     orderBy: { created_at: "desc" },
@@ -636,7 +719,7 @@ export const getAllDepartmentsController = async (
 
 export const getDepartmentByIdController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const { departmentId } = req.params;
 
@@ -673,7 +756,7 @@ export const getDepartmentByIdController = async (
 
 export const updateDepartmentController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const { departmentId } = req.params;
   const { name, description } = req.body;
@@ -716,7 +799,7 @@ export const updateDepartmentController = async (
 
 export const deleteDepartmentController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const { departmentId } = req.params;
 
@@ -779,7 +862,7 @@ export const getAllGroupsController = async (_: Request, res: Response) => {
   return res.json(
     await prisma.group.findMany({
       include: { department: true, students: true },
-    })
+    }),
   );
 };
 
@@ -819,7 +902,7 @@ export const deleteGroupController = async (req: Request, res: Response) => {
 
 export const addStudentToGroupController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const { groupId, studentId } = req.params;
 
@@ -869,7 +952,7 @@ export const addStudentToGroupController = async (
 
 export const removeStudentFromGroupController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const { groupId, studentId } = req.params;
 
@@ -998,7 +1081,7 @@ export const updateFeeController = async (req: Request, res: Response) => {
   const allowedFields = ["amount", "due_date"];
 
   const data = Object.fromEntries(
-    Object.entries(req.body).filter(([key]) => allowedFields.includes(key))
+    Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
   );
 
   const updatedFee = await prisma.fee.update({
@@ -1067,27 +1150,55 @@ export const deleteFeeController = async (req: Request, res: Response) => {
    Documents
 ====================================================== */
 
-export const getAllDocumentsController = async (_: Request, res: Response) => {
+export const getAllDocumentsController = async (
+  req: Request,
+  res: Response,
+) => {
   const documents = await prisma.document.findMany({
     include: {
       student: {
         select: {
-          student_id: true,
           first_name: true,
           last_name: true,
           email: true,
+          avatar_url: true,
         },
       },
     },
     orderBy: { uploaded_at: "desc" },
   });
 
-  res.json(documents);
+  const mapped = documents.map((doc) => {
+    const fileExtension = doc.file_path.split(".").pop()?.toLowerCase();
+
+    const fileType =
+      fileExtension === "pdf"
+        ? "pdf"
+        : ["jpg", "jpeg", "png", "webp"].includes(fileExtension ?? "")
+          ? "image"
+          : "doc";
+
+    return {
+      id: doc.document_id,
+      fileName: `${doc.type}.${fileExtension ?? "file"}`,
+      fileUrl: doc.file_path,
+      fileType,
+      uploadDate: doc.uploaded_at,
+      status: doc.status,
+      student: {
+        name: `${doc.student.first_name} ${doc.student.last_name}`,
+        email: doc.student.email ?? "",
+        avatar: doc.student.avatar_url ?? undefined,
+      },
+    };
+  });
+
+  return res.json(mapped);
 };
 
 export const getDocumentByIdController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const { documentId } = req.params;
 
@@ -1148,7 +1259,7 @@ export const deleteDocumentController = async (req: Request, res: Response) => {
 
 export const getAllEnrollmentsController = async (
   _: Request,
-  res: Response
+  res: Response,
 ) => {
   const enrollments = await prisma.enrollment.findMany({
     include: {
@@ -1164,7 +1275,7 @@ export const getAllEnrollmentsController = async (
 
 export const getEnrollmentByIdController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const enrollment = await prisma.enrollment.findUnique({
     where: { enrollment_id: req.params.enrollmentId },
@@ -1185,7 +1296,7 @@ export const getEnrollmentByIdController = async (
 
 export const validateEnrollmentController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const admin = (req as Request & { user?: JwtUser }).user;
   const { enrollmentId } = req.params;
@@ -1225,7 +1336,7 @@ export const validateEnrollmentController = async (
 
 export const rejectEnrollmentController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const admin = (req as Request & { user?: JwtUser }).user;
   const { enrollmentId } = req.params;
@@ -1265,7 +1376,7 @@ export const rejectEnrollmentController = async (
 
 export const markEnrollmentPaidController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const admin = (req as Request & { user?: JwtUser }).user;
   const { enrollmentId } = req.params;
@@ -1305,7 +1416,7 @@ export const markEnrollmentPaidController = async (
 
 export const finishEnrollmentController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const admin = (req as Request & { user?: JwtUser }).user;
   const { enrollmentId } = req.params;
@@ -1399,7 +1510,7 @@ export const createSessionController = async (req: Request, res: Response) => {
 
 export const getAllSessionsController = async (
   _req: Request,
-  res: Response
+  res: Response,
 ) => {
   const sessions = await prisma.session.findMany({
     include: {
@@ -1441,7 +1552,7 @@ export const updateSessionController = async (req: Request, res: Response) => {
   const allowedFields = ["session_date", "topic"];
 
   const data = Object.fromEntries(
-    Object.entries(req.body).filter(([key]) => allowedFields.includes(key))
+    Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
   );
 
   const session = await prisma.session.update({
@@ -1538,7 +1649,7 @@ export const markAttendanceController = async (req: Request, res: Response) => {
 
 export const getAttendanceBySessionController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const attendance = await prisma.attendance.findMany({
     where: { session_id: req.params.sessionId },
@@ -1551,7 +1662,7 @@ export const getAttendanceBySessionController = async (
 
 export const getAttendanceByStudentController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const attendance = await prisma.attendance.findMany({
     where: { student_id: req.params.studentId },
@@ -1564,7 +1675,7 @@ export const getAttendanceByStudentController = async (
 
 export const updateAttendanceController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const { attendanceId } = req.params;
 
@@ -1675,7 +1786,7 @@ export const updateExamController = async (req: Request, res: Response) => {
   const allowedFields = ["exam_name", "exam_date", "max_marks"];
 
   const data = Object.fromEntries(
-    Object.entries(req.body).filter(([key]) => allowedFields.includes(key))
+    Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
   );
 
   const updated = await prisma.exam.update({
@@ -1782,7 +1893,7 @@ export const addExamResultsController = async (req: Request, res: Response) => {
 
 export const getResultsByExamController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const results = await prisma.result.findMany({
     where: { exam_id: req.params.examId },
@@ -1793,7 +1904,7 @@ export const getResultsByExamController = async (
 
 export const getResultsByStudentController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const results = await prisma.result.findMany({
     where: { student_id: req.params.studentId },
@@ -1812,7 +1923,7 @@ export const updateResultController = async (req: Request, res: Response) => {
   const allowedFields = ["marks_obtained", "grade"];
 
   const data = Object.fromEntries(
-    Object.entries(req.body).filter(([key]) => allowedFields.includes(key))
+    Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
   );
 
   const result = await prisma.result.update({
@@ -1829,7 +1940,7 @@ export const updateResultController = async (req: Request, res: Response) => {
 
 export const createPermissionController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const { name, description } = req.body;
 
@@ -1861,7 +1972,7 @@ export const createPermissionController = async (
 
 export const getAllPermissionsController = async (
   _req: Request,
-  res: Response
+  res: Response,
 ) => {
   const permissions = await prisma.permission.findMany({
     orderBy: { name: "asc" },
@@ -1872,7 +1983,7 @@ export const getAllPermissionsController = async (
 
 export const assignPermissionToStudentController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const { studentId } = req.params;
   const { permissionId } = req.body;
@@ -1924,7 +2035,7 @@ export const assignPermissionToStudentController = async (
 
 export const removePermissionFromStudentController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const { studentId, permissionId } = req.params;
 
@@ -1961,7 +2072,7 @@ export const removePermissionFromStudentController = async (
 
 export const getAdminDashboardStatsController = async (
   _: Request,
-  res: Response
+  res: Response,
 ) => {
   const [students, teachers, courses, unpaidFees, genderStats] =
     await Promise.all([
@@ -1997,7 +2108,7 @@ export const getAdminDashboardStatsController = async (
 
 export const getStudentsReportController = async (
   _: Request,
-  res: Response
+  res: Response,
 ) => {
   const students = await prisma.student.findMany({
     include: {
@@ -2033,7 +2144,7 @@ export const getGroupsReportController = async (_: Request, res: Response) => {
 
 export const getPaymentsReportController = async (
   _: Request,
-  res: Response
+  res: Response,
 ) => {
   const fees = await prisma.fee.findMany({
     include: { student: true },
@@ -2054,7 +2165,7 @@ export const getPaymentsReportController = async (
 
 export const getAttendanceReportController = async (
   _: Request,
-  res: Response
+  res: Response,
 ) => {
   const attendance = await prisma.attendance.groupBy({
     by: ["status"],
@@ -2071,7 +2182,7 @@ export const getAttendanceReportController = async (
 
 export const getEnrollmentsReportController = async (
   _: Request,
-  res: Response
+  res: Response,
 ) => {
   const enrollments = await prisma.enrollment.groupBy({
     by: ["registration_status"],
@@ -2097,4 +2208,49 @@ export const getEnrollmentsReportController = async (
   };
 
   res.json(data);
+};
+
+export const updateStudentAvatarController = async (
+  req: Request,
+  res: Response,
+) => {
+  const { studentId } = req.params;
+  const file = req.file;
+
+  if (!file) {
+    return res.status(400).json({ message: "Avatar image is required" });
+  }
+
+  if (!file.mimetype.startsWith("image/")) {
+    return res.status(400).json({ message: "Only image files are allowed" });
+  }
+
+  // 1️⃣ الطالب + اليوزر
+  const student = await prisma.student.findUnique({
+    where: { student_id: studentId },
+    include: { user: true },
+  });
+
+  if (!student || !student.user) {
+    return res.status(404).json({ message: "Student or user not found" });
+  }
+
+  // 2️⃣ رفع إلى Cloudinary
+  const uploadResult = await uploadToCloudinary(
+    file,
+    `avatars/${student.user.user_id}`,
+  );
+
+  // 3️⃣ تحديث user (مش student)
+  await prisma.user.update({
+    where: { user_id: student.user.user_id },
+    data: {
+      google_avatar: uploadResult.secure_url,
+    },
+  });
+
+  return res.json({
+    message: "Avatar updated successfully",
+    avatar: uploadResult.secure_url,
+  });
 };
