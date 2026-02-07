@@ -1,6 +1,7 @@
-// =======================
-// GENERATOR & DATASOURCE
-// =======================
+// ================================================================
+// FIXED PRISMA SCHEMA - Multi-Group Support
+// Student can be in multiple groups (via Enrollment.group_id)
+// ================================================================
 
 generator client {
   provider = "prisma-client-js"
@@ -11,13 +12,439 @@ datasource db {
   provider = "postgresql"
 }
 
-// =======================
+// ================================================================
+// STUDENT - No direct group_id
+// Groups accessed via enrollments
+// ================================================================
+model Student {
+  student_id      String              @id @default(uuid()) @db.Uuid
+  first_name      String              @db.VarChar(100)
+  last_name       String              @db.VarChar(100)
+  date_of_birth   DateTime?
+  gender          Gender?
+  user_id         String              @unique @db.Uuid
+  phone_number    String?             @db.VarChar(35)
+  email           String?             @db.VarChar(100)
+  secondary_email String?             @db.VarChar(100)
+  address         String?
+  nationality     String?             @db.VarChar(50)
+  language        String?
+  avatar_url      String?
+  education_level String?             @db.VarChar(100)
+  study_location  String?             @db.VarChar(100)
+  status          StudentStatus       @default(ACTIVE)
+  created_at      DateTime            @default(now())
+  updated_at      DateTime            @updatedAt
+  
+  // ❌ REMOVED: group_id String? @db.Uuid
+  // ❌ REMOVED: group Group? @relation(fields: [group_id], references: [group_id])
+  
+  // Relations
+  attendance      Attendance[]
+  documents       Document[]          @relation("StudentDocuments")
+  enrollments     Enrollment[]        // ✅ Access groups via this
+  fees            Fee[]
+  results         Result[]
+  permissions     StudentPermission[]
+  user            User?
+
+  @@map("Student")
+}
+
+// ================================================================
+// TEACHER
+// ================================================================
+model Teacher {
+  teacher_id   String   @id @default(uuid()) @db.Uuid
+  first_name   String   @db.VarChar(100)
+  last_name    String   @db.VarChar(100)
+  email        String?  @db.VarChar(100)
+  phone_number String?  @db.VarChar(35)
+  created_at   DateTime @default(now())
+  
+  // Relations
+  groups       Group[]
+  user         User?
+
+  @@map("Teacher")
+}
+
+// ================================================================
+// COURSE
+// ================================================================
+model Course {
+  course_id   String       @id @default(uuid()) @db.Uuid
+  course_code String?      @unique @db.VarChar(20)
+  course_name String       @db.VarChar(100)
+  credits     Int?
+
+  fee_amount  Decimal? @db.Decimal(10, 2) @default(1000)
+
+  profile     CourseProfile?
+  
+  // Relations
+  enrollments Enrollment[]
+  exams       Exam[]
+  groups      Group[]
+
+  @@map("Course")
+}
+
+model CourseProfile {
+  profile_id        String    @id @default(uuid()) @db.Uuid
+  course_id         String    @unique @db.Uuid
+
+  title_ar          String?   @db.VarChar(200)
+  description       String?   @db.Text
+  description_ar    String?   @db.Text
+
+  language          String?   @db.VarChar(50)
+  level             String?   @db.VarChar(20)
+  flag_emoji        String?   @db.VarChar(10)
+
+  price             Decimal?  @db.Decimal(10, 2) @default(0)
+  currency          String?   @db.VarChar(10) @default("DZD")
+
+  session_name      String?   @db.VarChar(100)
+  start_date        DateTime?
+  end_date          DateTime?
+
+  registration_open Boolean   @default(true)
+  is_published      Boolean   @default(false)
+  image_url         String?
+  image_public_id   String?
+
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  course            Course          @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
+  pricing           CoursePricing[]  // ← الإضافة الجديدة
+
+  @@map("CourseProfile")
+}
+
+model CoursePricing {
+  pricing_id   String   @id @default(uuid()) @db.Uuid
+  profile_id   String   @db.Uuid
+
+  status_fr    String   @db.VarChar(200)   // "Étudiant(e)"
+  status_ar    String?  @db.VarChar(200)   // "طالب"
+  status_en    String?  @db.VarChar(200)   // "Student"
+
+  price        Decimal  @db.Decimal(10, 2) @default(0)
+  currency     String   @db.VarChar(10)    @default("DA")
+  discount     String?  @db.VarChar(100)   // "Aucune", "50%"
+
+  sort_order   Int      @default(0)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  profile      CourseProfile @relation(fields: [profile_id], references: [profile_id], onDelete: Cascade)
+
+  @@map("CoursePricing")
+}
+
+// ================================================================
+// DEPARTMENT
+// ================================================================
+model Department {
+  department_id String   @id @default(uuid()) @db.Uuid
+  name          String   @unique @db.VarChar(100)
+  description   String?
+  created_at    DateTime @default(now())
+  
+  // Relations
+  groups        Group[]
+
+  @@map("Department")
+}
+
+// ================================================================
+// GROUP - No direct students relation
+// Students accessed via enrollments
+// ================================================================
+model Group {
+  group_id      String       @id @default(uuid()) @db.Uuid
+  name          String
+  department_id String?      @db.Uuid
+  course_id     String       @db.Uuid
+  max_students  Int          @default(25)
+  status        GroupStatus  @default(OPEN)
+  teacher_id    String?      @db.Uuid
+  level         Level
+  
+  // ❌ REMOVED: students Student[]
+  
+  // Relations
+  enrollments   Enrollment[] // ✅ Access students via this
+  sessions      Session[]
+  course        Course       @relation(fields: [course_id], references: [course_id])
+  department    Department?  @relation(fields: [department_id], references: [department_id])
+  teacher       Teacher?     @relation(fields: [teacher_id], references: [teacher_id])
+
+  @@map("Group")
+}
+
+// ================================================================
+// ENROLLMENT - Core of multi-group system
+// Each enrollment can have its own group_id
+// ================================================================
+model Enrollment {
+  enrollment_id       String                @id @default(uuid()) @db.Uuid
+  student_id          String                @db.Uuid
+  course_id           String                @db.Uuid
+  group_id            String?               @db.Uuid  // ✅ Group stored here
+  enrollment_date     DateTime              @default(now())
+  level               Level?
+  start_date          DateTime?
+  end_date            DateTime?
+  registration_status RegistrationStatus    @default(PENDING)
+  
+  // Relations
+  course              Course                @relation(fields: [course_id], references: [course_id])
+  group               Group?                @relation(fields: [group_id], references: [group_id]) // ✅ Direct relation
+  student             Student               @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  fees                Fee[]
+  history             RegistrationHistory[]
+
+  // ✅ Ensures one enrollment per student per course
+  @@unique([student_id, course_id])
+  @@map("Enrollment")
+}
+
+// ================================================================
+// SESSION
+// ================================================================
+model Session {
+  session_id   String       @id @default(uuid()) @db.Uuid
+  group_id     String       @db.Uuid
+  session_date DateTime
+  topic        String?
+  
+  // Relations
+  attendance   Attendance[]
+  group        Group        @relation(fields: [group_id], references: [group_id])
+
+  @@map("Session")
+}
+
+// ================================================================
+// ATTENDANCE
+// ================================================================
+model Attendance {
+  attendance_id String           @id @default(uuid()) @db.Uuid
+  session_id    String           @db.Uuid
+  student_id    String           @db.Uuid
+  status        AttendanceStatus
+  
+  // Relations
+  session       Session          @relation(fields: [session_id], references: [session_id], onDelete: Restrict)
+  student       Student          @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@unique([session_id, student_id])
+  @@map("Attendance")
+}
+
+// ================================================================
+// EXAM
+// ================================================================
+model Exam {
+  exam_id   String   @id @default(uuid()) @db.Uuid
+  course_id String   @db.Uuid
+  exam_name String?
+  exam_date DateTime
+  max_marks Int
+  
+  // Relations
+  course    Course   @relation(fields: [course_id], references: [course_id])
+  results   Result[]
+
+  @@map("Exam")
+}
+
+// ================================================================
+// RESULT
+// ================================================================
+model Result {
+  result_id      String  @id @default(uuid()) @db.Uuid
+  exam_id        String  @db.Uuid
+  student_id     String  @db.Uuid
+  marks_obtained Int
+  grade          String?
+  
+  // Relations
+  exam           Exam    @relation(fields: [exam_id], references: [exam_id], onDelete: Cascade)
+  student        Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@unique([exam_id, student_id])
+  @@map("Result")
+}
+
+// ================================================================
+// FEE
+// ================================================================
+model Fee {
+  fee_id         String      @id @default(uuid()) @db.Uuid
+  student_id     String      @db.Uuid
+  enrollment_id  String?     @db.Uuid
+  amount         Decimal     @db.Decimal(10, 2)
+  due_date       DateTime
+  status         FeeStatus   @default(UNPAID)
+  payment_method String?     @db.VarChar(30)
+  reference_code String?     @db.VarChar(100)
+  paid_at        DateTime?
+  
+  // Relations
+  enrollment     Enrollment? @relation(fields: [enrollment_id], references: [enrollment_id])
+  student        Student     @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@map("Fee")
+}
+
+// ================================================================
+// DOCUMENT
+// ================================================================
+model Document {
+  document_id String         @id @default(uuid())
+  student_id  String         @db.Uuid
+  type        String
+  file_path   String
+  public_id   String?
+  status      DocumentStatus @default(PENDING)
+  reviewed_at DateTime?
+  reviewed_by String?        @db.Uuid
+  uploaded_at DateTime       @default(now())
+  
+  // Relations
+  student     Student        @relation("StudentDocuments", fields: [student_id], references: [student_id])
+
+  @@map("Document")
+}
+
+// ================================================================
+// PERMISSION
+// ================================================================
+model Permission {
+  permission_id String              @id @default(uuid()) @db.Uuid
+  name          String              @unique
+  description   String?
+  
+  // Relations
+  students      StudentPermission[]
+
+  @@map("Permission")
+}
+
+// ================================================================
+// STUDENT PERMISSION (Junction Table)
+// ================================================================
+model StudentPermission {
+  student_id    String     @db.Uuid
+  permission_id String     @db.Uuid
+  
+  // Relations
+  permission    Permission @relation(fields: [permission_id], references: [permission_id], onDelete: Cascade)
+  student       Student    @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@id([student_id, permission_id])
+  @@map("StudentPermission")
+}
+
+// ================================================================
+// REGISTRATION HISTORY
+// ================================================================
+model RegistrationHistory {
+  history_id    String             @id @default(uuid()) @db.Uuid
+  enrollment_id String             @db.Uuid
+  old_status    RegistrationStatus
+  new_status    RegistrationStatus
+  changed_at    DateTime           @default(now())
+  changed_by    String?            @db.Uuid
+  
+  // Relations
+  enrollment    Enrollment         @relation(fields: [enrollment_id], references: [enrollment_id], onDelete: Cascade)
+
+  @@map("RegistrationHistory")
+}
+
+// ================================================================
+// USER
+// ================================================================
+model User {
+  user_id        String         @id @default(uuid()) @db.Uuid
+  email          String         @unique @db.VarChar(100)
+  password       String?
+  role           UserRole       @default(STUDENT)
+  is_active      Boolean        @default(true)
+  google_id      String?        @unique
+  google_email   String?
+  google_avatar  String?
+  student_id     String?        @unique @db.Uuid
+  teacher_id     String?        @unique @db.Uuid
+  created_at     DateTime       @default(now())
+  
+  // Relations
+  refresh_tokens RefreshToken[]
+  student        Student?       @relation(fields: [student_id], references: [student_id])
+  teacher        Teacher?       @relation(fields: [teacher_id], references: [teacher_id])
+
+  @@map("User")
+}
+
+// ================================================================
+// REFRESH TOKEN
+// ================================================================
+model RefreshToken {
+  token_id   String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  token      String   @unique
+  expires_at DateTime
+  created_at DateTime @default(now())
+  
+  // Relations
+  user       User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("RefreshToken")
+}
+
+model Announcement {
+  announcement_id   String    @id @default(uuid())
+
+  title             String
+  title_ar          String?
+  content           String    @db.Text
+  content_ar        String?   @db.Text
+  excerpt           String?
+  excerpt_ar        String?
+
+  category          String?
+
+  image_url         String?
+  image_public_id   String?
+
+  is_published      Boolean   @default(false)
+  published_at      DateTime?
+
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  @@map("announcements")
+}
+
+// ================================================================
 // ENUMS
-// =======================
+// ================================================================
 
 enum StudentStatus {
-  Active
-  Inactive
+  ACTIVE
+  INACTIVE
+}
+
+enum GroupStatus {
+  OPEN
+  FULL
+  FINISHED
 }
 
 enum UserRole {
@@ -27,27 +454,27 @@ enum UserRole {
 }
 
 enum AttendanceStatus {
-  Present
-  Absent
+  PRESENT
+  ABSENT
 }
 
 enum FeeStatus {
-  Paid
-  Unpaid
+  PAID
+  UNPAID
 }
 
 enum Gender {
-  Male
-  Female
-  Other
+  MALE
+  FEMALE
+  OTHER
 }
 
 enum RegistrationStatus {
-  Pending
-  Validated
-  Rejected
-  Paid
-  Finished
+  PENDING
+  VALIDATED
+  REJECTED
+  PAID
+  FINISHED
 }
 
 enum Level {
@@ -62,364 +489,4 @@ enum DocumentStatus {
   PENDING
   APPROVED
   REJECTED
-}
-
-//
-// =======================
-// STUDENT
-// =======================
-//
-
-model Student {
-  student_id String @id @default(uuid()) @db.Uuid
-
-  first_name    String    @db.VarChar(100)
-  last_name     String    @db.VarChar(100)
-  date_of_birth DateTime?
-
-  gender Gender?
-
-  user_id String @unique @db.Uuid
-
-  phone_number    String? @db.VarChar(35)
-  email           String? @db.VarChar(100)
-  secondary_email String? @db.VarChar(100)
-
-  address     String?
-  nationality String? @db.VarChar(50)
-  language    String?
-
-  avatar_url String?
-
-  education_level String? @db.VarChar(100)
-  study_location  String? @db.VarChar(100)
-
-  status StudentStatus @default(Active)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  enrollments Enrollment[]
-  attendance  Attendance[]
-  results     Result[]
-  fees        Fee[]
-  permissions StudentPermission[]
-  documents   Document[]          @relation("StudentDocuments")
-
-  user User?
-
-  group_id String? @db.Uuid
-  group    Group?  @relation(fields: [group_id], references: [group_id])
-}
-
-//
-// =======================
-// TEACHER
-// =======================
-//
-
-model Teacher {
-  teacher_id String @id @default(uuid()) @db.Uuid
-
-  first_name   String  @db.VarChar(100)
-  last_name    String  @db.VarChar(100)
-  email        String? @db.VarChar(100)
-  phone_number String? @db.VarChar(35)
-
-  created_at DateTime @default(now())
-
-  courses  Course[]
-  sessions Session[]
-  user     User?
-}
-
-//
-// =======================
-// COURSE
-// =======================
-//
-
-model Course {
-  course_id String @id @default(uuid()) @db.Uuid
-
-  course_code String? @unique @db.VarChar(20)
-  course_name String  @db.VarChar(100)
-  credits     Int?
-
-  teacher_id String?  @db.Uuid
-  teacher    Teacher? @relation(fields: [teacher_id], references: [teacher_id])
-
-  enrollments Enrollment[]
-  exams       Exam[]
-  sessions    Session[]
-}
-
-//
-// =======================
-// DEPARTMENT & GROUP
-// =======================
-//
-
-model Department {
-  department_id String @id @default(uuid()) @db.Uuid
-
-  name        String  @unique @db.VarChar(100)
-  description String?
-
-  created_at DateTime @default(now())
-
-  groups Group[]
-}
-
-model Group {
-  group_id String @id @default(uuid()) @db.Uuid
-
-  name          String  @db.VarChar(50)
-  academic_year String?
-
-  department_id String     @db.Uuid
-  department    Department @relation(fields: [department_id], references: [department_id])
-
-  students    Student[]
-  sessions    Session[]
-  enrollments Enrollment[]
-}
-
-//
-// =======================
-// ENROLLMENT
-// =======================
-//
-
-model Enrollment {
-  enrollment_id String @id @default(uuid()) @db.Uuid
-
-  student_id String  @db.Uuid
-  course_id  String  @db.Uuid
-  group_id   String? @db.Uuid
-
-  enrollment_date DateTime @default(now())
-
-  level  Level?
-  status String?
-
-  start_date DateTime?
-  end_date   DateTime?
-
-  registration_status RegistrationStatus @default(Pending)
-
-  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
-  course  Course  @relation(fields: [course_id], references: [course_id])
-  group   Group?  @relation(fields: [group_id], references: [group_id])
-
-  fees    Fee[]
-  history RegistrationHistory[]
-
-  @@unique([student_id, course_id])
-}
-
-//
-// =======================
-// SESSION
-// =======================
-//
-
-model Session {
-  session_id String @id @default(uuid()) @db.Uuid
-
-  course_id  String @db.Uuid
-  teacher_id String @db.Uuid
-  group_id   String @db.Uuid
-
-  session_date DateTime
-  topic        String?
-
-  course  Course  @relation(fields: [course_id], references: [course_id])
-  teacher Teacher @relation(fields: [teacher_id], references: [teacher_id])
-  group   Group   @relation(fields: [group_id], references: [group_id])
-
-  attendance Attendance[]
-}
-
-//
-// =======================
-// ATTENDANCE
-// =======================
-//
-
-model Attendance {
-  attendance_id String @id @default(uuid()) @db.Uuid
-
-  session_id String           @db.Uuid
-  student_id String           @db.Uuid
-  status     AttendanceStatus
-
-  session Session @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
-  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
-
-  @@unique([session_id, student_id])
-}
-
-//
-// =======================
-// EXAMS & RESULTS
-// =======================
-//
-
-model Exam {
-  exam_id String @id @default(uuid()) @db.Uuid
-
-  course_id String   @db.Uuid
-  exam_name String?
-  exam_date DateTime
-  max_marks Int
-
-  course  Course   @relation(fields: [course_id], references: [course_id])
-  results Result[]
-}
-
-model Result {
-  result_id String @id @default(uuid()) @db.Uuid
-
-  exam_id        String  @db.Uuid
-  student_id     String  @db.Uuid
-  marks_obtained Int
-  grade          String?
-
-  exam    Exam    @relation(fields: [exam_id], references: [exam_id], onDelete: Cascade)
-  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
-
-  @@unique([exam_id, student_id])
-}
-
-//
-// =======================
-// FEES
-// =======================
-//
-
-model Fee {
-  fee_id String @id @default(uuid()) @db.Uuid
-
-  student_id    String  @db.Uuid
-  enrollment_id String? @db.Uuid
-
-  amount   Decimal   @db.Decimal(10, 2)
-  due_date DateTime
-  status   FeeStatus
-
-  payment_method String?   @db.VarChar(30)
-  reference_code String?   @db.VarChar(100)
-  paid_at        DateTime?
-
-  student    Student     @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
-  enrollment Enrollment? @relation(fields: [enrollment_id], references: [enrollment_id])
-}
-
-//
-// =======================
-// DOCUMENTS
-// =======================
-//
-
-model Document {
-  document_id String  @id @default(uuid())
-  student_id  String  @db.Uuid
-  type        String
-  file_path   String
-  public_id   String?
-
-  status      DocumentStatus @default(PENDING)
-  reviewed_at DateTime?
-  reviewed_by String?        @db.Uuid // 🔥 هذا السطر المهم
-  reviewer    User?          @relation(fields: [reviewed_by], references: [user_id])
-
-  uploaded_at DateTime @default(now())
-  student     Student  @relation("StudentDocuments", fields: [student_id], references: [student_id])
-}
-
-//
-// =======================
-// PERMISSIONS
-// =======================
-//
-
-model Permission {
-  permission_id String  @id @default(uuid()) @db.Uuid
-  name          String  @unique
-  description   String?
-
-  students StudentPermission[]
-}
-
-model StudentPermission {
-  student_id    String @db.Uuid
-  permission_id String @db.Uuid
-
-  student    Student    @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
-  permission Permission @relation(fields: [permission_id], references: [permission_id], onDelete: Cascade)
-
-  @@id([student_id, permission_id])
-}
-
-//
-// =======================
-// REGISTRATION HISTORY
-// =======================
-//
-
-model RegistrationHistory {
-  history_id String @id @default(uuid()) @db.Uuid
-
-  enrollment_id String             @db.Uuid
-  old_status    RegistrationStatus
-  new_status    RegistrationStatus
-
-  changed_at DateTime @default(now())
-  changed_by String?
-
-  enrollment Enrollment @relation(fields: [enrollment_id], references: [enrollment_id], onDelete: Cascade)
-}
-
-//
-// =======================
-// USER & AUTH
-// =======================
-//
-
-model User {
-  user_id String @id @default(uuid()) @db.Uuid
-
-  email    String  @unique @db.VarChar(100)
-  password String?
-
-  role      UserRole @default(STUDENT)
-  is_active Boolean  @default(true)
-
-  google_id     String? @unique
-  google_email  String?
-  google_avatar String?
-
-  student_id String? @unique @db.Uuid
-  teacher_id String? @unique @db.Uuid
-
-  student Student? @relation(fields: [student_id], references: [student_id])
-  teacher Teacher? @relation(fields: [teacher_id], references: [teacher_id])
-
-  created_at DateTime @default(now())
-
-  refresh_tokens RefreshToken[]
-  documents      Document[]
-}
-
-model RefreshToken {
-  token_id   String   @id @default(uuid()) @db.Uuid
-  user_id    String   @db.Uuid
-  token      String   @unique
-  expires_at DateTime
-  created_at DateTime @default(now())
-
-  user User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
-
-  @@index([user_id])
 }

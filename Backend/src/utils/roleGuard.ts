@@ -3,6 +3,11 @@ import { JwtUser } from "../middlewares/auth.middleware";
 import { PermissionType, RoleType } from "../enums/role.enum";
 import { RolePermissions } from "../enums/role.enum";
 
+/**
+ * ✅ FIXED: Admin now bypasses all permission checks
+ *
+ * This fixes the 403 error on /api/admin/sessions/:sessionId/attendance
+ */
 export const roleGuard =
   (requiredPermissions: PermissionType[]) =>
   (req: Request, res: Response, next: NextFunction) => {
@@ -12,6 +17,12 @@ export const roleGuard =
       return res.status(401).json({ message: "Unauthorized" });
     }
 
+    // ✅ CRITICAL FIX: Admin bypasses all permission checks
+    if (user.role === "ADMIN") {
+      return next();
+    }
+
+    // ✅ For other roles (TEACHER, STUDENT), check permissions
     const permissions = RolePermissions[user.role as RoleType];
 
     if (!permissions) {
@@ -19,7 +30,7 @@ export const roleGuard =
     }
 
     const hasPermission = requiredPermissions.every((permission) =>
-      permissions.includes(permission)
+      permissions.includes(permission),
     );
 
     if (!hasPermission) {

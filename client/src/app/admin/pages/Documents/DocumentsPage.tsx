@@ -44,9 +44,10 @@ import { cn } from "../../../../lib/utils/utils";
 import {
   useAdminDocuments,
   useDeleteDocument,
-  useReviewDocument,
-} from "../../../../hooks/admin/useAdminDocuments";
-import type { AdminDocument } from "../../../../types/document";
+  useApproveDocument, // ✅ CHANGED
+  useRejectDocument, // ✅ ADDED
+} from "../../../../hooks/admin/useAdmin";
+import type { AdminDocument } from "../../../../types/Types";
 import { toast } from "sonner";
 
 // Type for grouped documents
@@ -70,21 +71,24 @@ const AdminDocuments = () => {
     error,
   } = useAdminDocuments();
   const { mutate: deleteDocument, isPending: isDeleting } = useDeleteDocument();
-  const { mutate: reviewDocument, isPending: isReviewing } =
-    useReviewDocument();
+  const { mutate: approveDocument, isPending: isApproving } =
+    useApproveDocument(); // ✅ CHANGED
+  const { mutate: rejectDocument, isPending: isRejecting } =
+    useRejectDocument(); // ✅ ADDED
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
-  const [reviewAction, setReviewAction] = useState<"APPROVED" | "REJECTED">(
-    "APPROVED"
-  );
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false); // ✅ CHANGED
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false); // ✅ ADDED
   const [documentToDelete, setDocumentToDelete] =
     useState<AdminDocument | null>(null);
-  const [documentToReview, setDocumentToReview] =
-    useState<AdminDocument | null>(null);
+  const [documentToApprove, setDocumentToApprove] =
+    useState<AdminDocument | null>(null); // ✅ CHANGED
+  const [documentToReject, setDocumentToReject] =
+    useState<AdminDocument | null>(null); // ✅ ADDED
+  const [rejectReason, setRejectReason] = useState(""); // ✅ ADDED
 
   // Get file type icon
   const getFileIcon = (fileType: AdminDocument["fileType"]) => {
@@ -192,13 +196,13 @@ const AdminDocuments = () => {
   const sortedStudentIds = Object.keys(groupedDocuments).sort((a, b) => {
     const latestDateA = Math.max(
       ...groupedDocuments[a].documents.map((doc) =>
-        new Date(doc.uploadDate).getTime()
-      )
+        new Date(doc.uploadDate).getTime(),
+      ),
     );
     const latestDateB = Math.max(
       ...groupedDocuments[b].documents.map((doc) =>
-        new Date(doc.uploadDate).getTime()
-      )
+        new Date(doc.uploadDate).getTime(),
+      ),
     );
     return sortOrder === "newest"
       ? latestDateB - latestDateA
@@ -220,35 +224,56 @@ const AdminDocuments = () => {
     window.document.body.removeChild(link);
   };
 
-  // Handle review click
-  const handleReviewClick = (
-    document: AdminDocument,
-    action: "APPROVED" | "REJECTED"
-  ) => {
-    setDocumentToReview(document);
-    setReviewAction(action);
-    setReviewDialogOpen(true);
+  // ✅ CHANGED: Handle approve click
+  const handleApproveClick = (document: AdminDocument) => {
+    setDocumentToApprove(document);
+    setApproveDialogOpen(true);
   };
 
-  // Handle review confirm
-  const handleReviewConfirm = () => {
-    if (!documentToReview) return;
+  // ✅ CHANGED: Handle approve confirm
+  const handleApproveConfirm = () => {
+    if (!documentToApprove) return;
 
-    reviewDocument(
-      { id: documentToReview.id, status: reviewAction },
+    approveDocument(documentToApprove.id, {
+      onSuccess: () => {
+        toast.success("Document approved successfully");
+        setApproveDialogOpen(false);
+        setDocumentToApprove(null);
+      },
+      onError: (error: any) => {
+        console.error("Error approving document:", error);
+        toast.error(error?.message || "Failed to approve document");
+      },
+    });
+  };
+
+  // ✅ ADDED: Handle reject click
+  const handleRejectClick = (document: AdminDocument) => {
+    setDocumentToReject(document);
+    setRejectDialogOpen(true);
+  };
+
+  // ✅ ADDED: Handle reject confirm
+  const handleRejectConfirm = () => {
+    if (!documentToReject || !rejectReason.trim()) {
+      toast.error("Please provide a rejection reason");
+      return;
+    }
+
+    rejectDocument(
+      { documentId: documentToReject.id, reason: rejectReason },
       {
         onSuccess: () => {
-          toast.success(
-            `Document ${reviewAction === "APPROVED" ? "approved" : "rejected"} successfully`
-          );
-          setReviewDialogOpen(false);
-          setDocumentToReview(null);
+          toast.success("Document rejected successfully");
+          setRejectDialogOpen(false);
+          setDocumentToReject(null);
+          setRejectReason("");
         },
         onError: (error: any) => {
-          console.error("Error reviewing document:", error);
-          toast.error(error?.message || "Failed to review document");
+          console.error("Error rejecting document:", error);
+          toast.error(error?.message || "Failed to reject document");
         },
-      }
+      },
     );
   };
 
@@ -396,7 +421,7 @@ const AdminDocuments = () => {
                           "w-full p-3 rounded-lg text-left transition-all hover:bg-muted/50",
                           isSelected
                             ? "bg-primary/10 border-2 border-primary"
-                            : "bg-muted/30 border border-transparent"
+                            : "bg-muted/30 border border-transparent",
                         )}
                       >
                         <div className="flex items-center gap-3">
@@ -421,14 +446,15 @@ const AdminDocuments = () => {
                                 variant="outline"
                                 className="text-xs bg-blue-50 text-blue-700 border-blue-200"
                               >
-                                {stats.total} {stats.total === 1 ? "File" : "Files"}
+                                {stats.total}{" "}
+                                {stats.total === 1 ? "File" : "Files"}
                               </Badge>
                             </div>
                           </div>
                           <ChevronRight
                             className={cn(
                               "h-5 w-5 text-muted-foreground transition-transform",
-                              isSelected && "text-primary"
+                              isSelected && "text-primary",
                             )}
                           />
                         </div>
@@ -456,7 +482,7 @@ const AdminDocuments = () => {
                         />
                         <AvatarFallback className="text-lg font-bold">
                           {getInitials(
-                            groupedDocuments[selectedStudent].student.name
+                            groupedDocuments[selectedStudent].student.name,
                           )}
                         </AvatarFallback>
                       </Avatar>
@@ -470,7 +496,7 @@ const AdminDocuments = () => {
                         <div className="flex items-center gap-2 mt-2">
                           {(() => {
                             const stats = getDocumentStats(
-                              groupedDocuments[selectedStudent].documents
+                              groupedDocuments[selectedStudent].documents,
                             );
                             return (
                               <>
@@ -528,7 +554,7 @@ const AdminDocuments = () => {
                               </div>
                             </div>
 
-                            {/* Actions */}
+                            {/* Actions - ✅ CHANGED */}
                             <div className="flex items-center gap-1">
                               <Button
                                 variant="ghost"
@@ -551,9 +577,7 @@ const AdminDocuments = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() =>
-                                  handleReviewClick(document, "APPROVED")
-                                }
+                                onClick={() => handleApproveClick(document)}
                                 className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
                                 title="Approve document"
                               >
@@ -562,9 +586,7 @@ const AdminDocuments = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() =>
-                                  handleReviewClick(document, "REJECTED")
-                                }
+                                onClick={() => handleRejectClick(document)}
                                 className="h-8 w-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                                 title="Reject document"
                               >
@@ -582,7 +604,7 @@ const AdminDocuments = () => {
                             </div>
                           </div>
                         </div>
-                      )
+                      ),
                     )}
                   </div>
                 </div>
@@ -621,30 +643,26 @@ const AdminDocuments = () => {
         )}
       </main>
 
-      {/* Review Confirmation Dialog */}
-      <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+      {/* ✅ CHANGED: Approve Confirmation Dialog */}
+      <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {reviewAction === "APPROVED" ? "Approve" : "Reject"} Document
-            </DialogTitle>
+            <DialogTitle>Approve Document</DialogTitle>
             <DialogDescription>
-              Are you sure you want to{" "}
-              {reviewAction === "APPROVED" ? "approve" : "reject"} this
-              document?
+              Are you sure you want to approve this document?
             </DialogDescription>
           </DialogHeader>
 
-          {documentToReview && (
+          {documentToApprove && (
             <div className="py-4">
               <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                {getFileIcon(documentToReview.fileType)}
+                {getFileIcon(documentToApprove.fileType)}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">
-                    {documentToReview.fileName}
+                    {documentToApprove.fileName}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {documentToReview.student.name}
+                    {documentToApprove.student.name}
                   </p>
                 </div>
               </div>
@@ -654,28 +672,91 @@ const AdminDocuments = () => {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setReviewDialogOpen(false)}
-              disabled={isReviewing}
+              onClick={() => setApproveDialogOpen(false)}
+              disabled={isApproving}
             >
               Cancel
             </Button>
             <Button
-              variant={reviewAction === "APPROVED" ? "default" : "destructive"}
-              onClick={handleReviewConfirm}
-              disabled={isReviewing}
-              className={
-                reviewAction === "APPROVED"
-                  ? "bg-green-600 hover:bg-green-700"
-                  : ""
-              }
+              onClick={handleApproveConfirm}
+              disabled={isApproving}
+              className="bg-green-600 hover:bg-green-700"
             >
-              {isReviewing ? (
+              {isApproving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
+                  Approving...
                 </>
               ) : (
-                <>{reviewAction === "APPROVED" ? "Approve" : "Reject"}</>
+                "Approve"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ✅ ADDED: Reject Confirmation Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Document</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for rejecting this document.
+            </DialogDescription>
+          </DialogHeader>
+
+          {documentToReject && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                {getFileIcon(documentToReject.fileType)}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {documentToReject.fileName}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {documentToReject.student.name}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Rejection Reason
+                </label>
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Enter reason for rejection (e.g., Photo is not clear, ID expired, etc.)"
+                  className="w-full p-3 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                  rows={4}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectDialogOpen(false);
+                setRejectReason("");
+              }}
+              disabled={isRejecting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRejectConfirm}
+              disabled={isRejecting || !rejectReason.trim()}
+            >
+              {isRejecting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Rejecting...
+                </>
+              ) : (
+                "Reject Document"
               )}
             </Button>
           </DialogFooter>

@@ -16,8 +16,8 @@ import {
 import {
   useUpdateStudent,
   useUpdateStudentAvatar,
-} from "../../../hooks/admin/useAdminStudents";
-import type { AdminStudent } from "../../../hooks/admin/useAdminStudents";
+} from "../../../hooks/admin/useAdmin";
+import type { AdminStudent } from "../../../hooks/admin/useAdmin";
 
 interface EditStudentModalProps {
   open: boolean;

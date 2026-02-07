@@ -18,7 +18,7 @@ import { Input } from "../../../../components/ui/input";
 import {
   useAdminTeachers,
   useDeleteTeacher,
-} from "../../../../hooks/admin/useAdminTeachers";
+} from "../../../../hooks/admin/useAdmin";
 
 const TeachersPage = () => {
   const { data: teachers = [], isLoading } = useAdminTeachers();
@@ -168,7 +168,7 @@ const TeachersPage = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 lg:flex-shrink-0">
+                <div className="flex items-center gap-2 lg:shrink-0">
                   <Button asChild size="sm" variant="outline" className="gap-1">
                     <Link to={`/admin/teachers/${teacher.teacher_id}`}>
                       <Eye className="h-4 w-4" />

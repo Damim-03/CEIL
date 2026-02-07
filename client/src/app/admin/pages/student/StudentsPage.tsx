@@ -5,7 +5,6 @@ import {
   Eye,
   Trash2,
   Search,
-  UserPlus,
   Users,
   Mail,
   Phone,
@@ -19,7 +18,7 @@ import {
   useAdminStudents,
   useDeleteStudent,
   type AdminStudent,
-} from "../../../../hooks/admin/useAdminStudents";
+} from "../../../../hooks/admin/useAdmin";
 import ConfirmDeleteCard from "../../components/ConfirmDeleteCard";
 
 const StudentsPage = () => {
@@ -71,10 +70,6 @@ const StudentsPage = () => {
             Manage and monitor all student records
           </p>
         </div>
-        <Button className="gap-2">
-          <UserPlus className="w-4 h-4" />
-          Add Student
-        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -171,7 +166,7 @@ const StudentsPage = () => {
                     <img
                       src={student.user.google_avatar}
                       alt={`${student.first_name || ""} ${student.last_name || ""}`}
-                      className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg shrink-0"
+                      className="w-15 h-15 rounded-full object-cover border-4 border-white shadow-lg shrink-0"
                     />
                   ) : (
                     <div className="w-20 h-20 rounded-full bg-linear-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white text-3xl font-semibold shadow-lg shrink-0">

@@ -10,6 +10,9 @@ import {
   LogOut,
   GraduationCap,
   X,
+  DollarSign,      // ✅ ADDED
+  Calendar,        // ✅ ADDED
+  Award,           // ✅ ADDED
 } from "lucide-react";
 
 interface NavItem {
@@ -18,6 +21,7 @@ interface NavItem {
   href: string;
 }
 
+// ✅ UPDATED: Added 3 new navigation items
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
   { icon: User, label: "My Profile", href: "/dashboard/profile" },
@@ -28,6 +32,9 @@ const navItems: NavItem[] = [
     label: "My Enrollments",
     href: "/dashboard/enrollments",
   },
+  { icon: DollarSign, label: "My Fees", href: "/dashboard/fees" },            // ✅ ADDED
+  { icon: Calendar, label: "My Attendance", href: "/dashboard/attendance" },  // ✅ ADDED
+  { icon: Award, label: "My Results", href: "/dashboard/results" },          // ✅ ADDED
 ];
 
 interface StudentSidebarProps {
@@ -123,7 +130,7 @@ export default function StudentSidebar({ open, onClose }: StudentSidebarProps) {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="h-full w-full bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm">
+                <div className="h-full w-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm">
                   {initials}
                 </div>
               )}

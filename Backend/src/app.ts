@@ -9,6 +9,7 @@ import { HTTPSTATUS } from "./config/http/http.config";
 import { asyncHandler } from "./middlewares/asyncHandler.middleware";
 import mainRoute from "./routes/mainRoutes";
 import "./config/passport/passport.config";
+import path from "node:path";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -17,7 +18,7 @@ app.use(
   cors({
     origin: config.FRONTEND_ORIGIN,
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json());
@@ -36,7 +37,7 @@ app.use(
     secure: config.NODE_ENV === "production",
     httpOnly: true,
     sameSite: "lax",
-  })
+  }),
 );
 
 app.get(
@@ -45,11 +46,19 @@ app.get(
     res.status(HTTPSTATUS.OK).json({
       message: "Hello World!",
     });
-  })
+  }),
 );
+
+if (config.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../client/dist")));
+
+  app.get("*", (_req: Request, res: Response) => {
+    res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+  });
+}
 
 app.listen(config.PORT, async () => {
   console.log(
-    `🚀 Server is running on port ${config.PORT} in ${config.NODE_ENV} mode`
+    `🚀 Server is running on port ${config.PORT} in ${config.NODE_ENV} mode`,
   );
 });

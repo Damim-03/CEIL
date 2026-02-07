@@ -11,13 +11,15 @@ import {
   Calendar,
   DollarSign,
   ClipboardList,
-  BarChart3,
-  Settings,
+  Megaphone,
   UserCircle,
   LayoutDashboard,
   LogOut,
   ShieldCheck,
   X,
+  Building2,
+  UsersRound,
+  Globe,
 } from "lucide-react";
 
 interface NavItem {
@@ -32,15 +34,20 @@ const navItems: NavItem[] = [
   { icon: GraduationCap, label: "Students", href: "/admin/students" },
   { icon: Briefcase, label: "Teachers", href: "/admin/teachers" },
   { icon: BookOpen, label: "Courses", href: "/admin/courses" },
+  { icon: Building2, label: "Departments", href: "/admin/departments" },
+  { icon: UsersRound, label: "Groups", href: "/admin/groups" },
   { icon: Calendar, label: "Sessions", href: "/admin/sessions" },
   { icon: DollarSign, label: "Fees", href: "/admin/fees" },
   { icon: ClipboardList, label: "Enrollments", href: "/admin/enrollments" },
   { icon: FileText, label: "Documents", href: "/admin/documents" },
-  { icon: BarChart3, label: "Reports", href: "/admin/reports" },
+];
+
+const publicNavItems: NavItem[] = [
+  { icon: Globe, label: "Formations", href: "/admin/formations" },
+  { icon: Megaphone, label: "Announcements", href: "/admin/announcements" },
 ];
 
 const bottomNavItems: NavItem[] = [
-  { icon: Settings, label: "Settings", href: "/admin/settings" },
   { icon: UserCircle, label: "Profile", href: "/admin/profile" },
 ];
 
@@ -58,13 +65,11 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
     location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   const handleLinkClick = () => {
-    // Close mobile sidebar when link is clicked
     if (onClose && window.innerWidth < 768) {
       onClose();
     }
   };
 
-  // Safe initials
   const initials = user?.email
     ? user.email.split("@")[0].slice(0, 2).toUpperCase()
     : "AD";
@@ -73,9 +78,8 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
     <aside
       className={cn(
         "fixed left-0 top-0 z-40 h-screen bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300 w-64",
-        // Mobile responsive
         "md:translate-x-0",
-        open ? "translate-x-0" : "-translate-x-full"
+        open ? "translate-x-0" : "-translate-x-full",
       )}
     >
       {/* Header */}
@@ -89,7 +93,6 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
           </span>
         </div>
 
-        {/* Close button for mobile */}
         {onClose && (
           <button
             onClick={onClose}
@@ -113,7 +116,7 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
                   isActive(item.href)
                     ? "bg-sidebar-accent text-sidebar-primary"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 )}
               >
                 <item.icon className="h-5 w-5 shrink-0" />
@@ -123,7 +126,30 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
           ))}
         </ul>
 
-        {/* Bottom Nav Items (Settings & Profile) */}
+        {/* Public / Website */}
+        <div className="mt-4 pt-4 border-t border-sidebar-border">
+          <ul className="space-y-1 px-3">
+            {publicNavItems.map((item) => (
+              <li key={item.label}>
+                <Link
+                  to={item.href}
+                  onClick={handleLinkClick}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                    isActive(item.href)
+                      ? "bg-sidebar-accent text-sidebar-primary"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  )}
+                >
+                  <item.icon className="h-5 w-5 shrink-0" />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Profile */}
         <div className="mt-4 pt-4 border-t border-sidebar-border">
           <ul className="space-y-1 px-3">
             {bottomNavItems.map((item) => (
@@ -135,7 +161,7 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
                     isActive(item.href)
                       ? "bg-sidebar-accent text-sidebar-primary"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                   )}
                 >
                   <item.icon className="h-5 w-5 shrink-0" />
@@ -150,7 +176,6 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
       {/* User Footer */}
       {user && (
         <div className="border-t border-sidebar-border p-4 space-y-3">
-          {/* User Info */}
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full overflow-hidden shrink-0 border border-sidebar-border bg-gray-100">
               {user.google_avatar ? (
@@ -165,7 +190,6 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
                 </div>
               )}
             </div>
-
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-foreground">
                 {user.email}
@@ -174,13 +198,12 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
             </div>
           </div>
 
-          {/* Logout Button */}
           <button
             onClick={() => logoutMutation.mutate()}
             disabled={logoutMutation.isPending}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
-              logoutMutation.isPending && "opacity-50 cursor-not-allowed"
+              logoutMutation.isPending && "opacity-50 cursor-not-allowed",
             )}
           >
             <LogOut className="h-5 w-5 shrink-0" />

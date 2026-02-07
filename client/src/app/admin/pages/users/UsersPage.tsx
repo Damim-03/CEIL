@@ -8,7 +8,7 @@ import { StatusBadge } from "../../components/StatusBadge";
 import {
   useAdminUsers,
   useChangeUserRole,
-} from "../../../../hooks/admin/useAdminUsers";
+} from "../../../../hooks/admin/useAdmin";
 import { Search, Users, Eye, Filter, UserCog } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,7 +29,7 @@ const UsersPage = () => {
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [changingUserId, setChangingUserId] = useState<string | null>(null);
-  const { mutate: changeRole, isLoading: isChangingRole } = useChangeUserRole();
+  const { mutate: changeRole, isPending: isChangingRole } = useChangeUserRole();
 
   if (isLoading) return <PageLoader />;
 
@@ -58,7 +58,6 @@ const UsersPage = () => {
       u.email === currentUser?.email;
 
     if (isCurrentUser) {
-      console.log("Filtering out current user:", u);
       return false;
     }
 
@@ -197,9 +196,17 @@ const UsersPage = () => {
               >
                 <div className="flex items-center gap-4 flex-1 min-w-0">
                   {/* Avatar */}
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-lg shrink-0">
-                    {user.email.charAt(0).toUpperCase()}
-                  </div>
+                  {user.google_avatar ? (
+                    <img
+                      src={user.google_avatar}
+                      alt={`${user.email} avatar`}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-lg shrink-0">
+                      {user.email.charAt(0).toUpperCase()}
+                    </div>
+                  )}
 
                   {/* User Info */}
                   <div className="flex-1 min-w-0">

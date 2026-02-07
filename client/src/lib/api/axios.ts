@@ -9,6 +9,26 @@ const axiosInstance = axios.create({
 let isRefreshing = false;
 let queue: ((success: boolean) => void)[] = [];
 
+// ✅ ADD THIS: Request Interceptor for FormData
+axiosInstance.interceptors.request.use(
+  (config) => {
+    // ✅ CRITICAL: Handle FormData
+    if (config.data instanceof FormData) {
+      // Let browser set Content-Type with boundary
+      delete config.headers["Content-Type"];
+    } else if (!config.headers["Content-Type"]) {
+      // For non-FormData requests, set JSON
+      config.headers["Content-Type"] = "application/json";
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
+
+// ✅ EXISTING: Response Interceptor (keep as is)
 axiosInstance.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -32,7 +52,7 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await authApi.refresh(); // 🔥 refresh من cookie
+        await authApi.refresh();
         queue.forEach((cb) => cb(true));
         queue = [];
         return axiosInstance(originalRequest);

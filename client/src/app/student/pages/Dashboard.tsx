@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { useStudentDashboard } from "../../../hooks/student/useStudentDashboard";
-import { useStudentProfile } from "../../../hooks/student/useStudentProfile";
+import { useStudentDashboard } from "../../../hooks/student/Usestudent";
+import { useStudentProfile } from "../../../hooks/student/Usestudent";
 import PageLoader from "../../../components/PageLoader";
 import { Button } from "../../../components/ui/button";
 import {

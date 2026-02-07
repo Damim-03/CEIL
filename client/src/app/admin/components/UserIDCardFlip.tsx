@@ -5,7 +5,7 @@ interface UserIDCardProps {
   profile: {
     user_id?: string;
     email: string;
-    google_avatar?: string;
+    google_avatar?: string | null;
     role?: "ADMIN" | "TEACHER" | "STUDENT";
     is_active?: boolean;
   };
@@ -23,26 +23,26 @@ export function UserIDCardFlip({ profile }: UserIDCardProps) {
       case "ADMIN":
         return {
           label: "Administrator",
-          gradient: "from-purple-500 to-indigo-600",
-          bgColor: "bg-purple-500",
-          textColor: "text-purple-600",
-          borderColor: "border-purple-200",
+          gradient: "from-red-500 to-rose-600",
+          bgColor: "bg-red-500",
+          textColor: "text-red-600",
+          borderColor: "border-red-200",
         };
       case "TEACHER":
         return {
           label: "Teacher",
-          gradient: "from-emerald-500 to-teal-600",
-          bgColor: "bg-emerald-500",
-          textColor: "text-emerald-600",
-          borderColor: "border-emerald-200",
+          gradient: "from-blue-500 to-indigo-600",
+          bgColor: "bg-blue-500",
+          textColor: "text-blue-600",
+          borderColor: "border-blue-200",
         };
       case "STUDENT":
         return {
           label: "Student",
-          gradient: "from-blue-500 to-cyan-600",
-          bgColor: "bg-blue-500",
-          textColor: "text-blue-600",
-          borderColor: "border-blue-200",
+          gradient: "from-green-500 to-emerald-600",
+          bgColor: "bg-green-500",
+          textColor: "text-green-600",
+          borderColor: "border-green-200",
         };
       default:
         return {

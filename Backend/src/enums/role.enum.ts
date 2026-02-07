@@ -59,6 +59,8 @@ export const Permissions = {
 
   MANAGE_DOCUMENTS: "MANAGE_DOCUMENTS",
 
+  MANAGE_ANNOUNCEMENTS: "MANAGE_ANNOUNCEMENTS",
+
   VIEW_REPORTS: "VIEW_REPORTS",
 } as const;
 
@@ -88,6 +90,8 @@ export const RolePermissions: Record<RoleType, PermissionType[]> = {
     Permissions.MANAGE_PERMISSIONS,
 
     Permissions.MANAGE_DOCUMENTS,
+
+    Permissions.MANAGE_ANNOUNCEMENTS,
 
     Permissions.VIEW_REPORTS,
   ],

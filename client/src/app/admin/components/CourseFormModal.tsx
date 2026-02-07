@@ -1,25 +1,41 @@
-import { useRef, useState, useEffect, type FormEvent } from "react";
-import { X, BookOpen, Loader2, ChevronDown, User } from "lucide-react";
+import { useState, useEffect, type FormEvent } from "react";
+import { X, BookOpen, Loader2 } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
-import type { CoursePayload } from "../../../lib/api/admin/adminCourses.api";
-import { useAdminTeachers } from "../../../hooks/admin/useAdminTeachers";
+import { Textarea } from "../../../components/ui/textarea";
+import type {
+  CreateCoursePayload,
+  UpdateCoursePayload,
+} from "../../../types/Types";
+
+/* =======================
+   FORM STATE TYPE
+   Separate from API payloads
+======================= */
+
+type CourseFormState = {
+  course_name: string;
+  course_code: string;
+  credits: number | undefined;
+  description: string;
+  duration: string;
+};
 
 interface CourseFormModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: CoursePayload) => void;
+  onSubmit: (data: CreateCoursePayload | UpdateCoursePayload) => void;
   isSubmitting?: boolean;
-
-  initialData?: Partial<CoursePayload>; // 👈 جديد
+  initialData?: Partial<CourseFormState>;
   mode?: "create" | "edit";
 }
 
-const EMPTY: CoursePayload = {
+const EMPTY_FORM: CourseFormState = {
   course_name: "",
   course_code: "",
   credits: undefined,
-  teacher_id: undefined,
+  description: "",
+  duration: "",
 };
 
 const CourseFormModal = ({
@@ -27,53 +43,38 @@ const CourseFormModal = ({
   onClose,
   onSubmit,
   isSubmitting = false,
+  initialData,
+  mode = "create",
 }: CourseFormModalProps) => {
-  const { data: teachers = [], isLoading: teachersLoading } =
-    useAdminTeachers();
-
-  const [form, setForm] = useState<CoursePayload>(EMPTY);
+  const [form, setForm] = useState<CourseFormState>(EMPTY_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [teacherSearch, setTeacherSearch] = useState("");
-  const [teacherDropdownOpen, setTeacherDropdownOpen] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
-  // Ref on the teacher select container — used for outside-click detection
-  const teacherSelectRef = useRef<HTMLDivElement>(null);
+  // Initialize form with initial data
+  useEffect(() => {
+    if (open) {
+      if (initialData && mode === "edit") {
+        setForm({
+          course_name: initialData.course_name || "",
+          course_code: initialData.course_code || "",
+          credits: initialData.credits,
+          description: initialData.description || "",
+          duration: initialData.duration || "",
+        });
+      } else {
+        setForm(EMPTY_FORM);
+      }
+      setErrors({});
+    }
+  }, [open, initialData, mode]);
 
-  // Wraps onClose: resets every piece of local state before telling the
-  // parent to close.  Clearing state here — inside an event handler —
-  // avoids the "setState synchronously inside an effect" lint error.
   const handleClose = () => {
-    setForm(EMPTY);
+    setForm(EMPTY_FORM);
     setErrors({});
-    setTeacherSearch("");
-    setTeacherDropdownOpen(false);
-    setHighlightedIndex(-1);
     onClose();
   };
 
-  // Outside-click: compare against the container ref, not stopPropagation.
-  // This avoids the mousedown-vs-click mismatch that caused the flicker.
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (
-        teacherSelectRef.current &&
-        !teacherSelectRef.current.contains(e.target as Node)
-      ) {
-        setTeacherDropdownOpen(false);
-        setHighlightedIndex(-1);
-      }
-    };
-
-    if (teacherDropdownOpen) {
-      document.addEventListener("mousedown", handler);
-    }
-    return () => document.removeEventListener("mousedown", handler);
-  }, [teacherDropdownOpen]);
-
   if (!open) return null;
 
-  // ── validation ──
   const validate = (): boolean => {
     const next: Record<string, string> = {};
     if (!form.course_name.trim()) {
@@ -90,80 +91,17 @@ const CourseFormModal = ({
     e.preventDefault();
     if (!validate()) return;
 
-    const payload: CoursePayload = {
+    // Convert FormState to API payload
+    const payload: CreateCoursePayload | UpdateCoursePayload = {
       course_name: form.course_name.trim(),
     };
     if (form.course_code?.trim()) payload.course_code = form.course_code.trim();
     if (form.credits !== undefined && form.credits >= 0)
       payload.credits = form.credits;
-    if (form.teacher_id) payload.teacher_id = form.teacher_id;
+    if (form.description?.trim())
+      payload.description = form.description.trim();
 
     onSubmit(payload);
-  };
-
-  // ── teacher dropdown helpers ──
-  const filteredTeachers = teachers.filter((t) => {
-    const full = `${t.first_name} ${t.last_name}`.toLowerCase();
-    return full.includes(teacherSearch.toLowerCase());
-  });
-
-  const selectedTeacher = teachers.find(
-    (t) => t.teacher_id === form.teacher_id,
-  );
-
-  const selectTeacher = (teacherId: string | undefined) => {
-    setForm((prev) => ({ ...prev, teacher_id: teacherId }));
-    setTeacherDropdownOpen(false);
-    setHighlightedIndex(-1);
-  };
-
-  // Keyboard nav inside the dropdown
-  const handleTeacherKeyDown = (e: React.KeyboardEvent) => {
-    if (!teacherDropdownOpen) {
-      // Open on Enter / Space / ArrowDown when focused on trigger
-      if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
-        e.preventDefault();
-        setTeacherDropdownOpen(true);
-        setHighlightedIndex(0);
-      }
-      return;
-    }
-
-    switch (e.key) {
-      case "Escape":
-        e.preventDefault();
-        setTeacherDropdownOpen(false);
-        setHighlightedIndex(-1);
-        break;
-
-      case "ArrowDown":
-        e.preventDefault();
-        setHighlightedIndex((prev) =>
-          prev < filteredTeachers.length - 1 ? prev + 1 : prev,
-        );
-        break;
-
-      case "ArrowUp":
-        e.preventDefault();
-        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
-        break;
-
-      case "Enter":
-        e.preventDefault();
-        if (
-          highlightedIndex >= 0 &&
-          highlightedIndex < filteredTeachers.length
-        ) {
-          selectTeacher(filteredTeachers[highlightedIndex].teacher_id);
-        }
-        break;
-
-      case "Tab":
-        // Let Tab close the dropdown naturally
-        setTeacherDropdownOpen(false);
-        setHighlightedIndex(-1);
-        break;
-    }
   };
 
   return (
@@ -174,21 +112,23 @@ const CourseFormModal = ({
         onClick={handleClose}
       />
 
-      {/* Modal — overflow-hidden removed so the teacher dropdown is not clipped */}
+      {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md border border-gray-200">
-          {/* ── Header ── */}
-          <div className="flex items-center justify-between px-6 pt-6 pb-4">
+        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md border border-gray-200 max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 pt-6 pb-4 sticky top-0 bg-white z-10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-teal-500 to-cyan-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center">
                 <BookOpen className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-gray-900">
-                  Create Course
+                  {mode === "edit" ? "Edit Course" : "Create Course"}
                 </h2>
                 <p className="text-xs text-gray-500">
-                  Fill in the details below
+                  {mode === "edit"
+                    ? "Update course information"
+                    : "Fill in the details below"}
                 </p>
               </div>
             </div>
@@ -200,10 +140,9 @@ const CourseFormModal = ({
             </button>
           </div>
 
-          {/* ── Divider ── */}
           <div className="border-t border-gray-100 mx-6" />
 
-          {/* ── Body ── */}
+          {/* Body */}
           <form onSubmit={handleSubmit} noValidate>
             <div className="px-6 py-5 space-y-5">
               {/* Course Name (required) */}
@@ -254,9 +193,7 @@ const CourseFormModal = ({
                     }
                     disabled={isSubmitting}
                   />
-                  <p className="text-xs text-gray-400 mt-1.5">
-                    Unique identifier (optional)
-                  </p>
+                  <p className="text-xs text-gray-400 mt-1.5">Optional</p>
                 </div>
 
                 {/* Credits */}
@@ -287,169 +224,55 @@ const CourseFormModal = ({
                       {errors.credits}
                     </p>
                   ) : (
-                    <p className="text-xs text-gray-400 mt-1.5">
-                      Credit hours (optional)
-                    </p>
+                    <p className="text-xs text-gray-400 mt-1.5">Optional</p>
                   )}
                 </div>
               </div>
 
-              {/* ── Teacher select ── */}
+              {/* Duration */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Assign Teacher
+                  Duration
                 </label>
+                <Input
+                  placeholder="e.g. 12 weeks, 1 semester"
+                  value={form.duration ?? ""}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      duration: e.target.value,
+                    }))
+                  }
+                  disabled={isSubmitting}
+                />
+                <p className="text-xs text-gray-400 mt-1.5">Optional</p>
+              </div>
 
-                {/* Container ref — outside-click checks against this */}
-                <div
-                  ref={teacherSelectRef}
-                  className="relative"
-                  onKeyDown={handleTeacherKeyDown}
-                >
-                  {/* Trigger */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTeacherDropdownOpen((prev) => !prev);
-                      setHighlightedIndex(0);
-                    }}
-                    disabled={isSubmitting || teachersLoading}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm transition-colors hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <span
-                      className={
-                        selectedTeacher
-                          ? "text-gray-900 flex items-center gap-2"
-                          : "text-gray-400"
-                      }
-                    >
-                      {selectedTeacher ? (
-                        <>
-                          <span className="w-6 h-6 rounded-full bg-teal-100 flex items-center justify-center">
-                            <User className="w-3 h-3 text-teal-600" />
-                          </span>
-                          {selectedTeacher.first_name}{" "}
-                          {selectedTeacher.last_name}
-                        </>
-                      ) : teachersLoading ? (
-                        <span className="flex items-center gap-1.5">
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          Loading...
-                        </span>
-                      ) : (
-                        "Select a teacher (optional)"
-                      )}
-                    </span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-400 transition-transform duration-150 ${teacherDropdownOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-
-                  {/* Dropdown */}
-                  {teacherDropdownOpen && (
-                    <div className="absolute z-10 mt-1.5 w-full bg-white border border-gray-200 rounded-xl shadow-lg">
-                      {/* Search */}
-                      <div className="p-2 border-b border-gray-100">
-                        <Input
-                          placeholder="Search teachers..."
-                          value={teacherSearch}
-                          onChange={(e) => {
-                            setTeacherSearch(e.target.value);
-                            setHighlightedIndex(-1);
-                          }}
-                          className="h-8 text-sm"
-                          autoFocus
-                        />
-                      </div>
-
-                      {/* List */}
-                      <ul className="max-h-40 overflow-y-auto py-1">
-                        {/* While teachers are still fetching */}
-                        {teachersLoading && (
-                          <li className="px-3 py-3 flex items-center justify-center gap-2 text-xs text-gray-400">
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            Loading teachers...
-                          </li>
-                        )}
-
-                        {/* Clear option — only when a teacher is already selected */}
-                        {!teachersLoading && form.teacher_id && (
-                          <li>
-                            <button
-                              type="button"
-                              onClick={() => selectTeacher(undefined)}
-                              className="w-full text-left px-3 py-2 text-xs text-gray-500 hover:bg-gray-50 transition-colors"
-                            >
-                              Clear selection
-                            </button>
-                          </li>
-                        )}
-
-                        {/* Teacher options */}
-                        {!teachersLoading &&
-                          (filteredTeachers.length > 0 ? (
-                            filteredTeachers.map((teacher, idx) => {
-                              const isSelected =
-                                form.teacher_id === teacher.teacher_id;
-                              const isHighlighted = idx === highlightedIndex;
-                              return (
-                                <li key={teacher.teacher_id}>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      selectTeacher(teacher.teacher_id)
-                                    }
-                                    onMouseEnter={() =>
-                                      setHighlightedIndex(idx)
-                                    }
-                                    className={`w-full text-left px-3 py-2 flex items-center gap-2.5 text-sm transition-colors ${
-                                      isSelected
-                                        ? "bg-teal-50 text-teal-700"
-                                        : isHighlighted
-                                          ? "bg-gray-100 text-gray-900"
-                                          : "text-gray-700 hover:bg-gray-50"
-                                    }`}
-                                  >
-                                    <span
-                                      className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                                        isSelected
-                                          ? "bg-teal-100"
-                                          : "bg-gray-100"
-                                      }`}
-                                    >
-                                      <User
-                                        className={`w-3.5 h-3.5 ${isSelected ? "text-teal-600" : "text-gray-500"}`}
-                                      />
-                                    </span>
-                                    <span className="truncate">
-                                      {teacher.first_name} {teacher.last_name}
-                                    </span>
-                                    {teacher.email && (
-                                      <span className="text-xs text-gray-400 ml-auto truncate">
-                                        {teacher.email}
-                                      </span>
-                                    )}
-                                  </button>
-                                </li>
-                              );
-                            })
-                          ) : (
-                            <li className="px-3 py-3 text-center text-xs text-gray-400">
-                              {teacherSearch
-                                ? "No teachers match your search"
-                                : "No teachers available"}
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Description
+                </label>
+                <Textarea
+                  placeholder="Brief description of the course..."
+                  value={form.description ?? ""}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  disabled={isSubmitting}
+                  rows={4}
+                  className="resize-none"
+                />
+                <p className="text-xs text-gray-400 mt-1.5">Optional</p>
               </div>
             </div>
 
-            {/* ── Footer ── */}
+            {/* Footer */}
             <div className="border-t border-gray-100 mx-6 mt-2" />
-            <div className="flex items-center justify-end gap-3 px-6 py-4">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 sticky bottom-0 bg-white">
               <Button
                 type="button"
                 variant="ghost"
@@ -467,8 +290,10 @@ const CourseFormModal = ({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Creating...
+                    {mode === "edit" ? "Updating..." : "Creating..."}
                   </>
+                ) : mode === "edit" ? (
+                  "Update Course"
                 ) : (
                   "Create Course"
                 )}

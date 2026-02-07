@@ -107,13 +107,29 @@ import {
   getGroupsReportController,
   getPaymentsReportController,
   updateStudentAvatarController,
+  updateAdminAvatarController,
+  approveDocumentController,
+  rejectDocumentController,
+  assignInstructorToGroupController,
 } from "../../controllers/admin/admin.controller";
 import { reviewDocumentController } from "../../controllers/admin/document.controller";
 import { upload } from "../../middlewares/upload.middleware";
+import { createAnnouncementController, getAllAnnouncementsController, getAnnouncementByIdController, updateAnnouncementController, deleteAnnouncementController, publishAnnouncementController, unpublishAnnouncementController } from "../../controllers/admin/Announcement.controller";
+import { createOrUpdateCourseProfileController, getCourseProfileController, publishCourseProfileController, unpublishCourseProfileController, getCoursePricingController, addCoursePricingController, updateCoursePricingController, deleteCoursePricingController } from "../../controllers/admin/Courseprofile.controller";
 
 const adminRoutes = Router();
 
-adminRoutes.patch("/documents/:id/review", reviewDocumentController);
+/* ======================================================
+  admin
+====================================================== */
+
+adminRoutes.patch(
+  "/me/avatar",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_USERS]), // أو Permission خاص
+  upload.single("avatar"),
+  updateAdminAvatarController,
+);
 
 /* ======================================================
    USERS
@@ -364,6 +380,13 @@ adminRoutes.post(
   addStudentToGroupController,
 );
 
+adminRoutes.patch(
+  "/groups/:groupId/assign-instructor",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_CLASSES]),
+  assignInstructorToGroupController,  // ← Controller جديد
+);
+
 adminRoutes.delete(
   "/groups/:groupId/students/:studentId",
   authMiddleware,
@@ -481,13 +504,20 @@ adminRoutes.get(
   getDocumentByIdController,
 );
 
-adminRoutes.patch(
-  "/documents/:id/review",
+// ✅ ADD these 2 routes:
+adminRoutes.put(
+  "/documents/:documentId/approve",
   authMiddleware,
   roleGuard([Permissions.MANAGE_DOCUMENTS]),
-  reviewDocumentController
+  approveDocumentController,
 );
 
+adminRoutes.put(
+  "/documents/:documentId/reject",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_DOCUMENTS]),
+  rejectDocumentController,
+);
 
 adminRoutes.delete(
   "/documents/:documentId",
@@ -549,7 +579,10 @@ adminRoutes.post(
 adminRoutes.get(
   "/sessions/:sessionId/attendance",
   authMiddleware,
-  roleGuard([Permissions.MANAGE_ATTENDANCE]),
+  roleGuard([
+    Permissions.MANAGE_ATTENDANCE,
+    Permissions.MANAGE_SESSIONS, // ✅ إضافة
+  ]),
   getAttendanceBySessionController,
 );
 
@@ -714,6 +747,134 @@ adminRoutes.get(
   authMiddleware,
   roleGuard([Permissions.VIEW_REPORTS]),
   getEnrollmentsReportController,
+);
+
+/* ======================================================
+   ANNOUNCEMENTS (الأخبار والإعلانات)
+====================================================== */
+
+adminRoutes.post(
+  "/announcements",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
+  upload.single("image"),
+  createAnnouncementController,
+);
+
+adminRoutes.get(
+  "/announcements",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
+  getAllAnnouncementsController,
+);
+
+adminRoutes.get(
+  "/announcements/:announcementId",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
+  getAnnouncementByIdController,
+);
+
+adminRoutes.put(
+  "/announcements/:announcementId",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
+  upload.single("image"),
+  updateAnnouncementController,
+);
+
+adminRoutes.delete(
+  "/announcements/:announcementId",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
+  deleteAnnouncementController,
+);
+
+adminRoutes.patch(
+  "/announcements/:announcementId/publish",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
+  publishAnnouncementController,
+);
+
+adminRoutes.patch(
+  "/announcements/:announcementId/unpublish",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
+  unpublishAnnouncementController,
+);
+
+/* ======================================================
+   COURSE PROFILES (الملف العام للدورة)
+====================================================== */
+
+// إنشاء أو تحديث الملف العام للدورة
+adminRoutes.post(
+  "/courses/:courseId/profile",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_COURSES]),
+  upload.single("image"),
+  createOrUpdateCourseProfileController,
+);
+
+// عرض الملف العام
+adminRoutes.get(
+  "/courses/:courseId/profile",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_COURSES]),
+  getCourseProfileController,
+);
+
+// نشر
+adminRoutes.patch(
+  "/courses/:courseId/profile/publish",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_COURSES]),
+  publishCourseProfileController,
+);
+
+// إلغاء النشر
+adminRoutes.patch(
+  "/courses/:courseId/profile/unpublish",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_COURSES]),
+  unpublishCourseProfileController,
+);
+
+/* ======================================================
+   COURSE PRICING (التعرفة حسب الصفة)
+====================================================== */
+
+// عرض كل التعرفات
+adminRoutes.get(
+  "/courses/:courseId/pricing",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_COURSES]),
+  getCoursePricingController,
+);
+
+// إضافة تعرفة جديدة
+adminRoutes.post(
+  "/courses/:courseId/pricing",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_COURSES]),
+  addCoursePricingController,
+);
+
+// تحديث تعرفة
+adminRoutes.put(
+  "/courses/:courseId/pricing/:pricingId",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_COURSES]),
+  updateCoursePricingController,
+);
+
+// حذف تعرفة
+adminRoutes.delete(
+  "/courses/:courseId/pricing/:pricingId",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_COURSES]),
+  deleteCoursePricingController,
 );
 
 export default adminRoutes;

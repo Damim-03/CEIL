@@ -1,7 +1,5 @@
 import { Award, Heart, Target, Users } from "lucide-react";
-import { Footer } from "../../components/footer";
 import { Card, CardContent } from "../../components/ui/card";
-import { Header } from "../../components/header";
 
 const VALUES = [
   {
@@ -34,8 +32,6 @@ const TEAM = [
 const AboutUs = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
-
       {/* Hero */}
       <div className="border-b bg-card">
         <div className="mx-auto max-w-7xl px-4 py-16 text-center">
@@ -45,7 +41,6 @@ const AboutUs = () => {
             </div>
             <h1 className="text-4xl font-bold text-foreground">About Us</h1>
           </div>
-
           <p className="mx-auto text-lg text-muted-foreground max-w-2xl">
             Learn more about our story, mission, and the passionate team behind
             our language learning platform.
@@ -55,28 +50,30 @@ const AboutUs = () => {
 
       {/* Content */}
       <div className="flex-1 mx-auto max-w-7xl px-4 py-12 w-full">
-        {/* Story Section */}
+        {/* Story */}
         <section className="mb-16">
-          <h2 className="text-2xl font-bold text-foreground mb-4">Our Story</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-4">
+            Our Story
+          </h2>
           <div className="prose prose-lg text-muted-foreground max-w-none">
             <p className="mb-4">
               Founded in 2020, our platform was born from a simple idea:
-              language learning should be accessible, engaging, and effective
-              for everyone. What started as a small online community has grown
-              into a thriving educational platform serving thousands of learners
+              language learning should be accessible, engaging, and effective for
+              everyone. What started as a small online community has grown into a
+              thriving educational platform serving thousands of learners
               worldwide.
             </p>
             <p>
               We combine cutting-edge technology with proven teaching
               methodologies to create an immersive learning experience. Our team
               of experienced educators and language enthusiasts work tirelessly
-              to develop courses that make learning a new language both
-              enjoyable and rewarding.
+              to develop courses that make learning a new language both enjoyable
+              and rewarding.
             </p>
           </div>
         </section>
 
-        {/* Values Section */}
+        {/* Values */}
         <section className="mb-16">
           <h2 className="text-2xl font-bold text-foreground mb-8">
             What Drives Us
@@ -104,7 +101,7 @@ const AboutUs = () => {
           </div>
         </section>
 
-        {/* Team Section */}
+        {/* Team */}
         <section>
           <h2 className="text-2xl font-bold text-foreground mb-8">
             Meet Our Team
@@ -131,8 +128,6 @@ const AboutUs = () => {
           </div>
         </section>
       </div>
-
-      <Footer />
     </div>
   );
 };

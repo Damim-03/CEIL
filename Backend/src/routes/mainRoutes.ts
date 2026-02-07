@@ -6,10 +6,13 @@ import { Permissions } from "../enums/role.enum";
 import teacherRoutes from "./Teacher/teacher.route";
 import adminRoutes from "./admin/admin.route";
 import studentRoutes from "./student/student.route";
+import publicRoutes from "./announcement/announcement.routes";
 
 const mainRoute: Router = Router();
 
 mainRoute.use("/auth", authRoutes);
+
+mainRoute.use("/public", publicRoutes)
 
 mainRoute.use(
   "/admin",

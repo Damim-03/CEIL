@@ -4,6 +4,7 @@ import { prisma } from "../../prisma/client";
 import { config } from "../../config/app.config";
 import { Roles } from "../../enums/role.enum";
 import { hashPassword, verifyPassword } from "../../utils/password.util";
+import { Gender } from "../../../generated/prisma/client";
 import { JwtUser } from "../../middlewares/auth.middleware";
 
 /**
@@ -55,7 +56,7 @@ export const registerUserController = async (req: Request, res: Response) => {
           user_id: createdUser.user_id,
           first_name,
           last_name,
-          gender,
+          gender: gender ? (gender.toUpperCase() as Gender) : null,
           phone_number,
           nationality,
           education_level,
@@ -241,6 +242,7 @@ export const meController = async (req: Request, res: Response) => {
       user_id: true,
       email: true,
       role: true,
+      is_active: true,
       google_avatar: true,
       created_at: true,
     },

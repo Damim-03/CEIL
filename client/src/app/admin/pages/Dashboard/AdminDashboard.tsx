@@ -8,16 +8,15 @@ import {
   Calendar,
 } from "lucide-react";
 import PageLoader from "../../../../components/PageLoader";
-import { useAdminDashboard } from "../../../../hooks/admin/useAdminDashboard";
+import { useAdminDashboard } from "../../../../hooks/admin/useAdmin";
 import { useMe } from "../../../../hooks/auth/auth.hooks";
 import { EnrollmentsChart } from "../../components/EnrollmentsChart";
 import { GenderChart } from "../../components/GenderChart";
-import { UserIDCardFlip } from "../../components/UserIDCardFlip";
 
 const AdminDashboard = () => {
   const { data: dashboardData, isLoading: isDashboardLoading } =
     useAdminDashboard();
-  const { data: user, isLoading: isUserLoading } = useMe();
+  const { isLoading: isUserLoading } = useMe();
 
   const isLoading = isDashboardLoading || isUserLoading;
 
@@ -75,7 +74,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* ================= STATS CARDS ================= */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-6">
         {/* Total Users Card */}
         <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow overflow-hidden">
           {/* Vertical Accent Bar */}
@@ -134,32 +133,9 @@ const AdminDashboard = () => {
       </div>
 
       {/* ================= USER ID CARD & QUICK STATS ================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* User ID Card - Takes 1 column */}
-        <div className="lg:col-span-1">
-          <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-6 h-full overflow-hidden">
-            {/* Vertical Accent Bar */}
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-linear-to-b from-blue-500 to-purple-600"></div>
-
-            <div className="flex items-center gap-3 mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Your ID Card</h3>
-            </div>
-            {user && (
-              <UserIDCardFlip
-                profile={{
-                  user_id: user.user_id,
-                  email: user.email,
-                  google_avatar: user.google_avatar,
-                  role: user.role,
-                  is_active: user.is_active ?? true,
-                }}
-              />
-            )}
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Stats & Platform Overview - Takes 2 columns */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-3 space-y-6">
           {/* Quick Stats Card */}
           <div className="relative bg-white rounded-2xl shadow-sm border border-gray-100 p-6 overflow-hidden">
             {/* Vertical Accent Bar */}

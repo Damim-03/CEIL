@@ -3,7 +3,7 @@ import PageLoader from "../../../components/PageLoader";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { AlertDialog, useAlert } from "../components/Alertdialog";
-import type { Document, UploadMutation } from "../../../types/document";
+import type { Document, UploadMutation } from "../../../types/Types";
 import {
   FileText,
   Search,
@@ -22,7 +22,7 @@ import {
   ExternalLink,
   Trash2,
 } from "lucide-react";
-import { useStudentDocuments } from "../../../hooks/student/useStudentDocuments";
+import { useStudentDocuments } from "../../../hooks/student/Usestudent";
 
 /* ================= PAGE ================= */
 
@@ -590,25 +590,56 @@ function UploadModal({
   };
 
   const handleUpload = () => {
+    console.log("=== HANDLEUPLOAD START ===");
+
     if (!file || !type) {
+      console.log("❌ Missing file or type:", { file, type });
       onError("Please select both a file and document type");
       return;
     }
 
+    console.log("✅ File selected:", {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+    });
+    console.log("✅ Document type:", type);
+
+    // Create FormData
     const formData = new FormData();
     formData.append(type, file);
 
+    // ✅ CRITICAL DEBUG: Verify FormData
+    console.log("FormData created, checking entries:");
+    let hasEntries = false;
+    for (const pair of formData.entries()) {
+      console.log(`  ${pair[0]}:`, pair[1]);
+      hasEntries = true;
+    }
+
+    if (!hasEntries) {
+      console.log("❌ FormData is empty!");
+      onError("FormData creation failed");
+      return;
+    }
+
+    console.log("✅ FormData ready, calling mutate...");
+
     uploadDocuments.mutate(formData, {
       onSuccess: () => {
+        console.log("✅ Upload successful!");
         onSuccess();
       },
       onError: (err: Error) => {
+        console.error("❌ Upload error:", err);
         const errorMessage =
           (err as { response?: { data?: { message?: string } } })?.response
             ?.data?.message || "Upload failed. Please try again.";
         onError(errorMessage);
       },
     });
+
+    console.log("=== HANDLEUPLOAD END ===");
   };
 
   const isUploading = uploadDocuments.isPending;

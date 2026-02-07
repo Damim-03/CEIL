@@ -19,7 +19,7 @@ import {
   Languages,
   Users,
 } from "lucide-react";
-import { useStudentProfile } from "../../../hooks/student/useStudentProfile";
+import { useStudentProfile } from "../../../hooks/student/Usestudent";
 import type { Profile } from "../../../types/profile";
 
 export default function Profile() {
