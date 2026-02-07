@@ -9,7 +9,7 @@ import { HTTPSTATUS } from "./config/http/http.config";
 import { asyncHandler } from "./middlewares/asyncHandler.middleware";
 import mainRoute from "./routes/mainRoutes";
 import "./config/passport/passport.config";
-import path from "node:path";
+import path from "path";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -50,10 +50,12 @@ app.get(
 );
 
 if (config.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../client/dist")));
+  const frontendPath = path.join(__dirname, "../../client/dist");
 
-  app.get("/{*splat}", (_req: Request, res: Response) => {
-    res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+  app.use(express.static(frontendPath));
+
+  app.use((_req: Request, res: Response) => {
+    res.sendFile(path.join(frontendPath, "index.html"));
   });
 }
 
