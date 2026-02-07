@@ -10,8 +10,8 @@ export function HeroSection() {
     <section className="relative overflow-hidden bg-brand-gray min-h-[90vh] flex items-center">
       {/* ── Background Layers ── */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 right-0 w-[60%] h-full bg-gradient-to-bl from-brand-teal-dark/8 via-transparent to-transparent" />
-        <div className="absolute bottom-0 left-0 w-[40%] h-[60%] bg-gradient-to-tr from-brand-mustard/5 via-transparent to-transparent" />
+        <div className="absolute top-0 right-0 w-[60%] h-full bg-linear-to-bl from-brand-teal-dark/8 via-transparent to-transparent" />
+        <div className="absolute bottom-0 left-0 w-[40%] h-[60%] bg-linear-to-tr from-brand-mustard/5 via-transparent to-transparent" />
         <div className="absolute top-20 right-[15%] w-72 h-72 rounded-full border border-brand-teal/10 opacity-60" />
         <div className="absolute bottom-16 right-[25%] w-48 h-48 rounded-full border border-brand-mustard/15 opacity-50" />
         <div className="absolute top-[40%] left-[8%] w-24 h-24 rounded-full bg-brand-teal-dark/5" />
