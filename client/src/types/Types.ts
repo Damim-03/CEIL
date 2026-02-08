@@ -295,7 +295,7 @@ export interface Session {
   _count: any;
   session_id: string; // UUID
   group_id: string; // UUID
-  session_date: Date | string;
+  session_date?: Date;
   topic?: string | null;
   
   // Relations

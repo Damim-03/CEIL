@@ -118,7 +118,7 @@ const CourseFormModal = ({
           {/* Header */}
           <div className="flex items-center justify-between px-6 pt-6 pb-4 sticky top-0 bg-white z-10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-teal-500 to-cyan-600 flex items-center justify-center">
                 <BookOpen className="w-5 h-5 text-white" />
               </div>
               <div>

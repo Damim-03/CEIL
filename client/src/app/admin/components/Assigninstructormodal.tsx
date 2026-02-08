@@ -82,7 +82,7 @@ const AssignInstructorModal = ({
           {/* Header */}
           <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center">
                 <UserCheck className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -286,7 +286,7 @@ const AssignInstructorModal = ({
                 <Button
                   type="submit"
                   disabled={isSubmitting || !selectedInstructorId}
-                  className="gap-2 min-w-32 shadow-sm bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                  className="gap-2 min-w-32 shadow-sm bg-linear-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
                 >
                   {isSubmitting ? (
                     <>

@@ -180,12 +180,12 @@ const SessionFormModal = ({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-gray-200/60 overflow-hidden animate-[modalIn_0.25s_cubic-bezier(.4,0,.2,1)_both]">
           {/* Accent bar */}
-          <div className="h-1.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-blue-500" />
+          <div className="h-1.5 bg-linear-to-r from-indigo-500 via-violet-500 to-blue-500" />
 
           {/* Header */}
           <div className="flex items-start justify-between px-7 pt-6 pb-2">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg">
+              <div className="w-11 h-11 rounded-2xl bg-linear-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg">
                 <Calendar className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -424,7 +424,7 @@ const SessionFormModal = ({
               size="sm"
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="gap-2 px-6 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 shadow-md hover:shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="gap-2 px-6 rounded-xl bg-linear-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 shadow-md hover:shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {status === "loading" ? (
                 <>

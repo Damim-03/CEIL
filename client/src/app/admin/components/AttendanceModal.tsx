@@ -192,7 +192,7 @@ export default function AttendanceModal({
         </DialogHeader>
 
         {/* Session Info */}
-        <div className="bg-gradient-to-br from-indigo-50 to-violet-50 rounded-lg p-4 border border-indigo-200">
+        <div className="bg-linear-to-br from-indigo-50 to-violet-50 rounded-lg p-4 border border-indigo-200">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm">
               <FileText className="w-4 h-4 text-indigo-600" />
