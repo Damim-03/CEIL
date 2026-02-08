@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "npm install --prefix Backend && npm install --prefix client && npm run build --prefix client && cd Backend && npx prisma generate && npx prisma migrate deploy && npm run build",
-    "start": "npm run start --prefix Backend"
+    "start": "node Backend/dist/app.js"
   },
   "repository": {
     "type": "git",
