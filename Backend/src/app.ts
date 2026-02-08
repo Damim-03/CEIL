@@ -9,7 +9,7 @@ import { HTTPSTATUS } from "./config/http/http.config";
 import { asyncHandler } from "./middlewares/asyncHandler.middleware";
 import mainRoute from "./routes/mainRoutes";
 import "./config/passport/passport.config";
-import path from "path";
+import path from "node:path";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -50,7 +50,7 @@ app.get(
 );
 
 if (config.NODE_ENV === "production") {
-  const frontendPath = path.join(__dirname, "../../client/dist");
+  const frontendPath = path.join(__dirname, "../client/dist");
 
   app.use(express.static(frontendPath));
 
