@@ -1667,44 +1667,49 @@ export const validateEnrollmentController = async (
   const { enrollmentId } = req.params;
 
   try {
-    // 1. Get enrollment
     const enrollment = await prisma.enrollment.findUnique({
       where: { enrollment_id: enrollmentId },
       include: {
-        course: true,
+        course: {
+          include: {
+            profile: true, // ✅ جلب الـ profile للسعر
+          },
+        },
         student: true,
       },
     });
 
     if (!enrollment) {
-      return res.status(404).json({
-        message: "Enrollment not found",
-      });
+      return res.status(404).json({ message: "Enrollment not found" });
     }
 
-    // 2. Check status
     if (enrollment.registration_status !== "PENDING") {
       return res.status(400).json({
         message: "Only pending enrollments can be validated",
       });
     }
 
-    // 3. Update enrollment + Create fee (MINIMAL)
+    // ✅ السعر من course profile، أو 0 إذا ما موجود
+    const feeAmount = Number(enrollment.course?.profile?.price ?? 0);
+
+    if (feeAmount <= 0) {
+      return res.status(400).json({
+        message:
+          "Course has no price set. Please update the course profile first.",
+      });
+    }
+
     const result = await prisma.$transaction(async (tx) => {
-      // Update enrollment
       const updatedEnrollment = await tx.enrollment.update({
         where: { enrollment_id: enrollmentId },
-        data: {
-          registration_status: "VALIDATED",
-        },
+        data: { registration_status: "VALIDATED" },
       });
 
-      // Create fee (MINIMAL FIELDS ONLY)
       const fee = await tx.fee.create({
         data: {
           student_id: enrollment.student_id,
           enrollment_id: enrollmentId,
-          amount: 1000,
+          amount: feeAmount, // ✅ السعر الحقيقي من الكورس
           status: "UNPAID",
           due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         },
@@ -1713,7 +1718,6 @@ export const validateEnrollmentController = async (
       return { enrollment: updatedEnrollment, fee };
     });
 
-    // 4. Return success
     return res.json({
       message: "Enrollment validated successfully",
       enrollment: result.enrollment,
@@ -1721,7 +1725,6 @@ export const validateEnrollmentController = async (
     });
   } catch (error: any) {
     console.error("❌ Validation error:", error);
-
     return res.status(500).json({
       message: error.message || "Failed to validate enrollment",
     });
@@ -1790,6 +1793,7 @@ export const markEnrollmentPaidController = async (
   }
 
   const updated = await prisma.$transaction(async (tx) => {
+    // ✅ 1. تحديث حالة الـ Enrollment
     await tx.registrationHistory.create({
       data: {
         enrollment_id: enrollmentId,
@@ -1799,10 +1803,26 @@ export const markEnrollmentPaidController = async (
       },
     });
 
-    return tx.enrollment.update({
+    const updatedEnrollment = await tx.enrollment.update({
       where: { enrollment_id: enrollmentId },
       data: { registration_status: RegistrationStatus.PAID },
     });
+
+    // ✅ 2. تحديث حالة الـ Fee المرتبط → PAID
+    await tx.fee.updateMany({
+      where: {
+        enrollment_id: enrollmentId,
+        status: "UNPAID",
+      },
+      data: {
+        status: "PAID",
+        paid_at: new Date(),
+        payment_method: "Cash",
+        reference_code: `PAY-${Date.now()}`,
+      },
+    });
+
+    return updatedEnrollment;
   });
 
   res.json(updated);

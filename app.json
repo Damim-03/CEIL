@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "9fd84771-9c12-4aa2-91b1-6bee920b06fa"
+      }
+    },
+    "android": {
+      "package": "com.damim03.ceil"
+    }
+  }
+}
