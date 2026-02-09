@@ -934,7 +934,8 @@ export const getAllGroupsController = async (_: Request, res: Response) => {
   const groups = await prisma.group.findMany({
     include: {
       department: true,
-      // ✅ FIXED: Get students via enrollments
+      course: true, // ✅ هل هذا موجود؟
+      teacher: true,
       enrollments: {
         where: {
           registration_status: { in: ["VALIDATED", "PAID", "FINISHED"] },
@@ -1850,47 +1851,48 @@ export const finishEnrollmentController = async (
 /* ================= SESSIONS ================= */
 
 export const createSessionController = async (req: Request, res: Response) => {
-  const { course_id, teacher_id, group_id, session_date, topic } = req.body;
+  const { group_id, session_date, topic } = req.body;
 
-  if (!course_id || !teacher_id || !group_id || !session_date) {
+  if (!group_id || !session_date) {
     return res.status(400).json({
-      message: "course_id, teacher_id, group_id and session_date are required",
+      message: "group_id and session_date are required",
     });
   }
 
-  const [course, teacher, group] = await Promise.all([
-    prisma.course.findUnique({ where: { course_id } }),
-    prisma.teacher.findUnique({ where: { teacher_id } }),
-    prisma.group.findUnique({ where: { group_id } }),
-  ]);
-
-  if (!course || !teacher || !group) {
-    return res.status(400).json({
-      message: "Invalid course, teacher or group",
-    });
-  }
-
-  const conflict = await prisma.session.findFirst({
-    where: {
-      group: {
-        teacher_id,
-      },
-    },
+  // ✅ findUnique بدل findMany
+  const group = await prisma.group.findUnique({
+    where: { group_id },
   });
 
-  if (conflict) {
+  // ✅ الآن group معرّف
+  if (!group) {
     return res.status(400).json({
-      message: "Teacher already has a session at this time",
+      message: "Invalid group_id",
     });
   }
 
   const session = await prisma.session.create({
     data: {
-      group: {
-        connect: { group_id },
-      },
+      group_id,
       session_date: new Date(session_date),
-      topic,
+      topic: topic || null,
+    },
+    include: {
+      group: {
+        include: {
+          course: true,
+          teacher: true,
+          enrollments: {
+            where: {
+              registration_status: { in: ["VALIDATED", "PAID", "FINISHED"] },
+            },
+            include: {
+              student: true,
+            },
+          },
+        },
+      },
+      _count: { select: { attendance: true } },
     },
   });
 
@@ -2072,7 +2074,6 @@ export const deleteSessionController = async (req: Request, res: Response) => {
   try {
     const { sessionId } = req.params;
 
-    // ✅ STEP 1: Check if attendance exists
     const attendanceCount = await prisma.attendance.count({
       where: { session_id: sessionId },
     });
@@ -2081,17 +2082,11 @@ export const deleteSessionController = async (req: Request, res: Response) => {
       return res.status(400).json({
         success: false,
         message: "Cannot delete session with attendance records",
-        details: {
-          attendance_count: attendanceCount,
-          hint: "This session has attendance data that must be preserved for historical records",
-        },
       });
     }
 
-    // ✅ STEP 2: Check if session has started
     const session = await prisma.session.findUnique({
       where: { session_id: sessionId },
-      select: { session_date: true },
     });
 
     if (!session) {
@@ -2101,22 +2096,7 @@ export const deleteSessionController = async (req: Request, res: Response) => {
       });
     }
 
-    const sessionDate = new Date(session.session_date);
-    const now = new Date();
-
-    // Warn if trying to delete past session
-    if (sessionDate < now) {
-      return res.status(400).json({
-        success: false,
-        message: "Cannot delete past session",
-        details: {
-          session_date: session.session_date,
-          hint: "Past sessions should be kept for historical records",
-        },
-      });
-    }
-
-    // ✅ STEP 3: Safe to delete (no attendance, future session)
+    // ✅ حذف مباشر بدون شرط التاريخ
     await prisma.session.delete({
       where: { session_id: sessionId },
     });
@@ -2126,28 +2106,21 @@ export const deleteSessionController = async (req: Request, res: Response) => {
       message: "Session deleted successfully",
     });
   } catch (error: any) {
-    console.error("Delete session error:", error);
-
-    // ✅ STEP 4: Handle Prisma constraint errors
     if (error.code === "P2003") {
       return res.status(400).json({
         success: false,
         message: "Cannot delete session due to related data",
-        error: "This session is referenced by other records",
       });
     }
-
     if (error.code === "P2025") {
       return res.status(404).json({
         success: false,
         message: "Session not found",
       });
     }
-
     return res.status(500).json({
       success: false,
       message: "Failed to delete session",
-      error: error.message,
     });
   }
 };

@@ -7,18 +7,45 @@ import {
   GraduationCap,
   Target,
   Heart,
-  ArrowRight,
+  UserPlus,
+  LayoutDashboard,
+  LogIn,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Link } from "react-router-dom";
+import { useAuthRedirect } from "../../lib/utils/auth-redirect";
 
 export function CenterInfoPreview() {
+  const { isLoggedIn, role, getRegisterHref } = useAuthRedirect();
+
+  const getCtaConfig = () => {
+    if (!isLoggedIn) {
+      return {
+        label: "Register Now",
+        icon: <LogIn className="ml-2 h-4 w-4" />,
+        href: getRegisterHref(),
+      };
+    }
+    if (role === "STUDENT") {
+      return {
+        label: "Register Now",
+        icon: <UserPlus className="ml-2 h-4 w-4" />,
+        href: getRegisterHref(),
+      };
+    }
+    return {
+      label: "Go to Dashboard",
+      icon: <LayoutDashboard className="ml-2 h-4 w-4" />,
+      href: getRegisterHref(),
+    };
+  };
+
+  const cta = getCtaConfig();
+
   return (
     <section className="py-20 lg:py-28 bg-white relative">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* ── About Overview ── */}
         <div className="grid gap-12 lg:grid-cols-2 items-center mb-20">
-          {/* Left - Text */}
           <div className="animate-fade-up">
             <div className="inline-flex items-center gap-2 rounded-full bg-brand-teal-dark/8 border border-brand-teal/15 px-4 py-2 text-xs font-semibold text-brand-teal-dark tracking-wide uppercase mb-6">
               About Our Center
@@ -44,7 +71,6 @@ export function CenterInfoPreview() {
               language goals efficiently and enjoyably.
             </p>
 
-            {/* Mission Values */}
             <div className="grid gap-4 sm:grid-cols-3">
               <ValueCard
                 icon={<GraduationCap className="h-5 w-5" />}
@@ -67,10 +93,8 @@ export function CenterInfoPreview() {
             </div>
           </div>
 
-          {/* Right - Contact Card */}
           <div className="animate-fade-up" style={{ animationDelay: "200ms" }}>
             <div className="rounded-2xl border border-brand-beige bg-brand-gray p-8 relative overflow-hidden">
-              {/* Decorative shapes */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-brand-mustard/5 rounded-bl-full" />
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-brand-teal/5 rounded-tr-full" />
 
@@ -138,8 +162,7 @@ export function CenterInfoPreview() {
           className="rounded-2xl overflow-hidden relative animate-fade-up"
           style={{ animationDelay: "100ms" }}
         >
-          <div className="bg-gradient-to-r from-brand-teal-dark to-brand-teal p-10 sm:p-14 text-center relative">
-            {/* Decorative circles */}
+          <div className="bg-linear-to-r from-brand-teal-dark to-brand-teal p-10 sm:p-14 text-center relative">
             <div className="absolute inset-0 opacity-10 pointer-events-none">
               <div className="absolute top-4 left-10 w-20 h-20 border-2 border-white rounded-full" />
               <div className="absolute bottom-4 right-10 w-32 h-32 border-2 border-white rounded-full" />
@@ -163,9 +186,9 @@ export function CenterInfoPreview() {
                   asChild
                   className="bg-brand-mustard hover:bg-brand-mustard-dark text-white border-0 shadow-lg shadow-black/20 px-8 rounded-xl h-13 text-base font-semibold"
                 >
-                  <Link to="/register">
-                    Register Now
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                  <Link to={cta.href}>
+                    {cta.label}
+                    {cta.icon}
                   </Link>
                 </Button>
                 <Button
@@ -185,8 +208,6 @@ export function CenterInfoPreview() {
   );
 }
 
-// ── Sub-components ──
-
 function ValueCard({
   icon,
   title,
@@ -204,7 +225,6 @@ function ValueCard({
     brown: { bg: "bg-brand-brown/5", icon: "bg-brand-brown/10" },
   };
   const c = colorMap[color];
-
   return (
     <div
       className={`flex flex-col items-center text-center p-5 rounded-xl ${c.bg} transition-all hover:shadow-sm`}

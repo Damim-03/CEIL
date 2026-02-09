@@ -35,7 +35,6 @@ const navItems: NavItem[] = [
   { icon: Briefcase, label: "Teachers", href: "/admin/teachers" },
   { icon: BookOpen, label: "Courses", href: "/admin/courses" },
   { icon: Building2, label: "Departments", href: "/admin/departments" },
-  { icon: UsersRound, label: "Groups", href: "/admin/groups" },
   { icon: Calendar, label: "Sessions", href: "/admin/sessions" },
   { icon: DollarSign, label: "Fees", href: "/admin/fees" },
   { icon: ClipboardList, label: "Enrollments", href: "/admin/enrollments" },

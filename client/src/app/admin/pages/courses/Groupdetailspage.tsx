@@ -161,7 +161,9 @@ const GroupDetailsPage = () => {
           <h2 className="text-2xl font-semibold text-gray-900">
             Group Not Found
           </h2>
-          <p className="text-gray-600">The group you're looking for doesn't exist</p>
+          <p className="text-gray-600">
+            The group you're looking for doesn't exist
+          </p>
           <Link to="/admin/groups">
             <Button variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -306,7 +308,9 @@ const GroupDetailsPage = () => {
               • Current capacity: {currentCapacity}/{maxCapacity}
             </p>
             <p>• Capacity percentage: {Math.round(capacityPercent)}%</p>
-            <p>• Can assign teacher? {canAssignInstructor ? "Yes ✅" : "No ❌"}</p>
+            <p>
+              • Can assign teacher? {canAssignInstructor ? "Yes ✅" : "No ❌"}
+            </p>
             <p>• Has teacher? {hasInstructor ? "Yes ✅" : "No ❌"}</p>
           </div>
         </div>
@@ -660,9 +664,7 @@ const GroupDetailsPage = () => {
                 <Tag className="w-5 h-5 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-500">
-                  Group Name
-                </p>
+                <p className="text-sm font-medium text-gray-500">Group Name</p>
                 <p className="text-base text-gray-900 mt-1">
                   {group.name || "Not specified"}
                 </p>
@@ -785,6 +787,8 @@ const GroupDetailsPage = () => {
           course_id: group.course_id,
           max_students: maxCapacity,
           teacher_id: group.teacher_id,
+          department_id: group.department_id,
+          current_capacity: currentCapacity,
         }}
         mode="edit"
       />

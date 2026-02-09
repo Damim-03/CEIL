@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   X,
   Save,
@@ -10,24 +10,23 @@ import {
   FileText,
   CheckCircle,
   AlertCircle,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import {
   useCreateSession,
   useUpdateSession,
-  useAdminCourses,
-  useAdminTeachers,
   useAdminGroups,
+  useAdminCourses,
 } from "../../../hooks/admin/useAdmin";
 import type { Session } from "../../../types/Types";
 
 /* =======================
-   FORM STATE TYPE
+   TYPES
 ======================= */
 
 type SessionFormState = {
   course_id: string;
-  teacher_id: string;
   group_id: string;
   session_date: string;
   topic: string;
@@ -44,11 +43,14 @@ type StatusType = "idle" | "loading" | "success" | "error";
 
 const EMPTY_FORM: SessionFormState = {
   course_id: "",
-  teacher_id: "",
   group_id: "",
   session_date: "",
   topic: "",
 };
+
+/* =======================
+   COMPONENT
+======================= */
 
 const SessionFormModal = ({
   open,
@@ -62,27 +64,38 @@ const SessionFormModal = ({
   const [status, setStatus] = useState<StatusType>("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // ✅ Fetch data internally
+  // Fetch courses & groups
   const { data: courses = [], isLoading: isLoadingCourses } = useAdminCourses();
-  const { data: teachers = [], isLoading: isLoadingTeachers } =
-    useAdminTeachers();
   const { data: groups = [], isLoading: isLoadingGroups } = useAdminGroups();
 
   const createSession = useCreateSession();
   const updateSession = useUpdateSession();
 
-  // Check if data is loading
-  const isLoadingData =
-    isLoadingCourses || isLoadingTeachers || isLoadingGroups;
+  const isLoadingData = isLoadingCourses || isLoadingGroups;
+
+  // Filter groups by selected course
+  const filteredGroups = useMemo(() => {
+    if (!form.course_id) return [];
+    return groups.filter((g) => {
+      const groupCourseId =
+        (g as any).course?.course_id || (g as any).course_id;
+      return groupCourseId === form.course_id;
+    });
+  }, [form.course_id, groups]);
+
+  // Get selected group details
+  const selectedGroup = groups.find((g) => g.group_id === form.group_id);
+  const groupTeacher = (selectedGroup as any)?.teacher;
+
+  // Get selected course
+  const selectedCourse = courses.find((c) => c.course_id === form.course_id);
 
   // Initialize form
   useEffect(() => {
     if (open) {
       if (session) {
-        // Edit mode - only date and topic are editable
         setForm({
           course_id: session.group?.course?.course_id || "",
-          teacher_id: session.group?.teacher?.teacher_id || "",
           group_id: session.group?.group_id || "",
           session_date: session.session_date
             ? new Date(session.session_date).toISOString().slice(0, 16)
@@ -90,7 +103,6 @@ const SessionFormModal = ({
           topic: session.topic || "",
         });
       } else {
-        // Create mode
         setForm(EMPTY_FORM);
       }
       setStatus("idle");
@@ -104,16 +116,20 @@ const SessionFormModal = ({
     >,
   ) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "course_id") {
+      // Reset group when course changes
+      setForm((prev) => ({ ...prev, course_id: value, group_id: "" }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
+
     if (status !== "idle") setStatus("idle");
   };
 
   const validate = () => {
-    if (!isEditMode) {
-      if (!form.course_id) return "Course is required.";
-      if (!form.teacher_id) return "Teacher is required.";
-      if (!form.group_id) return "Group is required.";
-    }
+    if (!isEditMode && !form.course_id) return "Course is required.";
+    if (!isEditMode && !form.group_id) return "Group is required.";
     if (!form.session_date) return "Session date & time is required.";
     return null;
   };
@@ -131,7 +147,6 @@ const SessionFormModal = ({
 
     try {
       if (isEditMode) {
-        // Edit mode - only send session_date and topic
         await updateSession.mutateAsync({
           sessionId: session.session_id,
           payload: {
@@ -140,10 +155,8 @@ const SessionFormModal = ({
           },
         });
       } else {
-        // Create mode - send all fields
+        // Only send group_id (backend gets course & teacher from group)
         await createSession.mutateAsync({
-          course_id: form.course_id,
-          teacher_id: form.teacher_id,
           group_id: form.group_id,
           session_date: new Date(form.session_date).toISOString(),
           topic: form.topic.trim() || undefined,
@@ -163,29 +176,56 @@ const SessionFormModal = ({
     }
   };
 
+  // Helper: check if group is unavailable
+  const isGroupDisabled = (group: any) => {
+    return group.status === "FULL" || group.status === "FINISHED";
+  };
+
+  // Helper: get status badge
+  const getStatusBadge = (group: any) => {
+    if (group.status === "FULL") {
+      return {
+        label: "🔴 Full",
+        className: "bg-red-50 text-red-600 border border-red-200",
+      };
+    }
+    if (group.status === "FINISHED") {
+      return {
+        label: "🔒 Closed",
+        className: "bg-gray-100 text-gray-500 border border-gray-200",
+      };
+    }
+    return {
+      label: "🟢 Open",
+      className: "bg-green-50 text-green-600 border border-green-200",
+    };
+  };
+
   if (!open) return null;
 
   const validationError = validate();
   const canSubmit = !validationError && status !== "loading" && !isLoadingData;
 
+  // Count available vs total groups for selected course
+  const availableGroupsCount = filteredGroups.filter(
+    (g) => !isGroupDisabled(g),
+  ).length;
+
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-gray-200/60 overflow-hidden animate-[modalIn_0.25s_cubic-bezier(.4,0,.2,1)_both]">
-          {/* Accent bar */}
-          <div className="h-1.5 bg-linear-to-r from-indigo-500 via-violet-500 to-blue-500" />
+          <div className="h-1.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-blue-500" />
 
           {/* Header */}
           <div className="flex items-start justify-between px-7 pt-6 pb-2">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-linear-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg">
                 <Calendar className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -195,7 +235,7 @@ const SessionFormModal = ({
                 <p className="text-sm text-gray-500 mt-0.5">
                   {isEditMode
                     ? "Update session date and topic"
-                    : "Schedule a new academic session"}
+                    : "Select course → group → schedule"}
                 </p>
               </div>
             </div>
@@ -210,7 +250,6 @@ const SessionFormModal = ({
 
           {/* Body */}
           <div className="px-7 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
-            {/* Loading state for data */}
             {isLoadingData && !isEditMode && (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
@@ -218,101 +257,273 @@ const SessionFormModal = ({
               </div>
             )}
 
-            {/* Course, Teacher, Group (disabled in edit mode) */}
+            {/* ===== CREATE MODE ===== */}
             {!isEditMode && !isLoadingData && (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Course */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-                      <BookOpen className="w-4 h-4 text-indigo-500" />
-                      Course
-                      <span className="text-indigo-500">*</span>
-                    </label>
-                    <select
-                      name="course_id"
-                      value={form.course_id}
-                      onChange={handleChange}
-                      disabled={status === "loading" || status === "success"}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value="">Select course</option>
-                      {courses.map((course) => (
-                        <option key={course.course_id} value={course.course_id}>
-                          {course.course_name}
-                        </option>
-                      ))}
-                    </select>
-                    {courses.length === 0 && (
-                      <p className="text-xs text-amber-600">
-                        No courses available. Please create courses first.
-                      </p>
-                    )}
-                  </div>
+                {/* Step indicator */}
+                <div className="flex items-center gap-2 text-xs font-medium">
+                  <span
+                    className={`px-3 py-1.5 rounded-lg transition-all ${
+                      form.course_id
+                        ? "bg-green-50 text-green-700 border border-green-200"
+                        : "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                    }`}
+                  >
+                    1. Course
+                  </span>
+                  <ChevronRight className="w-3 h-3 text-gray-300" />
+                  <span
+                    className={`px-3 py-1.5 rounded-lg transition-all ${
+                      form.group_id
+                        ? "bg-green-50 text-green-700 border border-green-200"
+                        : form.course_id
+                          ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                          : "bg-gray-50 text-gray-400 border border-gray-200"
+                    }`}
+                  >
+                    2. Group
+                  </span>
+                  <ChevronRight className="w-3 h-3 text-gray-300" />
+                  <span
+                    className={`px-3 py-1.5 rounded-lg transition-all ${
+                      form.session_date
+                        ? "bg-green-50 text-green-700 border border-green-200"
+                        : form.group_id
+                          ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                          : "bg-gray-50 text-gray-400 border border-gray-200"
+                    }`}
+                  >
+                    3. Schedule
+                  </span>
+                </div>
 
-                  {/* Teacher */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-                      <User className="w-4 h-4 text-indigo-500" />
-                      Teacher
-                      <span className="text-indigo-500">*</span>
-                    </label>
-                    <select
-                      name="teacher_id"
-                      value={form.teacher_id}
-                      onChange={handleChange}
-                      disabled={status === "loading" || status === "success"}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value="">Select teacher</option>
-                      {teachers.map((teacher) => (
-                        <option
-                          key={teacher.teacher_id}
-                          value={teacher.teacher_id}
-                        >
-                          {teacher.first_name} {teacher.last_name}
-                        </option>
-                      ))}
-                    </select>
-                    {teachers.length === 0 && (
-                      <p className="text-xs text-amber-600">
-                        No teachers available. Please create teachers first.
-                      </p>
-                    )}
-                  </div>
+                {/* STEP 1: Course Select */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+                    <BookOpen className="w-4 h-4 text-indigo-500" />
+                    Course
+                    <span className="text-indigo-500">*</span>
+                  </label>
+                  <select
+                    name="course_id"
+                    value={form.course_id}
+                    onChange={handleChange}
+                    disabled={status === "loading" || status === "success"}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Select course</option>
+                    {courses.map((course) => (
+                      <option key={course.course_id} value={course.course_id}>
+                        {course.course_name}
+                        {course.course_code ? ` (${course.course_code})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                  {/* Group */}
+                {/* STEP 2: Group Select (filtered by course) */}
+                {form.course_id && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
                       <Users className="w-4 h-4 text-indigo-500" />
                       Group
                       <span className="text-indigo-500">*</span>
+                      <span className="text-xs text-gray-400 font-normal ml-1">
+                        ({availableGroupsCount} available /{" "}
+                        {filteredGroups.length} total)
+                      </span>
                     </label>
-                    <select
-                      name="group_id"
-                      value={form.group_id}
-                      onChange={handleChange}
-                      disabled={status === "loading" || status === "success"}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value="">Select group</option>
-                      {groups.map((group) => (
-                        <option key={group.group_id} value={group.group_id}>
-                          {group.name}
-                        </option>
-                      ))}
-                    </select>
-                    {groups.length === 0 && (
-                      <p className="text-xs text-amber-600">
-                        No groups available. Please create groups first.
-                      </p>
+
+                    {filteredGroups.length > 0 ? (
+                      <div className="space-y-2">
+                        {filteredGroups.map((group) => {
+                          const teacher = (group as any).teacher;
+                          const studentCount =
+                            (group as any).current_capacity ||
+                            (group as any)._count?.enrollments ||
+                            0;
+                          const isSelected = form.group_id === group.group_id;
+                          const disabled = isGroupDisabled(group);
+                          const badge = getStatusBadge(group);
+
+                          return (
+                            <button
+                              key={group.group_id}
+                              type="button"
+                              onClick={() => {
+                                if (disabled) return;
+                                setForm((prev) => ({
+                                  ...prev,
+                                  group_id: group.group_id,
+                                }));
+                                if (status !== "idle") setStatus("idle");
+                              }}
+                              disabled={
+                                status === "loading" ||
+                                status === "success" ||
+                                disabled
+                              }
+                              className={`w-full flex items-center gap-3 p-3.5 rounded-xl border-2 transition-all text-left ${
+                                disabled
+                                  ? "border-gray-200 bg-gray-50/80 opacity-50 cursor-not-allowed"
+                                  : isSelected
+                                    ? "border-indigo-500 bg-indigo-50 shadow-sm"
+                                    : "border-gray-200 bg-white hover:border-indigo-300 hover:bg-gray-50"
+                              }`}
+                            >
+                              {/* Radio indicator */}
+                              <div
+                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                                  disabled
+                                    ? "border-gray-300 bg-gray-100"
+                                    : isSelected
+                                      ? "border-indigo-500 bg-indigo-500"
+                                      : "border-gray-300"
+                                }`}
+                              >
+                                {isSelected && !disabled && (
+                                  <div className="w-2 h-2 rounded-full bg-white" />
+                                )}
+                                {disabled && (
+                                  <X className="w-3 h-3 text-gray-400" />
+                                )}
+                              </div>
+
+                              {/* Group icon */}
+                              <div
+                                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                                  disabled
+                                    ? "bg-gray-100 text-gray-400"
+                                    : isSelected
+                                      ? "bg-indigo-500 text-white"
+                                      : "bg-gray-100 text-gray-500"
+                                }`}
+                              >
+                                <Users className="w-5 h-5" />
+                              </div>
+
+                              {/* Group info */}
+                              <div className="flex-1 min-w-0">
+                                <p
+                                  className={`font-semibold text-sm ${
+                                    disabled ? "text-gray-400" : "text-gray-900"
+                                  }`}
+                                >
+                                  {group.name}
+                                </p>
+                                <div
+                                  className={`flex items-center gap-3 text-xs mt-0.5 ${
+                                    disabled ? "text-gray-400" : "text-gray-500"
+                                  }`}
+                                >
+                                  {teacher ? (
+                                    <span className="flex items-center gap-1">
+                                      <User className="w-3 h-3" />
+                                      {teacher.first_name} {teacher.last_name}
+                                    </span>
+                                  ) : (
+                                    <span
+                                      className={`flex items-center gap-1 ${
+                                        disabled
+                                          ? "text-gray-400"
+                                          : "text-amber-600"
+                                      }`}
+                                    >
+                                      <User className="w-3 h-3" />
+                                      No teacher
+                                    </span>
+                                  )}
+                                  {group.level && (
+                                    <span
+                                      className={`px-1.5 py-0.5 rounded text-xs ${
+                                        disabled
+                                          ? "bg-gray-100 text-gray-400"
+                                          : "bg-gray-100 text-gray-600"
+                                      }`}
+                                    >
+                                      {group.level}
+                                    </span>
+                                  )}
+                                  <span className="flex items-center gap-1">
+                                    <Users className="w-3 h-3" />
+                                    {studentCount}/{group.max_students}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Status badge */}
+                              <div className="shrink-0">
+                                <span
+                                  className={`text-xs font-medium px-2 py-1 rounded-lg ${badge.className}`}
+                                >
+                                  {badge.label}
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+                        <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-amber-800">
+                            No groups for this course
+                          </p>
+                          <p className="text-xs text-amber-600 mt-0.5">
+                            Create a group for "
+                            {selectedCourse?.course_name}" first
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Warning if all groups are full */}
+                    {filteredGroups.length > 0 && availableGroupsCount === 0 && (
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-red-50 border border-red-200">
+                        <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                        <p className="text-sm font-medium text-red-700">
+                          All groups for this course are full or closed.
+                        </p>
+                      </div>
                     )}
                   </div>
-                </div>
+                )}
+
+                {/* Selected group summary */}
+                {selectedGroup && (
+                  <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-200">
+                    <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">
+                      Session will be created for
+                    </p>
+                    <div className="grid grid-cols-3 gap-3 text-sm">
+                      <div>
+                        <span className="text-gray-500">Course:</span>
+                        <p className="font-semibold text-gray-900">
+                          {selectedCourse?.course_name || "—"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Group:</span>
+                        <p className="font-semibold text-gray-900">
+                          {selectedGroup.name}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Teacher:</span>
+                        <p className="font-semibold text-gray-900">
+                          {groupTeacher
+                            ? `${groupTeacher.first_name} ${groupTeacher.last_name}`
+                            : "No teacher"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
-            {/* Show read-only info in edit mode */}
+            {/* ===== EDIT MODE ===== */}
             {isEditMode && (
               <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
@@ -330,7 +541,7 @@ const SessionFormModal = ({
                     <p className="font-semibold text-gray-900">
                       {session.group?.teacher
                         ? `${session.group.teacher.first_name} ${session.group.teacher.last_name}`
-                        : "Unknown"}
+                        : "No teacher"}
                     </p>
                   </div>
                   <div>
@@ -343,8 +554,8 @@ const SessionFormModal = ({
               </div>
             )}
 
-            {/* Date & Time */}
-            {!isLoadingData && (
+            {/* ===== Date & Topic ===== */}
+            {!isLoadingData && (form.group_id || isEditMode) && (
               <>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
@@ -362,7 +573,6 @@ const SessionFormModal = ({
                   />
                 </div>
 
-                {/* Topic */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
                     <FileText className="w-4 h-4 text-indigo-500" />
@@ -424,7 +634,7 @@ const SessionFormModal = ({
               size="sm"
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="gap-2 px-6 rounded-xl bg-linear-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 shadow-md hover:shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="gap-2 px-6 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 shadow-md hover:shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {status === "loading" ? (
                 <>

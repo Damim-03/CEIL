@@ -12,11 +12,14 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  LayoutDashboard,
+  LogIn,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Link, useSearchParams } from "react-router-dom";
 import { usePublicCourses } from "../../hooks/announce/Usepublic";
 import type { PublicCourse } from "../../lib/api/announce/announce.api";
+import { useAuthRedirect } from "../../lib/utils/auth-redirect";
 
 function getStatus(course: PublicCourse) {
   if (!course.registration_open) return { key: "closed", label: "Closed" };
@@ -53,14 +56,29 @@ function CourseCard({
       ? Math.min((course.enrolled / course.capacity) * 100, 100)
       : 0;
 
+  const { isLoggedIn, role, getRegisterHref } = useAuthRedirect();
+
+  const getButtonContent = () => {
+    if (!isLoggedIn) {
+      return { label: "Register", icon: <LogIn className="w-4 h-4" /> };
+    }
+    if (role === "STUDENT") {
+      return { label: "Register", icon: <UserPlus className="w-4 h-4" /> };
+    }
+    return {
+      label: "Dashboard",
+      icon: <LayoutDashboard className="w-4 h-4" />,
+    };
+  };
+
+  const btnContent = getButtonContent();
+
   return (
     <div
       className="group flex flex-col rounded-2xl border border-brand-beige bg-white overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-brand-teal-dark/5 hover:-translate-y-1 hover:border-brand-teal/20 animate-fade-up"
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      {/* ── Header ── */}
       <div className="relative p-6 pb-5 overflow-hidden">
-        {/* Background: image or gradient */}
         {course.image_url ? (
           <>
             <img
@@ -89,11 +107,7 @@ function CourseCard({
             </div>
           )}
           <span
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${
-              isOpen
-                ? "bg-emerald-400/90 text-white"
-                : "bg-red-400/90 text-white"
-            }`}
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${isOpen ? "bg-emerald-400/90 text-white" : "bg-red-400/90 text-white"}`}
           >
             {isOpen ? (
               <CheckCircle2 className="w-3 h-3" />
@@ -134,7 +148,6 @@ function CourseCard({
         </div>
       </div>
 
-      {/* ── Body ── */}
       <div className="flex-1 p-5 space-y-4">
         {(course.description || course.description_ar) && (
           <p className="text-sm text-brand-black/55 leading-relaxed line-clamp-2">
@@ -175,13 +188,7 @@ function CourseCard({
           {course.capacity > 0 && (
             <div className="h-1.5 bg-brand-beige rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-700 ${
-                  fillPercent >= 90
-                    ? "bg-red-400"
-                    : fillPercent >= 60
-                      ? "bg-brand-mustard"
-                      : "bg-brand-teal-dark"
-                }`}
+                className={`h-full rounded-full transition-all duration-700 ${fillPercent >= 90 ? "bg-red-400" : fillPercent >= 60 ? "bg-brand-mustard" : "bg-brand-teal-dark"}`}
                 style={{ width: `${fillPercent}%` }}
               />
             </div>
@@ -196,16 +203,15 @@ function CourseCard({
         </div>
       </div>
 
-      {/* ── Actions ── */}
       <div className="p-5 pt-0 flex gap-2.5">
         {isOpen && (
           <Button
             asChild
             className="flex-1 bg-brand-teal-dark hover:bg-brand-teal-dark/90 text-white border-0 gap-2 rounded-xl h-11 font-semibold shadow-md shadow-brand-teal-dark/15"
           >
-            <Link to={`/register?course=${course.id}`}>
-              <UserPlus className="w-4 h-4" />
-              Register
+            <Link to={getRegisterHref(course.id)}>
+              {btnContent.icon}
+              {btnContent.label}
             </Link>
           </Button>
         )}
@@ -253,21 +259,15 @@ export default function CoursesHomePage() {
     searchParams.get("language")?.toLowerCase() || "all",
   );
 
-  // Sync langFilter with URL
   useEffect(() => {
     const urlLang = searchParams.get("language")?.toLowerCase();
-    if (urlLang && urlLang !== langFilter) {
-      setLangFilter(urlLang);
-    }
+    if (urlLang && urlLang !== langFilter) setLangFilter(urlLang);
   }, [langFilter, searchParams]);
 
   const handleLangFilter = (lang: string) => {
     setLangFilter(lang);
-    if (lang === "all") {
-      searchParams.delete("language");
-    } else {
-      searchParams.set("language", lang);
-    }
+    if (lang === "all") searchParams.delete("language");
+    else searchParams.set("language", lang);
     setSearchParams(searchParams, { replace: true });
   };
 
@@ -300,7 +300,6 @@ export default function CoursesHomePage() {
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-        {/* ── Header ── */}
         <div className="text-center mb-10 animate-fade-up">
           <div className="inline-flex items-center gap-2 rounded-full bg-brand-teal-dark/8 border border-brand-teal/15 px-4 py-2 text-xs font-semibold text-brand-teal-dark tracking-wide uppercase mb-4">
             <GraduationCap className="w-3.5 h-3.5" />
@@ -321,7 +320,6 @@ export default function CoursesHomePage() {
           </p>
         </div>
 
-        {/* ── Filters ── */}
         <div
           className="flex flex-col sm:flex-row items-center gap-3 mb-8 animate-fade-up"
           style={{ animationDelay: "100ms" }}
@@ -336,15 +334,10 @@ export default function CoursesHomePage() {
               className="w-full pl-11 pr-4 h-11 rounded-xl border border-brand-beige bg-white text-sm text-brand-black placeholder:text-brand-brown/40 focus:outline-none focus:border-brand-teal/40 focus:ring-2 focus:ring-brand-teal/10 transition-all"
             />
           </div>
-
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => handleLangFilter("all")}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                langFilter === "all"
-                  ? "bg-brand-teal-dark text-white shadow-md shadow-brand-teal-dark/20"
-                  : "bg-white border border-brand-beige text-brand-brown hover:border-brand-teal/30"
-              }`}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${langFilter === "all" ? "bg-brand-teal-dark text-white shadow-md shadow-brand-teal-dark/20" : "bg-white border border-brand-beige text-brand-brown hover:border-brand-teal/30"}`}
             >
               All
             </button>
@@ -352,11 +345,7 @@ export default function CoursesHomePage() {
               <button
                 key={lang}
                 onClick={() => handleLangFilter(lang!)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all capitalize ${
-                  langFilter === lang
-                    ? "bg-brand-teal-dark text-white shadow-md shadow-brand-teal-dark/20"
-                    : "bg-white border border-brand-beige text-brand-brown hover:border-brand-teal/30"
-                }`}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all capitalize ${langFilter === lang ? "bg-brand-teal-dark text-white shadow-md shadow-brand-teal-dark/20" : "bg-white border border-brand-beige text-brand-brown hover:border-brand-teal/30"}`}
               >
                 {lang}
               </button>
@@ -364,7 +353,6 @@ export default function CoursesHomePage() {
           </div>
         </div>
 
-        {/* ── Content ── */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <div className="relative">
@@ -406,10 +394,8 @@ export default function CoursesHomePage() {
         ) : (
           <>
             <p className="text-xs text-brand-brown mb-5 animate-fade-up">
-              Showing {filtered.length} course
-              {filtered.length > 1 ? "s" : ""}
+              Showing {filtered.length} course{filtered.length > 1 ? "s" : ""}
             </p>
-
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((course, i) => (
                 <CourseCard key={course.id} course={course} index={i} />

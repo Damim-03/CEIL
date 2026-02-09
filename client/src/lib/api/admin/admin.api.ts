@@ -531,9 +531,8 @@ export const adminSessionsApi = {
     return res.data;
   },
 
+  // ✅ FIXED: Only send group_id (course & teacher come from group)
   async create(payload: {
-    course_id: string;
-    teacher_id: string;
     group_id: string;
     session_date: string;
     topic?: string;

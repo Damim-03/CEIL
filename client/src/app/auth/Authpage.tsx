@@ -54,7 +54,11 @@ export default function AuthPage() {
     setTimeout(() => {
       setMode(to);
       setTransitioning(false);
-      window.history.replaceState(null, "", to === "login" ? "/login" : "/register");
+      window.history.replaceState(
+        null,
+        "",
+        to === "login" ? "/login" : "/register",
+      );
     }, 200);
   };
 
@@ -93,9 +97,7 @@ export default function AuthPage() {
               className="transition-all duration-500 ease-out"
               style={{
                 opacity: transitioning ? 0 : 1,
-                transform: transitioning
-                  ? "translateY(12px)"
-                  : "translateY(0)",
+                transform: transitioning ? "translateY(12px)" : "translateY(0)",
               }}
             >
               {mode === "login" ? (
@@ -140,9 +142,7 @@ export default function AuthPage() {
               className="transition-all duration-500 ease-out delay-75"
               style={{
                 opacity: transitioning ? 0 : 1,
-                transform: transitioning
-                  ? "translateY(8px)"
-                  : "translateY(0)",
+                transform: transitioning ? "translateY(8px)" : "translateY(0)",
               }}
             >
               {mode === "login" ? (
@@ -201,12 +201,8 @@ export default function AuthPage() {
                     S
                   </div>
                   <div>
-                    <p className="text-white text-sm font-semibold">
-                      Sarah M.
-                    </p>
-                    <p className="text-white/50 text-xs">
-                      French B1 Student
-                    </p>
+                    <p className="text-white text-sm font-semibold">Sarah M.</p>
+                    <p className="text-white/50 text-xs">French B1 Student</p>
                   </div>
                 </div>
               </div>
@@ -283,7 +279,11 @@ export default function AuthPage() {
                 : "translateX(0)",
             }}
           >
-            {mode === "login" ? <LoginForm /> : <RegisterForm switchToLogin={() => switchMode("login")} />}
+            {mode === "login" ? (
+              <LoginForm />
+            ) : (
+              <RegisterForm switchToLogin={() => switchMode("login")} />
+            )}
           </div>
         </div>
       </div>
@@ -340,8 +340,7 @@ function LoginForm() {
         variant="outline"
         className="w-full gap-2.5 h-12 rounded-xl border-brand-beige text-brand-black hover:bg-brand-gray font-medium"
         onClick={() => {
-          window.location.href =
-            import.meta.env.VITE_API_URL + "/auth/google";
+          window.location.href = import.meta.env.VITE_API_URL + "/auth/google";
         }}
       >
         <GoogleIcon />
@@ -468,8 +467,7 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
             replace: true,
             state: { registered: true },
           }),
-        onError: (err: any) =>
-          setError(err.message || "Registration failed"),
+        onError: (err: any) => setError(err.message || "Registration failed"),
       },
     );
   };
@@ -494,8 +492,7 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
         variant="outline"
         className="w-full gap-2.5 h-12 rounded-xl border-brand-beige text-brand-black hover:bg-brand-gray font-medium"
         onClick={() => {
-          window.location.href =
-            import.meta.env.VITE_API_URL + "/auth/google";
+          window.location.href = import.meta.env.VITE_API_URL + "/auth/google";
         }}
       >
         <GoogleIcon />
@@ -683,13 +680,7 @@ function PasswordToggle({
   );
 }
 
-function PillBadge({
-  icon,
-  label,
-}: {
-  icon: React.ReactNode;
-  label: string;
-}) {
+function PillBadge({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 text-white text-xs font-medium">
       {icon}
@@ -698,13 +689,7 @@ function PillBadge({
   );
 }
 
-function FeatureItem({
-  icon,
-  text,
-}: {
-  icon: React.ReactNode;
-  text: string;
-}) {
+function FeatureItem({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <div className="flex items-center gap-3 text-white/70 text-sm">
       <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">

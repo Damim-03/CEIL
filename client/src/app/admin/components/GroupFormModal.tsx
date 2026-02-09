@@ -10,6 +10,7 @@ import {
   AlertCircle,
   Sparkles,
   TrendingUp,
+  Building2,
 } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
@@ -17,8 +18,11 @@ import type {
   CreateGroupPayload,
   UpdateGroupPayload,
 } from "../../../types/Types";
-import { useAdminCourses } from "../../../hooks/admin/useAdmin";
-import { useAdminTeachers } from "../../../hooks/admin/useAdmin";
+import {
+  useAdminCourses,
+  useAdminTeachers,
+  useAdminDepartments,
+} from "../../../hooks/admin/useAdmin";
 
 /* =======================
    ✅ CORRECTED FORM STATE TYPE
@@ -26,11 +30,12 @@ import { useAdminTeachers } from "../../../hooks/admin/useAdmin";
 ======================= */
 
 type GroupFormState = {
-  name: string;              // ✅ Matches schema
+  name: string;
   level: string;
   course_id: string;
-  max_students: number;      // ✅ Matches schema
-  teacher_id: string | undefined;  // ✅ Matches schema
+  max_students: number;
+  teacher_id: string | undefined;
+  department_id: string | undefined;
   current_capacity?: number;
 };
 
@@ -45,11 +50,12 @@ interface GroupFormModalProps {
 }
 
 const EMPTY_FORM: GroupFormState = {
-  name: "",                  // ✅ Correct field name
+  name: "",
   level: "A1",
   course_id: "",
-  max_students: 20,          // ✅ Correct field name
-  teacher_id: undefined,     // ✅ Correct field name
+  max_students: 20,
+  teacher_id: undefined,
+  department_id: undefined,
   current_capacity: 0,
 };
 
@@ -85,6 +91,8 @@ const GroupFormModal = ({
   const { data: courses = [], isLoading: coursesLoading } = useAdminCourses();
   const { data: teachers = [], isLoading: teachersLoading } =
     useAdminTeachers();
+  const { data: departments = [], isLoading: departmentsLoading } =
+    useAdminDepartments();
 
   const [form, setForm] = useState<GroupFormState>(EMPTY_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -98,20 +106,27 @@ const GroupFormModal = ({
   const [instructorHighlightedIndex, setInstructorHighlightedIndex] =
     useState(-1);
 
+  const [deptDropdownOpen, setDeptDropdownOpen] = useState(false);
+  const [deptSearch, setDeptSearch] = useState("");
+  const [deptHighlightedIndex, setDeptHighlightedIndex] = useState(-1);
+
   const courseSelectRef = useRef<HTMLDivElement>(null);
   const instructorSelectRef = useRef<HTMLDivElement>(null);
+  const deptSelectRef = useRef<HTMLDivElement>(null);
 
   // ✅ Initialize form with proper field mapping
   useEffect(() => {
     if (open) {
       if (initialData && mode === "edit") {
         setForm({
-          // Support both old and new field names for backward compatibility
           name: initialData.name || (initialData as any).group_name || "",
           level: initialData.level || "A1",
           course_id: initialData.course_id || "",
-          max_students: initialData.max_students || (initialData as any).max_capacity || 20,
-          teacher_id: initialData.teacher_id || (initialData as any).instructor_id,
+          max_students:
+            initialData.max_students || (initialData as any).max_capacity || 20,
+          teacher_id:
+            initialData.teacher_id || (initialData as any).instructor_id,
+          department_id: initialData.department_id || undefined,
           current_capacity: initialData.current_capacity || 0,
         });
       } else {
@@ -127,6 +142,9 @@ const GroupFormModal = ({
       setInstructorSearch("");
       setInstructorDropdownOpen(false);
       setInstructorHighlightedIndex(-1);
+      setDeptSearch("");
+      setDeptDropdownOpen(false);
+      setDeptHighlightedIndex(-1);
     }
   }, [open, initialData, mode, injectedCourseId]);
 
@@ -139,6 +157,9 @@ const GroupFormModal = ({
     setInstructorSearch("");
     setInstructorDropdownOpen(false);
     setInstructorHighlightedIndex(-1);
+    setDeptSearch("");
+    setDeptDropdownOpen(false);
+    setDeptHighlightedIndex(-1);
     onClose();
   };
 
@@ -175,16 +196,32 @@ const GroupFormModal = ({
     return () => document.removeEventListener("mousedown", handler);
   }, [instructorDropdownOpen]);
 
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        deptSelectRef.current &&
+        !deptSelectRef.current.contains(e.target as Node)
+      ) {
+        setDeptDropdownOpen(false);
+        setDeptHighlightedIndex(-1);
+      }
+    };
+    if (deptDropdownOpen) {
+      document.addEventListener("mousedown", handler);
+    }
+    return () => document.removeEventListener("mousedown", handler);
+  }, [deptDropdownOpen]);
+
   if (!open) return null;
 
   // Calculate if instructor assignment should be enabled
   const currentCapacity = form.current_capacity || 0;
   const maxCapacity = form.max_students || 20;
-  const capacityPercent = maxCapacity > 0 ? (currentCapacity / maxCapacity) * 100 : 0;
+  const capacityPercent =
+    maxCapacity > 0 ? (currentCapacity / maxCapacity) * 100 : 0;
   const isInstructorAssignmentEnabled =
     mode === "edit" && capacityPercent >= CAPACITY_THRESHOLD_PERCENT;
-  const canAssignInstructor =
-    isInstructorAssignmentEnabled || form.teacher_id;
+  const canAssignInstructor = isInstructorAssignmentEnabled || form.teacher_id;
 
   const validate = (): boolean => {
     const next: Record<string, string> = {};
@@ -208,12 +245,12 @@ const GroupFormModal = ({
     e.preventDefault();
     if (!validate()) return;
 
-    // ✅ Convert FormState to API payload with correct field names
     const payload: CreateGroupPayload | UpdateGroupPayload = {
       name: form.name.trim(),
       level: form.level as any,
       course_id: form.course_id,
       max_students: form.max_students,
+      department_id: form.department_id || undefined,
     };
 
     // Only include teacher_id if it's set and allowed
@@ -274,6 +311,64 @@ const GroupFormModal = ({
       case "Tab":
         setCourseDropdownOpen(false);
         setCourseHighlightedIndex(-1);
+        break;
+    }
+  };
+
+  // Department dropdown
+  const filteredDepartments = departments.filter((d) =>
+    d.name.toLowerCase().includes(deptSearch.toLowerCase()),
+  );
+  const selectedDepartment = departments.find(
+    (d) => d.department_id === form.department_id,
+  );
+
+  const selectDepartment = (departmentId: string | undefined) => {
+    setForm((prev) => ({ ...prev, department_id: departmentId }));
+    setDeptDropdownOpen(false);
+    setDeptHighlightedIndex(-1);
+  };
+
+  const handleDeptKeyDown = (e: React.KeyboardEvent) => {
+    if (!deptDropdownOpen) {
+      if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+        e.preventDefault();
+        setDeptDropdownOpen(true);
+        setDeptHighlightedIndex(0);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case "Escape":
+        e.preventDefault();
+        setDeptDropdownOpen(false);
+        setDeptHighlightedIndex(-1);
+        break;
+      case "ArrowDown":
+        e.preventDefault();
+        setDeptHighlightedIndex((prev) =>
+          prev < filteredDepartments.length - 1 ? prev + 1 : prev,
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setDeptHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (
+          deptHighlightedIndex >= 0 &&
+          deptHighlightedIndex < filteredDepartments.length
+        ) {
+          selectDepartment(
+            filteredDepartments[deptHighlightedIndex].department_id,
+          );
+        }
+        break;
+      case "Tab":
+        setDeptDropdownOpen(false);
+        setDeptHighlightedIndex(-1);
         break;
     }
   };
@@ -352,14 +447,18 @@ const GroupFormModal = ({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-300">
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-gray-100 overflow-hidden">
           {/* Enhanced Header with Gradient */}
-          <div className={`relative px-6 pt-6 pb-5 bg-gradient-to-br ${LEVEL_COLORS[form.level as keyof typeof LEVEL_COLORS]} overflow-hidden`}>
+          <div
+            className={`relative px-6 pt-6 pb-5 bg-gradient-to-br ${LEVEL_COLORS[form.level as keyof typeof LEVEL_COLORS]} overflow-hidden`}
+          >
             {/* Decorative circles */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
-            
+
             <div className="relative flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className={`w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg ring-4 ${LEVEL_RING_COLORS[form.level as keyof typeof LEVEL_RING_COLORS]}`}>
+                <div
+                  className={`w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg ring-4 ${LEVEL_RING_COLORS[form.level as keyof typeof LEVEL_RING_COLORS]}`}
+                >
                   <Users className="w-7 h-7 text-white" />
                 </div>
                 <div>
@@ -440,7 +539,9 @@ const GroupFormModal = ({
                           ? `bg-gradient-to-br ${
                               LEVEL_COLORS[level as keyof typeof LEVEL_COLORS]
                             } text-white shadow-lg ring-4 ${
-                              LEVEL_RING_COLORS[level as keyof typeof LEVEL_RING_COLORS]
+                              LEVEL_RING_COLORS[
+                                level as keyof typeof LEVEL_RING_COLORS
+                              ]
                             }`
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800"
                       }`}
@@ -511,32 +612,38 @@ const GroupFormModal = ({
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Current Enrollment
                     </label>
-                    <div className={`h-11 rounded-xl border-2 ${
-                      capacityPercent >= 100
-                        ? "border-red-200 bg-red-50"
-                        : capacityPercent >= CAPACITY_THRESHOLD_PERCENT
-                          ? "border-orange-200 bg-orange-50"
-                          : "border-blue-200 bg-blue-50"
-                    } px-4 flex items-center justify-between`}>
+                    <div
+                      className={`h-11 rounded-xl border-2 ${
+                        capacityPercent >= 100
+                          ? "border-red-200 bg-red-50"
+                          : capacityPercent >= CAPACITY_THRESHOLD_PERCENT
+                            ? "border-orange-200 bg-orange-50"
+                            : "border-blue-200 bg-blue-50"
+                      } px-4 flex items-center justify-between`}
+                    >
                       <div className="flex items-center gap-2">
-                        <TrendingUp className={`w-4 h-4 ${
+                        <TrendingUp
+                          className={`w-4 h-4 ${
+                            capacityPercent >= 100
+                              ? "text-red-600"
+                              : capacityPercent >= CAPACITY_THRESHOLD_PERCENT
+                                ? "text-orange-600"
+                                : "text-blue-600"
+                          }`}
+                        />
+                        <span className="text-sm font-semibold text-gray-700">
+                          {currentCapacity} / {maxCapacity}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-xs font-bold ${
                           capacityPercent >= 100
                             ? "text-red-600"
                             : capacityPercent >= CAPACITY_THRESHOLD_PERCENT
                               ? "text-orange-600"
                               : "text-blue-600"
-                        }`} />
-                        <span className="text-sm font-semibold text-gray-700">
-                          {currentCapacity} / {maxCapacity}
-                        </span>
-                      </div>
-                      <span className={`text-xs font-bold ${
-                        capacityPercent >= 100
-                          ? "text-red-600"
-                          : capacityPercent >= CAPACITY_THRESHOLD_PERCENT
-                            ? "text-orange-600"
-                            : "text-blue-600"
-                      }`}>
+                        }`}
+                      >
                         {Math.round(capacityPercent)}%
                       </span>
                     </div>
@@ -550,7 +657,9 @@ const GroupFormModal = ({
                                 ? "bg-gradient-to-r from-orange-500 to-amber-600"
                                 : "bg-gradient-to-r from-blue-500 to-indigo-600"
                           }`}
-                          style={{ width: `${Math.min(capacityPercent, 100)}%` }}
+                          style={{
+                            width: `${Math.min(capacityPercent, 100)}%`,
+                          }}
                         />
                       </div>
                     </div>
@@ -558,7 +667,7 @@ const GroupFormModal = ({
                 )}
               </div>
 
-              {/* Course Select - Same as before, no changes needed */}
+              {/* Course Select */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Assign Course
@@ -604,7 +713,9 @@ const GroupFormModal = ({
                           <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow">
                             <GraduationCap className="w-4 h-4 text-white" />
                           </span>
-                          <span className="font-semibold">{selectedCourse.course_name}</span>
+                          <span className="font-semibold">
+                            {selectedCourse.course_name}
+                          </span>
                         </>
                       ) : coursesLoading ? (
                         <>
@@ -731,6 +842,168 @@ const GroupFormModal = ({
                 </div>
               </div>
 
+              {/* ═══════════════════════════════════════════
+                  DEPARTMENT SELECT (NEW)
+              ═══════════════════════════════════════════ */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                  Department
+                  <span className="text-xs font-normal text-gray-400">
+                    (optional)
+                  </span>
+                </label>
+                <div
+                  ref={deptSelectRef}
+                  className="relative"
+                  onKeyDown={handleDeptKeyDown}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeptDropdownOpen((prev) => !prev);
+                      setDeptHighlightedIndex(0);
+                    }}
+                    disabled={isSubmitting || departmentsLoading}
+                    className="w-full h-11 flex items-center justify-between px-4 rounded-xl border-2 bg-white text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-teal-500/20 border-gray-300 hover:border-teal-400 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span
+                      className={
+                        selectedDepartment
+                          ? "text-gray-900 flex items-center gap-2"
+                          : "text-gray-400 flex items-center gap-2"
+                      }
+                    >
+                      {selectedDepartment ? (
+                        <>
+                          <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow">
+                            <Building2 className="w-4 h-4 text-white" />
+                          </span>
+                          <span className="font-semibold">
+                            {selectedDepartment.name}
+                          </span>
+                        </>
+                      ) : departmentsLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Loading departments...
+                        </>
+                      ) : (
+                        <>
+                          <Building2 className="w-4 h-4" />
+                          Select a department
+                        </>
+                      )}
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                        deptDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {deptDropdownOpen && (
+                    <div className="absolute z-10 mt-2 w-full bg-white border-2 border-gray-200 rounded-xl shadow-2xl overflow-hidden">
+                      <div className="p-3 border-b border-gray-100 bg-gray-50">
+                        <Input
+                          placeholder="Search departments..."
+                          value={deptSearch}
+                          onChange={(e) => {
+                            setDeptSearch(e.target.value);
+                            setDeptHighlightedIndex(-1);
+                          }}
+                          className="h-9 text-sm border-gray-300"
+                          autoFocus
+                        />
+                      </div>
+
+                      <ul className="max-h-48 overflow-y-auto py-1">
+                        {departmentsLoading && (
+                          <li className="px-4 py-4 flex items-center justify-center gap-2 text-xs text-gray-400">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Loading departments...
+                          </li>
+                        )}
+
+                        {/* Clear selection option */}
+                        {!departmentsLoading && form.department_id && (
+                          <li>
+                            <button
+                              type="button"
+                              onClick={() => selectDepartment(undefined)}
+                              className="w-full text-left px-4 py-2 text-xs text-gray-500 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                            >
+                              ✕ No department
+                            </button>
+                          </li>
+                        )}
+
+                        {!departmentsLoading &&
+                          (filteredDepartments.length > 0 ? (
+                            filteredDepartments.map((dept, idx) => {
+                              const isSelected =
+                                form.department_id === dept.department_id;
+                              const isHighlighted =
+                                idx === deptHighlightedIndex;
+                              return (
+                                <li key={dept.department_id}>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      selectDepartment(dept.department_id)
+                                    }
+                                    onMouseEnter={() =>
+                                      setDeptHighlightedIndex(idx)
+                                    }
+                                    className={`w-full text-left px-4 py-3 flex items-center gap-3 text-sm transition-all duration-150 ${
+                                      isSelected
+                                        ? "bg-teal-50 text-teal-700 border-l-4 border-teal-600"
+                                        : isHighlighted
+                                          ? "bg-gray-100 text-gray-900"
+                                          : "text-gray-700 hover:bg-gray-50"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-sm ${
+                                        isSelected
+                                          ? "bg-gradient-to-br from-teal-500 to-emerald-600"
+                                          : "bg-gray-200"
+                                      }`}
+                                    >
+                                      <Building2
+                                        className={`w-4 h-4 ${
+                                          isSelected
+                                            ? "text-white"
+                                            : "text-gray-500"
+                                        }`}
+                                      />
+                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-medium truncate">
+                                        {dept.name}
+                                      </p>
+                                      {dept.description && (
+                                        <p className="text-xs text-gray-400 truncate">
+                                          {dept.description}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </button>
+                                </li>
+                              );
+                            })
+                          ) : (
+                            <li className="px-4 py-8 text-center text-sm text-gray-400">
+                              {deptSearch
+                                ? "No departments match your search"
+                                : "No departments available"}
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Instructor Select with lock indicator */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
@@ -812,8 +1085,12 @@ const GroupFormModal = ({
                     <div className="mt-2 flex items-start gap-2 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
                       <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
                       <p className="text-xs text-blue-700 leading-relaxed">
-                        <span className="font-semibold">Note:</span> Instructor assignment unlocks when the group reaches{" "}
-                        <span className="font-bold">{CAPACITY_THRESHOLD_PERCENT}%</span> capacity (
+                        <span className="font-semibold">Note:</span> Instructor
+                        assignment unlocks when the group reaches{" "}
+                        <span className="font-bold">
+                          {CAPACITY_THRESHOLD_PERCENT}%
+                        </span>{" "}
+                        capacity (
                         {Math.ceil(
                           (maxCapacity * CAPACITY_THRESHOLD_PERCENT) / 100,
                         )}{" "}
@@ -826,7 +1103,8 @@ const GroupFormModal = ({
                     <div className="mt-2 flex items-start gap-2 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
                       <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
                       <p className="text-xs text-amber-700 leading-relaxed">
-                        <span className="font-semibold">Almost there!</span> Need{" "}
+                        <span className="font-semibold">Almost there!</span>{" "}
+                        Need{" "}
                         <span className="font-bold">
                           {Math.ceil(
                             (maxCapacity * CAPACITY_THRESHOLD_PERCENT) / 100 -

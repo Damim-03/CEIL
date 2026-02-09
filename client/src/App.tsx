@@ -42,6 +42,7 @@ import FormationsPage from "./app/admin/pages/Formationspage";
 import CourseInfoMorePage from "./app/Home/CourseInfoMorePage";
 import PublicLayout from "./layouts/Publiclayout";
 import AuthPage from "./app/auth/Authpage";
+import DepartmentsPage from "./app/admin/pages/DepartmentsPage";
 
 const App = () => {
   return (
@@ -105,6 +106,7 @@ const App = () => {
             path="courses/:courseId/profile"
             element={<CourseProfileManager />}
           />
+          <Route path="departments" element={<DepartmentsPage />} />
           <Route path="groups/:groupId" element={<GroupDetailsPage />} />
           <Route path="sessions" element={<SessionsPage />} />
           <Route path="fees" element={<FeesPage />} />

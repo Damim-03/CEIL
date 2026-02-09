@@ -1,10 +1,9 @@
 /* ===============================================================
-   SESSIONS PAGE - OPTIMIZED FOR ACTUAL API RESPONSE
+   SESSIONS PAGE - WITH QUICK ATTENDANCE (FIXED)
    
-   ✅ Based on actual API response structure
-   ✅ Handles null teacher gracefully
-   ✅ Correct enrollment filtering
-   ✅ Fixed student count logic
+   ✅ Quick Attendance: pick group → auto-create session → mark attendance
+   ✅ createSession only needs group_id + session_date + topic
+   ✅ Detects if today's session already exists
 =============================================================== */
 
 import { useState } from "react";
@@ -21,11 +20,17 @@ import {
   Clock,
   Users,
   UserX,
+  Zap,
+  Search,
+  Loader2,
 } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
+import { Input } from "../../../../components/ui/input";
 import {
   useAdminSessions,
   useDeleteSession,
+  useCreateSession,
+  useAdminGroups,
 } from "../../../../hooks/admin/useAdmin";
 import SessionFormModal from "../../components/SessionFormModal";
 import AttendanceModal from "../../components/AttendanceModal";
@@ -33,23 +38,228 @@ import DeleteConfirmDialog from "../../components/DeleteConfirmDialog";
 import type { Session } from "../../../../types/Types";
 import { toast } from "sonner";
 
+/* ===============================================================
+   QUICK ATTENDANCE MODAL
+=============================================================== */
+
+const QuickAttendanceModal = ({
+  open,
+  onClose,
+  onSessionReady,
+  sessions,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSessionReady: (session: Session) => void;
+  sessions: Session[];
+}) => {
+  const { data: groups = [], isLoading: groupsLoading } = useAdminGroups();
+  const createSession = useCreateSession();
+
+  const [search, setSearch] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  if (!open) return null;
+
+  const filteredGroups = groups.filter((g) => {
+    const s = search.toLowerCase();
+    const name = g.name?.toLowerCase() || "";
+    const course = (g as any).course?.course_name?.toLowerCase() || "";
+    return name.includes(s) || course.includes(s);
+  });
+
+  const getTodaySession = (groupId: string): Session | undefined => {
+    const today = new Date();
+    return sessions.find((s) => {
+      const sd = new Date(s.session_date);
+      return (
+        s.group?.group_id === groupId &&
+        sd.getDate() === today.getDate() &&
+        sd.getMonth() === today.getMonth() &&
+        sd.getFullYear() === today.getFullYear()
+      );
+    });
+  };
+
+  const handleGroupClick = async (group: any) => {
+    const existing = getTodaySession(group.group_id);
+
+    if (existing) {
+      onSessionReady(existing);
+      onClose();
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const now = new Date();
+      const newSession = await createSession.mutateAsync({
+        group_id: group.group_id,
+        session_date: now.toISOString(),
+        topic: `Session - ${now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+      });
+
+      toast.success("Session created for today");
+      onSessionReady(newSession);
+      onClose();
+    } catch (err: any) {
+      console.error("Quick session error:", err);
+      toast.error(err?.response?.data?.message || "Failed to create session");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-gray-100 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-500 to-violet-600">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <Zap className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">
+                  Quick Attendance
+                </h3>
+                <p className="text-sm text-white/80">
+                  Select a group to take today's attendance
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-6 pt-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Search groups or courses..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 h-10"
+                autoFocus
+              />
+            </div>
+          </div>
+
+          <div className="px-6 py-4 max-h-80 overflow-y-auto">
+            {groupsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+              </div>
+            ) : filteredGroups.length > 0 ? (
+              <div className="space-y-2">
+                {filteredGroups.map((group) => {
+                  const todaySession = getTodaySession(group.group_id);
+                  const courseName =
+                    (group as any).course?.course_name || "No course";
+                  const teacher = (group as any).teacher;
+                  const teacherName = teacher
+                    ? `${teacher.first_name} ${teacher.last_name}`
+                    : null;
+
+                  return (
+                    <button
+                      key={group.group_id}
+                      onClick={() => handleGroupClick(group)}
+                      disabled={creating}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50 transition-all text-left disabled:opacity-50"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0">
+                        <Users className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 truncate">
+                          {group.name}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span>{courseName}</span>
+                          {group.level && (
+                            <>
+                              <span>•</span>
+                              <span>{group.level}</span>
+                            </>
+                          )}
+                          {teacherName && (
+                            <>
+                              <span>•</span>
+                              <span>{teacherName}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="shrink-0">
+                        {todaySession ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-green-50 border border-green-200 text-xs font-semibold text-green-700">
+                            <UserCheck className="w-3 h-3" />
+                            Today
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-xs font-semibold text-indigo-700">
+                            <Plus className="w-3 h-3" />
+                            New
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Users className="w-12 h-12 mx-auto text-gray-200 mb-3" />
+                <p className="font-medium text-gray-500">No groups found</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  {search ? "Try a different search" : "Create groups first"}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+            <p className="text-xs text-gray-400">
+              {creating
+                ? "Creating session..."
+                : `${filteredGroups.length} groups`}
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              disabled={creating}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ===============================================================
+   MAIN PAGE
+=============================================================== */
+
 const SessionsPage = () => {
-  // State for modals
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isQuickAttendanceOpen, setIsQuickAttendanceOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
-  // Fetch sessions
   const { data: sessions = [], isLoading, error, refetch } = useAdminSessions();
   const deleteSession = useDeleteSession();
 
-  // Format date for display
   const formatDate = (dateString: string) => {
     try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", {
+      return new Date(dateString).toLocaleDateString("en-US", {
         weekday: "short",
         month: "short",
         day: "numeric",
@@ -62,8 +272,7 @@ const SessionsPage = () => {
 
   const formatTime = (dateString: string) => {
     try {
-      const date = new Date(dateString);
-      return date.toLocaleTimeString("en-US", {
+      return new Date(dateString).toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
       });
@@ -72,17 +281,14 @@ const SessionsPage = () => {
     }
   };
 
-  // Handle actions
   const handleViewAttendance = (session: Session) => {
     setSelectedSession(session);
     setIsAttendanceOpen(true);
   };
-
   const handleEdit = (session: Session) => {
     setSelectedSession(session);
     setIsEditOpen(true);
   };
-
   const handleDeleteClick = (session: Session) => {
     setSelectedSession(session);
     setIsDeleteOpen(true);
@@ -90,50 +296,32 @@ const SessionsPage = () => {
 
   const handleDeleteConfirm = async () => {
     if (!selectedSession) return;
-
     try {
       await deleteSession.mutateAsync(selectedSession.session_id);
       toast.success("✅ Session deleted successfully");
       setIsDeleteOpen(false);
       setSelectedSession(null);
     } catch (error: any) {
-      console.error("Delete error:", error);
-
-      const message =
-        error?.response?.data?.message || "Failed to delete session";
-      const details = error?.response?.data?.details;
-
-      // ✅ Show specific error messages
-      if (message.includes("attendance records")) {
-        toast.error("❌ Cannot delete: This session has attendance records", {
-          description: `${details?.attendance_count} students' attendance will be lost if deleted`,
-          duration: 5000,
-        });
-      } else if (message.includes("past session")) {
-        toast.error("❌ Cannot delete past sessions", {
-          description: "Past sessions should be kept for historical records",
-          duration: 5000,
-        });
-      } else {
-        toast.error(message);
-      }
+      toast.error(error?.response?.data?.message || "Failed to delete session");
     }
   };
 
   const handleSuccess = () => {
     refetch();
-    toast.success("✅ Operation completed successfully");
   };
 
-  // ✅ Check if session has attendance records
-  const hasAttendanceRecords = (session: Session) => {
-    return session._count && session._count.attendance > 0;
+  const handleQuickSessionReady = (session: Session) => {
+    refetch().then(() => {
+      setSelectedSession(session);
+      setIsAttendanceOpen(true);
+    });
   };
 
-  // ✅ FIXED: Get student count from enrollments with FINISHED status
+  const hasAttendanceRecords = (session: Session) =>
+    session._count && session._count.attendance > 0;
+
   const getStudentCount = (session: Session) => {
     if (!session.group?.enrollments) return 0;
-
     return session.group.enrollments.filter(
       (e: any) =>
         e.registration_status === "VALIDATED" ||
@@ -142,42 +330,26 @@ const SessionsPage = () => {
     ).length;
   };
 
-  // ✅ Get session display data
   const getSessionData = (session: Session) => {
     const group = session.group;
-
     return {
-      // Course info
       courseName: group?.course?.course_name || "Unknown Course",
       courseCode: group?.course?.course_code || null,
-
-      // Group info
       groupName: group?.name || "Unknown Group",
       groupLevel: group?.level || null,
-      groupId: group?.group_id || null,
-
-      // Teacher info (can be null)
       teacherName: group?.teacher
         ? `${group.teacher.first_name} ${group.teacher.last_name}`
         : null,
       teacherEmail: group?.teacher?.email || null,
       hasTeacher: !!group?.teacher,
-
-      // Session info
       topic: session.topic || null,
       sessionDate: session.session_date,
-
-      // Counts
       studentCount: getStudentCount(session),
       attendanceCount: session._count?.attendance || 0,
       maxStudents: group?.max_students || 0,
-
-      // Status
-      groupStatus: group?.status || "UNKNOWN",
     };
   };
 
-  // Render loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
@@ -186,7 +358,6 @@ const SessionsPage = () => {
             <div className="h-8 w-48 bg-gray-200 rounded-lg animate-pulse mb-2" />
             <div className="h-4 w-96 bg-gray-200 rounded-lg animate-pulse" />
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             {[1, 2, 3, 4].map((i) => (
               <div
@@ -198,9 +369,8 @@ const SessionsPage = () => {
               </div>
             ))}
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+            {[1, 2, 3].map((i) => (
               <div
                 key={i}
                 className="bg-white rounded-2xl p-6 border border-gray-200 animate-pulse"
@@ -209,7 +379,6 @@ const SessionsPage = () => {
                 <div className="space-y-2">
                   <div className="h-4 w-full bg-gray-200 rounded" />
                   <div className="h-4 w-3/4 bg-gray-200 rounded" />
-                  <div className="h-4 w-1/2 bg-gray-200 rounded" />
                 </div>
               </div>
             ))}
@@ -219,7 +388,6 @@ const SessionsPage = () => {
     );
   }
 
-  // Render error state
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
@@ -244,16 +412,15 @@ const SessionsPage = () => {
     );
   }
 
-  // ✅ Calculate statistics
   const stats = {
     total: sessions.length,
     today: sessions.filter((s) => {
-      const today = new Date();
-      const sessionDate = new Date(s.session_date);
+      const t = new Date();
+      const sd = new Date(s.session_date);
       return (
-        sessionDate.getDate() === today.getDate() &&
-        sessionDate.getMonth() === today.getMonth() &&
-        sessionDate.getFullYear() === today.getFullYear()
+        sd.getDate() === t.getDate() &&
+        sd.getMonth() === t.getMonth() &&
+        sd.getFullYear() === t.getFullYear()
       );
     }).length,
     withAttendance: sessions.filter((s) => hasAttendanceRecords(s)).length,
@@ -271,23 +438,31 @@ const SessionsPage = () => {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-white" />
               </div>
-              Sessions Management
+              Sessions
             </h1>
             <p className="text-gray-600 mt-1">
-              Schedule and track academic sessions and attendance
+              Schedule and track sessions and attendance
             </p>
           </div>
-
-          <Button
-            onClick={() => setIsCreateOpen(true)}
-            className="gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 shadow-lg hover:shadow-xl transition-all"
-          >
-            <Plus className="w-5 h-5" />
-            Create Session
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => setIsQuickAttendanceOpen(true)}
+              className="gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all"
+            >
+              <Zap className="w-5 h-5" />
+              Quick Attendance
+            </Button>
+            <Button
+              onClick={() => setIsCreateOpen(true)}
+              className="gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 shadow-lg hover:shadow-xl transition-all"
+            >
+              <Plus className="w-5 h-5" />
+              Create Session
+            </Button>
+          </div>
         </div>
 
-        {/* Statistics Cards */}
+        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
@@ -304,7 +479,6 @@ const SessionsPage = () => {
               </div>
             </div>
           </div>
-
           <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
@@ -320,7 +494,6 @@ const SessionsPage = () => {
               </div>
             </div>
           </div>
-
           <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
@@ -336,7 +509,6 @@ const SessionsPage = () => {
               </div>
             </div>
           </div>
-
           <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
@@ -362,15 +534,24 @@ const SessionsPage = () => {
               No sessions found
             </h3>
             <p className="text-gray-600 mb-6">
-              Create your first session to get started with attendance tracking
+              Create your first session to get started
             </p>
-            <Button
-              onClick={() => setIsCreateOpen(true)}
-              className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-            >
-              <Plus className="w-4 h-4" />
-              Create Session
-            </Button>
+            <div className="flex items-center justify-center gap-3">
+              <Button
+                onClick={() => setIsQuickAttendanceOpen(true)}
+                className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+              >
+                <Zap className="w-4 h-4" />
+                Quick Attendance
+              </Button>
+              <Button
+                onClick={() => setIsCreateOpen(true)}
+                className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+              >
+                <Plus className="w-4 h-4" />
+                Create Session
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -382,11 +563,8 @@ const SessionsPage = () => {
               return (
                 <div
                   key={session.session_id}
-                  className={`bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all group ${
-                    isPast ? "opacity-75" : ""
-                  }`}
+                  className={`bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all group ${isPast ? "opacity-75" : ""}`}
                 >
-                  {/* Card Header */}
                   <div className="bg-gradient-to-br from-indigo-500 to-violet-600 p-5 text-white">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
@@ -405,14 +583,6 @@ const SessionsPage = () => {
                               </span>
                             </>
                           )}
-                          {data.courseCode && (
-                            <>
-                              <span className="text-indigo-200">•</span>
-                              <span className="text-indigo-100">
-                                {data.courseCode}
-                              </span>
-                            </>
-                          )}
                         </div>
                       </div>
                       {hasAttendance && (
@@ -421,8 +591,6 @@ const SessionsPage = () => {
                         </div>
                       )}
                     </div>
-
-                    {/* Date/Time */}
                     <div className="flex items-center gap-2 text-sm flex-wrap">
                       <Calendar className="w-4 h-4" />
                       <span>{formatDate(data.sessionDate)}</span>
@@ -430,8 +598,6 @@ const SessionsPage = () => {
                       <Clock className="w-4 h-4" />
                       <span>{formatTime(data.sessionDate)}</span>
                     </div>
-
-                    {/* Past indicator */}
                     {isPast && (
                       <div className="mt-2 text-xs bg-white/20 rounded px-2 py-1 inline-block">
                         Completed
@@ -439,9 +605,7 @@ const SessionsPage = () => {
                     )}
                   </div>
 
-                  {/* Card Body */}
                   <div className="p-5 space-y-3">
-                    {/* Teacher - Handle null gracefully */}
                     {data.hasTeacher ? (
                       <div className="flex items-center gap-2 text-sm">
                         <User className="w-4 h-4 text-indigo-500 shrink-0" />
@@ -464,8 +628,6 @@ const SessionsPage = () => {
                         </span>
                       </div>
                     )}
-
-                    {/* Topic */}
                     {data.topic && (
                       <div className="flex items-start gap-2 text-sm">
                         <FileText className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
@@ -474,8 +636,6 @@ const SessionsPage = () => {
                         </p>
                       </div>
                     )}
-
-                    {/* Students Enrolled */}
                     {data.studentCount > 0 && (
                       <div className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded-lg">
                         <div className="flex items-center gap-2">
@@ -490,13 +650,11 @@ const SessionsPage = () => {
                         </span>
                       </div>
                     )}
-
-                    {/* Attendance Stats */}
                     {hasAttendance && (
                       <div className="pt-3 border-t border-gray-100">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-xs font-medium text-gray-500">
-                            Attendance Recorded
+                            Attendance
                           </span>
                           <span className="text-sm font-bold text-indigo-600">
                             {data.attendanceCount}
@@ -508,11 +666,7 @@ const SessionsPage = () => {
                             <div
                               className="h-full bg-gradient-to-r from-indigo-500 to-violet-600 rounded-full transition-all"
                               style={{
-                                width: `${Math.min(
-                                  (data.attendanceCount / data.studentCount) *
-                                    100,
-                                  100,
-                                )}%`,
+                                width: `${Math.min((data.attendanceCount / data.studentCount) * 100, 100)}%`,
                               }}
                             />
                           </div>
@@ -521,7 +675,6 @@ const SessionsPage = () => {
                     )}
                   </div>
 
-                  {/* Card Actions */}
                   <div className="px-5 pb-5 flex items-center gap-2">
                     <Button
                       size="sm"
@@ -531,7 +684,6 @@ const SessionsPage = () => {
                       <Eye className="w-4 h-4" />
                       Attendance
                     </Button>
-
                     <Button
                       size="sm"
                       onClick={() => handleEdit(session)}
@@ -539,7 +691,6 @@ const SessionsPage = () => {
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
-
                     <Button
                       size="sm"
                       onClick={() => handleDeleteClick(session)}
@@ -561,13 +712,11 @@ const SessionsPage = () => {
         )}
       </div>
 
-      {/* Modals */}
       <SessionFormModal
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onSuccess={handleSuccess}
       />
-
       <SessionFormModal
         open={isEditOpen}
         onClose={() => {
@@ -577,16 +726,15 @@ const SessionsPage = () => {
         session={selectedSession}
         onSuccess={handleSuccess}
       />
-
       <AttendanceModal
         open={isAttendanceOpen}
         onClose={() => {
           setIsAttendanceOpen(false);
           setSelectedSession(null);
+          refetch();
         }}
         session={selectedSession}
       />
-
       <DeleteConfirmDialog
         open={isDeleteOpen}
         onClose={() => {
@@ -600,6 +748,12 @@ const SessionsPage = () => {
             ? `${getSessionData(selectedSession).courseName} - ${getSessionData(selectedSession).groupName} - ${formatDate(selectedSession.session_date)}`
             : ""
         }
+      />
+      <QuickAttendanceModal
+        open={isQuickAttendanceOpen}
+        onClose={() => setIsQuickAttendanceOpen(false)}
+        onSessionReady={handleQuickSessionReady}
+        sessions={sessions}
       />
     </div>
   );
