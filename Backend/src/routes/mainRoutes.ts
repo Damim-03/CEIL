@@ -30,7 +30,7 @@ mainRoute.use(
 );
 
 mainRoute.use(
-  "/teacher",
+  "/teachers",
   authMiddleware,
   roleGuard([Permissions.VIEW_ASSIGNED_COURSES]),
   teacherRoutes,

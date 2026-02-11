@@ -9,6 +9,8 @@ import {
   Users,
   Mail,
   Phone,
+  X,
+  Loader2,
 } from "lucide-react";
 
 import PageLoader from "../../../../components/PageLoader";
@@ -18,12 +20,199 @@ import { Input } from "../../../../components/ui/input";
 import {
   useAdminTeachers,
   useDeleteTeacher,
+  useCreateTeacher,
 } from "../../../../hooks/admin/useAdmin";
+
+/* ═══════════════════════════════════════════════════════
+   ADD TEACHER DIALOG
+═══════════════════════════════════════════════════════ */
+
+interface AddTeacherDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+const AddTeacherDialog = ({ open, onClose }: AddTeacherDialogProps) => {
+  const createTeacher = useCreateTeacher();
+  const [form, setForm] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone_number: "",
+  });
+  const [error, setError] = useState("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setError("");
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!form.first_name.trim() || !form.last_name.trim()) {
+      setError("First name and last name are required");
+      return;
+    }
+
+    createTeacher.mutate(form, {
+      onSuccess: () => {
+        setForm({ first_name: "", last_name: "", email: "", phone_number: "" });
+        setError("");
+        onClose();
+      },
+      onError: (err: any) => {
+        setError(err?.response?.data?.message || "Failed to create teacher");
+      },
+    });
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Dialog */}
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 animate-in fade-in zoom-in-95 duration-200">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+              <UserPlus className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Add Teacher
+              </h2>
+              <p className="text-sm text-gray-500">
+                Create a new teacher record
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                First Name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                name="first_name"
+                value={form.first_name}
+                onChange={handleChange}
+                placeholder="Ahmed"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Last Name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                name="last_name"
+                value={form.last_name}
+                onChange={handleChange}
+                placeholder="Benali"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Email
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="teacher@example.com"
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Phone Number
+            </label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                name="phone_number"
+                value={form.phone_number}
+                onChange={handleChange}
+                placeholder="0555 123 456"
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex items-center gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="flex-1"
+              disabled={createTeacher.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="flex-1 gap-2"
+              disabled={createTeacher.isPending}
+            >
+              {createTeacher.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="w-4 h-4" />
+                  Add Teacher
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   TEACHERS PAGE
+═══════════════════════════════════════════════════════ */
 
 const TeachersPage = () => {
   const { data: teachers = [], isLoading } = useAdminTeachers();
   const deleteTeacher = useDeleteTeacher();
   const [search, setSearch] = useState("");
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   if (isLoading) return <PageLoader />;
 
@@ -50,7 +239,7 @@ const TeachersPage = () => {
             Manage and monitor all teaching staff
           </p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setShowAddDialog(true)}>
           <UserPlus className="w-4 h-4" />
           Add Teacher
         </Button>
@@ -98,7 +287,6 @@ const TeachersPage = () => {
       {/* Search Bar */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <div className="flex flex-col sm:flex-row gap-4">
-          {/* Search */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
@@ -110,7 +298,6 @@ const TeachersPage = () => {
           </div>
         </div>
 
-        {/* Results count */}
         <div className="mt-3 text-sm text-gray-600">
           Showing{" "}
           <span className="font-semibold text-gray-900">
@@ -214,6 +401,12 @@ const TeachersPage = () => {
           </div>
         )}
       </div>
+
+      {/* Add Teacher Dialog */}
+      <AddTeacherDialog
+        open={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
+      />
     </div>
   );
 };

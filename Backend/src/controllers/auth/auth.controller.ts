@@ -203,20 +203,22 @@ export const googleLoginCallback = async (req: Request, res: Response) => {
       expiresIn: "7d",
     });
 
-    // 3️⃣ وضع Access Token في Cookie
+    // 3️⃣ Access Token Cookie
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: config.NODE_ENV === "production", // false في localhost
+      secure: config.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
+      maxAge: 15 * 60 * 1000, // ✅ 15 دقيقة (يطابق JWT expiry)
     });
 
-    // 4️⃣ وضع Refresh Token في Cookie
+    // 4️⃣ Refresh Token Cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: config.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // ✅ 7 أيام (يطابق JWT expiry)
     });
 
     // 5️⃣ Redirect نظيف للفرونت (بدون token في URL)

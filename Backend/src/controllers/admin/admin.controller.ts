@@ -227,34 +227,48 @@ export const deleteStudentController = async (req: Request, res: Response) => {
 export const createTeacherController = async (req: Request, res: Response) => {
   const { first_name, last_name, email, phone_number } = req.body;
 
-  if (!first_name?.trim() || !last_name?.trim()) {
+  if (!first_name?.trim() || !last_name?.trim() || !email) {
     return res.status(400).json({
-      message: "first_name and last_name are required",
+      message: "first_name, last_name and email are required",
     });
   }
 
-  if (email) {
-    const exists = await prisma.teacher.findFirst({
-      where: { email },
-    });
-
-    if (exists) {
-      return res.status(409).json({
-        message: "Teacher with this email already exists",
-      });
-    }
-  }
-
-  const teacher = await prisma.teacher.create({
-    data: {
-      first_name: first_name.trim(),
-      last_name: last_name.trim(),
-      email,
-      phone_number,
-    },
+  // Check if email already used
+  const existingUser = await prisma.user.findUnique({
+    where: { email: email.toLowerCase() },
   });
 
-  return res.status(201).json(teacher);
+  if (existingUser) {
+    return res.status(409).json({
+      message: "User with this email already exists",
+    });
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    // 1️⃣ Create TEACHER first (no user_id field in Teacher model)
+    const teacher = await tx.teacher.create({
+      data: {
+        first_name: first_name.trim(),
+        last_name: last_name.trim(),
+        email: email.toLowerCase(),
+        phone_number: phone_number || null,
+      },
+    });
+
+    // 2️⃣ Create USER linked via teacher_id (User → Teacher relation)
+    await tx.user.create({
+      data: {
+        email: email.toLowerCase(),
+        password: null,
+        role: Roles.TEACHER,
+        teacher_id: teacher.teacher_id,
+      },
+    });
+
+    return teacher;
+  });
+
+  return res.status(201).json(result);
 };
 
 export const getAllTeachersController = async (_: Request, res: Response) => {
@@ -1665,6 +1679,7 @@ export const validateEnrollmentController = async (
   res: Response,
 ) => {
   const { enrollmentId } = req.params;
+  const { pricing_id } = req.body; // ← NEW: Admin selects which pricing tier
 
   try {
     const enrollment = await prisma.enrollment.findUnique({
@@ -1672,7 +1687,11 @@ export const validateEnrollmentController = async (
       include: {
         course: {
           include: {
-            profile: true, // ✅ جلب الـ profile للسعر
+            profile: {
+              include: {
+                pricing: true, // ← جلب كل التعرفات
+              },
+            },
           },
         },
         student: true,
@@ -1689,29 +1708,80 @@ export const validateEnrollmentController = async (
       });
     }
 
-    // ✅ السعر من course profile، أو 0 إذا ما موجود
-    const feeAmount = Number(enrollment.course?.profile?.price ?? 0);
+    const profile = enrollment.course?.profile;
+
+    if (!profile) {
+      return res.status(400).json({
+        message:
+          "Course profile not found. Please create course profile first.",
+      });
+    }
+
+    // ✅ تحديد السعر بناءً على الاختيار
+    let feeAmount = 0;
+    let selectedPricing = null;
+
+    if (pricing_id) {
+      // ← Admin اختار pricing محدد
+      selectedPricing = profile.pricing.find(
+        (p) => p.pricing_id === pricing_id,
+      );
+
+      if (!selectedPricing) {
+        return res.status(400).json({
+          message: "Invalid pricing_id. Selected pricing tier not found.",
+        });
+      }
+
+      feeAmount = Number(selectedPricing.price);
+    } else {
+      // ← لو ما اختار، نستخدم أقل سعر متاح
+      if (profile.pricing.length === 0) {
+        return res.status(400).json({
+          message:
+            "No pricing tiers configured. Please add pricing to course profile first.",
+        });
+      }
+
+      selectedPricing = profile.pricing.reduce((min, p) =>
+        Number(p.price) < Number(min.price) ? p : min,
+      );
+
+      feeAmount = Number(selectedPricing.price);
+    }
 
     if (feeAmount <= 0) {
       return res.status(400).json({
-        message:
-          "Course has no price set. Please update the course profile first.",
+        message: "Invalid pricing amount. Price must be greater than 0.",
       });
     }
 
     const result = await prisma.$transaction(async (tx) => {
+      // 1. تحديث الـ Enrollment
       const updatedEnrollment = await tx.enrollment.update({
         where: { enrollment_id: enrollmentId },
         data: { registration_status: "VALIDATED" },
       });
 
+      // 2. إنشاء الـ Fee بالسعر المناسب
       const fee = await tx.fee.create({
         data: {
           student_id: enrollment.student_id,
           enrollment_id: enrollmentId,
-          amount: feeAmount, // ✅ السعر الحقيقي من الكورس
+          amount: feeAmount, // ← السعر حسب الصفة المختارة
           status: "UNPAID",
-          due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 يوم
+          // ← اختياري: يمكن إضافة حقل لحفظ pricing_id المستخدم
+        },
+      });
+
+      // 3. تسجيل في الـ History
+      await tx.registrationHistory.create({
+        data: {
+          enrollment_id: enrollmentId,
+          old_status: "PENDING",
+          new_status: "VALIDATED",
+          changed_by: (req as any).user?.user_id,
         },
       });
 
@@ -1722,6 +1792,12 @@ export const validateEnrollmentController = async (
       message: "Enrollment validated successfully",
       enrollment: result.enrollment,
       fee: result.fee,
+      pricing_used: {
+        id: selectedPricing.pricing_id,
+        status: selectedPricing.status_fr,
+        price: Number(selectedPricing.price),
+        currency: selectedPricing.currency,
+      },
     });
   } catch (error: any) {
     console.error("❌ Validation error:", error);

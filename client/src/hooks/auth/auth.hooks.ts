@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { authApi, type RegisterPayload } from "../../lib/api/auth.api";
 
 /* ================= QUERY KEYS ================= */
@@ -11,25 +11,28 @@ const ME_KEY = ["me"];
 export const useLogin = () => {
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
 
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: async () => {
-      // ✅ Step 1: Clear ALL cached state (including 401 error states)
       qc.removeQueries({ queryKey: ME_KEY });
 
       try {
-        // ✅ Step 2: Direct API call — NOT fetchQuery
-        // fetchQuery can get stuck if interceptor retries or cache conflicts
         const user = await authApi.me();
-
-        // ✅ Step 3: Manually put fresh data into cache
         qc.setQueryData(ME_KEY, user);
 
-        // ✅ Step 4: Redirect based on role
+        // Check for saved redirect URL (from ProtectedRoute)
+        const from = (location.state as { from?: string })?.from;
+
+        if (from) {
+          navigate(from, { replace: true });
+          return;
+        }
+
         const redirectMap: Record<string, string> = {
           ADMIN: "/admin",
-          TEACHER: "/teacher",
+          TEACHER: "/admin",
           STUDENT: "/dashboard",
         };
 
@@ -66,10 +69,18 @@ export const useLogout = () => {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: authApi.logout,
-    onSuccess: () => {
+    mutationFn: async () => {
+      try {
+        await authApi.logout();
+      } catch {
+        // ✅ Ignore 401 — cookie already expired, that's fine
+      }
+    },
+    onSettled: () => {
+      // ✅ ALWAYS clear cache and redirect, even if API failed
       qc.removeQueries({ queryKey: ME_KEY });
-      window.location.replace("/login");
+      qc.clear();
+      window.location.replace("/");
     },
   });
 };

@@ -31,7 +31,7 @@ export default function GoogleCallbackPage() {
     };
 
     finishGoogleLogin();
-  }, []);
+  }, [navigate, queryClient]);
 
   return (
     <div className="flex min-h-screen items-center justify-center">

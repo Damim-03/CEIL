@@ -219,6 +219,10 @@ export const adminStudentsApi = {
    TEACHERS API
 =============================================================== */
 
+/* ===============================================================
+   TEACHERS API — UPDATED (add this create method)
+=============================================================== */
+
 export const adminTeachersApi = {
   getAll: async (): Promise<Teacher[]> => {
     const { data } = await axiosInstance.get("/admin/teachers");
@@ -230,7 +234,21 @@ export const adminTeachersApi = {
     return data;
   },
 
-  update: async (teacherId: string, payload: Teacher): Promise<Teacher> => {
+  // ✅ NEW: Create teacher (creates User + Teacher in backend)
+  create: async (payload: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone_number?: string;
+  }): Promise<Teacher> => {
+    const { data } = await axiosInstance.post("/admin/teachers", payload);
+    return data;
+  },
+
+  update: async (
+    teacherId: string,
+    payload: Partial<Teacher>,
+  ): Promise<Teacher> => {
     const { data } = await axiosInstance.put(
       `/admin/teachers/${teacherId}`,
       payload,

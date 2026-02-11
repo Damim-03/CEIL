@@ -1,14 +1,12 @@
 /* ===============================================================
-   ADMIN ENROLLMENTS MANAGEMENT PAGE - Complete Workflow
+   ADMIN ENROLLMENTS MANAGEMENT PAGE - WITH PRICING SELECTION
    
-   Handles the complete student enrollment lifecycle:
+   ✅ COMPLETE VERSION with all features:
    1. Document Review (PENDING documents)
-   2. Enrollment Validation (PENDING → VALIDATED + Fee Creation)
+   2. Enrollment Validation with Pricing Selection (PENDING → VALIDATED)
    3. Payment Confirmation (VALIDATED → PAID)
    4. Group Assignment (PAID students)
    5. Finish Enrollment (PAID → FINISHED)
-   
-   ✅ FIXED: Document validation checks only REQUIRED_DOCUMENTS
 =============================================================== */
 
 import { useState } from "react";
@@ -26,6 +24,8 @@ import {
   Calendar,
   GraduationCap,
   AlertCircle,
+  Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 
 import PageLoader from "../../../../components/PageLoader";
@@ -52,6 +52,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../../components/ui/select";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "../../../../components/ui/radio-group";
+import { Label } from "../../../../components/ui/label";
+import { Badge } from "../../../../components/ui/badge";
 
 import {
   useAdminEnrollments,
@@ -64,6 +70,249 @@ import {
 
 import type { Enrollment } from "../../../../types/Types";
 import { toast } from "sonner";
+
+/* ===============================================================
+   PRICING SELECTION MODAL COMPONENT
+=============================================================== */
+
+interface PricingSelectionModalProps {
+  open: boolean;
+  onClose: () => void;
+  enrollment: Enrollment | null;
+  onConfirm: (pricingId: string) => Promise<void>;
+  isLoading?: boolean;
+}
+
+const PricingSelectionModal = ({
+  open,
+  onClose,
+  enrollment,
+  onConfirm,
+  isLoading = false,
+}: PricingSelectionModalProps) => {
+  const [selectedPricingId, setSelectedPricingId] = useState<string>("");
+
+  const pricing = enrollment?.course?.profile?.pricing || [];
+
+  const handleConfirm = async () => {
+    if (!selectedPricingId && pricing.length > 0) {
+      toast.error("Please select a pricing tier");
+      return;
+    }
+
+    await onConfirm(selectedPricingId);
+    setSelectedPricingId("");
+  };
+
+  const selectedPricing = pricing.find(
+    (p: any) => p.pricing_id === selectedPricingId,
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            Validate Enrollment
+          </DialogTitle>
+          <DialogDescription>
+            Select the appropriate pricing tier for this student
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Student Info */}
+        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Student</span>
+            <span className="font-semibold">
+              {enrollment?.student?.first_name} {enrollment?.student?.last_name}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Course</span>
+            <span className="font-medium">
+              {enrollment?.course?.course_name}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              Enrollment Date
+            </span>
+            <span className="text-sm">
+              {enrollment?.enrollment_date &&
+                new Date(enrollment.enrollment_date).toLocaleDateString()}
+            </span>
+          </div>
+        </div>
+
+        {/* Pricing Selection */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-primary" />
+            <h3 className="font-semibold">Select Pricing Tier</h3>
+          </div>
+
+          {pricing.length === 0 ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3 dark:bg-amber-950/30 dark:border-amber-800">
+              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-semibold text-amber-900 dark:text-amber-100">
+                  No Pricing Configured
+                </p>
+                <p className="text-amber-700 dark:text-amber-300 mt-1">
+                  Please configure pricing tiers in the course profile before
+                  validating enrollments.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <RadioGroup
+              value={selectedPricingId}
+              onValueChange={setSelectedPricingId}
+              className="space-y-3"
+            >
+              {pricing.map((tier: any) => {
+                const isSelected = selectedPricingId === tier.pricing_id;
+
+                return (
+                  <div
+                    key={tier.pricing_id}
+                    className={`relative rounded-xl border-2 transition-all duration-200 ${
+                      isSelected
+                        ? "border-primary bg-primary/5 shadow-md"
+                        : "border-border hover:border-primary/30 hover:bg-muted/30"
+                    }`}
+                  >
+                    <Label
+                      htmlFor={tier.pricing_id}
+                      className="flex items-center gap-4 p-4 cursor-pointer"
+                    >
+                      <RadioGroupItem
+                        value={tier.pricing_id}
+                        id={tier.pricing_id}
+                        className="flex-shrink-0"
+                      />
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-foreground">
+                            {tier.status_fr}
+                          </span>
+                          {tier.status_ar && (
+                            <span className="text-sm text-muted-foreground">
+                              ({tier.status_ar})
+                            </span>
+                          )}
+                          {tier.discount &&
+                            tier.discount !== "Aucune" &&
+                            tier.discount !== "None" && (
+                              <Badge
+                                variant="secondary"
+                                className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                              >
+                                <Sparkles className="w-3 h-3 mr-1" />
+                                {tier.discount}
+                              </Badge>
+                            )}
+                        </div>
+
+                        {tier.status_en && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {tier.status_en}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="text-right">
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-2xl font-bold text-primary">
+                            {Number(tier.price).toLocaleString()}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {tier.currency}
+                          </span>
+                        </div>
+                      </div>
+                    </Label>
+
+                    {isSelected && (
+                      <div className="absolute top-2 right-2">
+                        <CheckCircle2 className="w-5 h-5 text-primary fill-primary/20" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </RadioGroup>
+          )}
+        </div>
+
+        {/* Selected Summary */}
+        {selectedPricing && (
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">
+                  Selected Category
+                </p>
+                <p className="font-semibold text-lg">
+                  {selectedPricing.status_fr}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-sm text-muted-foreground">
+                    Fee Amount:
+                  </span>
+                  <span className="text-xl font-bold text-primary">
+                    {Number(selectedPricing.price).toLocaleString()}{" "}
+                    {selectedPricing.currency}
+                  </span>
+                </div>
+                {selectedPricing.discount &&
+                  selectedPricing.discount !== "Aucune" && (
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                      Discount applied: {selectedPricing.discount}
+                    </p>
+                  )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            disabled={(!selectedPricingId && pricing.length > 0) || isLoading}
+            className="gap-2"
+          >
+            {isLoading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Validating...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                Validate Enrollment
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 /* ===============================================================
    MAIN PAGE COMPONENT
@@ -82,6 +331,7 @@ export default function AdminEnrollmentsPage() {
   const [selectedEnrollment, setSelectedEnrollment] =
     useState<Enrollment | null>(null);
   const [rejectDialog, setRejectDialog] = useState(false);
+  const [pricingDialog, setPricingDialog] = useState(false);
   const [assignGroupDialog, setAssignGroupDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
@@ -105,7 +355,7 @@ export default function AdminEnrollmentsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  // Calculate stats
+  // Stats
   const stats = {
     total: enrollments.length,
     pending: enrollments.filter((e) => e.registration_status === "PENDING")
@@ -119,7 +369,7 @@ export default function AdminEnrollmentsPage() {
       .length,
   };
 
-  // Group enrollments by status for tabs
+  // Categorized enrollments
   const pendingEnrollments = filteredEnrollments.filter(
     (e) => e.registration_status === "PENDING",
   );
@@ -133,27 +383,30 @@ export default function AdminEnrollmentsPage() {
     (e) => e.registration_status === "FINISHED",
   );
 
-  // Handlers
-  const handleValidate = async (enrollmentId: string) => {
-    if (
-      !window.confirm(
-        "Validate this enrollment? This will create a fee record for the student.",
-      )
-    ) {
-      return;
-    }
+  // ✅ UPDATED: Validate with pricing selection
+  const handleValidate = async (pricingId: string) => {
+    if (!selectedEnrollment) return;
 
     try {
-      await validateEnrollment.mutateAsync(enrollmentId);
-      toast.success(
-        "✅ Enrollment validated! Fee record created automatically.",
-      );
+      await validateEnrollment.mutateAsync({
+        enrollmentId: selectedEnrollment.enrollment_id,
+        pricing_id: pricingId,
+      });
+
+      toast.success("✅ Enrollment validated! Fee created successfully.");
+      setPricingDialog(false);
+      setSelectedEnrollment(null);
     } catch (error: any) {
       const message =
         error?.response?.data?.message || "Failed to validate enrollment";
       toast.error(message);
       console.error(error);
     }
+  };
+
+  const openPricingDialog = (enrollment: Enrollment) => {
+    setSelectedEnrollment(enrollment);
+    setPricingDialog(true);
   };
 
   const handleReject = async () => {
@@ -387,7 +640,7 @@ export default function AdminEnrollmentsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Pending Tab - Need Validation */}
+        {/* Pending Tab */}
         <TabsContent value="pending">
           <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
             <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -402,7 +655,7 @@ export default function AdminEnrollmentsPage() {
                 <EnrollmentCard
                   key={enrollment.enrollment_id}
                   enrollment={enrollment}
-                  onValidate={() => handleValidate(enrollment.enrollment_id)}
+                  onValidate={() => openPricingDialog(enrollment)}
                   onReject={() => openRejectDialog(enrollment)}
                 />
               ))}
@@ -412,7 +665,7 @@ export default function AdminEnrollmentsPage() {
           )}
         </TabsContent>
 
-        {/* Validated Tab - Need Payment Confirmation */}
+        {/* Validated Tab */}
         <TabsContent value="validated">
           <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
             <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -439,7 +692,7 @@ export default function AdminEnrollmentsPage() {
           )}
         </TabsContent>
 
-        {/* Paid Tab - Can Assign to Group */}
+        {/* Paid Tab */}
         <TabsContent value="paid">
           <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
             <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -493,7 +746,7 @@ export default function AdminEnrollmentsPage() {
                   enrollment={enrollment}
                   onValidate={
                     enrollment.registration_status === "PENDING"
-                      ? () => handleValidate(enrollment.enrollment_id)
+                      ? () => openPricingDialog(enrollment)
                       : undefined
                   }
                   onReject={
@@ -525,6 +778,18 @@ export default function AdminEnrollmentsPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Pricing Selection Modal */}
+      <PricingSelectionModal
+        open={pricingDialog}
+        onClose={() => {
+          setPricingDialog(false);
+          setSelectedEnrollment(null);
+        }}
+        enrollment={selectedEnrollment}
+        onConfirm={handleValidate}
+        isLoading={validateEnrollment.isPending}
+      />
 
       {/* Reject Dialog */}
       <Dialog open={rejectDialog} onOpenChange={setRejectDialog}>
@@ -633,7 +898,7 @@ export default function AdminEnrollmentsPage() {
 }
 
 /* ===============================================================
-   ENROLLMENT CARD COMPONENT - ✅ FIXED
+   ENROLLMENT CARD COMPONENT
 =============================================================== */
 
 interface EnrollmentCardProps {
@@ -718,7 +983,7 @@ function EnrollmentCard({
       })
     : "N/A";
 
-  // ✅ FIX: Check if REQUIRED documents are approved
+  // Document validation
   const REQUIRED_DOCUMENTS = [
     "PHOTO",
     "ID_CARD",
@@ -728,7 +993,6 @@ function EnrollmentCard({
 
   const studentDocs = enrollment.student?.documents || [];
 
-  // Check each required document
   const requiredDocsStatus = REQUIRED_DOCUMENTS.map((type) => {
     const doc = studentDocs.find((d: any) => d.type === type);
     return {
@@ -788,7 +1052,7 @@ function EnrollmentCard({
           )}
         </div>
 
-        {/* Group Info (if assigned) */}
+        {/* Group Info */}
         {groupName && (
           <div className="p-3 bg-teal-50 rounded-lg border border-teal-200">
             <div className="flex items-center gap-2 mb-1">
@@ -801,7 +1065,7 @@ function EnrollmentCard({
           </div>
         )}
 
-        {/* ✅ FIXED: Document Status Warning (for pending) */}
+        {/* Document Status */}
         {enrollment.registration_status === "PENDING" &&
           !allRequiredDocsApproved && (
             <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
@@ -826,7 +1090,6 @@ function EnrollmentCard({
             </div>
           )}
 
-        {/* ✅ Success indicator when all docs approved */}
         {enrollment.registration_status === "PENDING" &&
           allRequiredDocsApproved && (
             <div className="p-3 bg-green-50 rounded-lg border border-green-200">
@@ -854,7 +1117,7 @@ function EnrollmentCard({
               onClick={onValidate}
               className="w-full bg-green-600 hover:bg-green-700"
               size="sm"
-              disabled={!allRequiredDocsApproved} // ✅ DISABLED!
+              disabled={!allRequiredDocsApproved}
             >
               <CheckCircle className="w-4 h-4 mr-2" />
               Validate & Create Fee
@@ -895,7 +1158,6 @@ function EnrollmentCard({
             </Button>
           )}
 
-          {/* View Details Link - Always show */}
           <Button asChild variant="outline" size="sm" className="w-full">
             <Link to={`/admin/students/${enrollment.student_id}`}>
               <Eye className="w-4 h-4 mr-2" />

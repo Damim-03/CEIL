@@ -21,7 +21,7 @@ export interface RegisterPayload {
 export const authApi = {
   login: async (payload: LoginPayload) => {
     const { data } = await axiosInstance.post("/auth/login", payload);
-    return data; // sets cookies on backend
+    return data;
   },
 
   register: async (payload: RegisterPayload) => {
@@ -38,7 +38,6 @@ export const authApi = {
     await axiosInstance.post("/auth/logout");
   },
 
-  // ✅ ADD THIS (next step ready)
   refresh: async () => {
     const { data } = await axiosInstance.post("/auth/refresh");
     return data;

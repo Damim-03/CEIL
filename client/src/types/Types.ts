@@ -122,6 +122,7 @@ export interface Teacher {
 =============================================================== */
 
 export interface Course {
+  teacher: any;
   course_id: string; // UUID
   course_code?: string | null; // VARCHAR(20), unique
   course_name: string; // VARCHAR(100)

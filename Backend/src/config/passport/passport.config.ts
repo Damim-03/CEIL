@@ -27,6 +27,8 @@ passport.use(
         const googleId = profile.id;
         const email = profile.emails?.[0]?.value;
         const avatar = profile.photos?.[0]?.value;
+        const firstName = profile.name?.givenName || "";
+        const lastName = profile.name?.familyName || "";
 
         if (!email) {
           throw new NotFoundException("Google account has no email");
@@ -43,32 +45,80 @@ passport.use(
         });
 
         if (!user) {
-          user = await prisma.user.create({
-            data: {
-              email,
-              google_id: googleId,
-              google_avatar: avatar,
-              role: Roles.STUDENT,
-            },
-          });
-        }
+          // ✅ Create User + Student in a transaction (same as register)
+          user = await prisma.$transaction(async (tx) => {
+            const createdUser = await tx.user.create({
+              data: {
+                email,
+                google_id: googleId,
+                google_avatar: avatar,
+                role: Roles.STUDENT,
+                is_active: true,
+              },
+            });
 
-        if (user && !user.google_id) {
-          user = await prisma.user.update({
-            where: { user_id: user.user_id },
-            data: {
-              google_id: googleId,
-              google_avatar: avatar,
-            },
+            const student = await tx.student.create({
+              data: {
+                user_id: createdUser.user_id,
+                first_name: firstName,
+                last_name: lastName,
+                email,
+              },
+            });
+
+            const updatedUser = await tx.user.update({
+              where: { user_id: createdUser.user_id },
+              data: { student_id: student.student_id },
+            });
+
+            return updatedUser;
           });
+        } else {
+          // ✅ Existing user — link google_id if missing
+          if (!user.google_id) {
+            user = await prisma.user.update({
+              where: { user_id: user.user_id },
+              data: {
+                google_id: googleId,
+                google_avatar: avatar,
+              },
+            });
+          }
+
+          // ✅ Existing user — create Student record if missing
+          if (user.role === Roles.STUDENT && !user.student_id) {
+            const existingStudent = await prisma.student.findFirst({
+              where: { user_id: user.user_id },
+            });
+
+            if (!existingStudent) {
+              const student = await prisma.$transaction(async (tx) => {
+                const newStudent = await tx.student.create({
+                  data: {
+                    user_id: user!.user_id,
+                    first_name: firstName || email.split("@")[0],
+                    last_name: lastName || "",
+                    email,
+                  },
+                });
+
+                await tx.user.update({
+                  where: { user_id: user!.user_id },
+                  data: { student_id: newStudent.student_id },
+                });
+
+                return newStudent;
+              });
+            }
+          }
         }
 
         return done(null, user);
       } catch (error) {
         return done(error as Error, false);
       }
-    }
-  )
+    },
+  ),
 );
 
 /**
@@ -107,6 +157,6 @@ passport.use(
       } catch (error) {
         return done(error as Error, false);
       }
-    }
-  )
+    },
+  ),
 );

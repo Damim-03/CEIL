@@ -401,6 +401,13 @@ export type UpdateTeacherPayload = {
   phone_number?: string;
 };
 
+export type CreateTeacherPayload = {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_number?: string;
+};
+
 export const useAdminTeachers = () =>
   useQuery<Teacher[]>({
     queryKey: TEACHERS_KEY,
@@ -413,6 +420,26 @@ export const useAdminTeacher = (teacherId?: string) =>
     enabled: typeof teacherId === "string",
     queryFn: () => adminTeachersApi.getById(teacherId!),
   });
+
+// ✅ NEW: Create Teacher hook
+export const useCreateTeacher = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateTeacherPayload) =>
+      adminTeachersApi.create(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TEACHERS_KEY });
+      queryClient.invalidateQueries({ queryKey: USERS_KEY });
+      toast.success("Teacher created successfully");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message || "Failed to create teacher",
+      );
+    },
+  });
+};
 
 export const useDeleteTeacher = () => {
   const queryClient = useQueryClient();
