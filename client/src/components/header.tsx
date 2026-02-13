@@ -64,7 +64,7 @@ export function Header() {
     { to: "/courses", label: t("common.courses") },
     { to: "/about-us", label: t("common.features") },
     { to: "/announcements", label: t("common.announcements") },
-    { to: "/contact", label: t("common.contact") },
+    { to: "/OurPlatform", label: t("common.OurPlatform") },
   ];
 
   const dashboardPath =
@@ -116,7 +116,7 @@ export function Header() {
                   src={logo}
                   alt="University"
                   className={`object-contain transition-all duration-500 ${
-                    scrolled ? "h-10 w-10" : "h-[52px] w-[52px]"
+                    scrolled ? "h-10 w-10" : "h-13 w-13"
                   }`}
                 />
                 {/* Ring on hover */}

@@ -14,7 +14,9 @@ import {
 
   // Courses & Groups
   getAssignedGroupsController,
+  getGroupDetailsController, // ✅ NEW
   getGroupStudentsController,
+  getGroupStatsController, // ✅ NEW
 
   // Sessions
   getTeacherSessionsController,
@@ -22,10 +24,14 @@ import {
   updateTeacherSessionController,
   deleteTeacherSessionController,
 
+  // Schedule
+  getTeacherScheduleController, // ✅ NEW
+
   // Attendance
   getSessionAttendanceController,
   markSessionAttendanceController,
   markBulkAttendanceController,
+  getStudentAttendanceController, // ✅ NEW
 
   // Exams
   getTeacherExamsController,
@@ -37,7 +43,18 @@ import {
   getExamResultsController,
   addExamResultController,
   addBulkExamResultsController,
+  getStudentResultsController, // ✅ NEW
+
+  // Announcements
+  getTeacherAnnouncementsController, // ✅ NEW
+  getTeacherAnnouncementByIdController, // ✅ NEW
 } from "../../controllers/Teachers/teacher.controller";
+import {
+  getMyNotificationsController,
+  getUnreadCountController,
+  markAllNotificationsReadController,
+  markNotificationReadController,
+} from "../../controllers/admin/Notification.controller";
 
 const teacherRoutes: Router = Router();
 
@@ -79,6 +96,17 @@ teacherRoutes.get(
 );
 
 /* ======================================================
+   SCHEDULE (upcoming sessions)                    ✅ NEW
+====================================================== */
+
+teacherRoutes.get(
+  "/me/schedule",
+  authMiddleware,
+  roleGuard([Permissions.VIEW_ASSIGNED_COURSES]),
+  getTeacherScheduleController,
+);
+
+/* ======================================================
    COURSES & GROUPS
 ====================================================== */
 
@@ -89,11 +117,47 @@ teacherRoutes.get(
   getAssignedGroupsController,
 );
 
+// ✅ NEW — Full group details (must be BEFORE /:groupId/students)
+teacherRoutes.get(
+  "/me/groups/:groupId",
+  authMiddleware,
+  roleGuard([Permissions.VIEW_ASSIGNED_COURSES]),
+  getGroupDetailsController,
+);
+
 teacherRoutes.get(
   "/me/groups/:groupId/students",
   authMiddleware,
   roleGuard([Permissions.VIEW_STUDENTS]),
   getGroupStudentsController,
+);
+
+// ✅ NEW — Group statistics (attendance, grades, etc.)
+teacherRoutes.get(
+  "/me/groups/:groupId/stats",
+  authMiddleware,
+  roleGuard([Permissions.VIEW_ASSIGNED_COURSES]),
+  getGroupStatsController,
+);
+
+/* ======================================================
+   STUDENTS — Attendance & Results per student     ✅ NEW
+====================================================== */
+
+// ✅ NEW — Student's attendance history across teacher's groups
+teacherRoutes.get(
+  "/me/students/:studentId/attendance",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ATTENDANCE]),
+  getStudentAttendanceController,
+);
+
+// ✅ NEW — Student's exam results in teacher's courses
+teacherRoutes.get(
+  "/me/students/:studentId/results",
+  authMiddleware,
+  roleGuard([Permissions.ENTER_RESULTS]),
+  getStudentResultsController,
 );
 
 /* ======================================================
@@ -208,6 +272,52 @@ teacherRoutes.post(
   authMiddleware,
   roleGuard([Permissions.ENTER_RESULTS]),
   addBulkExamResultsController,
+);
+
+/* ======================================================
+   ANNOUNCEMENTS (read-only, published only)       ✅ NEW
+====================================================== */
+
+teacherRoutes.get(
+  "/me/announcements",
+  authMiddleware,
+  roleGuard([Permissions.VIEW_ASSIGNED_COURSES]),
+  getTeacherAnnouncementsController,
+);
+
+teacherRoutes.get(
+  "/me/announcements/:announcementId",
+  authMiddleware,
+  roleGuard([Permissions.VIEW_ASSIGNED_COURSES]),
+  getTeacherAnnouncementByIdController,
+);
+
+/* ======================================================
+   NOTIFICATIONS
+====================================================== */
+
+teacherRoutes.get(
+  "/notifications",
+  authMiddleware,
+  getMyNotificationsController,
+);
+
+teacherRoutes.get(
+  "/notifications/unread-count",
+  authMiddleware,
+  getUnreadCountController,
+);
+
+teacherRoutes.patch(
+  "/notifications/read-all",
+  authMiddleware,
+  markAllNotificationsReadController,
+);
+
+teacherRoutes.patch(
+  "/notifications/:recipientId/read",
+  authMiddleware,
+  markNotificationReadController,
 );
 
 export default teacherRoutes;

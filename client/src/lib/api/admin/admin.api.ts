@@ -135,6 +135,102 @@ interface PaginatedResponse<T> {
   };
 }
 
+export type NotificationTargetType =
+  | "ALL_STUDENTS"
+  | "ALL_TEACHERS"
+  | "SPECIFIC_STUDENTS"
+  | "SPECIFIC_TEACHERS"
+  | "GROUP"
+  | "COURSE";
+
+export type NotificationPriorityType = "LOW" | "NORMAL" | "HIGH" | "URGENT";
+
+export interface NotificationPayload {
+  title: string;
+  title_ar?: string;
+  message: string;
+  message_ar?: string;
+  target_type: NotificationTargetType;
+  priority?: NotificationPriorityType;
+  course_id?: string;
+  group_id?: string;
+  user_ids?: string[];
+}
+
+export interface NotificationItem {
+  notification_id: string;
+  title: string;
+  title_ar: string | null;
+  message: string;
+  message_ar: string | null;
+  target_type: string;
+  priority: string;
+  course_id: string | null;
+  group_id: string | null;
+  created_by: string | null;
+  created_at: string;
+  course?: { course_id: string; course_name: string } | null;
+  group?: { group_id: string; name: string } | null;
+  total_recipients: number;
+  read_count: number;
+}
+
+export interface NotificationDetail extends NotificationItem {
+  recipients: Array<{
+    recipient_id: string;
+    is_read: boolean;
+    read_at: string | null;
+    user: {
+      user_id: string;
+      email: string;
+      role: string;
+      google_avatar: string | null;
+      student?: { first_name: string; last_name: string } | null;
+      teacher?: { first_name: string; last_name: string } | null;
+    };
+  }>;
+}
+
+export interface NotificationTargets {
+  courses: Array<{
+    course_id: string;
+    course_name: string;
+    course_code: string | null;
+    student_count: number;
+  }>;
+  groups: Array<{
+    group_id: string;
+    name: string;
+    level: string;
+    course: { course_name: string };
+    teacher: { first_name: string; last_name: string } | null;
+    student_count: number;
+  }>;
+  teachers: Array<{
+    teacher_id: string;
+    first_name: string;
+    last_name: string;
+    email: string | null;
+    user_id: string;
+  }>;
+}
+
+export interface MyNotificationItem {
+  recipient_id: string;
+  is_read: boolean;
+  read_at: string | null;
+  notification_id: string;
+  title: string;
+  title_ar: string | null;
+  message: string;
+  message_ar: string | null;
+  target_type: string;
+  priority: string;
+  created_at: string;
+  course?: { course_name: string } | null;
+  group?: { name: string } | null;
+}
+
 /* ===============================================================
    USERS API
 =============================================================== */
@@ -411,9 +507,14 @@ export const adminEnrollmentsApi = {
     return res.data;
   },
 
-  async validate(enrollmentId: string): Promise<Enrollment> {
+  // ✅ الصحيح:
+  async validate(
+    enrollmentId: string,
+    payload?: { pricing_id?: string },
+  ): Promise<Enrollment> {
     const res = await axiosInstance.patch(
       `/admin/enrollments/${enrollmentId}/validate`,
+      payload || {},
     );
     return res.data;
   },
@@ -1121,6 +1222,104 @@ export const adminCoursePricingApi = {
   ): Promise<{ message: string }> => {
     const { data } = await axiosInstance.delete(
       `/admin/courses/${courseId}/pricing/${pricingId}`,
+    );
+    return data;
+  },
+};
+
+export const adminNotificationApi = {
+  getTargets: async (): Promise<NotificationTargets> => {
+    const { data } = await axiosInstance.get("/admin/notifications/targets");
+    return data;
+  },
+
+  send: async (
+    payload: NotificationPayload,
+  ): Promise<{
+    message: string;
+    notification: NotificationItem;
+    recipients_count: number;
+  }> => {
+    const { data } = await axiosInstance.post("/admin/notifications", payload);
+    return data;
+  },
+
+  getAll: async (
+    page = 1,
+    limit = 20,
+  ): Promise<{
+    data: NotificationItem[];
+    meta: { page: number; limit: number; total: number; pages: number };
+  }> => {
+    const { data } = await axiosInstance.get(
+      `/admin/notifications?page=${page}&limit=${limit}`,
+    );
+    return data;
+  },
+
+  getById: async (id: string): Promise<NotificationDetail> => {
+    const { data } = await axiosInstance.get(`/admin/notifications/${id}`);
+    return data;
+  },
+
+  delete: async (id: string): Promise<{ message: string }> => {
+    const { data } = await axiosInstance.delete(`/admin/notifications/${id}`);
+    return data;
+  },
+};
+
+/* ===============================================================
+   USER NOTIFICATION API (Student / Teacher shared endpoints)
+=============================================================== */
+
+export const userNotificationApi = {
+  getMine: async (
+    base: "student" | "teacher",
+    page = 1,
+    unreadOnly = false,
+  ): Promise<{
+    data: MyNotificationItem[];
+    unread_count: number;
+    meta: { page: number; limit: number; total: number; pages: number };
+  }> => {
+    const { data } = await axiosInstance.get(
+      `/${base}/notifications?page=${page}${unreadOnly ? "&unread=true" : ""}`,
+    );
+    return data;
+  },
+
+  getUnreadCount: async (
+    base: "student" | "teacher",
+  ): Promise<{ unread_count: number }> => {
+    const { data } = await axiosInstance.get(
+      `/${base}/notifications/unread-count`,
+    );
+    return data;
+  },
+
+  markRead: async (
+    base: "student" | "teacher",
+    recipientId: string,
+  ): Promise<{ message: string }> => {
+    const { data } = await axiosInstance.patch(
+      `/${base}/notifications/${recipientId}/read`,
+    );
+    return data;
+  },
+
+  markAllRead: async (
+    base: "student" | "teacher",
+  ): Promise<{ message: string; count: number }> => {
+    const { data } = await axiosInstance.patch(
+      `/${base}/notifications/read-all`,
+    );
+    return data;
+  },
+
+  // داخل adminNotificationApi:
+  searchStudents: async (query: string) => {
+    const { data } = await axiosInstance.get(
+      `/admin/notifications/search-students?q=${encodeURIComponent(query)}`,
     );
     return data;
   },

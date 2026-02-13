@@ -1,40 +1,69 @@
-import { Bell, Menu } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "../../../components/ui/avatar";
-import { Button } from "../../../components/ui/button";
 import { useAuth } from "../../../context/AuthContext";
+import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
+import { DashboardLanguageSwitcher } from "../../student/components/Dashboardlanguageswitcher";
+import NotificationBell from "../../student/components/Notificationbell";
 import {
   LayoutDashboard,
   Users,
   GraduationCap,
   Briefcase,
   BookOpen,
+  Building2,
   Calendar,
   DollarSign,
   ClipboardList,
   FileText,
-  BarChart3,
-  Settings,
   UserCircle,
+  Globe,
+  Megaphone,
+  BellRing,
 } from "lucide-react";
 
 const ADMIN_NAVIGATION = [
-  { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
-  { name: "Users", path: "/admin/users", icon: Users },
-  { name: "Students", path: "/admin/students", icon: GraduationCap },
-  { name: "Teachers", path: "/admin/teachers", icon: Briefcase },
-  { name: "Courses", path: "/admin/courses", icon: BookOpen },
-  { name: "Sessions", path: "/admin/sessions", icon: Calendar },
-  { name: "Fees", path: "/admin/fees", icon: DollarSign },
-  { name: "Enrollments", path: "/admin/enrollments", icon: ClipboardList },
-  { name: "Documents", path: "/admin/documents", icon: FileText },
-  { name: "Reports", path: "/admin/reports", icon: BarChart3 },
-  { name: "Settings", path: "/admin/settings", icon: Settings },
-  { name: "Profile", path: "/admin/profile", icon: UserCircle },
+  {
+    labelKey: "admin.nav.dashboard",
+    path: "/admin/dashboard",
+    icon: LayoutDashboard,
+  },
+  { labelKey: "admin.nav.users", path: "/admin/users", icon: Users },
+  {
+    labelKey: "admin.nav.students",
+    path: "/admin/students",
+    icon: GraduationCap,
+  },
+  { labelKey: "admin.nav.teachers", path: "/admin/teachers", icon: Briefcase },
+  { labelKey: "admin.nav.courses", path: "/admin/courses", icon: BookOpen },
+  {
+    labelKey: "admin.nav.departments",
+    path: "/admin/departments",
+    icon: Building2,
+  },
+  { labelKey: "admin.nav.sessions", path: "/admin/sessions", icon: Calendar },
+  { labelKey: "admin.nav.fees", path: "/admin/fees", icon: DollarSign },
+  {
+    labelKey: "admin.nav.enrollments",
+    path: "/admin/enrollments",
+    icon: ClipboardList,
+  },
+  { labelKey: "admin.nav.documents", path: "/admin/documents", icon: FileText },
+  {
+    labelKey: "admin.nav.notifications",
+    path: "/admin/notifications",
+    icon: BellRing,
+  },
+  { labelKey: "admin.nav.formations", path: "/admin/formations", icon: Globe },
+  {
+    labelKey: "admin.nav.announcements",
+    path: "/admin/announcements",
+    icon: Megaphone,
+  },
+  { labelKey: "admin.nav.profile", path: "/admin/profile", icon: UserCircle },
 ];
 
 interface HeaderProps {
@@ -44,6 +73,7 @@ interface HeaderProps {
 export const Header = ({ onMenuClick }: HeaderProps) => {
   const location = useLocation();
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   // Find current page
   const currentPage =
@@ -51,64 +81,49 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
     ADMIN_NAVIGATION.find((n) => location.pathname.startsWith(n.path)) ||
     ADMIN_NAVIGATION[0];
 
-  // Safe initials: first letter of email
+  // Safe initials
   const initials = user?.email
     ? user.email.split("@")[0].slice(0, 2).toUpperCase()
     : "AD";
 
   const avatarSrc = user?.google_avatar || "";
-  const hasNotifications = false; // Replace with real state later
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between px-4 sm:px-6 border-b bg-background shadow-sm">
-      {/* Left: Menu + Title */}
+    <header className="sticky top-0 z-20 flex h-14 items-center justify-between px-4 sm:px-6 border-b border-[#D8CDC0]/30 bg-white/80 backdrop-blur-sm">
+      {/* Left: Title */}
       <div className="flex items-center gap-3">
-        {/* Mobile Menu Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onMenuClick}
-          className="md:hidden"
-          aria-label="Toggle menu"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-
-        {/* Page Title */}
-        <h1 className="text-lg sm:text-xl font-semibold text-foreground truncate">
-          {currentPage.name}
+        <h1 className="text-base sm:text-lg font-semibold text-[#1B1B1B] truncate">
+          {t(currentPage.labelKey)}
         </h1>
       </div>
 
-      {/* Right: Notifications + Avatar */}
-      <div className="flex items-center gap-3">
-        {/* Notifications */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
-          aria-label="Notifications"
-        >
-          <Bell className="h-5 w-5 text-muted-foreground" />
-          {hasNotifications && (
-            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
-          )}
-        </Button>
+      {/* Right: Language + Notifications + Avatar */}
+      <div className="flex items-center gap-2">
+        {/* Language Switcher */}
+        <DashboardLanguageSwitcher className="hidden sm:flex" />
 
-        {/* User Info - Hidden on small screens */}
+        {/* Notification Bell */}
+        <NotificationBell
+          role="admin"
+          notificationsPath="/admin/notifications"
+        />
+
+        {/* User Info */}
         {user && (
-          <div className="hidden sm:flex flex-col items-end">
-            <span className="text-sm font-medium text-foreground truncate max-w-37.5">
+          <div className="hidden sm:flex flex-col items-end mr-1">
+            <span className="text-sm font-medium text-[#1B1B1B] truncate max-w-[150px]">
               {user.email.split("@")[0]}
             </span>
-            <span className="text-xs text-muted-foreground">Admin</span>
+            <span className="text-[11px] text-[#BEB29E]">
+              {t("admin.role")}
+            </span>
           </div>
         )}
 
         {/* Avatar */}
-        <Avatar className="h-9 w-9 border">
+        <Avatar className="h-9 w-9 border-2 border-[#D8CDC0]/40">
           <AvatarImage src={avatarSrc} alt={user?.email || "Admin avatar"} />
-          <AvatarFallback className="text-xs font-medium bg-linear-to-br from-blue-500 to-indigo-600 text-white">
+          <AvatarFallback className="text-xs font-semibold bg-gradient-to-br from-[#8DB896] to-[#2B6F5E] text-white">
             {initials}
           </AvatarFallback>
         </Avatar>

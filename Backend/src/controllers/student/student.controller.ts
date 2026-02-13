@@ -60,16 +60,16 @@ export const getMyProfile = async (req: Request, res: Response) => {
       },
     },
     include: {
-      // ✅ FIXED: Get groups via enrollments
       enrollments: {
         where: {
-          registration_status: { in: ['VALIDATED', 'PAID', 'FINISHED'] },
-          group_id: { not: null }
+          registration_status: { in: ["VALIDATED", "PAID", "FINISHED"] },
+          group_id: { not: null },
         },
         include: {
           group: true,
-          course: true
-        }
+          course: true,
+          pricing: true, // ✅ NEW
+        },
       },
       documents: true,
       user: {
@@ -88,18 +88,17 @@ export const getMyProfile = async (req: Request, res: Response) => {
 
   const isProfileComplete = Boolean(
     student.first_name &&
-      student.last_name &&
-      student.date_of_birth &&
-      student.gender &&
-      student.phone_number &&
-      student.nationality &&
-      student.language &&
-      student.education_level &&
-      student.study_location,
+    student.last_name &&
+    student.date_of_birth &&
+    student.gender &&
+    student.phone_number &&
+    student.nationality &&
+    student.language &&
+    student.education_level &&
+    student.study_location,
   );
 
   const approvedDocs = student.documents.filter((d) => d.status === "APPROVED");
-
   const isDocumentsComplete = approvedDocs.length === REQUIRED_DOCUMENTS.length;
 
   return res.json({
@@ -164,77 +163,49 @@ export const uploadDocumentsController = async (
   req: Request,
   res: Response,
 ) => {
-  console.log('=== UPLOAD DEBUG START ===');
-  console.log('1. User:', req.user);
-  
+  console.log("=== UPLOAD DEBUG START ===");
+  console.log("1. User:", req.user);
+
   const user = (req as AuthenticatedRequest).user;
-  
+
   if (!user) {
-    console.log('❌ No user found in request');
+    console.log("❌ No user found in request");
     return res.status(401).json({ message: "Unauthorized" });
   }
-  
-  console.log('✅ User authenticated:', user.user_id);
-  
-  console.log('2. req.files (raw):', req.files);
-  console.log('3. typeof req.files:', typeof req.files);
-  console.log('4. req.files is array?', Array.isArray(req.files));
-  console.log('5. req.files is null?', req.files === null);
-  console.log('6. req.files is undefined?', req.files === undefined);
-  
+
+  console.log("✅ User authenticated:", user.user_id);
+
   const files = req.files as Record<string, Express.Multer.File[]>;
-  
-  console.log('7. files after assertion:', files);
-  console.log('8. files keys:', files ? Object.keys(files) : 'null');
-  console.log('9. files keys length:', files ? Object.keys(files).length : 0);
-  
+
   if (!files) {
-    console.log('❌ files is null or undefined');
-    return res.status(400).json({ message: "No documents uploaded - files is null" });
+    return res
+      .status(400)
+      .json({ message: "No documents uploaded - files is null" });
   }
-  
+
   const fileKeys = Object.keys(files);
-  console.log('10. File keys:', fileKeys);
-  
+
   if (fileKeys.length === 0) {
-    console.log('❌ files object is empty');
-    return res.status(400).json({ message: "No documents uploaded - empty object" });
+    return res
+      .status(400)
+      .json({ message: "No documents uploaded - empty object" });
   }
-  
-  console.log('✅ Files received:', fileKeys.length, 'fields');
-  
+
   const student = await prisma.student.findUnique({
     where: { user_id: user.user_id },
   });
 
   if (!student) {
-    console.log('❌ Student not found for user:', user.user_id);
     return res.status(404).json({ message: "Student not found" });
   }
-  
-  console.log('✅ Student found:', student.student_id);
 
   const createdDocuments = [];
   const skippedDocuments = [];
 
   for (const type of REQUIRED_DOCUMENTS) {
-    console.log(`\n--- Processing ${type} ---`);
-    console.log('  Field exists in files?', type in files);
-    console.log('  Field value:', files[type]);
-    
     const file = files[type]?.[0];
-    
-    if (!file) {
-      console.log(`  ⏭️  No file for ${type}`);
-      continue;
-    }
-    
-    console.log(`  ✅ File found:`, {
-      fieldname: file.fieldname,
-      originalname: file.originalname,
-      size: file.size,
-      mimetype: file.mimetype
-    });
+
+    if (!file) continue;
 
     const exists = await prisma.document.findFirst({
       where: {
@@ -244,18 +215,14 @@ export const uploadDocumentsController = async (
     });
 
     if (exists) {
-      console.log(`  ⚠️  Document ${type} already exists`);
       skippedDocuments.push({ type, reason: "already_exists" });
       continue;
     }
 
-    console.log(`  📤 Uploading ${type} to Cloudinary...`);
     const uploadResult = await uploadToCloudinary(
       file,
       `students/${student.student_id}`,
     );
-    
-    console.log(`  ✅ Uploaded to Cloudinary:`, uploadResult.secure_url);
 
     const document = await prisma.document.create({
       data: {
@@ -265,16 +232,9 @@ export const uploadDocumentsController = async (
         public_id: uploadResult.public_id,
       },
     });
-    
-    console.log(`  ✅ Saved to database:`, document.document_id);
 
     createdDocuments.push(document);
   }
-
-  console.log('\n=== UPLOAD SUMMARY ===');
-  console.log('Created:', createdDocuments.length);
-  console.log('Skipped:', skippedDocuments.length);
-  console.log('=== UPLOAD DEBUG END ===\n');
 
   return res.status(201).json({
     message: "Documents uploaded successfully",
@@ -403,12 +363,18 @@ export const reuploadDocumentController = async (
 
 // ======================== ENROLLMENT ========================
 
+/* ══════════════════════════════════════════════════════════
+   ✅ UPDATED: createEnrollmentController
+   Now accepts pricing_id from the PricingModal
+   The student selects their category (student/employee/external)
+   and this choice is saved with the enrollment for admin to see.
+   ══════════════════════════════════════════════════════════ */
 export const createEnrollmentController = async (
   req: Request,
   res: Response,
 ) => {
   const user = (req as AuthenticatedRequest).user;
-  const { course_id, group_id, level } = req.body;
+  const { course_id, group_id, level, pricing_id } = req.body; // ✅ NEW: pricing_id
 
   if (!course_id) {
     return res.status(400).json({
@@ -443,6 +409,11 @@ export const createEnrollmentController = async (
 
   const course = await prisma.course.findUnique({
     where: { course_id },
+    include: {
+      profile: {
+        include: { pricing: true }, // ✅ Load pricing for validation
+      },
+    },
   });
 
   if (!course) {
@@ -462,6 +433,20 @@ export const createEnrollmentController = async (
     });
   }
 
+  // ✅ NEW: Validate pricing_id if provided
+  if (pricing_id) {
+    const validPricing = course.profile?.pricing.find(
+      (p) => p.pricing_id === pricing_id,
+    );
+
+    if (!validPricing) {
+      return res.status(400).json({
+        message:
+          "Invalid pricing_id. This pricing tier does not belong to the selected course.",
+      });
+    }
+  }
+
   let enrollmentGroupId: string | null = null;
   let enrollmentLevel: Level | null = level || null;
 
@@ -473,11 +458,11 @@ export const createEnrollmentController = async (
           select: {
             enrollments: {
               where: {
-                registration_status: { in: ['VALIDATED', 'PAID', 'FINISHED'] }
-              }
-            }
-          }
-        }
+                registration_status: { in: ["VALIDATED", "PAID", "FINISHED"] },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -491,7 +476,10 @@ export const createEnrollmentController = async (
       });
     }
 
-    if (group.status === "FULL" || group._count.enrollments >= group.max_students) {
+    if (
+      group.status === "FULL" ||
+      group._count.enrollments >= group.max_students
+    ) {
       return res.status(400).json({
         message: "Group is full",
       });
@@ -507,11 +495,24 @@ export const createEnrollmentController = async (
       course_id,
       group_id: enrollmentGroupId,
       level: enrollmentLevel,
+      pricing_id: pricing_id || null, // ✅ NEW: Save student's pricing choice
       registration_status: "PENDING",
     },
     include: {
       course: true,
       group: true,
+      pricing: {
+        // ✅ NEW: Return pricing details in response
+        select: {
+          pricing_id: true,
+          status_fr: true,
+          status_ar: true,
+          status_en: true,
+          price: true,
+          currency: true,
+          discount: true,
+        },
+      },
     },
   });
 
@@ -539,8 +540,48 @@ export const getMyEnrollmentsController = async (
     where: { student_id: student.student_id },
     include: {
       course: true,
-      group: true,
+      group: {
+        include: {
+          teacher: {
+            select: {
+              teacher_id: true,
+              first_name: true,
+              last_name: true,
+              email: true,
+            },
+          },
+          department: {
+            select: {
+              department_id: true,
+              name: true,
+              description: true,
+            },
+          },
+          _count: {
+            select: {
+              enrollments: {
+                where: {
+                  registration_status: {
+                    in: ["VALIDATED", "PAID", "FINISHED"],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
       fees: true,
+      pricing: {
+        select: {
+          pricing_id: true,
+          status_fr: true,
+          status_ar: true,
+          status_en: true,
+          price: true,
+          currency: true,
+          discount: true,
+        },
+      },
     },
     orderBy: { enrollment_date: "desc" },
   });
@@ -554,8 +595,19 @@ export const getMyEnrollmentsController = async (
       .filter((fee) => fee.status === "PAID")
       .reduce((sum, fee) => sum + Number(fee.amount), 0);
 
+    // Map _count.enrollments → _count.students for frontend compatibility
+    const group = enrollment.group
+      ? {
+          ...enrollment.group,
+          _count: {
+            students: enrollment.group._count?.enrollments ?? 0,
+          },
+        }
+      : null;
+
     return {
       ...enrollment,
+      group,
       payment_summary: {
         total: totalFees,
         paid: paidFees,
@@ -605,7 +657,6 @@ export const cancelEnrollmentController = async (
 
   const hasPaidFees = enrollment.fees.some((fee) => fee.status === "PAID");
 
-  // ✅ FIXED: Just check group and reopen if needed
   if (enrollment.group_id) {
     const group = await prisma.group.findUnique({
       where: { group_id: enrollment.group_id },
@@ -678,6 +729,18 @@ export const getEnrollmentDetailsController = async (
       history: {
         orderBy: { changed_at: "desc" },
       },
+      pricing: {
+        // ✅ NEW: Include pricing choice
+        select: {
+          pricing_id: true,
+          status_fr: true,
+          status_ar: true,
+          status_en: true,
+          price: true,
+          currency: true,
+          discount: true,
+        },
+      },
     },
   });
 
@@ -687,6 +750,7 @@ export const getEnrollmentDetailsController = async (
 
   return res.json(enrollment);
 };
+
 // ======================== GROUPS ========================
 
 export const joinGroupController = async (req: Request, res: Response) => {
@@ -710,7 +774,6 @@ export const joinGroupController = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    // ✅ FIXED: Check via enrollments not student.group_id
     const group = await prisma.group.findUnique({
       where: { group_id: groupId },
       include: {
@@ -718,11 +781,11 @@ export const joinGroupController = async (req: Request, res: Response) => {
           select: {
             enrollments: {
               where: {
-                registration_status: { in: ['VALIDATED', 'PAID', 'FINISHED'] }
-              }
-            }
-          }
-        }
+                registration_status: { in: ["VALIDATED", "PAID", "FINISHED"] },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -766,7 +829,6 @@ export const joinGroupController = async (req: Request, res: Response) => {
       });
     }
 
-    // ✅ FIXED: Update enrollment, not student
     await prisma.enrollment.update({
       where: { enrollment_id: enrollment.enrollment_id },
       data: {
@@ -806,12 +868,11 @@ export const leaveGroupController = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    // ✅ FIXED: Find enrollment with group
     const enrollment = await prisma.enrollment.findFirst({
       where: {
         student_id: student.student_id,
         group_id: { not: null },
-        registration_status: { in: ['VALIDATED', 'PAID', 'FINISHED'] }
+        registration_status: { in: ["VALIDATED", "PAID", "FINISHED"] },
       },
     });
 
@@ -823,7 +884,6 @@ export const leaveGroupController = async (req: Request, res: Response) => {
 
     const groupId = enrollment.group_id;
 
-    // ✅ FIXED: Update enrollment, not student
     await prisma.enrollment.update({
       where: { enrollment_id: enrollment.enrollment_id },
       data: { group_id: null },
@@ -870,9 +930,9 @@ export const getCourseGroupsForStudents = async (
         select: {
           enrollments: {
             where: {
-              registration_status: { in: ['VALIDATED', 'PAID', 'FINISHED'] }
-            }
-          }
+              registration_status: { in: ["VALIDATED", "PAID", "FINISHED"] },
+            },
+          },
         },
       },
     },
@@ -923,8 +983,10 @@ export const getCoursesForStudents = async (req: Request, res: Response) => {
               select: {
                 enrollments: {
                   where: {
-                    registration_status: { in: ['VALIDATED', 'PAID', 'FINISHED'] }
-                  }
+                    registration_status: {
+                      in: ["VALIDATED", "PAID", "FINISHED"],
+                    },
+                  },
                 },
               },
             },
@@ -996,6 +1058,7 @@ export const getMyDashboardController = async (req: Request, res: Response) => {
           course: true,
           group: true,
           fees: true,
+          pricing: true, // ✅ NEW
         },
         orderBy: { enrollment_date: "desc" },
       },
@@ -1037,9 +1100,7 @@ export const getMyDashboardController = async (req: Request, res: Response) => {
     "language",
   ];
 
-  const missingFields = fieldNames.filter(
-    (_, index) => !profileFields[index],
-  );
+  const missingFields = fieldNames.filter((_, index) => !profileFields[index]);
 
   /* ================= DOCUMENTS ================= */
 
@@ -1073,7 +1134,6 @@ export const getMyDashboardController = async (req: Request, res: Response) => {
     ["PENDING", "VALIDATED", "PAID"].includes(e.registration_status),
   );
 
-  // ✅ ملخص الرسوم
   const totalFees = student.enrollments
     .flatMap((e) => e.fees)
     .reduce((sum, fee) => sum + Number(fee.amount), 0);
@@ -1082,19 +1142,19 @@ export const getMyDashboardController = async (req: Request, res: Response) => {
     .filter((fee) => fee.status === "PAID")
     .reduce((sum, fee) => sum + Number(fee.amount), 0);
 
-  // ✅ FIXED: Get current groups from enrollments
   const currentGroups = student.enrollments
-    .filter(e => 
-      e.group_id && 
-      ['VALIDATED', 'PAID', 'FINISHED'].includes(e.registration_status)
+    .filter(
+      (e) =>
+        e.group_id &&
+        ["VALIDATED", "PAID", "FINISHED"].includes(e.registration_status),
     )
-    .map(e => ({
+    .map((e) => ({
       group_id: e.group?.group_id,
       name: e.group?.name,
       level: e.group?.level,
       course_name: e.course?.course_name,
     }))
-    .filter(g => g.group_id);
+    .filter((g) => g.group_id);
 
   return res.json({
     profile: {
@@ -1116,7 +1176,8 @@ export const getMyDashboardController = async (req: Request, res: Response) => {
       isReady: isEnrollmentReady,
       active_count: activeEnrollments.length,
       max_allowed: MAX_ACTIVE_ENROLLMENTS,
-      can_enroll: isEnrollmentReady && activeEnrollments.length < MAX_ACTIVE_ENROLLMENTS,
+      can_enroll:
+        isEnrollmentReady && activeEnrollments.length < MAX_ACTIVE_ENROLLMENTS,
       enrollments: activeEnrollments.map((e) => ({
         enrollment_id: e.enrollment_id,
         course_name: e.course?.course_name,
@@ -1124,6 +1185,14 @@ export const getMyDashboardController = async (req: Request, res: Response) => {
         level: e.level,
         status: e.registration_status,
         enrollment_date: e.enrollment_date,
+        pricing: e.pricing // ✅ NEW: Include pricing in dashboard
+          ? {
+              status_fr: e.pricing.status_fr,
+              status_ar: e.pricing.status_ar,
+              price: Number(e.pricing.price),
+              currency: e.pricing.currency,
+            }
+          : null,
       })),
     },
     fees: {
@@ -1132,7 +1201,7 @@ export const getMyDashboardController = async (req: Request, res: Response) => {
       remaining: totalFees - paidFees,
       is_fully_paid: totalFees > 0 && paidFees >= totalFees,
     },
-    current_groups: currentGroups, // ✅ Array of groups, not single group
+    current_groups: currentGroups,
   });
 };
 
@@ -1155,6 +1224,7 @@ export const getMyFeesController = async (req: Request, res: Response) => {
       enrollment: {
         include: {
           course: true,
+          pricing: true, // ✅ NEW
         },
       },
     },
@@ -1214,14 +1284,10 @@ export const getMyAttendanceController = async (
   });
 
   const totalSessions = attendance.length;
-  const presentCount = attendance.filter(
-    (a) => a.status === "PRESENT",
-  ).length;
+  const presentCount = attendance.filter((a) => a.status === "PRESENT").length;
   const absentCount = attendance.filter((a) => a.status === "ABSENT").length;
   const attendanceRate =
-    totalSessions > 0
-      ? Math.round((presentCount / totalSessions) * 100)
-      : 0;
+    totalSessions > 0 ? Math.round((presentCount / totalSessions) * 100) : 0;
 
   return res.json({
     records: attendance,
@@ -1283,4 +1349,65 @@ export const getMyResultsController = async (req: Request, res: Response) => {
       average_score: averageScore,
     },
   });
+};
+
+// ======================== COURSE PRICING ========================
+
+export const getCourseProfileWithPricing = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const { courseId } = req.params;
+
+    if (!courseId) {
+      return res.status(400).json({ message: "Course ID is required" });
+    }
+
+    const profile = await prisma.courseProfile.findUnique({
+      where: { course_id: courseId },
+      include: {
+        pricing: {
+          orderBy: { sort_order: "asc" },
+        },
+        course: {
+          select: {
+            course_id: true,
+            course_name: true,
+            course_code: true,
+          },
+        },
+      },
+    });
+
+    if (!profile) {
+      return res.status(404).json({
+        message: "Course profile not found",
+        error: "This course does not have a profile set up yet.",
+      });
+    }
+
+    if (!profile.is_published) {
+      return res.status(403).json({
+        message: "Course profile is not published",
+        error: "This course is not available for enrollment at this time.",
+      });
+    }
+
+    if (!profile.registration_open) {
+      return res.status(403).json({
+        message: "Registration is closed",
+        error: "This course is not currently accepting new enrollments.",
+      });
+    }
+
+    return res.json(profile);
+  } catch (error) {
+    console.error("Error fetching course profile with pricing:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error:
+        "An error occurred while fetching course information. Please try again later.",
+    });
+  }
 };

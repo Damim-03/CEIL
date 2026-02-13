@@ -1,12 +1,5 @@
 /* ===============================================================
-   ADMIN ENROLLMENTS MANAGEMENT PAGE - WITH PRICING SELECTION
-   
-   ✅ COMPLETE VERSION with all features:
-   1. Document Review (PENDING documents)
-   2. Enrollment Validation with Pricing Selection (PENDING → VALIDATED)
-   3. Payment Confirmation (VALIDATED → PAID)
-   4. Group Assignment (PAID students)
-   5. Finish Enrollment (PAID → FINISHED)
+   ADMIN ENROLLMENTS MANAGEMENT PAGE - Brand Colors Applied
 =============================================================== */
 
 import { useState } from "react";
@@ -24,8 +17,8 @@ import {
   Calendar,
   GraduationCap,
   AlertCircle,
-  Sparkles,
-  CheckCircle2,
+  Tag,
+  ExternalLink,
 } from "lucide-react";
 
 import PageLoader from "../../../../components/PageLoader";
@@ -52,277 +45,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../../components/ui/select";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "../../../../components/ui/radio-group";
-import { Label } from "../../../../components/ui/label";
-import { Badge } from "../../../../components/ui/badge";
 
 import {
   useAdminEnrollments,
   useValidateEnrollment,
   useRejectEnrollment,
-  useMarkEnrollmentPaid,
   useFinishEnrollment,
   useAddStudentToGroup,
 } from "../../../../hooks/admin/useAdmin";
 
 import type { Enrollment } from "../../../../types/Types";
 import { toast } from "sonner";
-
-/* ===============================================================
-   PRICING SELECTION MODAL COMPONENT
-=============================================================== */
-
-interface PricingSelectionModalProps {
-  open: boolean;
-  onClose: () => void;
-  enrollment: Enrollment | null;
-  onConfirm: (pricingId: string) => Promise<void>;
-  isLoading?: boolean;
-}
-
-const PricingSelectionModal = ({
-  open,
-  onClose,
-  enrollment,
-  onConfirm,
-  isLoading = false,
-}: PricingSelectionModalProps) => {
-  const [selectedPricingId, setSelectedPricingId] = useState<string>("");
-
-  const pricing = enrollment?.course?.profile?.pricing || [];
-
-  const handleConfirm = async () => {
-    if (!selectedPricingId && pricing.length > 0) {
-      toast.error("Please select a pricing tier");
-      return;
-    }
-
-    await onConfirm(selectedPricingId);
-    setSelectedPricingId("");
-  };
-
-  const selectedPricing = pricing.find(
-    (p: any) => p.pricing_id === selectedPricingId,
-  );
-
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-            Validate Enrollment
-          </DialogTitle>
-          <DialogDescription>
-            Select the appropriate pricing tier for this student
-          </DialogDescription>
-        </DialogHeader>
-
-        {/* Student Info */}
-        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Student</span>
-            <span className="font-semibold">
-              {enrollment?.student?.first_name} {enrollment?.student?.last_name}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Course</span>
-            <span className="font-medium">
-              {enrollment?.course?.course_name}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">
-              Enrollment Date
-            </span>
-            <span className="text-sm">
-              {enrollment?.enrollment_date &&
-                new Date(enrollment.enrollment_date).toLocaleDateString()}
-            </span>
-          </div>
-        </div>
-
-        {/* Pricing Selection */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-primary" />
-            <h3 className="font-semibold">Select Pricing Tier</h3>
-          </div>
-
-          {pricing.length === 0 ? (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3 dark:bg-amber-950/30 dark:border-amber-800">
-              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-semibold text-amber-900 dark:text-amber-100">
-                  No Pricing Configured
-                </p>
-                <p className="text-amber-700 dark:text-amber-300 mt-1">
-                  Please configure pricing tiers in the course profile before
-                  validating enrollments.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <RadioGroup
-              value={selectedPricingId}
-              onValueChange={setSelectedPricingId}
-              className="space-y-3"
-            >
-              {pricing.map((tier: any) => {
-                const isSelected = selectedPricingId === tier.pricing_id;
-
-                return (
-                  <div
-                    key={tier.pricing_id}
-                    className={`relative rounded-xl border-2 transition-all duration-200 ${
-                      isSelected
-                        ? "border-primary bg-primary/5 shadow-md"
-                        : "border-border hover:border-primary/30 hover:bg-muted/30"
-                    }`}
-                  >
-                    <Label
-                      htmlFor={tier.pricing_id}
-                      className="flex items-center gap-4 p-4 cursor-pointer"
-                    >
-                      <RadioGroupItem
-                        value={tier.pricing_id}
-                        id={tier.pricing_id}
-                        className="flex-shrink-0"
-                      />
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-foreground">
-                            {tier.status_fr}
-                          </span>
-                          {tier.status_ar && (
-                            <span className="text-sm text-muted-foreground">
-                              ({tier.status_ar})
-                            </span>
-                          )}
-                          {tier.discount &&
-                            tier.discount !== "Aucune" &&
-                            tier.discount !== "None" && (
-                              <Badge
-                                variant="secondary"
-                                className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-                              >
-                                <Sparkles className="w-3 h-3 mr-1" />
-                                {tier.discount}
-                              </Badge>
-                            )}
-                        </div>
-
-                        {tier.status_en && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {tier.status_en}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="text-right">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-bold text-primary">
-                            {Number(tier.price).toLocaleString()}
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            {tier.currency}
-                          </span>
-                        </div>
-                      </div>
-                    </Label>
-
-                    {isSelected && (
-                      <div className="absolute top-2 right-2">
-                        <CheckCircle2 className="w-5 h-5 text-primary fill-primary/20" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </RadioGroup>
-          )}
-        </div>
-
-        {/* Selected Summary */}
-        {selectedPricing && (
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Users className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground">
-                  Selected Category
-                </p>
-                <p className="font-semibold text-lg">
-                  {selectedPricing.status_fr}
-                </p>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-sm text-muted-foreground">
-                    Fee Amount:
-                  </span>
-                  <span className="text-xl font-bold text-primary">
-                    {Number(selectedPricing.price).toLocaleString()}{" "}
-                    {selectedPricing.currency}
-                  </span>
-                </div>
-                {selectedPricing.discount &&
-                  selectedPricing.discount !== "Aucune" && (
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
-                      Discount applied: {selectedPricing.discount}
-                    </p>
-                  )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={(!selectedPricingId && pricing.length > 0) || isLoading}
-            className="gap-2"
-          >
-            {isLoading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Validating...
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="w-4 h-4" />
-                Validate Enrollment
-              </>
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
+import { useTranslation } from "react-i18next";
 
 /* ===============================================================
    MAIN PAGE COMPONENT
 =============================================================== */
 
 export default function AdminEnrollmentsPage() {
+  const { t } = useTranslation();
   const { data: enrollments = [], isLoading } = useAdminEnrollments();
   const validateEnrollment = useValidateEnrollment();
   const rejectEnrollment = useRejectEnrollment();
-  const markPaid = useMarkEnrollmentPaid();
   const finishEnrollment = useFinishEnrollment();
   const addToGroup = useAddStudentToGroup();
 
@@ -331,161 +75,125 @@ export default function AdminEnrollmentsPage() {
   const [selectedEnrollment, setSelectedEnrollment] =
     useState<Enrollment | null>(null);
   const [rejectDialog, setRejectDialog] = useState(false);
-  const [pricingDialog, setPricingDialog] = useState(false);
   const [assignGroupDialog, setAssignGroupDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
 
   if (isLoading) return <PageLoader />;
 
-  // Filter enrollments
-  const filteredEnrollments = enrollments.filter((enrollment) => {
+  const filteredEnrollments = enrollments.filter((enrollment: any) => {
     const studentName = enrollment.student
       ? `${enrollment.student.first_name} ${enrollment.student.last_name}`.toLowerCase()
       : "";
     const courseName = enrollment.course?.course_name?.toLowerCase() || "";
-
     const matchesSearch =
       studentName.includes(search.toLowerCase()) ||
       courseName.includes(search.toLowerCase());
-
     const matchesStatus =
       statusFilter === "all" || enrollment.registration_status === statusFilter;
-
     return matchesSearch && matchesStatus;
   });
 
-  // Stats
   const stats = {
     total: enrollments.length,
-    pending: enrollments.filter((e) => e.registration_status === "PENDING")
+    pending: enrollments.filter((e: any) => e.registration_status === "PENDING")
       .length,
-    validated: enrollments.filter((e) => e.registration_status === "VALIDATED")
+    validated: enrollments.filter(
+      (e: any) => e.registration_status === "VALIDATED",
+    ).length,
+    paid: enrollments.filter((e: any) => e.registration_status === "PAID")
       .length,
-    paid: enrollments.filter((e) => e.registration_status === "PAID").length,
-    rejected: enrollments.filter((e) => e.registration_status === "REJECTED")
-      .length,
-    finished: enrollments.filter((e) => e.registration_status === "FINISHED")
-      .length,
+    rejected: enrollments.filter(
+      (e: any) => e.registration_status === "REJECTED",
+    ).length,
+    finished: enrollments.filter(
+      (e: any) => e.registration_status === "FINISHED",
+    ).length,
   };
 
-  // Categorized enrollments
   const pendingEnrollments = filteredEnrollments.filter(
-    (e) => e.registration_status === "PENDING",
+    (e: any) => e.registration_status === "PENDING",
   );
   const validatedEnrollments = filteredEnrollments.filter(
-    (e) => e.registration_status === "VALIDATED",
+    (e: any) => e.registration_status === "VALIDATED",
   );
   const paidEnrollments = filteredEnrollments.filter(
-    (e) => e.registration_status === "PAID",
+    (e: any) => e.registration_status === "PAID",
   );
   const finishedEnrollments = filteredEnrollments.filter(
-    (e) => e.registration_status === "FINISHED",
+    (e: any) => e.registration_status === "FINISHED",
   );
 
-  // ✅ UPDATED: Validate with pricing selection
-  const handleValidate = async (pricingId: string) => {
-    if (!selectedEnrollment) return;
-
+  const handleValidate = async (
+    enrollmentId: string,
+    pricingId?: string | null,
+  ) => {
+    if (!window.confirm(t("admin.enrollments.confirmValidate"))) return;
     try {
       await validateEnrollment.mutateAsync({
-        enrollmentId: selectedEnrollment.enrollment_id,
-        pricing_id: pricingId,
+        enrollmentId,
+        pricing_id: pricingId || undefined,
       });
-
-      toast.success("✅ Enrollment validated! Fee created successfully.");
-      setPricingDialog(false);
-      setSelectedEnrollment(null);
+      toast.success(t("admin.enrollments.validateSuccess"));
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message || "Failed to validate enrollment";
-      toast.error(message);
-      console.error(error);
+      toast.error(
+        error?.response?.data?.message || t("admin.enrollments.validateFailed"),
+      );
     }
-  };
-
-  const openPricingDialog = (enrollment: Enrollment) => {
-    setSelectedEnrollment(enrollment);
-    setPricingDialog(true);
   };
 
   const handleReject = async () => {
     if (!selectedEnrollment || !rejectReason.trim()) {
-      toast.error("Please provide a rejection reason");
+      toast.error(t("admin.enrollments.provideReason"));
       return;
     }
-
     try {
       await rejectEnrollment.mutateAsync({
         enrollmentId: selectedEnrollment.enrollment_id,
         reason: rejectReason,
       });
-      toast.success("Enrollment rejected");
+      toast.success(t("admin.enrollments.rejectSuccess"));
       setRejectDialog(false);
       setRejectReason("");
       setSelectedEnrollment(null);
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message || "Failed to reject enrollment";
-      toast.error(message);
-      console.error(error);
-    }
-  };
-
-  const handleMarkPaid = async (enrollmentId: string) => {
-    if (!window.confirm("Confirm payment for this enrollment?")) {
-      return;
-    }
-
-    try {
-      await markPaid.mutateAsync(enrollmentId);
-      toast.success(
-        "💰 Payment confirmed! Student can now be assigned to a group.",
+      toast.error(
+        error?.response?.data?.message || t("admin.enrollments.rejectFailed"),
       );
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message || "Failed to confirm payment";
-      toast.error(message);
-      console.error(error);
     }
   };
 
   const handleAssignGroup = async () => {
     if (!selectedEnrollment || !selectedGroupId) {
-      toast.error("Please select a group");
+      toast.error(t("admin.enrollments.selectGroupError"));
       return;
     }
-
     try {
       await addToGroup.mutateAsync({
         groupId: selectedGroupId,
         studentId: selectedEnrollment.student_id,
       });
-      toast.success("👥 Student assigned to group successfully!");
+      toast.success(t("admin.enrollments.assignGroupSuccess"));
       setAssignGroupDialog(false);
       setSelectedGroupId("");
       setSelectedEnrollment(null);
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message || "Failed to assign student to group";
-      toast.error(message);
-      console.error(error);
+      toast.error(
+        error?.response?.data?.message ||
+          t("admin.enrollments.assignGroupFailed"),
+      );
     }
   };
 
   const handleFinish = async (enrollmentId: string) => {
-    if (!window.confirm("Mark this enrollment as finished?")) {
-      return;
-    }
-
+    if (!window.confirm(t("admin.enrollments.confirmFinish"))) return;
     try {
       await finishEnrollment.mutateAsync(enrollmentId);
-      toast.success("🎓 Enrollment marked as finished!");
+      toast.success(t("admin.enrollments.finishSuccess"));
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message || "Failed to finish enrollment";
-      toast.error(message);
-      console.error(error);
+      toast.error(
+        error?.response?.data?.message || t("admin.enrollments.finishFailed"),
+      );
     }
   };
 
@@ -493,7 +201,6 @@ export default function AdminEnrollmentsPage() {
     setSelectedEnrollment(enrollment);
     setRejectDialog(true);
   };
-
   const openAssignGroupDialog = (enrollment: Enrollment) => {
     setSelectedEnrollment(enrollment);
     setAssignGroupDialog(true);
@@ -502,15 +209,20 @@ export default function AdminEnrollmentsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Enrollment Management
-          </h1>
-          <p className="text-gray-500 mt-0.5 text-sm">
-            Complete student enrollment lifecycle from application to group
-            assignment
-          </p>
+      <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-6 overflow-hidden">
+        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20">
+            <GraduationCap className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-[#1B1B1B]">
+              {t("admin.enrollments.title")}
+            </h1>
+            <p className="text-sm text-[#BEB29E] mt-0.5">
+              {t("admin.enrollments.subtitle")}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -518,105 +230,131 @@ export default function AdminEnrollmentsPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <StatCard
           icon={FileText}
-          label="Total"
+          label={t("admin.enrollments.stats.total")}
           value={stats.total}
-          color="blue"
+          color="teal"
         />
         <StatCard
           icon={Clock}
-          label="Pending Review"
+          label={t("admin.enrollments.stats.pendingReview")}
           value={stats.pending}
-          color="yellow"
+          color="mustard"
           badge={stats.pending > 0}
         />
         <StatCard
           icon={CheckCircle}
-          label="Validated"
+          label={t("admin.enrollments.stats.validated")}
           value={stats.validated}
           color="green"
         />
         <StatCard
           icon={DollarSign}
-          label="Paid"
+          label={t("admin.enrollments.stats.paid")}
           value={stats.paid}
-          color="blue"
+          color="teal"
           badge={stats.paid > 0}
         />
         <StatCard
           icon={XCircle}
-          label="Rejected"
+          label={t("admin.enrollments.stats.rejected")}
           value={stats.rejected}
           color="red"
         />
         <StatCard
           icon={GraduationCap}
-          label="Finished"
+          label={t("admin.enrollments.stats.finished")}
           value={stats.finished}
-          color="purple"
+          color="beige"
         />
       </div>
 
       {/* Workflow Info Card */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-[#2B6F5E]/5 border border-[#2B6F5E]/15 rounded-2xl p-4">
         <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-[#2B6F5E] mt-0.5" />
           <div className="flex-1">
-            <h3 className="font-semibold text-blue-900 mb-1">
-              Enrollment Workflow
+            <h3 className="font-semibold text-[#2B6F5E] mb-1">
+              {t("admin.enrollments.workflow.title")}
             </h3>
-            <p className="text-sm text-blue-700 leading-relaxed">
-              <span className="font-medium">PENDING</span> → Validate (creates
-              fee) →<span className="font-medium"> VALIDATED</span> → Confirm
-              payment →<span className="font-medium"> PAID</span> → Assign to
-              group →<span className="font-medium"> FINISHED</span>
+            <p className="text-sm text-[#2B6F5E]/80 leading-relaxed">
+              <span className="font-medium">
+                {t("admin.enrollments.workflow.pending")}
+              </span>{" "}
+              → {t("admin.enrollments.workflow.validateStep")} →
+              <span className="font-medium">
+                {" "}
+                {t("admin.enrollments.workflow.validated")}
+              </span>{" "}
+              → {t("admin.enrollments.workflow.payStep")}{" "}
+              <Link
+                to="/admin/fees"
+                className="underline font-semibold hover:text-[#2B6F5E]"
+              >
+                {t("admin.enrollments.workflow.feesPage")}
+              </Link>{" "}
+              →
+              <span className="font-medium">
+                {" "}
+                {t("admin.enrollments.workflow.paid")}
+              </span>{" "}
+              → {t("admin.enrollments.workflow.assignStep")} →
+              <span className="font-medium">
+                {" "}
+                {t("admin.enrollments.workflow.finished")}
+              </span>
             </p>
           </div>
         </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-5">
         <div className="flex flex-col sm:flex-row gap-4">
-          {/* Search */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E]" />
             <Input
-              placeholder="Search by student name or course..."
+              placeholder={t("admin.enrollments.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
+              className="pl-10 border-[#D8CDC0]/60 focus:border-[#2B6F5E] focus:ring-[#2B6F5E]/20"
             />
           </div>
-
-          {/* Status Filter */}
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-400" />
+            <Filter className="w-4 h-4 text-[#BEB29E]" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-[#D8CDC0]/60 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2B6F5E]/20 focus:border-[#2B6F5E]"
             >
-              <option value="all">All Status</option>
-              <option value="PENDING">Pending</option>
-              <option value="VALIDATED">Validated</option>
-              <option value="PAID">Paid</option>
-              <option value="REJECTED">Rejected</option>
-              <option value="FINISHED">Finished</option>
+              <option value="all">
+                {t("admin.enrollments.filter.allStatus")}
+              </option>
+              <option value="PENDING">
+                {t("admin.enrollments.filter.pending")}
+              </option>
+              <option value="VALIDATED">
+                {t("admin.enrollments.filter.validated")}
+              </option>
+              <option value="PAID">{t("admin.enrollments.filter.paid")}</option>
+              <option value="REJECTED">
+                {t("admin.enrollments.filter.rejected")}
+              </option>
+              <option value="FINISHED">
+                {t("admin.enrollments.filter.finished")}
+              </option>
             </select>
           </div>
         </div>
-
-        {/* Results count */}
-        <div className="mt-3 text-sm text-gray-600">
-          Showing{" "}
-          <span className="font-semibold text-gray-900">
+        <div className="mt-3 text-sm text-[#6B5D4F]">
+          {t("admin.enrollments.showing")}{" "}
+          <span className="font-semibold text-[#1B1B1B]">
             {filteredEnrollments.length}
           </span>{" "}
-          of{" "}
-          <span className="font-semibold text-gray-900">
+          {t("admin.enrollments.of")}{" "}
+          <span className="font-semibold text-[#1B1B1B]">
             {enrollments.length}
           </span>{" "}
-          enrollments
+          {t("admin.enrollments.enrollmentsLabel")}
         </div>
       </div>
 
@@ -624,86 +362,113 @@ export default function AdminEnrollmentsPage() {
       <Tabs defaultValue="pending" className="space-y-4">
         <TabsList>
           <TabsTrigger value="pending">
-            ⏳ Pending ({pendingEnrollments.length})
+            ⏳ {t("admin.enrollments.tabs.pending")} (
+            {pendingEnrollments.length})
           </TabsTrigger>
           <TabsTrigger value="validated">
-            ✅ Validated ({validatedEnrollments.length})
+            ✅ {t("admin.enrollments.tabs.validated")} (
+            {validatedEnrollments.length})
           </TabsTrigger>
           <TabsTrigger value="paid">
-            💰 Paid ({paidEnrollments.length})
+            💰 {t("admin.enrollments.tabs.paid")} ({paidEnrollments.length})
           </TabsTrigger>
           <TabsTrigger value="finished">
-            🎓 Finished ({finishedEnrollments.length})
+            🎓 {t("admin.enrollments.tabs.finished")} (
+            {finishedEnrollments.length})
           </TabsTrigger>
           <TabsTrigger value="all">
-            All ({filteredEnrollments.length})
+            {t("admin.enrollments.tabs.all")} ({filteredEnrollments.length})
           </TabsTrigger>
         </TabsList>
 
-        {/* Pending Tab */}
         <TabsContent value="pending">
-          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
-            <div className="flex items-center gap-2 text-sm text-gray-700">
-              <Clock className="w-4 h-4" />
-              <span className="font-medium">Action Required:</span>
-              <span>Review documents and validate enrollments to proceed</span>
+          <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-4 mb-4">
+            <div className="flex items-center gap-2 text-sm text-[#6B5D4F]">
+              <Clock className="w-4 h-4 text-[#C4A035]" />
+              <span className="font-medium text-[#1B1B1B]">
+                {t("admin.enrollments.actionRequired")}:
+              </span>
+              <span>{t("admin.enrollments.pendingAction")}</span>
             </div>
           </div>
           {pendingEnrollments.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {pendingEnrollments.map((enrollment) => (
+              {pendingEnrollments.map((enrollment: any) => (
                 <EnrollmentCard
                   key={enrollment.enrollment_id}
                   enrollment={enrollment}
-                  onValidate={() => openPricingDialog(enrollment)}
+                  onValidate={() =>
+                    handleValidate(
+                      enrollment.enrollment_id,
+                      enrollment.pricing_id,
+                    )
+                  }
                   onReject={() => openRejectDialog(enrollment)}
                 />
               ))}
             </div>
           ) : (
-            <EmptyState message="No pending enrollments" icon={Clock} />
+            <EmptyState
+              message={t("admin.enrollments.empty.pending")}
+              icon={Clock}
+            />
           )}
         </TabsContent>
 
-        {/* Validated Tab */}
         <TabsContent value="validated">
-          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
-            <div className="flex items-center gap-2 text-sm text-gray-700">
-              <DollarSign className="w-4 h-4" />
-              <span className="font-medium">Action Required:</span>
-              <span>Confirm student payments to allow group assignment</span>
+          <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-[#6B5D4F]">
+                <DollarSign className="w-4 h-4 text-[#C4A035]" />
+                <span className="font-medium text-[#1B1B1B]">
+                  {t("admin.enrollments.awaitingPayment")}:
+                </span>
+                <span>{t("admin.enrollments.validatedAction")}</span>
+              </div>
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="border-[#D8CDC0]/60 hover:bg-[#C4A035]/8 hover:border-[#C4A035]/40"
+              >
+                <Link to="/admin/fees" className="gap-2">
+                  <ExternalLink className="w-3.5 h-3.5" />{" "}
+                  {t("admin.enrollments.goToFees")}
+                </Link>
+              </Button>
             </div>
           </div>
           {validatedEnrollments.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {validatedEnrollments.map((enrollment) => (
+              {validatedEnrollments.map((enrollment: any) => (
                 <EnrollmentCard
                   key={enrollment.enrollment_id}
                   enrollment={enrollment}
-                  onMarkPaid={() => handleMarkPaid(enrollment.enrollment_id)}
+                  showGoToFees
                 />
               ))}
             </div>
           ) : (
             <EmptyState
-              message="No validated enrollments awaiting payment"
+              message={t("admin.enrollments.empty.validated")}
               icon={CheckCircle}
             />
           )}
         </TabsContent>
 
-        {/* Paid Tab */}
         <TabsContent value="paid">
-          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
-            <div className="flex items-center gap-2 text-sm text-gray-700">
-              <Users className="w-4 h-4" />
-              <span className="font-medium">Action Required:</span>
-              <span>Assign students to groups and mark as finished</span>
+          <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-4 mb-4">
+            <div className="flex items-center gap-2 text-sm text-[#6B5D4F]">
+              <Users className="w-4 h-4 text-[#2B6F5E]" />
+              <span className="font-medium text-[#1B1B1B]">
+                {t("admin.enrollments.actionRequired")}:
+              </span>
+              <span>{t("admin.enrollments.paidAction")}</span>
             </div>
           </div>
           {paidEnrollments.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {paidEnrollments.map((enrollment) => (
+              {paidEnrollments.map((enrollment: any) => (
                 <EnrollmentCard
                   key={enrollment.enrollment_id}
                   enrollment={enrollment}
@@ -713,15 +478,17 @@ export default function AdminEnrollmentsPage() {
               ))}
             </div>
           ) : (
-            <EmptyState message="No paid enrollments" icon={DollarSign} />
+            <EmptyState
+              message={t("admin.enrollments.empty.paid")}
+              icon={DollarSign}
+            />
           )}
         </TabsContent>
 
-        {/* Finished Tab */}
         <TabsContent value="finished">
           {finishedEnrollments.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {finishedEnrollments.map((enrollment) => (
+              {finishedEnrollments.map((enrollment: any) => (
                 <EnrollmentCard
                   key={enrollment.enrollment_id}
                   enrollment={enrollment}
@@ -730,23 +497,26 @@ export default function AdminEnrollmentsPage() {
             </div>
           ) : (
             <EmptyState
-              message="No finished enrollments"
+              message={t("admin.enrollments.empty.finished")}
               icon={GraduationCap}
             />
           )}
         </TabsContent>
 
-        {/* All Tab */}
         <TabsContent value="all">
           {filteredEnrollments.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {filteredEnrollments.map((enrollment) => (
+              {filteredEnrollments.map((enrollment: any) => (
                 <EnrollmentCard
                   key={enrollment.enrollment_id}
                   enrollment={enrollment}
                   onValidate={
                     enrollment.registration_status === "PENDING"
-                      ? () => openPricingDialog(enrollment)
+                      ? () =>
+                          handleValidate(
+                            enrollment.enrollment_id,
+                            enrollment.pricing_id,
+                          )
                       : undefined
                   }
                   onReject={
@@ -754,11 +524,7 @@ export default function AdminEnrollmentsPage() {
                       ? () => openRejectDialog(enrollment)
                       : undefined
                   }
-                  onMarkPaid={
-                    enrollment.registration_status === "VALIDATED"
-                      ? () => handleMarkPaid(enrollment.enrollment_id)
-                      : undefined
-                  }
+                  showGoToFees={enrollment.registration_status === "VALIDATED"}
                   onAssignGroup={
                     enrollment.registration_status === "PAID" &&
                     !enrollment.group_id
@@ -774,44 +540,34 @@ export default function AdminEnrollmentsPage() {
               ))}
             </div>
           ) : (
-            <EmptyState message="No enrollments found" icon={FileText} />
+            <EmptyState
+              message={t("admin.enrollments.empty.all")}
+              icon={FileText}
+            />
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Pricing Selection Modal */}
-      <PricingSelectionModal
-        open={pricingDialog}
-        onClose={() => {
-          setPricingDialog(false);
-          setSelectedEnrollment(null);
-        }}
-        enrollment={selectedEnrollment}
-        onConfirm={handleValidate}
-        isLoading={validateEnrollment.isPending}
-      />
 
       {/* Reject Dialog */}
       <Dialog open={rejectDialog} onOpenChange={setRejectDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject Enrollment</DialogTitle>
+            <DialogTitle>
+              {t("admin.enrollments.rejectDialog.title")}
+            </DialogTitle>
             <DialogDescription>
-              Please provide a reason for rejecting this enrollment. The student
-              will be notified.
+              {t("admin.enrollments.rejectDialog.description")}
             </DialogDescription>
           </DialogHeader>
-
           <div className="py-4">
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Enter rejection reason (e.g., Incomplete documents, Invalid information, etc.)"
-              className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              placeholder={t("admin.enrollments.rejectDialog.placeholder")}
+              className="w-full p-3 border border-[#D8CDC0]/60 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
               rows={4}
             />
           </div>
-
           <DialogFooter>
             <Button
               variant="outline"
@@ -820,8 +576,9 @@ export default function AdminEnrollmentsPage() {
                 setRejectReason("");
                 setSelectedEnrollment(null);
               }}
+              className="border-[#D8CDC0]/60"
             >
-              Cancel
+              {t("admin.enrollments.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -829,8 +586,8 @@ export default function AdminEnrollmentsPage() {
               disabled={!rejectReason.trim() || rejectEnrollment.isPending}
             >
               {rejectEnrollment.isPending
-                ? "Rejecting..."
-                : "Confirm Rejection"}
+                ? t("admin.enrollments.rejectDialog.rejecting")
+                : t("admin.enrollments.rejectDialog.confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -840,20 +597,24 @@ export default function AdminEnrollmentsPage() {
       <Dialog open={assignGroupDialog} onOpenChange={setAssignGroupDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Assign Student to Group</DialogTitle>
+            <DialogTitle>
+              {t("admin.enrollments.assignDialog.title")}
+            </DialogTitle>
             <DialogDescription>
-              Select a group for {selectedEnrollment?.student?.first_name}{" "}
-              {selectedEnrollment?.student?.last_name}
+              {t("admin.enrollments.assignDialog.description", {
+                name: `${selectedEnrollment?.student?.first_name || ""} ${selectedEnrollment?.student?.last_name || ""}`.trim(),
+              })}
             </DialogDescription>
           </DialogHeader>
-
           <div className="py-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Available Groups
+            <label className="block text-sm font-medium text-[#1B1B1B] mb-2">
+              {t("admin.enrollments.assignDialog.availableGroups")}
             </label>
             <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a group" />
+                <SelectValue
+                  placeholder={t("admin.enrollments.assignDialog.selectGroup")}
+                />
               </SelectTrigger>
               <SelectContent>
                 {selectedEnrollment?.course?.groups
@@ -872,7 +633,6 @@ export default function AdminEnrollmentsPage() {
               </SelectContent>
             </Select>
           </div>
-
           <DialogFooter>
             <Button
               variant="outline"
@@ -881,14 +641,18 @@ export default function AdminEnrollmentsPage() {
                 setSelectedGroupId("");
                 setSelectedEnrollment(null);
               }}
+              className="border-[#D8CDC0]/60"
             >
-              Cancel
+              {t("admin.enrollments.cancel")}
             </Button>
             <Button
               onClick={handleAssignGroup}
               disabled={!selectedGroupId || addToGroup.isPending}
+              className="bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white"
             >
-              {addToGroup.isPending ? "Assigning..." : "Assign to Group"}
+              {addToGroup.isPending
+                ? t("admin.enrollments.assignDialog.assigning")
+                : t("admin.enrollments.assignDialog.assignBtn")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -898,14 +662,14 @@ export default function AdminEnrollmentsPage() {
 }
 
 /* ===============================================================
-   ENROLLMENT CARD COMPONENT
+   ENROLLMENT CARD
 =============================================================== */
 
 interface EnrollmentCardProps {
-  enrollment: Enrollment;
+  enrollment: any;
   onValidate?: () => void;
   onReject?: () => void;
-  onMarkPaid?: () => void;
+  showGoToFees?: boolean;
   onAssignGroup?: () => void;
   onFinish?: () => void;
 }
@@ -914,51 +678,47 @@ function EnrollmentCard({
   enrollment,
   onValidate,
   onReject,
-  onMarkPaid,
+  showGoToFees,
   onAssignGroup,
   onFinish,
 }: EnrollmentCardProps) {
-  // Status configuration
+  const { t } = useTranslation();
+
   const statusConfig = {
     PENDING: {
-      color: "yellow",
       icon: Clock,
-      label: "Pending Review",
-      bgColor: "bg-yellow-50",
-      textColor: "text-yellow-700",
-      borderColor: "border-yellow-200",
+      label: t("admin.enrollments.status.pendingReview"),
+      bgColor: "bg-[#C4A035]/8",
+      textColor: "text-[#C4A035]",
+      borderColor: "border-[#C4A035]/20",
     },
     VALIDATED: {
-      color: "green",
       icon: CheckCircle,
-      label: "Validated - Awaiting Payment",
-      bgColor: "bg-green-50",
-      textColor: "text-green-700",
-      borderColor: "border-green-200",
+      label: t("admin.enrollments.status.validatedAwaiting"),
+      bgColor: "bg-[#8DB896]/10",
+      textColor: "text-[#2B6F5E]",
+      borderColor: "border-[#8DB896]/30",
     },
     PAID: {
-      color: "blue",
       icon: DollarSign,
-      label: "Paid - Ready for Group",
-      bgColor: "bg-blue-50",
-      textColor: "text-blue-700",
-      borderColor: "border-blue-200",
+      label: t("admin.enrollments.status.paidReady"),
+      bgColor: "bg-[#2B6F5E]/5",
+      textColor: "text-[#2B6F5E]",
+      borderColor: "border-[#2B6F5E]/15",
     },
     REJECTED: {
-      color: "red",
       icon: XCircle,
-      label: "Rejected",
+      label: t("admin.enrollments.status.rejected"),
       bgColor: "bg-red-50",
       textColor: "text-red-700",
       borderColor: "border-red-200",
     },
     FINISHED: {
-      color: "purple",
       icon: GraduationCap,
-      label: "Finished",
-      bgColor: "bg-purple-50",
-      textColor: "text-purple-700",
-      borderColor: "border-purple-200",
+      label: t("admin.enrollments.status.finished"),
+      bgColor: "bg-[#D8CDC0]/15",
+      textColor: "text-[#6B5D4F]",
+      borderColor: "border-[#D8CDC0]/40",
     },
   };
 
@@ -966,15 +726,16 @@ function EnrollmentCard({
     statusConfig[enrollment.registration_status as keyof typeof statusConfig] ||
     statusConfig.PENDING;
   const StatusIcon = config.icon;
-
   const studentName = enrollment.student
     ? `${enrollment.student.first_name} ${enrollment.student.last_name}`
-    : "Unknown Student";
-
-  const courseName = enrollment.course?.course_name || "Unknown Course";
+    : t("admin.enrollments.unknownStudent");
+  const courseName =
+    enrollment.course?.course_name || t("admin.enrollments.unknownCourse");
   const courseCode = enrollment.course?.course_code;
   const groupName = enrollment.group?.name;
-
+  const pricing = enrollment.pricing;
+  const fees = enrollment.fees || [];
+  const unpaidFee = fees.find((f: any) => f.status === "UNPAID");
   const enrollmentDate = enrollment.enrollment_date
     ? new Date(enrollment.enrollment_date).toLocaleDateString("en-US", {
         month: "short",
@@ -983,25 +744,17 @@ function EnrollmentCard({
       })
     : "N/A";
 
-  // Document validation
   const REQUIRED_DOCUMENTS = [
     "PHOTO",
     "ID_CARD",
     "SCHOOL_CERTIFICATE",
     "PAYMENT_RECEIPT",
   ];
-
   const studentDocs = enrollment.student?.documents || [];
-
   const requiredDocsStatus = REQUIRED_DOCUMENTS.map((type) => {
     const doc = studentDocs.find((d: any) => d.type === type);
-    return {
-      type,
-      exists: !!doc,
-      approved: doc?.status === "APPROVED",
-    };
+    return { type, exists: !!doc, approved: doc?.status === "APPROVED" };
   });
-
   const allRequiredDocsApproved = requiredDocsStatus.every((d) => d.approved);
   const missingDocs = requiredDocsStatus
     .filter((d) => !d.exists)
@@ -1011,8 +764,7 @@ function EnrollmentCard({
     .map((d) => d.type);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-      {/* Status Header */}
+    <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       <div
         className={`${config.bgColor} ${config.borderColor} border-b px-5 py-3`}
       >
@@ -1023,66 +775,143 @@ function EnrollmentCard({
               {config.label}
             </span>
           </div>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-[#BEB29E]">
             #{enrollment.enrollment_id.slice(0, 8)}
           </span>
         </div>
       </div>
 
-      {/* Card Content */}
       <div className="p-5 space-y-4">
-        {/* Student Info */}
         <div>
-          <p className="text-xs font-medium text-gray-500 mb-1">Student</p>
-          <p className="text-base font-semibold text-gray-900">{studentName}</p>
+          <p className="text-xs font-medium text-[#6B5D4F] mb-1">
+            {t("admin.enrollments.card.student")}
+          </p>
+          <p className="text-base font-semibold text-[#1B1B1B]">
+            {studentName}
+          </p>
           {enrollment.student?.email && (
-            <p className="text-sm text-gray-600">{enrollment.student.email}</p>
+            <p className="text-sm text-[#6B5D4F]">{enrollment.student.email}</p>
           )}
         </div>
 
-        {/* Course Info */}
-        <div className="p-3 bg-gray-50 rounded-lg">
-          <p className="text-xs font-medium text-gray-500 mb-1">Course</p>
-          <p className="text-sm font-semibold text-gray-900">{courseName}</p>
+        <div className="p-3 bg-[#D8CDC0]/10 rounded-xl">
+          <p className="text-xs font-medium text-[#6B5D4F] mb-1">
+            {t("admin.enrollments.card.course")}
+          </p>
+          <p className="text-sm font-semibold text-[#1B1B1B]">{courseName}</p>
           {courseCode && (
-            <p className="text-xs text-gray-600">Code: {courseCode}</p>
+            <p className="text-xs text-[#6B5D4F]">
+              {t("admin.enrollments.card.code")}: {courseCode}
+            </p>
           )}
           {enrollment.level && (
-            <p className="text-xs text-gray-600">Level: {enrollment.level}</p>
+            <p className="text-xs text-[#6B5D4F]">
+              {t("admin.enrollments.card.level")}: {enrollment.level}
+            </p>
           )}
         </div>
 
-        {/* Group Info */}
-        {groupName && (
-          <div className="p-3 bg-teal-50 rounded-lg border border-teal-200">
+        {pricing && (
+          <div className="p-3 bg-[#C4A035]/5 rounded-xl border border-[#C4A035]/15">
             <div className="flex items-center gap-2 mb-1">
-              <Users className="w-4 h-4 text-teal-600" />
-              <p className="text-xs font-medium text-teal-700">
-                Group Assigned
+              <Tag className="w-4 h-4 text-[#C4A035]" />
+              <p className="text-xs font-medium text-[#C4A035]">
+                {t("admin.enrollments.card.pricingChoice")}
               </p>
             </div>
-            <p className="text-sm font-semibold text-teal-900">{groupName}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-[#1B1B1B]">
+                {pricing.status_fr}
+                {pricing.status_ar && (
+                  <span className="text-xs text-[#C4A035] mr-1">
+                    {" "}
+                    ({pricing.status_ar})
+                  </span>
+                )}
+              </p>
+              <span className="text-sm font-bold text-[#C4A035]">
+                {Number(pricing.price).toLocaleString()}{" "}
+                {pricing.currency || "DZD"}
+              </span>
+            </div>
+            {pricing.discount && (
+              <p className="text-xs text-[#C4A035]/80 mt-1">
+                {pricing.discount}
+              </p>
+            )}
           </div>
         )}
 
-        {/* Document Status */}
+        {!pricing && enrollment.registration_status === "PENDING" && (
+          <div className="p-3 bg-[#D8CDC0]/10 rounded-xl border border-[#D8CDC0]/30">
+            <div className="flex items-center gap-2">
+              <Tag className="w-4 h-4 text-[#BEB29E]" />
+              <p className="text-xs text-[#BEB29E]">
+                {t("admin.enrollments.card.noPricing")}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {showGoToFees && unpaidFee && (
+          <div className="p-3 bg-[#C4A035]/5 rounded-xl border border-[#C4A035]/15">
+            <div className="flex items-center gap-2 mb-1">
+              <DollarSign className="w-4 h-4 text-[#C4A035]" />
+              <p className="text-xs font-medium text-[#C4A035]">
+                {t("admin.enrollments.card.unpaidFee")}
+              </p>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-[#1B1B1B]">
+                {t("admin.enrollments.card.amount")}:{" "}
+                <span className="font-bold">
+                  {Number(unpaidFee.amount).toLocaleString()} DZD
+                </span>
+              </p>
+              {unpaidFee.due_date && (
+                <p className="text-xs text-[#C4A035]">
+                  {t("admin.enrollments.card.due")}:{" "}
+                  {new Date(unpaidFee.due_date).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {groupName && (
+          <div className="p-3 bg-[#2B6F5E]/5 rounded-xl border border-[#2B6F5E]/15">
+            <div className="flex items-center gap-2 mb-1">
+              <Users className="w-4 h-4 text-[#2B6F5E]" />
+              <p className="text-xs font-medium text-[#2B6F5E]">
+                {t("admin.enrollments.card.groupAssigned")}
+              </p>
+            </div>
+            <p className="text-sm font-semibold text-[#1B1B1B]">{groupName}</p>
+          </div>
+        )}
+
         {enrollment.registration_status === "PENDING" &&
           !allRequiredDocsApproved && (
-            <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+            <div className="p-3 bg-[#C4A035]/5 rounded-xl border border-[#C4A035]/15">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                <AlertCircle className="w-4 h-4 text-[#C4A035] mt-0.5 shrink-0" />
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-amber-800 mb-1">
-                    ⚠️ Document Issues
+                  <p className="text-xs font-semibold text-[#C4A035] mb-1">
+                    {t("admin.enrollments.card.docIssues")}
                   </p>
                   {missingDocs.length > 0 && (
-                    <p className="text-xs text-amber-700">
-                      Missing: {missingDocs.join(", ")}
+                    <p className="text-xs text-[#C4A035]/80">
+                      {t("admin.enrollments.card.missing")}:{" "}
+                      {missingDocs.join(", ")}
                     </p>
                   )}
                   {pendingDocs.length > 0 && (
-                    <p className="text-xs text-amber-700">
-                      Pending approval: {pendingDocs.join(", ")}
+                    <p className="text-xs text-[#C4A035]/80">
+                      {t("admin.enrollments.card.pendingApproval")}:{" "}
+                      {pendingDocs.join(", ")}
                     </p>
                   )}
                 </div>
@@ -1092,76 +921,91 @@ function EnrollmentCard({
 
         {enrollment.registration_status === "PENDING" &&
           allRequiredDocsApproved && (
-            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+            <div className="p-3 bg-[#8DB896]/10 rounded-xl border border-[#8DB896]/20">
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <p className="text-xs font-medium text-green-700">
-                  ✅ All required documents approved
+                <CheckCircle className="w-4 h-4 text-[#2B6F5E]" />
+                <p className="text-xs font-medium text-[#2B6F5E]">
+                  {t("admin.enrollments.card.allDocsApproved")}
                 </p>
               </div>
             </div>
           )}
 
-        {/* Details Grid */}
-        <div className="grid grid-cols-1 gap-3 pt-2 border-t border-gray-100">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Calendar className="w-4 h-4" />
-            <span>Enrolled: {enrollmentDate}</span>
+        <div className="grid grid-cols-1 gap-3 pt-2 border-t border-[#D8CDC0]/30">
+          <div className="flex items-center gap-2 text-sm text-[#6B5D4F]">
+            <Calendar className="w-4 h-4 text-[#BEB29E]" />
+            <span>
+              {t("admin.enrollments.card.enrolled")}: {enrollmentDate}
+            </span>
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex flex-col gap-2 pt-2">
           {onValidate && (
             <Button
               onClick={onValidate}
-              className="w-full bg-green-600 hover:bg-green-700"
+              className="w-full bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white"
               size="sm"
               disabled={!allRequiredDocsApproved}
             >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Validate & Create Fee
+              <CheckCircle className="w-4 h-4 mr-2" />{" "}
+              {t("admin.enrollments.actions.validateCreateFee")}
             </Button>
           )}
-
           {onReject && (
             <Button
               onClick={onReject}
-              variant="destructive"
-              className="w-full"
+              variant="outline"
+              className="w-full border-red-200 text-red-600 hover:bg-red-50"
               size="sm"
             >
-              <XCircle className="w-4 h-4 mr-2" />
-              Reject
+              <XCircle className="w-4 h-4 mr-2" />{" "}
+              {t("admin.enrollments.actions.reject")}
             </Button>
           )}
-
-          {onMarkPaid && (
+          {showGoToFees && (
             <Button
-              onClick={onMarkPaid}
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              asChild
+              className="w-full bg-[#C4A035] hover:bg-[#C4A035]/90 text-white"
               size="sm"
             >
-              <DollarSign className="w-4 h-4 mr-2" />
-              Confirm Payment
+              <Link to="/admin/fees">
+                <DollarSign className="w-4 h-4 mr-2" />{" "}
+                {t("admin.enrollments.actions.confirmPayment")}{" "}
+                <ExternalLink className="w-3.5 h-3.5 ml-2" />
+              </Link>
             </Button>
           )}
-
+          {onAssignGroup && (
+            <Button
+              onClick={onAssignGroup}
+              className="w-full bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white"
+              size="sm"
+            >
+              <Users className="w-4 h-4 mr-2" />{" "}
+              {t("admin.enrollments.actions.assignGroup")}
+            </Button>
+          )}
           {onFinish && (
             <Button
               onClick={onFinish}
-              className="w-full bg-purple-600 hover:bg-purple-700"
+              variant="outline"
+              className="w-full border-[#D8CDC0]/60 text-[#6B5D4F] hover:bg-[#D8CDC0]/15"
               size="sm"
             >
-              <GraduationCap className="w-4 h-4 mr-2" />
-              Mark as Finished
+              <GraduationCap className="w-4 h-4 mr-2" />{" "}
+              {t("admin.enrollments.actions.markFinished")}
             </Button>
           )}
-
-          <Button asChild variant="outline" size="sm" className="w-full">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="w-full border-[#D8CDC0]/60 text-[#6B5D4F] hover:bg-[#D8CDC0]/10"
+          >
             <Link to={`/admin/students/${enrollment.student_id}`}>
-              <Eye className="w-4 h-4 mr-2" />
-              View Student Details
+              <Eye className="w-4 h-4 mr-2" />{" "}
+              {t("admin.enrollments.actions.viewStudent")}
             </Link>
           </Button>
         </div>
@@ -1170,9 +1014,7 @@ function EnrollmentCard({
   );
 }
 
-/* ===============================================================
-   STAT CARD COMPONENT
-=============================================================== */
+/* ── STAT CARD ── */
 
 interface StatCardProps {
   icon: React.ElementType;
@@ -1183,58 +1025,80 @@ interface StatCardProps {
 }
 
 function StatCard({ icon: Icon, label, value, color, badge }: StatCardProps) {
-  const colorClasses = {
-    blue: "bg-blue-50 border-blue-100 text-blue-600",
-    yellow: "bg-yellow-50 border-yellow-100 text-yellow-600",
-    green: "bg-green-50 border-green-100 text-green-600",
-    red: "bg-red-50 border-red-100 text-red-600",
-    purple: "bg-purple-50 border-purple-100 text-purple-600",
+  const colors: Record<string, { bar: string; bg: string; icon: string }> = {
+    teal: {
+      bar: "from-[#2B6F5E] to-[#2B6F5E]/70",
+      bg: "bg-[#2B6F5E]/8",
+      icon: "text-[#2B6F5E]",
+    },
+    mustard: {
+      bar: "from-[#C4A035] to-[#C4A035]/70",
+      bg: "bg-[#C4A035]/8",
+      icon: "text-[#C4A035]",
+    },
+    green: {
+      bar: "from-[#8DB896] to-[#8DB896]/70",
+      bg: "bg-[#8DB896]/12",
+      icon: "text-[#3D7A4A]",
+    },
+    red: {
+      bar: "from-red-500 to-red-500/70",
+      bg: "bg-red-50",
+      icon: "text-red-600",
+    },
+    beige: {
+      bar: "from-[#BEB29E] to-[#BEB29E]/70",
+      bg: "bg-[#D8CDC0]/20",
+      icon: "text-[#6B5D4F]",
+    },
   };
+  const c = colors[color] || colors.teal;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm relative">
+    <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-4 overflow-hidden group hover:shadow-md transition-all">
+      <div
+        className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${c.bar} opacity-60 group-hover:opacity-100 transition-opacity`}
+      ></div>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+          <p className="text-xs font-medium text-[#6B5D4F] uppercase tracking-wide">
             {label}
           </p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+          <p className="text-2xl font-bold text-[#1B1B1B] mt-1">{value}</p>
         </div>
         <div
-          className={`w-11 h-11 rounded-lg border flex items-center justify-center ${
-            colorClasses[color as keyof typeof colorClasses]
-          }`}
+          className={`w-10 h-10 rounded-xl ${c.bg} flex items-center justify-center`}
         >
-          <Icon className="w-5 h-5" />
+          <Icon className={`w-5 h-5 ${c.icon}`} />
         </div>
       </div>
       {badge && value > 0 && (
-        <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-          <span className="text-xs font-bold text-white">{value}</span>
+        <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#C4A035] rounded-full flex items-center justify-center">
+          <span className="text-[10px] font-bold text-white">{value}</span>
         </div>
       )}
     </div>
   );
 }
 
-/* ===============================================================
-   EMPTY STATE COMPONENT
-=============================================================== */
+/* ── EMPTY STATE ── */
 
-interface EmptyStateProps {
+function EmptyState({
+  message,
+  icon: Icon,
+}: {
   message: string;
   icon: React.ElementType;
-}
-
-function EmptyState({ message, icon: Icon }: EmptyStateProps) {
+}) {
+  const { t } = useTranslation();
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-xl border border-gray-200">
-      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-        <Icon className="w-8 h-8 text-gray-400" />
+    <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-[#D8CDC0]/60">
+      <div className="w-16 h-16 rounded-full bg-[#D8CDC0]/20 flex items-center justify-center mb-4">
+        <Icon className="w-8 h-8 text-[#BEB29E]" />
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">{message}</h3>
-      <p className="text-gray-600 text-sm">
-        Try adjusting your filters or search criteria
+      <h3 className="text-lg font-semibold text-[#1B1B1B] mb-1">{message}</h3>
+      <p className="text-[#6B5D4F] text-sm">
+        {t("admin.enrollments.emptyHint")}
       </p>
     </div>
   );

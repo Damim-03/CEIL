@@ -1374,31 +1374,69 @@ export const markFeeAsPaidController = async (req: Request, res: Response) => {
   const admin = (req as Request & { user?: JwtUser }).user;
   const { feeId } = req.params;
 
-  const fee = await prisma.fee.findUnique({
-    where: { fee_id: feeId },
-  });
+  try {
+    const fee = await prisma.fee.findUnique({
+      where: { fee_id: feeId },
+      include: { enrollment: true },
+    });
 
-  if (!fee) {
-    return res.status(404).json({ message: "Fee not found" });
-  }
+    if (!fee) {
+      return res.status(404).json({ message: "Fee not found" });
+    }
 
-  if (fee.status === FeeStatus.PAID) {
-    return res.status(400).json({
-      message: "Fee already paid",
+    if (fee.status === FeeStatus.PAID) {
+      return res.status(400).json({ message: "Fee already paid" });
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Mark fee as PAID
+      const updatedFee = await tx.fee.update({
+        where: { fee_id: feeId },
+        data: {
+          status: FeeStatus.PAID,
+          paid_at: new Date(),
+          payment_method: req.body.payment_method || "Cash",
+          reference_code: req.body.reference_code || `PAY-${Date.now()}`,
+        },
+      });
+
+      // 2. ✅ Auto-advance enrollment VALIDATED → PAID
+      let updatedEnrollment = null;
+      if (
+        fee.enrollment_id &&
+        fee.enrollment?.registration_status === RegistrationStatus.VALIDATED
+      ) {
+        await tx.registrationHistory.create({
+          data: {
+            enrollment_id: fee.enrollment_id,
+            old_status: RegistrationStatus.VALIDATED,
+            new_status: RegistrationStatus.PAID,
+            changed_by: admin?.user_id,
+          },
+        });
+
+        updatedEnrollment = await tx.enrollment.update({
+          where: { enrollment_id: fee.enrollment_id },
+          data: { registration_status: RegistrationStatus.PAID },
+        });
+      }
+
+      return { fee: updatedFee, enrollment: updatedEnrollment };
+    });
+
+    return res.json({
+      message: result.enrollment
+        ? "Fee paid & enrollment advanced to PAID status"
+        : "Fee marked as paid",
+      fee: result.fee,
+      enrollment: result.enrollment,
+    });
+  } catch (error: any) {
+    console.error("❌ Mark fee paid error:", error);
+    return res.status(500).json({
+      message: error.message || "Failed to mark fee as paid",
     });
   }
-
-  const updatedFee = await prisma.fee.update({
-    where: { fee_id: feeId },
-    data: {
-      status: FeeStatus.PAID,
-      paid_at: new Date(),
-      payment_method: "Cash",
-      reference_code: `PAY-${Date.now()}`,
-    },
-  });
-
-  res.json(updatedFee);
 };
 
 export const deleteFeeController = async (req: Request, res: Response) => {
@@ -1613,6 +1651,13 @@ export const getAllEnrollmentsController = async (
       },
       course: {
         include: {
+          profile: {
+            include: {
+              pricing: {
+                orderBy: { sort_order: "asc" },
+              },
+            },
+          },
           groups: {
             include: {
               _count: {
@@ -1632,6 +1677,18 @@ export const getAllEnrollmentsController = async (
       },
       fees: true,
       group: true,
+      // ✅ Include the pricing tier chosen by the student
+      pricing: {
+        select: {
+          pricing_id: true,
+          status_fr: true,
+          status_ar: true,
+          status_en: true,
+          price: true,
+          currency: true,
+          discount: true,
+        },
+      },
     },
     orderBy: { enrollment_date: "desc" },
   });
@@ -1647,10 +1704,30 @@ export const getEnrollmentByIdController = async (
     where: { enrollment_id: req.params.enrollmentId },
     include: {
       student: true,
-      course: true,
+      course: {
+        include: {
+          profile: {
+            include: {
+              pricing: { orderBy: { sort_order: "asc" } },
+            },
+          },
+        },
+      },
       fees: true,
       history: true,
       group: true,
+      // ✅ Student's pricing choice
+      pricing: {
+        select: {
+          pricing_id: true,
+          status_fr: true,
+          status_ar: true,
+          status_en: true,
+          price: true,
+          currency: true,
+          discount: true,
+        },
+      },
     },
   });
 
@@ -1679,7 +1756,7 @@ export const validateEnrollmentController = async (
   res: Response,
 ) => {
   const { enrollmentId } = req.params;
-  const { pricing_id } = req.body; // ← NEW: Admin selects which pricing tier
+  const { pricing_id: adminPricingOverride } = req.body;
 
   try {
     const enrollment = await prisma.enrollment.findUnique({
@@ -1689,12 +1766,13 @@ export const validateEnrollmentController = async (
           include: {
             profile: {
               include: {
-                pricing: true, // ← جلب كل التعرفات
+                pricing: true,
               },
             },
           },
         },
         student: true,
+        pricing: true, // Student's original choice (may be null)
       },
     });
 
@@ -1709,73 +1787,95 @@ export const validateEnrollmentController = async (
     }
 
     const profile = enrollment.course?.profile;
+    const pricingTiers = profile?.pricing || [];
 
-    if (!profile) {
+    let feeAmount: number = 0;
+    let selectedPricing: any = null;
+
+    // ✅ CASE 1: Course has pricing tiers configured
+    if (pricingTiers.length > 0) {
+      const effectivePricingId = adminPricingOverride || enrollment.pricing_id;
+
+      if (effectivePricingId) {
+        // Use specific pricing tier
+        selectedPricing = pricingTiers.find(
+          (p) => p.pricing_id === effectivePricingId,
+        );
+
+        if (!selectedPricing) {
+          return res.status(400).json({
+            message: "Invalid pricing_id. Selected pricing tier not found.",
+          });
+        }
+      } else {
+        // Use lowest price tier (we already know length > 0)
+        selectedPricing = pricingTiers[0];
+        for (let i = 1; i < pricingTiers.length; i++) {
+          if (Number(pricingTiers[i].price) < Number(selectedPricing.price)) {
+            selectedPricing = pricingTiers[i];
+          }
+        }
+      }
+
+      feeAmount = Number(selectedPricing.price);
+
+      // Validate amount
+      if (isNaN(feeAmount) || feeAmount <= 0) {
+        return res.status(400).json({
+          message: "Invalid pricing amount for this course.",
+        });
+      }
+    }
+    // ✅ CASE 2: No pricing tiers, but profile has a base price
+    else if (profile?.price && Number(profile.price) > 0) {
+      feeAmount = Number(profile.price);
+    }
+    // ✅ CASE 3: No pricing configured at all - RETURN ERROR
+    else {
       return res.status(400).json({
         message:
-          "Course profile not found. Please create course profile first.",
-      });
-    }
-
-    // ✅ تحديد السعر بناءً على الاختيار
-    let feeAmount = 0;
-    let selectedPricing = null;
-
-    if (pricing_id) {
-      // ← Admin اختار pricing محدد
-      selectedPricing = profile.pricing.find(
-        (p) => p.pricing_id === pricing_id,
-      );
-
-      if (!selectedPricing) {
-        return res.status(400).json({
-          message: "Invalid pricing_id. Selected pricing tier not found.",
-        });
-      }
-
-      feeAmount = Number(selectedPricing.price);
-    } else {
-      // ← لو ما اختار، نستخدم أقل سعر متاح
-      if (profile.pricing.length === 0) {
-        return res.status(400).json({
-          message:
-            "No pricing tiers configured. Please add pricing to course profile first.",
-        });
-      }
-
-      selectedPricing = profile.pricing.reduce((min, p) =>
-        Number(p.price) < Number(min.price) ? p : min,
-      );
-
-      feeAmount = Number(selectedPricing.price);
-    }
-
-    if (feeAmount <= 0) {
-      return res.status(400).json({
-        message: "Invalid pricing amount. Price must be greater than 0.",
-      });
-    }
-
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. تحديث الـ Enrollment
-      const updatedEnrollment = await tx.enrollment.update({
-        where: { enrollment_id: enrollmentId },
-        data: { registration_status: "VALIDATED" },
-      });
-
-      // 2. إنشاء الـ Fee بالسعر المناسب
-      const fee = await tx.fee.create({
-        data: {
-          student_id: enrollment.student_id,
-          enrollment_id: enrollmentId,
-          amount: feeAmount, // ← السعر حسب الصفة المختارة
-          status: "UNPAID",
-          due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 يوم
-          // ← اختياري: يمكن إضافة حقل لحفظ pricing_id المستخدم
+          "This course has no pricing configured. Please add course pricing in the Courses section before validating enrollments.",
+        details: {
+          course_id: enrollment.course_id,
+          course_name: enrollment.course?.course_name,
+          has_profile: !!profile,
+          has_pricing_tiers: pricingTiers.length > 0,
+          has_base_price: !!profile?.price,
         },
       });
+    }
 
-      // 3. تسجيل في الـ History
+    // ─── Transaction ─────────────────────────────────────────
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Update enrollment status + confirm pricing if available
+      const updateData: any = {
+        registration_status: "VALIDATED",
+      };
+
+      if (selectedPricing) {
+        updateData.pricing_id = selectedPricing.pricing_id;
+      }
+
+      const updatedEnrollment = await tx.enrollment.update({
+        where: { enrollment_id: enrollmentId },
+        data: updateData,
+      });
+
+      // 2. Create fee (only if amount > 0)
+      let fee = null;
+      if (feeAmount > 0) {
+        fee = await tx.fee.create({
+          data: {
+            student_id: enrollment.student_id,
+            enrollment_id: enrollmentId,
+            amount: feeAmount,
+            status: "UNPAID",
+            due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+          },
+        });
+      }
+
+      // 3. Record in history
       await tx.registrationHistory.create({
         data: {
           enrollment_id: enrollmentId,
@@ -1789,15 +1889,21 @@ export const validateEnrollmentController = async (
     });
 
     return res.json({
-      message: "Enrollment validated successfully",
+      message:
+        feeAmount > 0
+          ? "Enrollment validated successfully. Fee created."
+          : "Enrollment validated successfully (no fee required).",
       enrollment: result.enrollment,
       fee: result.fee,
-      pricing_used: {
-        id: selectedPricing.pricing_id,
-        status: selectedPricing.status_fr,
-        price: Number(selectedPricing.price),
-        currency: selectedPricing.currency,
-      },
+      pricing_used: selectedPricing
+        ? {
+            id: selectedPricing.pricing_id,
+            status_fr: selectedPricing.status_fr,
+            status_ar: selectedPricing.status_ar,
+            price: Number(selectedPricing.price),
+            currency: selectedPricing.currency,
+          }
+        : null,
     });
   } catch (error: any) {
     console.error("❌ Validation error:", error);
@@ -1813,38 +1919,73 @@ export const rejectEnrollmentController = async (
 ) => {
   const admin = (req as Request & { user?: JwtUser }).user;
   const { enrollmentId } = req.params;
+  const { reason } = req.body;
 
-  const enrollment = await prisma.enrollment.findUnique({
-    where: { enrollment_id: enrollmentId },
-  });
+  try {
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({
+        message: "Rejection reason is required",
+      });
+    }
 
-  if (!enrollment) {
-    return res.status(404).json({ message: "Enrollment not found" });
-  }
-
-  if (enrollment.registration_status !== RegistrationStatus.PENDING) {
-    return res.status(400).json({
-      message: "Only pending enrollments can be rejected",
-    });
-  }
-
-  const updated = await prisma.$transaction(async (tx) => {
-    await tx.registrationHistory.create({
-      data: {
-        enrollment_id: enrollmentId,
-        old_status: enrollment.registration_status,
-        new_status: RegistrationStatus.REJECTED,
-        changed_by: admin?.user_id,
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { enrollment_id: enrollmentId },
+      include: {
+        student: {
+          select: {
+            student_id: true,
+            first_name: true,
+            last_name: true,
+            email: true,
+          },
+        },
+        course: { select: { course_id: true, course_name: true } },
       },
     });
 
-    return tx.enrollment.update({
-      where: { enrollment_id: enrollmentId },
-      data: { registration_status: RegistrationStatus.REJECTED },
-    });
-  });
+    if (!enrollment) {
+      return res.status(404).json({ message: "Enrollment not found" });
+    }
 
-  res.json(updated);
+    if (enrollment.registration_status !== RegistrationStatus.PENDING) {
+      return res.status(400).json({
+        message: "Only pending enrollments can be rejected",
+      });
+    }
+
+    // Store data before deletion
+    const studentInfo = {
+      id: enrollment.student.student_id,
+      name: `${enrollment.student.first_name} ${enrollment.student.last_name}`,
+      email: enrollment.student.email,
+    };
+    const courseInfo = {
+      id: enrollment.course.course_id,
+      name: enrollment.course.course_name,
+    };
+
+    // ✅ Delete in transaction
+    await prisma.$transaction(async (tx) => {
+      await tx.fee.deleteMany({ where: { enrollment_id: enrollmentId } });
+      await tx.registrationHistory.deleteMany({
+        where: { enrollment_id: enrollmentId },
+      });
+      await tx.enrollment.delete({ where: { enrollment_id: enrollmentId } });
+    });
+
+    return res.json({
+      success: true,
+      message: "Enrollment rejected and deleted successfully",
+      rejection_reason: reason.trim(),
+      student: studentInfo,
+      course: courseInfo,
+    });
+  } catch (error: any) {
+    console.error("❌ Reject enrollment error:", error);
+    return res.status(500).json({
+      message: error.message || "Failed to reject enrollment",
+    });
+  }
 };
 
 export const markEnrollmentPaidController = async (
@@ -2705,36 +2846,150 @@ export const getAdminDashboardStatsController = async (
   _: Request,
   res: Response,
 ) => {
-  const [students, teachers, courses, unpaidFees, genderStats] =
-    await Promise.all([
-      prisma.student.count(),
+  try {
+    const [
+      students,
+      teachers,
+      courses,
+      groups,
+      unpaidFees,
+      paidFees,
+      genderStats,
+      enrollmentStats,
+      recentEnrollments,
+      recentFees,
+      totalFees,
+    ] = await Promise.all([
+      prisma.student.count({ where: { status: StudentStatus.ACTIVE } }),
       prisma.teacher.count(),
       prisma.course.count(),
+      prisma.group.count(),
       prisma.fee.aggregate({
         where: { status: "UNPAID" },
         _sum: { amount: true },
+        _count: true,
+      }),
+      prisma.fee.aggregate({
+        where: { status: "PAID" },
+        _sum: { amount: true },
+        _count: true,
       }),
       prisma.student.groupBy({
         by: ["gender"],
-        _count: {
-          gender: true,
+        _count: { gender: true },
+      }),
+      // ✅ Enrollment breakdown by status
+      prisma.enrollment.groupBy({
+        by: ["registration_status"],
+        _count: { registration_status: true },
+      }),
+      // ✅ Recent enrollments (last 10)
+      prisma.enrollment.findMany({
+        take: 10,
+        orderBy: { enrollment_date: "desc" },
+        include: {
+          student: {
+            select: {
+              student_id: true,
+              first_name: true,
+              last_name: true,
+              email: true,
+              avatar_url: true,
+            },
+          },
+          course: {
+            select: {
+              course_id: true,
+              course_name: true,
+              course_code: true,
+            },
+          },
+          pricing: {
+            select: {
+              status_fr: true,
+              price: true,
+              currency: true,
+            },
+          },
         },
       }),
+      // ✅ Recent fees (last 5 paid)
+      prisma.fee.findMany({
+        take: 5,
+        where: { status: "PAID" },
+        orderBy: { paid_at: "desc" },
+        include: {
+          student: {
+            select: {
+              first_name: true,
+              last_name: true,
+            },
+          },
+        },
+      }),
+      // ✅ Total fees count
+      prisma.fee.count(),
     ]);
 
-  const gender = {
-    Male: genderStats.find((g) => g.gender === "MALE")?._count.gender || 0,
-    Female: genderStats.find((g) => g.gender === "FEMALE")?._count.gender || 0,
-    Other: genderStats.find((g) => g.gender === "OTHER")?._count.gender || 0,
-  };
+    const gender = {
+      Male: genderStats.find((g) => g.gender === "MALE")?._count.gender || 0,
+      Female:
+        genderStats.find((g) => g.gender === "FEMALE")?._count.gender || 0,
+      Other: genderStats.find((g) => g.gender === "OTHER")?._count.gender || 0,
+    };
 
-  res.json({
-    students,
-    teachers,
-    courses,
-    unpaidFees: unpaidFees._sum.amount || 0,
-    gender,
-  });
+    // ✅ Enrollment stats breakdown
+    const enrollments = {
+      pending:
+        enrollmentStats.find((e) => e.registration_status === "PENDING")?._count
+          .registration_status || 0,
+      validated:
+        enrollmentStats.find((e) => e.registration_status === "VALIDATED")
+          ?._count.registration_status || 0,
+      paid:
+        enrollmentStats.find((e) => e.registration_status === "PAID")?._count
+          .registration_status || 0,
+      finished:
+        enrollmentStats.find((e) => e.registration_status === "FINISHED")
+          ?._count.registration_status || 0,
+      total: 0,
+    };
+    enrollments.total =
+      enrollments.pending +
+      enrollments.validated +
+      enrollments.paid +
+      enrollments.finished;
+
+    // ✅ Revenue stats
+    const revenue = {
+      collected: Number(paidFees._sum.amount || 0),
+      pending: Number(unpaidFees._sum.amount || 0),
+      total:
+        Number(paidFees._sum.amount || 0) + Number(unpaidFees._sum.amount || 0),
+      paidCount: paidFees._count || 0,
+      unpaidCount: unpaidFees._count || 0,
+      totalCount: totalFees,
+    };
+
+    res.json({
+      students,
+      teachers,
+      courses,
+      groups,
+      unpaidFees: unpaidFees._sum.amount || 0,
+      gender,
+      // ✅ New fields
+      enrollments,
+      revenue,
+      recentEnrollments,
+      recentFees,
+    });
+  } catch (error: any) {
+    console.error("❌ Dashboard stats error:", error);
+    return res.status(500).json({
+      message: error.message || "Failed to fetch dashboard stats",
+    });
+  }
 };
 
 export const getStudentsReportController = async (

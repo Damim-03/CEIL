@@ -1,41 +1,59 @@
 import { Outlet, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { TooltipProvider } from "../components/ui/tooltip";
 import TeacherSidebar from "../app/teacher/components/Teachersidebar";
 import { TeacherHeader } from "../app/teacher/components/TeacherHeader";
 
 const TeacherLayout = () => {
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // ✅ Collapse sidebar on click outside (all screen sizes)
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (collapsed) return;
+
+      const target = e.target as HTMLElement;
+      if (sidebarRef.current?.contains(target)) return;
+      if (target.closest("[data-sidebar-toggle]")) return;
+
+      setCollapsed(true);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [collapsed]);
+
+  // ✅ Auto-collapse on mobile route change
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      setCollapsed(true);
+    }
+  }, [location.pathname]);
 
   return (
     <TooltipProvider>
-      <div className="flex min-h-screen bg-background">
-        {/* Sidebar */}
-        <TeacherSidebar
-          open={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-        />
+      <div className="flex min-h-screen bg-[#FAFAF8]">
+        <div ref={sidebarRef}>
+          <TeacherSidebar
+            collapsed={collapsed}
+            onExpand={() => setCollapsed(false)}
+          />
+        </div>
 
-        {/* Main Area */}
-        <div className="flex flex-1 flex-col md:ml-64 transition-all duration-300">
-          {/* Top Navbar */}
-          <TeacherHeader onMenuClick={() => setSidebarOpen(true)} />
+        <div
+          className={`flex flex-1 flex-col transition-all duration-300 ${
+            collapsed ? "ml-16" : "ml-64"
+          }`}
+        >
+          <TeacherHeader onMenuClick={() => setCollapsed((prev) => !prev)} />
 
-          {/* Page Content */}
-          <main className="flex-1 p-6 bg-background">
+          <main className="flex-1 p-6 bg-[#FAFAF8]">
             <Outlet />
           </main>
         </div>
       </div>
-
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
     </TooltipProvider>
   );
 };

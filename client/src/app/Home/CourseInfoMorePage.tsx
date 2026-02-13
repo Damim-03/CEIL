@@ -17,7 +17,6 @@ import {
   Info,
   Sparkles,
   BadgeCheck,
-  TrendingUp,
   LayoutDashboard,
   LogIn,
 } from "lucide-react";
@@ -26,11 +25,12 @@ import { usePublicCourse } from "../../hooks/announce/Usepublic";
 import { useAuthRedirect } from "../../lib/utils/auth-redirect";
 import { useLanguage } from "../../hooks/useLanguage";
 import { LocaleLink } from "../../i18n/locales/components/LocaleLink";
+import { Link } from "react-router-dom";
 
 export default function CourseInfoMorePage() {
   const { id } = useParams<{ id: string }>();
   const { data: course, isLoading, isError } = usePublicCourse(id!);
-  const { isLoggedIn, role, getRegisterHref } = useAuthRedirect();
+  const { isLoggedIn, role } = useAuthRedirect();
   const { t, dir, isRTL, currentLang } = useLanguage();
 
   const formatDate = (date: string | null) => {
@@ -91,6 +91,13 @@ export default function CourseInfoMorePage() {
       ? course.title_ar || course.course_name
       : course.course_name;
   const altTitle = currentLang === "ar" ? course.course_name : course.title_ar;
+
+  // Dashboard link for admin/teacher
+  const getDashboardLink = () => {
+    if (role === "ADMIN") return "/admin";
+    if (role === "TEACHER") return "/teacher";
+    return "/dashboard";
+  };
 
   return (
     <div className="min-h-screen bg-brand-gray" dir={dir}>
@@ -576,7 +583,7 @@ export default function CourseInfoMorePage() {
                           className="w-full bg-brand-mustard hover:bg-brand-mustard/90 text-white gap-2 h-12 text-sm font-semibold rounded-xl shadow-lg"
                         >
                           <LocaleLink
-                            to={`/login?redirect=${encodeURIComponent(`/courses/${course.id}`)}`}
+                            to={`/login?redirect=${encodeURIComponent(`/dashboard/courses?courseId=${course.id}`)}`}
                           >
                             <LogIn className="w-4 h-4" />
                             {t("courses.loginToRegister")}
@@ -588,10 +595,10 @@ export default function CourseInfoMorePage() {
                           asChild
                           className="w-full bg-brand-mustard hover:bg-brand-mustard/90 text-white gap-2 h-12 text-sm font-semibold rounded-xl shadow-lg"
                         >
-                          <LocaleLink to={getRegisterHref(course.id)}>
+                          <Link to={`/dashboard/courses?courseId=${course.id}`}>
                             <UserPlus className="w-4 h-4" />
                             {t("courses.registerNow")}
-                          </LocaleLink>
+                          </Link>
                         </Button>
                       )}
                       {isLoggedIn &&
@@ -610,10 +617,10 @@ export default function CourseInfoMorePage() {
                               variant="outline"
                               className="w-full border-brand-beige text-brand-teal-dark hover:bg-brand-teal-dark hover:text-white gap-2 rounded-xl h-11"
                             >
-                              <LocaleLink to={getRegisterHref(course.id)}>
+                              <Link to={getDashboardLink()}>
                                 <LayoutDashboard className="w-4 h-4" />
                                 {t("common.dashboard")}
-                              </LocaleLink>
+                              </Link>
                             </Button>
                           </>
                         )}

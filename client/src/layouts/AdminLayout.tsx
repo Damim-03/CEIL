@@ -1,47 +1,54 @@
 import { Outlet, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { TooltipProvider } from "../components/ui/tooltip";
 import Sidebar from "../app/admin/components/Sidebar";
 import { Header } from "../app/admin/components/Header";
 
 const AdminLayout = () => {
   const location = useLocation();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // Get the title based on the current route
-  const getPageTitle = () => {
-    // Extract segments from path
-    const segments = location.pathname.split("/").filter(Boolean);
+  // ✅ Collapse sidebar on click outside (all screen sizes)
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (collapsed) return;
 
-    // Get the last segment (e.g., "dashboard", "users", "students")
-    const lastSegment = segments[segments.length - 1];
+      const target = e.target as HTMLElement;
+      if (sidebarRef.current?.contains(target)) return;
+      if (target.closest("[data-sidebar-toggle]")) return;
 
-    // Capitalize first letter
-    return lastSegment
-      ? lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1)
-      : "Admin";
-  };
+      setCollapsed(true);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [collapsed]);
+
+  // ✅ Auto-collapse on mobile route change
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      setCollapsed(true);
+    }
+  }, [location.pathname]);
 
   return (
     <TooltipProvider>
-      <div className="flex min-h-screen bg-background">
-        {/* Sidebar */}
-        <Sidebar
-          collapsed={sidebarCollapsed}
-          onCollapsedChange={setSidebarCollapsed}
-        />
+      <div className="flex min-h-screen bg-[#FAFAF8]">
+        <div ref={sidebarRef}>
+          <Sidebar collapsed={collapsed} onExpand={() => setCollapsed(false)} />
+        </div>
 
-        {/* Main Area */}
         <div
           className={`flex flex-1 flex-col transition-all duration-300 ${
-            sidebarCollapsed ? "ml-16" : "ml-64"
+            collapsed ? "ml-16" : "ml-64"
           }`}
         >
-          {/* Top Navbar */}
-          <Header title={getPageTitle()} />
+          <Header
+            onMenuClick={() => setCollapsed((prev) => !prev)}
+          />
 
-          {/* Page Content */}
-          <main className="flex-1 p-6 bg-background">
+          <main className="flex-1 p-6 bg-[#FAFAF8]">
             <Outlet />
           </main>
         </div>

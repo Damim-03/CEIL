@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Save,
   Eye,
@@ -58,7 +59,6 @@ interface PricingForm {
   discount: string;
   sort_order: string;
 }
-
 const EMPTY_PRICING: PricingForm = {
   status_fr: "",
   status_ar: "",
@@ -68,7 +68,6 @@ const EMPTY_PRICING: PricingForm = {
   discount: "Aucune",
   sort_order: "0",
 };
-
 const FLAGS = [
   { emoji: "🇫🇷", label: "Français" },
   { emoji: "🇬🇧", label: "English" },
@@ -83,7 +82,6 @@ const FLAGS = [
   { emoji: "🇵🇹", label: "Português" },
 ];
 
-// ─── Section Card ───
 const SectionCard = ({
   icon: Icon,
   title,
@@ -118,7 +116,6 @@ const SectionCard = ({
   </div>
 );
 
-// ─── Field Group ───
 const FieldGroup = ({
   label,
   children,
@@ -136,6 +133,7 @@ const FieldGroup = ({
 );
 
 export default function CourseProfileManager() {
+  const { t } = useTranslation();
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const { data: course } = useAdminCourse(courseId);
@@ -166,7 +164,6 @@ export default function CourseProfileManager() {
     registration_open: true,
     is_published: false,
   });
-
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [pricingDialog, setPricingDialog] = useState(false);
   const [editingPricing, setEditingPricing] = useState<CoursePricing | null>(
@@ -196,10 +193,8 @@ export default function CourseProfileManager() {
     }
   }, [profile]);
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: any) =>
     setForm((prev) => ({ ...prev, [field]: value }));
-  };
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -207,27 +202,20 @@ export default function CourseProfileManager() {
       setImagePreview(URL.createObjectURL(file));
     }
   };
-
   const handleSaveProfile = () => {
     if (!courseId) return;
     saveProfile.mutate({ courseId, data: form });
   };
-
   const handleTogglePublish = () => {
     if (!courseId) return;
-    if (profile?.is_published) {
-      unpublishProfile.mutate(courseId);
-    } else {
-      publishProfile.mutate(courseId);
-    }
+    if (profile?.is_published) unpublishProfile.mutate(courseId);
+    else publishProfile.mutate(courseId);
   };
-
   const openAddPricing = () => {
     setEditingPricing(null);
     setPricingForm(EMPTY_PRICING);
     setPricingDialog(true);
   };
-
   const openEditPricing = (p: CoursePricing) => {
     setEditingPricing(p);
     setPricingForm({
@@ -241,7 +229,6 @@ export default function CourseProfileManager() {
     });
     setPricingDialog(true);
   };
-
   const handleSavePricing = () => {
     if (!courseId || !pricingForm.status_fr.trim()) return;
     const data: CreateCoursePricingData = {
@@ -253,19 +240,17 @@ export default function CourseProfileManager() {
       discount: pricingForm.discount || undefined,
       sort_order: Number(pricingForm.sort_order),
     };
-    if (editingPricing) {
+    if (editingPricing)
       updatePricing.mutate(
         { courseId, pricingId: editingPricing.pricing_id, data },
         { onSuccess: () => setPricingDialog(false) },
       );
-    } else {
+    else
       addPricing.mutate(
         { courseId, data },
         { onSuccess: () => setPricingDialog(false) },
       );
-    }
   };
-
   const handleDeletePricing = (pricingId: string) => {
     if (!courseId) return;
     deletePricing.mutate(
@@ -281,14 +266,16 @@ export default function CourseProfileManager() {
           <div className="w-12 h-12 rounded-full border-2 border-muted" />
           <Loader2 className="w-12 h-12 animate-spin text-primary absolute inset-0" />
         </div>
-        <p className="text-sm text-muted-foreground">Loading profile...</p>
+        <p className="text-sm text-muted-foreground">
+          {t("admin.courseProfile.loading")}
+        </p>
       </div>
     );
   }
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
-      {/* ─── Top Bar ─── */}
+      {/* Top Bar */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -303,8 +290,8 @@ export default function CourseProfileManager() {
             <div>
               <h1 className="text-xl font-bold text-foreground tracking-tight">
                 {profile
-                  ? "Edit Formation Profile"
-                  : "Create Formation Profile"}
+                  ? t("admin.courseProfile.editProfile")
+                  : t("admin.courseProfile.createProfile")}
               </h1>
               <p className="text-sm text-muted-foreground">
                 {course?.course_name || "..."}{" "}
@@ -314,7 +301,6 @@ export default function CourseProfileManager() {
               </p>
             </div>
           </div>
-
           <div className="flex items-center gap-2.5 flex-wrap">
             {profile && (
               <Button
@@ -325,7 +311,7 @@ export default function CourseProfileManager() {
               >
                 <Link to={`/courses/${courseId}`} target="_blank">
                   <ExternalLink className="w-3.5 h-3.5" />
-                  Preview
+                  {t("admin.courseProfile.preview")}
                 </Link>
               </Button>
             )}
@@ -343,12 +329,12 @@ export default function CourseProfileManager() {
               {profile?.is_published ? (
                 <>
                   <EyeOff className="w-3.5 h-3.5" />
-                  Unpublish
+                  {t("admin.courseProfile.unpublish")}
                 </>
               ) : (
                 <>
                   <Eye className="w-3.5 h-3.5" />
-                  Publish
+                  {t("admin.courseProfile.publish")}
                 </>
               )}
             </Button>
@@ -362,18 +348,13 @@ export default function CourseProfileManager() {
               ) : (
                 <Save className="w-4 h-4" />
               )}
-              Save Profile
+              {t("admin.courseProfile.saveProfile")}
             </Button>
           </div>
         </div>
-
         {profile && (
           <div
-            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium ${
-              profile.is_published
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800"
-                : "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800"
-            }`}
+            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium ${profile.is_published ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800" : "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800"}`}
           >
             {profile.is_published ? (
               <CheckCircle2 className="w-4 h-4" />
@@ -381,19 +362,22 @@ export default function CourseProfileManager() {
               <AlertCircle className="w-4 h-4" />
             )}
             {profile.is_published
-              ? "Published — Visible to website visitors"
-              : "Draft — Not visible to the public yet"}
+              ? t("admin.courseProfile.publishedStatus")
+              : t("admin.courseProfile.draftStatus")}
           </div>
         )}
       </div>
 
-      {/* ═══ SECTION 1: Basic Information ═══ */}
+      {/* Section 1: Basic Info */}
       <SectionCard
         icon={Languages}
-        title="Basic Information"
-        description="Course identity, language, and description"
+        title={t("admin.courseProfile.basicInfo")}
+        description={t("admin.courseProfile.basicInfoDesc")}
       >
-        <FieldGroup label="Arabic Title" hint="Displayed on the public website">
+        <FieldGroup
+          label={t("admin.courseProfile.arabicTitle")}
+          hint={t("admin.courseProfile.arabicTitleHint")}
+        >
           <Input
             value={form.title_ar}
             onChange={(e) => handleChange("title_ar", e.target.value)}
@@ -402,9 +386,8 @@ export default function CourseProfileManager() {
             className="rounded-lg"
           />
         </FieldGroup>
-
         <div className="grid gap-5 md:grid-cols-2">
-          <FieldGroup label="Arabic Description">
+          <FieldGroup label={t("admin.courseProfile.arabicDesc")}>
             <Textarea
               value={form.description_ar}
               onChange={(e) => handleChange("description_ar", e.target.value)}
@@ -414,7 +397,7 @@ export default function CourseProfileManager() {
               className="rounded-lg resize-none"
             />
           </FieldGroup>
-          <FieldGroup label="Description (FR / EN)">
+          <FieldGroup label={t("admin.courseProfile.descFrEn")}>
             <Textarea
               value={form.description}
               onChange={(e) => handleChange("description", e.target.value)}
@@ -425,9 +408,8 @@ export default function CourseProfileManager() {
             />
           </FieldGroup>
         </div>
-
         <div className="grid gap-5 md:grid-cols-3">
-          <FieldGroup label="Language">
+          <FieldGroup label={t("admin.courseProfile.language")}>
             <Input
               value={form.language}
               onChange={(e) => handleChange("language", e.target.value)}
@@ -436,7 +418,7 @@ export default function CourseProfileManager() {
               className="rounded-lg"
             />
           </FieldGroup>
-          <FieldGroup label="Level">
+          <FieldGroup label={t("admin.courseProfile.level")}>
             <Input
               value={form.level}
               onChange={(e) => handleChange("level", e.target.value)}
@@ -445,18 +427,14 @@ export default function CourseProfileManager() {
               className="rounded-lg"
             />
           </FieldGroup>
-          <FieldGroup label="Flag">
+          <FieldGroup label={t("admin.courseProfile.flag")}>
             <div className="flex flex-wrap gap-1.5 pt-0.5">
               {FLAGS.map((f) => (
                 <button
                   key={f.emoji}
                   type="button"
                   onClick={() => handleChange("flag_emoji", f.emoji)}
-                  className={`text-xl p-1.5 rounded-lg border-2 transition-all duration-150 ${
-                    form.flag_emoji === f.emoji
-                      ? "border-primary bg-primary/10 scale-110 shadow-sm"
-                      : "border-transparent hover:border-muted-foreground/20 hover:bg-muted/50"
-                  }`}
+                  className={`text-xl p-1.5 rounded-lg border-2 transition-all duration-150 ${form.flag_emoji === f.emoji ? "border-primary bg-primary/10 scale-110 shadow-sm" : "border-transparent hover:border-muted-foreground/20 hover:bg-muted/50"}`}
                   title={f.label}
                 >
                   {f.emoji}
@@ -465,10 +443,9 @@ export default function CourseProfileManager() {
             </div>
           </FieldGroup>
         </div>
-
         <FieldGroup
-          label="Course Image"
-          hint="Recommended: 800×450px, JPG or PNG"
+          label={t("admin.courseProfile.courseImage")}
+          hint={t("admin.courseProfile.courseImageHint")}
         >
           <div className="flex items-start gap-4">
             {imagePreview ? (
@@ -493,7 +470,7 @@ export default function CourseProfileManager() {
               <label className="flex flex-col items-center justify-center w-44 h-28 rounded-xl border-2 border-dashed border-muted-foreground/25 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all duration-200">
                 <ImagePlus className="w-6 h-6 text-muted-foreground/50" />
                 <span className="text-xs text-muted-foreground mt-1.5 font-medium">
-                  Upload Image
+                  {t("admin.courseProfile.uploadImage")}
                 </span>
                 <input
                   type="file"
@@ -507,14 +484,14 @@ export default function CourseProfileManager() {
         </FieldGroup>
       </SectionCard>
 
-      {/* ═══ SECTION 2: Session & Registration ═══ */}
+      {/* Section 2: Session & Registration */}
       <SectionCard
         icon={Calendar}
-        title="Session & Registration"
-        description="Session dates, pricing, and enrollment settings"
+        title={t("admin.courseProfile.sessionReg")}
+        description={t("admin.courseProfile.sessionRegDesc")}
       >
         <div className="grid gap-5 md:grid-cols-3">
-          <FieldGroup label="Session Name" hint="e.g. Spring 2026">
+          <FieldGroup label={t("admin.courseProfile.sessionName")}>
             <Input
               value={form.session_name}
               onChange={(e) => handleChange("session_name", e.target.value)}
@@ -523,7 +500,7 @@ export default function CourseProfileManager() {
               className="rounded-lg"
             />
           </FieldGroup>
-          <FieldGroup label="Start Date">
+          <FieldGroup label={t("admin.courseProfile.startDate")}>
             <Input
               type="date"
               value={form.start_date}
@@ -531,7 +508,7 @@ export default function CourseProfileManager() {
               className="rounded-lg"
             />
           </FieldGroup>
-          <FieldGroup label="End Date">
+          <FieldGroup label={t("admin.courseProfile.endDate")}>
             <Input
               type="date"
               value={form.end_date}
@@ -540,9 +517,8 @@ export default function CourseProfileManager() {
             />
           </FieldGroup>
         </div>
-
         <div className="grid gap-5 md:grid-cols-3">
-          <FieldGroup label="Base Price">
+          <FieldGroup label={t("admin.courseProfile.basePrice")}>
             <Input
               type="number"
               value={form.price}
@@ -551,7 +527,7 @@ export default function CourseProfileManager() {
               className="rounded-lg"
             />
           </FieldGroup>
-          <FieldGroup label="Currency">
+          <FieldGroup label={t("admin.courseProfile.currency")}>
             <Input
               value={form.currency}
               onChange={(e) => handleChange("currency", e.target.value)}
@@ -568,12 +544,14 @@ export default function CourseProfileManager() {
               />
               <div>
                 <p className="text-sm font-medium">
-                  {form.registration_open ? "Open" : "Closed"}
+                  {form.registration_open
+                    ? t("admin.courseProfile.open")
+                    : t("admin.courseProfile.closed")}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {form.registration_open
-                    ? "Accepting registrations"
-                    : "Registration disabled"}
+                    ? t("admin.courseProfile.acceptingReg")
+                    : t("admin.courseProfile.regDisabled")}
                 </p>
               </div>
             </div>
@@ -581,11 +559,11 @@ export default function CourseProfileManager() {
         </div>
       </SectionCard>
 
-      {/* ═══ SECTION 3: Pricing Tiers ═══ */}
+      {/* Section 3: Pricing Tiers */}
       <SectionCard
         icon={Tag}
-        title="Pricing Tiers"
-        description="Different prices based on applicant status"
+        title={t("admin.courseProfile.pricingTiers")}
+        description={t("admin.courseProfile.pricingTiersDesc")}
         action={
           <Button
             size="sm"
@@ -593,7 +571,7 @@ export default function CourseProfileManager() {
             className="gap-2 rounded-lg shadow-sm"
           >
             <Plus className="w-4 h-4" />
-            Add Tier
+            {t("admin.courseProfile.addTier")}
           </Button>
         }
       >
@@ -608,10 +586,10 @@ export default function CourseProfileManager() {
             </div>
             <div className="text-center">
               <p className="font-medium text-foreground">
-                No pricing tiers yet
+                {t("admin.courseProfile.noPricingYet")}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                Add your first tier to display on the course page
+                {t("admin.courseProfile.noPricingDesc")}
               </p>
             </div>
           </div>
@@ -624,22 +602,22 @@ export default function CourseProfileManager() {
                     #
                   </th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    Status (FR)
+                    {t("admin.courseProfile.statusFr")}
                   </th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    Arabic
+                    {t("admin.courseProfile.arabic")}
                   </th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    English
+                    {t("admin.courseProfile.english")}
                   </th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    Price
+                    {t("admin.courseProfile.price")}
                   </th>
                   <th className="text-center px-4 py-3 font-medium text-muted-foreground">
-                    Discount
+                    {t("admin.courseProfile.discount")}
                   </th>
                   <th className="text-center px-6 py-3 font-medium text-muted-foreground w-24">
-                    Actions
+                    {t("admin.courseProfile.actions")}
                   </th>
                 </tr>
               </thead>
@@ -673,11 +651,7 @@ export default function CourseProfileManager() {
                     </td>
                     <td className="px-4 py-3.5 text-center">
                       <span
-                        className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium ${
-                          !p.discount || p.discount === "Aucune"
-                            ? "bg-muted/60 text-muted-foreground"
-                            : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                        }`}
+                        className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium ${!p.discount || p.discount === "Aucune" ? "bg-muted/60 text-muted-foreground" : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"}`}
                       >
                         {p.discount || "None"}
                       </span>
@@ -710,16 +684,18 @@ export default function CourseProfileManager() {
         )}
       </SectionCard>
 
-      {/* ═══ PRICING DIALOG ═══ */}
+      {/* Pricing Dialog */}
       <Dialog open={pricingDialog} onOpenChange={setPricingDialog}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-lg">
-              {editingPricing ? "Edit Pricing Tier" : "Add Pricing Tier"}
+              {editingPricing
+                ? t("admin.courseProfile.editPricingTier")
+                : t("admin.courseProfile.addPricingTier")}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <FieldGroup label="Status (French) *">
+            <FieldGroup label={t("admin.courseProfile.statusFrRequired")}>
               <Input
                 value={pricingForm.status_fr}
                 onChange={(e) =>
@@ -731,28 +707,22 @@ export default function CourseProfileManager() {
               />
             </FieldGroup>
             <div className="grid gap-4 grid-cols-2">
-              <FieldGroup label="Arabic">
+              <FieldGroup label={t("admin.courseProfile.arabic")}>
                 <Input
                   value={pricingForm.status_ar}
                   onChange={(e) =>
-                    setPricingForm((p) => ({
-                      ...p,
-                      status_ar: e.target.value,
-                    }))
+                    setPricingForm((p) => ({ ...p, status_ar: e.target.value }))
                   }
                   placeholder="طالب، موظف..."
                   dir="rtl"
                   className="rounded-lg"
                 />
               </FieldGroup>
-              <FieldGroup label="English">
+              <FieldGroup label={t("admin.courseProfile.english")}>
                 <Input
                   value={pricingForm.status_en}
                   onChange={(e) =>
-                    setPricingForm((p) => ({
-                      ...p,
-                      status_en: e.target.value,
-                    }))
+                    setPricingForm((p) => ({ ...p, status_en: e.target.value }))
                   }
                   placeholder="Student, Staff..."
                   dir="ltr"
@@ -761,7 +731,7 @@ export default function CourseProfileManager() {
               </FieldGroup>
             </div>
             <div className="grid gap-4 grid-cols-3">
-              <FieldGroup label="Price">
+              <FieldGroup label={t("admin.courseProfile.price")}>
                 <Input
                   type="number"
                   value={pricingForm.price}
@@ -772,27 +742,21 @@ export default function CourseProfileManager() {
                   className="rounded-lg"
                 />
               </FieldGroup>
-              <FieldGroup label="Currency">
+              <FieldGroup label={t("admin.courseProfile.currency")}>
                 <Input
                   value={pricingForm.currency}
                   onChange={(e) =>
-                    setPricingForm((p) => ({
-                      ...p,
-                      currency: e.target.value,
-                    }))
+                    setPricingForm((p) => ({ ...p, currency: e.target.value }))
                   }
                   dir="ltr"
                   className="rounded-lg"
                 />
               </FieldGroup>
-              <FieldGroup label="Discount">
+              <FieldGroup label={t("admin.courseProfile.discount")}>
                 <Input
                   value={pricingForm.discount}
                   onChange={(e) =>
-                    setPricingForm((p) => ({
-                      ...p,
-                      discount: e.target.value,
-                    }))
+                    setPricingForm((p) => ({ ...p, discount: e.target.value }))
                   }
                   placeholder="None, 50%..."
                   dir="ltr"
@@ -800,15 +764,12 @@ export default function CourseProfileManager() {
                 />
               </FieldGroup>
             </div>
-            <FieldGroup label="Sort Order">
+            <FieldGroup label={t("admin.courseProfile.sortOrder")}>
               <Input
                 type="number"
                 value={pricingForm.sort_order}
                 onChange={(e) =>
-                  setPricingForm((p) => ({
-                    ...p,
-                    sort_order: e.target.value,
-                  }))
+                  setPricingForm((p) => ({ ...p, sort_order: e.target.value }))
                 }
                 dir="ltr"
                 className="w-28 rounded-lg"
@@ -821,7 +782,7 @@ export default function CourseProfileManager() {
               onClick={() => setPricingDialog(false)}
               className="rounded-lg"
             >
-              Cancel
+              {t("admin.courseProfile.cancel")}
             </Button>
             <Button
               onClick={handleSavePricing}
@@ -835,21 +796,24 @@ export default function CourseProfileManager() {
               {(addPricing.isPending || updatePricing.isPending) && (
                 <Loader2 className="w-4 h-4 animate-spin" />
               )}
-              {editingPricing ? "Update" : "Add Tier"}
+              {editingPricing
+                ? t("admin.courseProfile.update")
+                : t("admin.courseProfile.addTier")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* ═══ DELETE DIALOG ═══ */}
+      {/* Delete Dialog */}
       <Dialog open={!!deleteDialog} onOpenChange={() => setDeleteDialog(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Delete Pricing Tier</DialogTitle>
+            <DialogTitle>
+              {t("admin.courseProfile.deletePricingTier")}
+            </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground py-4">
-            Are you sure you want to delete this pricing tier? This action
-            cannot be undone.
+            {t("admin.courseProfile.deletePricingConfirm")}
           </p>
           <DialogFooter className="gap-2">
             <Button
@@ -857,7 +821,7 @@ export default function CourseProfileManager() {
               onClick={() => setDeleteDialog(null)}
               className="rounded-lg"
             >
-              Cancel
+              {t("admin.courseProfile.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -870,7 +834,7 @@ export default function CourseProfileManager() {
               ) : (
                 <Trash2 className="w-4 h-4" />
               )}
-              Delete
+              {t("admin.courses.delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

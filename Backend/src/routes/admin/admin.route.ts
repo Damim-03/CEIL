@@ -114,14 +114,39 @@ import {
 } from "../../controllers/admin/admin.controller";
 import { reviewDocumentController } from "../../controllers/admin/document.controller";
 import { upload } from "../../middlewares/upload.middleware";
-import { createAnnouncementController, getAllAnnouncementsController, getAnnouncementByIdController, updateAnnouncementController, deleteAnnouncementController, publishAnnouncementController, unpublishAnnouncementController } from "../../controllers/admin/Announcement.controller";
-import { createOrUpdateCourseProfileController, getCourseProfileController, publishCourseProfileController, unpublishCourseProfileController, getCoursePricingController, addCoursePricingController, updateCoursePricingController, deleteCoursePricingController } from "../../controllers/admin/Courseprofile.controller";
+import {
+  createAnnouncementController,
+  getAllAnnouncementsController,
+  getAnnouncementByIdController,
+  updateAnnouncementController,
+  deleteAnnouncementController,
+  publishAnnouncementController,
+  unpublishAnnouncementController,
+} from "../../controllers/admin/Announcement.controller";
+import {
+  createOrUpdateCourseProfileController,
+  getCourseProfileController,
+  publishCourseProfileController,
+  unpublishCourseProfileController,
+  getCoursePricingController,
+  addCoursePricingController,
+  updateCoursePricingController,
+  deleteCoursePricingController,
+} from "../../controllers/admin/Courseprofile.controller";
+import {
+  getNotificationTargetsController,
+  sendNotificationController,
+  getAllNotificationsController,
+  getNotificationByIdController,
+  deleteNotificationController,
+  searchStudentsController,
+} from "../../controllers/admin/Notification.controller";
 
 const adminRoutes = Router();
 
 /* ======================================================
-  admin
-====================================================== */
+    admin
+  ====================================================== */
 
 adminRoutes.patch(
   "/me/avatar",
@@ -132,8 +157,8 @@ adminRoutes.patch(
 );
 
 /* ======================================================
-   USERS
-====================================================== */
+    USERS
+  ====================================================== */
 
 adminRoutes.get(
   "/users",
@@ -171,8 +196,8 @@ adminRoutes.patch(
 );
 
 /* ======================================================
-   STUDENTS
-====================================================== */
+    STUDENTS
+  ====================================================== */
 
 adminRoutes.post(
   "/students",
@@ -218,8 +243,8 @@ adminRoutes.patch(
 );
 
 /* ======================================================
-   TEACHERS
-====================================================== */
+    TEACHERS
+  ====================================================== */
 
 adminRoutes.post(
   "/teachers",
@@ -257,8 +282,8 @@ adminRoutes.delete(
 );
 
 /* ======================================================
-   COURSES
-====================================================== */
+    COURSES
+  ====================================================== */
 
 adminRoutes.post(
   "/courses",
@@ -296,8 +321,8 @@ adminRoutes.delete(
 );
 
 /* ======================================================
-   DEPARTMENTS
-====================================================== */
+    DEPARTMENTS
+  ====================================================== */
 
 adminRoutes.post(
   "/departments",
@@ -335,8 +360,8 @@ adminRoutes.delete(
 );
 
 /* ======================================================
-   GROUPS
-====================================================== */
+    GROUPS
+  ====================================================== */
 
 adminRoutes.post(
   "/groups",
@@ -384,7 +409,7 @@ adminRoutes.patch(
   "/groups/:groupId/assign-instructor",
   authMiddleware,
   roleGuard([Permissions.MANAGE_CLASSES]),
-  assignInstructorToGroupController,  // ← Controller جديد
+  assignInstructorToGroupController, // ← Controller جديد
 );
 
 adminRoutes.delete(
@@ -395,8 +420,8 @@ adminRoutes.delete(
 );
 
 /* ======================================================
-   FEES
-====================================================== */
+    FEES
+  ====================================================== */
 
 adminRoutes.post(
   "/fees",
@@ -441,8 +466,8 @@ adminRoutes.delete(
 );
 
 /* ======================================================
-   ENROLLMENTS
-====================================================== */
+    ENROLLMENTS
+  ====================================================== */
 
 adminRoutes.get(
   "/enrollments",
@@ -487,8 +512,8 @@ adminRoutes.patch(
 );
 
 /* ======================================================
-   DOCUMENTS
-====================================================== */
+    DOCUMENTS
+  ====================================================== */
 
 adminRoutes.get(
   "/documents",
@@ -527,8 +552,8 @@ adminRoutes.delete(
 );
 
 /* ======================================================
-   SESSIONS
-====================================================== */
+    SESSIONS
+  ====================================================== */
 
 adminRoutes.post(
   "/sessions",
@@ -566,8 +591,8 @@ adminRoutes.delete(
 );
 
 /* ======================================================
-   ATTENDANCE
-====================================================== */
+    ATTENDANCE
+  ====================================================== */
 
 adminRoutes.post(
   "/sessions/:sessionId/attendance",
@@ -601,8 +626,8 @@ adminRoutes.put(
 );
 
 /* ======================================================
-   EXAMS & RESULTS
-====================================================== */
+    EXAMS & RESULTS
+  ====================================================== */
 
 adminRoutes.post(
   "/exams",
@@ -668,8 +693,8 @@ adminRoutes.put(
 );
 
 /* ======================================================
-   PERMISSIONS
-====================================================== */
+    PERMISSIONS
+  ====================================================== */
 
 adminRoutes.post(
   "/permissions",
@@ -700,8 +725,8 @@ adminRoutes.delete(
 );
 
 /* ======================================================
-   DASHBOARD
-====================================================== */
+    DASHBOARD
+  ====================================================== */
 
 adminRoutes.get(
   "/dashboard/stats",
@@ -711,8 +736,8 @@ adminRoutes.get(
 );
 
 /* ======================================================
-   REPORTS
-====================================================== */
+    REPORTS
+  ====================================================== */
 
 adminRoutes.get(
   "/reports/students",
@@ -750,8 +775,8 @@ adminRoutes.get(
 );
 
 /* ======================================================
-   ANNOUNCEMENTS (الأخبار والإعلانات)
-====================================================== */
+    ANNOUNCEMENTS (الأخبار والإعلانات)
+  ====================================================== */
 
 adminRoutes.post(
   "/announcements",
@@ -805,8 +830,8 @@ adminRoutes.patch(
 );
 
 /* ======================================================
-   COURSE PROFILES (الملف العام للدورة)
-====================================================== */
+    COURSE PROFILES (الملف العام للدورة)
+  ====================================================== */
 
 // إنشاء أو تحديث الملف العام للدورة
 adminRoutes.post(
@@ -842,8 +867,8 @@ adminRoutes.patch(
 );
 
 /* ======================================================
-   COURSE PRICING (التعرفة حسب الصفة)
-====================================================== */
+    COURSE PRICING (التعرفة حسب الصفة)
+  ====================================================== */
 
 // عرض كل التعرفات
 adminRoutes.get(
@@ -875,6 +900,53 @@ adminRoutes.delete(
   authMiddleware,
   roleGuard([Permissions.MANAGE_COURSES]),
   deleteCoursePricingController,
+);
+
+/* ======================================================
+    NOTIFICATIONS (الاشعارات)
+  ====================================================== */
+
+adminRoutes.get(
+  "/notifications/targets",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
+  getNotificationTargetsController,
+);
+
+// ✅ MUST be BEFORE /:notificationId
+adminRoutes.get(
+  "/notifications/search-students",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
+  searchStudentsController,
+);
+
+adminRoutes.post(
+  "/notifications",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
+  sendNotificationController,
+);
+
+adminRoutes.get(
+  "/notifications",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
+  getAllNotificationsController,
+);
+
+adminRoutes.get(
+  "/notifications/:notificationId",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
+  getNotificationByIdController,
+);
+
+adminRoutes.delete(
+  "/notifications/:notificationId",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
+  deleteNotificationController,
 );
 
 export default adminRoutes;

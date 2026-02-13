@@ -9,8 +9,8 @@ import {
   GraduationCap,
   UserPlus,
 } from "lucide-react";
-import { Button } from "../../../components/ui/button";
-import { usePublicCourse } from "../../../hooks/announce/Usepublic";
+import { Button } from "../../../../components/ui/button";
+import { usePublicCourse } from "../../../../hooks/announce/Usepublic";
 
 const formatDate = (date: string | null) => {
   if (!date) return "—";

@@ -37,13 +37,13 @@ import { AnnouncementsPreview } from "./app/Home/announcementspreview";
 import AboutUs from "./app/Home/AboutUs";
 import CoursesHomePage from "./app/Home/CoursesHomePage";
 import AnnouncementDetailPage from "./app/Home/Announcementdetailpage";
-import PricingCoursesPage from "./app/admin/pages/PricingCoursesPage";
+import PricingCoursesPage from "./app/admin/pages/Pricing/PricingCoursesPage";
 import CourseProfileManager from "./app/admin/pages/courses/Courseprofilemanager";
-import FormationsPage from "./app/admin/pages/Formationspage";
+import FormationsPage from "./app/admin/pages/Formation/Formationspage";
 import CourseInfoMorePage from "./app/Home/CourseInfoMorePage";
 import PublicLayout from "./layouts/Publiclayout";
 import AuthPage from "./app/auth/Authpage";
-import DepartmentsPage from "./app/admin/pages/DepartmentsPage";
+import DepartmentsPage from "./app/admin/pages/Departments/DepartmentsPage";
 
 // ═══ Teacher imports ═══
 import TeacherLayout from "./layouts/Teacherlayout";
@@ -59,6 +59,15 @@ import TeacherProfile from "./app/teacher/pages/profile/TeacherProfile";
 // ═══ i18n ═══
 import { LanguageLayout } from "./i18n/locales/components/LanguageLayout";
 import { DEFAULT_LANG } from "./i18n/i18n";
+import AdminNotificationsPage from "./app/admin/pages/Notifications/Adminnotificationspage";
+import StudentNotificationsPage from "./app/student/pages/StudentNotificationsPage";
+import TeacherAnnouncementDetail from "./app/teacher/pages/announcements/TeacherAnnouncementDetail";
+import TeacherAnnouncements from "./app/teacher/pages/announcements/TeacherAnnouncements";
+import TeacherGroupDetails from "./app/teacher/pages/groups/TeacherGroupDetails";
+import TeacherGroupStats from "./app/teacher/pages/groups/TeacherGroupStats";
+import TeacherSchedule from "./app/teacher/pages/schedule/TeacherSchedule";
+import TeacherStudentDetails from "./app/teacher/pages/student/TeacherStudentDetails";
+import OurPlatform from "./app/Home/OurPlatform";
 
 const App = () => {
   return (
@@ -80,6 +89,7 @@ const App = () => {
           <Route path="courses" element={<CoursesHomePage />} />
           <Route path="courses/:id" element={<CourseInfoMorePage />} />
           <Route path="about-us" element={<AboutUs />} />
+          <Route path="OurPlatform" element={<OurPlatform />} />
         </Route>
 
         {/* ═══ Auth pages under lang prefix too ═══ */}
@@ -173,6 +183,7 @@ const App = () => {
         <Route path="fees" element={<Fees />} />
         <Route path="attendance" element={<Attendance />} />
         <Route path="results" element={<Results />} />
+        <Route path="notifications" element={<StudentNotificationsPage />} />
       </Route>
 
       {/* ═══════════════════════════════════════════
@@ -188,11 +199,20 @@ const App = () => {
       >
         <Route index element={<TeacherDashboard />} />
         <Route path="groups" element={<TeacherGroups />} />
+        <Route path="groups/:groupId" element={<TeacherGroupDetails />} />
+        <Route path="groups/:groupId/stats" element={<TeacherGroupStats />} />
         <Route path="sessions" element={<TeacherSessions />} />
         <Route path="attendance" element={<TeacherAttendance />} />
         <Route path="exams" element={<TeacherExams />} />
         <Route path="results" element={<TeacherResults />} />
         <Route path="students" element={<TeacherStudents />} />
+        <Route path="students/:studentId" element={<TeacherStudentDetails />} />
+        <Route path="schedule" element={<TeacherSchedule />} />
+        <Route path="announcements" element={<TeacherAnnouncements />} />
+        <Route
+          path="announcements/:announcementId"
+          element={<TeacherAnnouncementDetail />}
+        />
         <Route path="profile" element={<TeacherProfile />} />
       </Route>
 
@@ -227,6 +247,7 @@ const App = () => {
         <Route path="enrollments" element={<EnrollmentsPage />} />
         <Route path="Documents" element={<DocumentsPage />} />
         <Route path="reports" element={<ReportsPage />} />
+        <Route path="notifications" element={<AdminNotificationsPage />} />
         <Route path="Announcements" element={<AnnouncementsPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="users/:userId" element={<UserDetailsPage />} />

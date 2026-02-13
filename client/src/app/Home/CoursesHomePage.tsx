@@ -20,15 +20,22 @@ import type { PublicCourse } from "../../lib/api/announce/announce.api";
 import { useAuthRedirect } from "../../lib/utils/auth-redirect";
 import { useLanguage } from "../../hooks/useLanguage";
 import { LocaleLink } from "../../i18n/locales/components/LocaleLink";
+import { useMe } from "../../hooks/auth/auth.hooks";
+import { Link } from "react-router-dom";
 
 function CourseCard({ course }: { course: PublicCourse }) {
   const { t, dir, currentLang } = useLanguage();
-  const { isLoggedIn, getRegisterHref } = useAuthRedirect();
+  const { isLoggedIn } = useAuthRedirect();
+  const { data: user } = useMe();
 
   const isOpen =
     course.registration_open &&
     (course.capacity === 0 || course.enrolled < course.capacity);
   const isFull = course.capacity > 0 && course.enrolled >= course.capacity;
+
+  // Only students (or unauthenticated users) can register
+  const canRegister =
+    !isLoggedIn || (user?.role !== "ADMIN" && user?.role !== "TEACHER");
 
   const formatDate = (date: string | null) => {
     if (!date) return "—";
@@ -172,29 +179,30 @@ function CourseCard({ course }: { course: PublicCourse }) {
 
       {/* Actions */}
       <div className="p-5 pt-0 flex gap-2.5">
-        {isOpen && (
+        {isOpen && canRegister && (
           <Button
             asChild
             className="flex-1 bg-brand-mustard hover:bg-brand-mustard/90 text-white border-0 gap-2 rounded-xl h-11 font-semibold shadow-md"
           >
-            <LocaleLink
-              to={
-                !isLoggedIn
-                  ? `/login?redirect=${encodeURIComponent(`/courses/${course.id}`)}`
-                  : getRegisterHref(course.id)
-              }
-            >
-              <UserPlus className="w-4 h-4" />
-              {!isLoggedIn
-                ? t("courses.loginToRegister")
-                : t("courses.registerNow")}
-            </LocaleLink>
+            {!isLoggedIn ? (
+              <LocaleLink
+                to={`/login?redirect=${encodeURIComponent(`/dashboard/courses?courseId=${course.id}`)}`}
+              >
+                <UserPlus className="w-4 h-4" />
+                {t("courses.loginToRegister")}
+              </LocaleLink>
+            ) : (
+              <Link to={`/dashboard/courses?courseId=${course.id}`}>
+                <UserPlus className="w-4 h-4" />
+                {t("courses.registerNow")}
+              </Link>
+            )}
           </Button>
         )}
         <Button
           variant="outline"
           asChild
-          className={`${isOpen ? "flex-1" : "w-full"} border-brand-teal-dark/20 text-brand-teal-dark hover:bg-brand-teal-dark hover:text-white hover:border-brand-teal-dark gap-2 rounded-xl h-11`}
+          className={`${isOpen && canRegister ? "flex-1" : "w-full"} border-brand-teal-dark/20 text-brand-teal-dark hover:bg-brand-teal-dark hover:text-white hover:border-brand-teal-dark gap-2 rounded-xl h-11`}
         >
           <LocaleLink to={`/courses/${course.id}`}>
             <Info className="w-4 h-4" />

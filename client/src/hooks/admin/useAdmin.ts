@@ -4,7 +4,8 @@
    All admin-related React Query hooks in one place.
    Organized by domain for easy navigation.
    
-   Replaces 16 separate files with 1 unified file.
+   ✅ Updated AdminDashboardStats type for new dashboard
+   ✅ Cross-invalidation: Fees ↔ Enrollments ↔ Dashboard
    
    Last updated: February 2026
 =============================================================== */
@@ -43,6 +44,12 @@ import {
   type CoursePricing,
   type CreateCoursePricingData,
   type CreateCourseProfileData,
+  adminDashboardApi,
+  adminNotificationApi,
+  userNotificationApi,
+  type NotificationDetail,
+  type NotificationPayload,
+  type NotificationTargets,
 } from "../../lib/api/admin/admin.api";
 
 // Context
@@ -72,7 +79,6 @@ import type {
   Permission,
   CreatePermissionPayload,
 } from "../../types/Types";
-import axios from "axios";
 
 /* ===============================================================
    QUERY KEYS (Centralized)
@@ -118,6 +124,9 @@ const enrollmentKey = (id: string) => ["admin-enrollment", id];
 const DOCUMENTS_KEY = ["admin-documents"];
 const documentKey = (id: string) => ["admin-document", id];
 
+const NOTIFICATIONS_KEY = ["admin-notifications"];
+const NOTIFICATION_TARGETS_KEY = ["notification-targets"];
+
 // Sessions
 const SESSIONS_KEY = ["admin-sessions"];
 const sessionKey = (id: string) => ["admin-session", id];
@@ -145,28 +154,74 @@ const PERMISSIONS_KEY = ["admin-permissions"];
 const ME_KEY = ["me"];
 
 /* ===============================================================
-   DASHBOARD
+   DASHBOARD - ✅ UPDATED TYPE
 =============================================================== */
 
 export interface AdminDashboardStats {
   students: number;
   teachers: number;
   courses: number;
+  groups: number;
   unpaidFees: number;
   gender: {
     Male?: number;
     Female?: number;
     Other?: number;
   };
+  // ✅ New fields
+  enrollments: {
+    pending: number;
+    validated: number;
+    paid: number;
+    finished: number;
+    total: number;
+  };
+  revenue: {
+    collected: number;
+    pending: number;
+    total: number;
+    paidCount: number;
+    unpaidCount: number;
+    totalCount: number;
+  };
+  recentEnrollments: Array<{
+    enrollment_id: string;
+    enrollment_date: string;
+    registration_status: string;
+    student: {
+      student_id: string;
+      first_name: string;
+      last_name: string;
+      email: string;
+      avatar_url?: string;
+    };
+    course: {
+      course_id: string;
+      course_name: string;
+      course_code?: string;
+    };
+    pricing?: {
+      status_fr: string;
+      price: number;
+      currency: string;
+    };
+  }>;
+  recentFees: Array<{
+    fee_id: string;
+    amount: number;
+    paid_at: string;
+    payment_method?: string;
+    student: {
+      first_name: string;
+      last_name: string;
+    };
+  }>;
 }
 
 export const useAdminDashboard = () =>
   useQuery<AdminDashboardStats>({
     queryKey: DASHBOARD_KEY,
-    queryFn: async () => {
-      const { data } = await axios.get("/admin/dashboard/stats");
-      return data;
-    },
+    queryFn: adminDashboardApi.getStats,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
@@ -304,7 +359,7 @@ export const useAdminStudents = () =>
       const res = await adminStudentsApi.getAll();
       return res.data ?? res.students ?? [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
 export const useAdminStudent = (studentId?: string) =>
@@ -326,6 +381,7 @@ export const useCreateStudent = () => {
       adminStudentsApi.create(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: STUDENTS_KEY });
+      qc.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
     },
   });
 };
@@ -373,6 +429,7 @@ export const useDeleteStudent = () => {
     mutationFn: (studentId: string) => adminStudentsApi.delete(studentId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: STUDENTS_KEY });
+      qc.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
     },
     onMutate: async (studentId) => {
       await qc.cancelQueries({ queryKey: STUDENTS_KEY });
@@ -421,7 +478,6 @@ export const useAdminTeacher = (teacherId?: string) =>
     queryFn: () => adminTeachersApi.getById(teacherId!),
   });
 
-// ✅ NEW: Create Teacher hook
 export const useCreateTeacher = () => {
   const queryClient = useQueryClient();
 
@@ -431,12 +487,11 @@ export const useCreateTeacher = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TEACHERS_KEY });
       queryClient.invalidateQueries({ queryKey: USERS_KEY });
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
       toast.success("Teacher created successfully");
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || "Failed to create teacher",
-      );
+      toast.error(error?.response?.data?.message || "Failed to create teacher");
     },
   });
 };
@@ -449,6 +504,7 @@ export const useDeleteTeacher = () => {
     onSuccess: (_, teacherId) => {
       queryClient.removeQueries({ queryKey: teacherKey(teacherId) });
       queryClient.invalidateQueries({ queryKey: TEACHERS_KEY });
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
     },
   });
 };
@@ -513,6 +569,7 @@ export const useCreateCourse = () => {
     mutationFn: adminCoursesApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: COURSES_KEY });
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
     },
   });
 };
@@ -542,6 +599,7 @@ export const useDeleteCourse = () => {
     mutationFn: adminCoursesApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: COURSES_KEY });
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
     },
   });
 };
@@ -631,6 +689,7 @@ export const useCreateGroup = () => {
     mutationFn: (payload: CreateGroupPayload) => adminGroupsApi.create(payload),
     onSuccess: (newGroup) => {
       qc.invalidateQueries({ queryKey: GROUPS_KEY });
+      qc.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
       qc.setQueryData(groupKey(newGroup.group_id), newGroup);
     },
   });
@@ -662,6 +721,7 @@ export const useDeleteGroup = () => {
     onSuccess: (_, groupId) => {
       qc.removeQueries({ queryKey: groupKey(groupId) });
       qc.invalidateQueries({ queryKey: GROUPS_KEY });
+      qc.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
     },
   });
 };
@@ -698,6 +758,7 @@ export const useAddStudentToGroup = () => {
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: groupKey(vars.groupId) });
       qc.invalidateQueries({ queryKey: GROUPS_KEY });
+      qc.invalidateQueries({ queryKey: ENROLLMENTS_KEY }); // ✅
     },
   });
 };
@@ -716,19 +777,20 @@ export const useRemoveStudentFromGroup = () => {
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: groupKey(vars.groupId) });
       qc.invalidateQueries({ queryKey: GROUPS_KEY });
+      qc.invalidateQueries({ queryKey: ENROLLMENTS_KEY }); // ✅
     },
   });
 };
 
 /* ===============================================================
-   ENROLLMENTS
+   ENROLLMENTS - ✅ Cross-invalidation with Dashboard & Fees
 =============================================================== */
 
 export const useAdminEnrollments = () =>
   useQuery<Enrollment[]>({
     queryKey: ENROLLMENTS_KEY,
     queryFn: adminEnrollmentsApi.getAll,
-    staleTime: 1000 * 30, // 30s
+    staleTime: 1000 * 30,
   });
 
 export const useAdminEnrollment = (enrollmentId?: string) =>
@@ -738,11 +800,14 @@ export const useAdminEnrollment = (enrollmentId?: string) =>
     enabled: Boolean(enrollmentId),
   });
 
+// ✅ Updated: invalidates dashboard + fees too
 const invalidateEnrollments = (
   qc: ReturnType<typeof useQueryClient>,
   id?: string,
 ) => {
   qc.invalidateQueries({ queryKey: ENROLLMENTS_KEY });
+  qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
+  qc.invalidateQueries({ queryKey: FEES_KEY });
   if (id) {
     qc.invalidateQueries({ queryKey: enrollmentKey(id) });
   }
@@ -752,9 +817,14 @@ export const useValidateEnrollment = () => {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (enrollmentId: string) =>
-      adminEnrollmentsApi.validate(enrollmentId),
-    onSuccess: (_, enrollmentId) => invalidateEnrollments(qc, enrollmentId),
+    mutationFn: ({
+      enrollmentId,
+      pricing_id,
+    }: {
+      enrollmentId: string;
+      pricing_id?: string;
+    }) => adminEnrollmentsApi.validate(enrollmentId, { pricing_id }),
+    onSuccess: (_, { enrollmentId }) => invalidateEnrollments(qc, enrollmentId),
   });
 };
 
@@ -828,23 +898,15 @@ const transformDocument = (doc: AdminDocumentResponse): AdminDocument => {
   }
 };
 
-// ✅ Get all documents
 export const useAdminDocuments = () =>
   useQuery({
     queryKey: DOCUMENTS_KEY,
     queryFn: async () => {
       try {
         const res = await adminDocumentsApi.getAll();
-        if (!res) {
-          console.warn("Empty response from API");
-          return [];
-        }
-        if (!Array.isArray(res)) {
-          console.error("Invalid response format:", res);
-          throw new Error("Invalid response format from server");
-        }
+        if (!res) return [];
+        if (!Array.isArray(res)) throw new Error("Invalid response format");
         if (res.length > 0 && "fileName" in res[0]) {
-          console.log("Data already transformed by backend");
           return res.map((doc: any) => ({
             ...doc,
             status: doc.status || "PENDING",
@@ -860,113 +922,76 @@ export const useAdminDocuments = () =>
     staleTime: 30000,
   });
 
-// ✅ Get single document
 export const useAdminDocument = (documentId?: string) =>
   useQuery<AdminDocument>({
     queryKey: documentKey(documentId!),
     queryFn: async () => {
-      try {
-        const res: AdminDocumentResponse = await adminDocumentsApi.getById(
-          documentId!,
-        );
-        return transformDocument(res);
-      } catch (error) {
-        console.error("Error fetching document:", error);
-        throw error;
-      }
+      const res: AdminDocumentResponse = await adminDocumentsApi.getById(
+        documentId!,
+      );
+      return transformDocument(res);
     },
     enabled: !!documentId,
     retry: 2,
   });
 
-// ✅ Delete document
 export const useDeleteDocument = () => {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (documentId: string) => {
-      try {
-        return await adminDocumentsApi.delete(documentId);
-      } catch (error) {
-        console.error("Error deleting document:", error);
-        throw error;
-      }
-    },
+    mutationFn: (documentId: string) => adminDocumentsApi.delete(documentId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: DOCUMENTS_KEY });
       toast.success("🗑️ Document deleted successfully");
     },
     onError: (error: any) => {
-      console.error("Delete mutation error:", error);
-      const message =
-        error?.response?.data?.message || "Failed to delete document";
-      toast.error(message);
+      toast.error(
+        error?.response?.data?.message || "Failed to delete document",
+      );
     },
   });
 };
 
-// ✅ NEW: Approve document
 export const useApproveDocument = () => {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (documentId: string) => {
-      try {
-        return await adminDocumentsApi.approve(documentId);
-      } catch (error) {
-        console.error("Error approving document:", error);
-        throw error;
-      }
-    },
+    mutationFn: (documentId: string) => adminDocumentsApi.approve(documentId),
     onSuccess: () => {
-      // ✅ Invalidate all related queries
       qc.invalidateQueries({ queryKey: DOCUMENTS_KEY });
       qc.invalidateQueries({ queryKey: ENROLLMENTS_KEY });
       qc.invalidateQueries({ queryKey: STUDENTS_KEY });
-
       toast.success("✅ Document approved successfully");
     },
     onError: (error: any) => {
-      console.error("Approve mutation error:", error);
-      const message =
-        error?.response?.data?.message || "Failed to approve document";
-      toast.error(message);
+      toast.error(
+        error?.response?.data?.message || "Failed to approve document",
+      );
     },
   });
 };
 
-// ✅ NEW: Reject document
 export const useRejectDocument = () => {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       documentId,
       reason,
     }: {
       documentId: string;
       reason: string;
-    }) => {
-      try {
-        return await adminDocumentsApi.reject(documentId, reason);
-      } catch (error) {
-        console.error("Error rejecting document:", error);
-        throw error;
-      }
-    },
+    }) => adminDocumentsApi.reject(documentId, reason),
     onSuccess: () => {
-      // ✅ Invalidate all related queries
       qc.invalidateQueries({ queryKey: DOCUMENTS_KEY });
       qc.invalidateQueries({ queryKey: ENROLLMENTS_KEY });
       qc.invalidateQueries({ queryKey: STUDENTS_KEY });
-
       toast.success("❌ Document rejected");
     },
     onError: (error: any) => {
-      console.error("Reject mutation error:", error);
-      const message =
-        error?.response?.data?.message || "Failed to reject document";
-      toast.error(message);
+      toast.error(
+        error?.response?.data?.message || "Failed to reject document",
+      );
     },
   });
 };
@@ -1124,7 +1149,7 @@ export const useAdminDeleteAttendance = () => {
 };
 
 /* ===============================================================
-   FEES
+   FEES - ✅ Cross-invalidation with Enrollments & Dashboard
 =============================================================== */
 
 export const useAdminFees = () =>
@@ -1147,6 +1172,7 @@ export const useCreateFee = () => {
     mutationFn: adminFeesApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: FEES_KEY });
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
     },
   });
 };
@@ -1165,10 +1191,12 @@ export const useUpdateFee = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: FEES_KEY });
       queryClient.invalidateQueries({ queryKey: feeKey(variables.feeId) });
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
     },
   });
 };
 
+// ✅ CRITICAL: Mark fee paid → invalidate enrollments + dashboard
 export const useMarkFeePaid = () => {
   const queryClient = useQueryClient();
 
@@ -1183,6 +1211,8 @@ export const useMarkFeePaid = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: FEES_KEY });
       queryClient.invalidateQueries({ queryKey: feeKey(variables.feeId) });
+      queryClient.invalidateQueries({ queryKey: ENROLLMENTS_KEY }); // ✅ enrollment auto-advances
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅ dashboard stats update
     },
   });
 };
@@ -1194,6 +1224,7 @@ export const useDeleteFee = () => {
     mutationFn: (feeId: string) => adminFeesApi.delete(feeId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: FEES_KEY });
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
     },
   });
 };
@@ -1416,7 +1447,6 @@ export const useUpdateAdminAvatar = () => {
       toast.success("Avatar updated successfully");
     },
     onError: (error: any) => {
-      console.error("Avatar upload error:", error);
       const message =
         error?.response?.data?.message ||
         error?.message ||
@@ -1426,14 +1456,14 @@ export const useUpdateAdminAvatar = () => {
   });
 };
 
-// ─── GET ALL ───
+// ─── ANNOUNCEMENTS ───
+
 export const useAdminAnnouncements = (params?: AnnouncementListParams) =>
   useQuery({
     queryKey: [QUERY_KEY, params],
     queryFn: () => announcementApi.getAll(params),
   });
 
-// ─── GET BY ID ───
 export const useAdminAnnouncement = (id: string) =>
   useQuery({
     queryKey: [QUERY_KEY, id],
@@ -1441,7 +1471,6 @@ export const useAdminAnnouncement = (id: string) =>
     enabled: !!id,
   });
 
-// ─── CREATE ───
 export const useCreateAnnouncement = () => {
   const queryClient = useQueryClient();
 
@@ -1459,7 +1488,6 @@ export const useCreateAnnouncement = () => {
   });
 };
 
-// ─── UPDATE ───
 export const useUpdateAnnouncement = () => {
   const queryClient = useQueryClient();
 
@@ -1479,7 +1507,6 @@ export const useUpdateAnnouncement = () => {
   });
 };
 
-// ─── DELETE ───
 export const useDeleteAnnouncement = () => {
   const queryClient = useQueryClient();
 
@@ -1497,7 +1524,6 @@ export const useDeleteAnnouncement = () => {
   });
 };
 
-// ─── PUBLISH ───
 export const usePublishAnnouncement = () => {
   const queryClient = useQueryClient();
 
@@ -1516,7 +1542,6 @@ export const usePublishAnnouncement = () => {
   });
 };
 
-// ─── UNPUBLISH ───
 export const useUnpublishAnnouncement = () => {
   const queryClient = useQueryClient();
 
@@ -1534,6 +1559,10 @@ export const useUnpublishAnnouncement = () => {
     },
   });
 };
+
+/* ===============================================================
+   COURSE PROFILE & PRICING
+=============================================================== */
 
 export const useAdminCourseProfile = (courseId?: string) =>
   useQuery<CourseProfile>({
@@ -1589,10 +1618,6 @@ export const useUnpublishCourseProfile = () => {
     },
   });
 };
-
-/* ===============================================================
-   COURSE PRICING HOOKS
-=============================================================== */
 
 export const useAdminCoursePricing = (courseId?: string) =>
   useQuery<CoursePricing[]>({
@@ -1664,11 +1689,137 @@ export const useDeleteCoursePricing = () => {
 };
 
 /* ===============================================================
+   NOTIFICATIONS - Admin Side
+=============================================================== */
+
+/** Get targeting options (courses, groups, teachers) for the send form */
+export const useNotificationTargets = () =>
+  useQuery<NotificationTargets>({
+    queryKey: NOTIFICATION_TARGETS_KEY,
+    queryFn: adminNotificationApi.getTargets,
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+  });
+
+/** Send a notification to selected targets */
+export const useSendNotification = () => {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: NotificationPayload) =>
+      adminNotificationApi.send(payload),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
+      toast.success("تم إرسال الإشعار بنجاح", {
+        description: `تم الإرسال إلى ${data.recipients_count} مستلم`,
+      });
+    },
+    onError: (error: any) => {
+      toast.error("فشل إرسال الإشعار", {
+        description: error.response?.data?.message || "حاول مرة أخرى",
+      });
+    },
+  });
+};
+
+/** Get all notifications (admin list with pagination) */
+export const useAdminNotifications = (page = 1) =>
+  useQuery({
+    queryKey: [...NOTIFICATIONS_KEY, page],
+    queryFn: () => adminNotificationApi.getAll(page),
+  });
+
+/** Get notification detail with recipient list */
+export const useAdminNotificationDetail = (id?: string) =>
+  useQuery<NotificationDetail>({
+    queryKey: ["admin-notification", id],
+    queryFn: () => adminNotificationApi.getById(id!),
+    enabled: !!id,
+  });
+
+/** Delete a notification */
+export const useDeleteNotification = () => {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => adminNotificationApi.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
+      toast.success("تم حذف الإشعار");
+    },
+    onError: () => toast.error("فشل حذف الإشعار"),
+  });
+};
+
+/* ===============================================================
+   NOTIFICATIONS - Student / Teacher Side (my notifications)
+=============================================================== */
+
+const MY_NOTIFICATIONS_KEY = (base: string) => [`${base}-notifications`];
+const UNREAD_COUNT_KEY = (base: string) => [`${base}-unread-count`];
+
+/** Get my notifications (student or teacher) */
+export const useMyNotifications = (
+  base: "student" | "teacher",
+  page = 1,
+  unreadOnly = false,
+) =>
+  useQuery({
+    queryKey: [...MY_NOTIFICATIONS_KEY(base), page, unreadOnly],
+    queryFn: () => userNotificationApi.getMine(base, page, unreadOnly),
+  });
+
+/** Get unread count — polls every 30s for live badge updates */
+export const useUnreadNotificationCount = (base: "student" | "teacher") =>
+  useQuery({
+    queryKey: UNREAD_COUNT_KEY(base),
+    queryFn: () => userNotificationApi.getUnreadCount(base),
+    refetchInterval: 30_000, // Poll every 30 seconds
+  });
+
+/** Mark one notification as read */
+export const useMarkNotificationRead = (base: "student" | "teacher") => {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (recipientId: string) =>
+      userNotificationApi.markRead(base, recipientId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: MY_NOTIFICATIONS_KEY(base) });
+      qc.invalidateQueries({ queryKey: UNREAD_COUNT_KEY(base) });
+    },
+  });
+};
+
+/** Mark all notifications as read */
+export const useMarkAllNotificationsRead = (base: "student" | "teacher") => {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => userNotificationApi.markAllRead(base),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: MY_NOTIFICATIONS_KEY(base) });
+      qc.invalidateQueries({ queryKey: UNREAD_COUNT_KEY(base) });
+      toast.success("تم تحديد الكل كمقروء");
+    },
+  });
+};
+
+// أضف بعد useDeleteNotification
+
+/** Search students for specific targeting */
+export const useSearchStudents = (query: string) =>
+  useQuery({
+    queryKey: ["search-students", query],
+    queryFn: () => userNotificationApi.searchStudents(query),
+    enabled: query.length >= 2,
+    staleTime: 30_000,
+  });
+
+/* ===============================================================
    EXPORTS
 =============================================================== */
 
 export {
-  // Query Keys
   DASHBOARD_KEY,
   USERS_KEY,
   STUDENTS_KEY,
@@ -1685,6 +1836,8 @@ export {
   RESULTS_KEY,
   PERMISSIONS_KEY,
   ME_KEY,
+  NOTIFICATIONS_KEY,
+  NOTIFICATION_TARGETS_KEY,
 };
 
 export type { AdminStudent };

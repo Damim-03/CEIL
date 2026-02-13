@@ -16,7 +16,6 @@ export const studentApi = {
   uploadAvatar: async (file: File) => {
     const formData = new FormData();
     formData.append("avatar", file);
-    // ✅ FIX: Don't set Content-Type, let browser add boundary
     const { data } = await axiosInstance.post("/students/avatar", formData);
     return data;
   },
@@ -35,9 +34,7 @@ export const studentApi = {
     return data;
   },
 
-  // ✅ FIXED: uploadDocuments
   uploadDocuments: async (formData: FormData) => {
-    // ✅ FIX: Accept FormData directly, don't set Content-Type
     const { data } = await axiosInstance.post("/students/documents", formData);
     return data;
   },
@@ -58,7 +55,6 @@ export const studentApi = {
   }) => {
     const formData = new FormData();
     formData.append("file", file);
-    // ✅ FIX: Don't set Content-Type
     const { data } = await axiosInstance.put(
       `/students/documents/${documentId}/reupload`,
       formData,
@@ -68,7 +64,13 @@ export const studentApi = {
 
   // ======================== ENROLLMENT ========================
 
-  enroll: async (payload: { course_id: string; group_id?: string }) => {
+  // ✅ UPDATED: Now accepts pricing_id
+  enroll: async (payload: {
+    course_id: string;
+    group_id?: string;
+    level?: string;
+    pricing_id?: string; // ✅ NEW
+  }) => {
     const { data } = await axiosInstance.post("/students/enroll", payload);
     return data;
   },
@@ -106,6 +108,13 @@ export const studentApi = {
     return data;
   },
 
+  getCoursePricing: async (courseId: string) => {
+    const { data } = await axiosInstance.get(
+      `/students/courses/${courseId}/pricing`,
+    );
+    return data;
+  },
+
   // ======================== GROUPS ========================
 
   joinGroup: async (groupId: string) => {
@@ -138,6 +147,32 @@ export const studentApi = {
 
   getResults: async () => {
     const { data } = await axiosInstance.get("/students/me/results");
+    return data;
+  },
+
+  // ======================== NOTIFICATIONS ========================
+
+  getNotifications: async (page = 1, unreadOnly = false) => {
+    const params = new URLSearchParams({ page: String(page), limit: "15" });
+    if (unreadOnly) params.append("unread", "true");
+    const { data } = await axiosInstance.get(`/students/notifications?${params}`);
+    return data;
+  },
+
+  getUnreadCount: async () => {
+    const { data } = await axiosInstance.get("/students/notifications/unread-count");
+    return data;  // { unread_count: number }
+  },
+
+  markNotificationRead: async (recipientId: string) => {
+    const { data } = await axiosInstance.patch(
+      `/students/notifications/${recipientId}/read`
+    );
+    return data;
+  },
+
+  markAllNotificationsRead: async () => {
+    const { data } = await axiosInstance.patch("/students/notifications/read-all");
     return data;
   },
 };

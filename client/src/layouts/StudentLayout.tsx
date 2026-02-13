@@ -1,62 +1,65 @@
-import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
 
 import StudentNavbar from "../app/student/components/StudentNavbar";
 import StudentSidebar from "../app/student/components/StudentSidebar";
 import PageLoader from "../components/PageLoader";
 import { useMe } from "../hooks/auth/auth.hooks";
+import { useLanguage } from "../hooks/useLanguage";
 
 const StudentLayout = () => {
-  const [open, setOpen] = useState(false);
-  const { data: user, isLoading } = useMe();
+  const location = useLocation();
+  const { dir } = useLanguage();
+  const [collapsed, setCollapsed] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const { isLoading } = useMe();
 
-  // Close sidebar when resizing to desktop
+  // Auto-collapse on mobile
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setOpen(false);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Prevent body scroll when sidebar is open on mobile
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
+    if (window.innerWidth < 768) {
+      setCollapsed(true);
     }
+  }, [location.pathname]);
 
-    return () => {
-      document.body.style.overflow = "unset";
+  // Click outside sidebar → collapse it
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (collapsed) return; // already collapsed, nothing to do
+
+      // Don't collapse if clicking inside sidebar
+      if (sidebarRef.current?.contains(e.target as Node)) return;
+
+      // Don't collapse if clicking the toggle button
+      const target = e.target as HTMLElement;
+      if (target.closest("[data-sidebar-toggle]")) return;
+
+      setCollapsed(true);
     };
-  }, [open]);
 
-  if (isLoading) {
-    return <PageLoader />;
-  }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [collapsed]);
+
+  if (isLoading) return <PageLoader />;
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex min-h-screen bg-[#FAFAF8]" dir={dir}>
       {/* Sidebar */}
-      <StudentSidebar open={open} onClose={() => setOpen(false)} />
-
-      {/* Backdrop overlay for mobile */}
-      {open && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden transition-opacity"
-          onClick={() => setOpen(false)}
-          aria-hidden="true"
+      <div ref={sidebarRef}>
+        <StudentSidebar
+          collapsed={collapsed}
+          onExpand={() => setCollapsed(false)}
         />
-      )}
+      </div>
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col min-w-0 md:ml-64">
+      <div
+        className={`flex flex-1 flex-col min-w-0 transition-all duration-300 ${
+          collapsed ? "ml-16" : "ml-64"
+        }`}
+      >
         {/* Navbar */}
-        <StudentNavbar onMenuClick={() => setOpen(!open)} />
+        <StudentNavbar onMenuClick={() => setCollapsed((prev) => !prev)} />
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-6">

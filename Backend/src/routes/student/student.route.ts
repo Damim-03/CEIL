@@ -18,11 +18,13 @@ import {
   getMyFeesController,
   getMyAttendanceController,
   getMyResultsController,
+  getCourseProfileWithPricing,
 } from "../../controllers/student/student.controller";
 import { authMiddleware } from "../../middlewares/auth.middleware";
 import { upload } from "../../middlewares/upload.middleware";
 import { requireApprovedDocuments } from "../../middlewares/requireApprovedDocuments.middleware";
 import { requireCompletedProfile } from "../../middlewares/requireCompletedProfile.middleware";
+import { getMyNotificationsController, getUnreadCountController, markAllNotificationsReadController, markNotificationReadController } from "../../controllers/admin/Notification.controller";
 
 const studentRoutes: Router = Router();
 
@@ -119,5 +121,37 @@ studentRoutes.get("/me/attendance", authMiddleware, getMyAttendanceController);
 /* ================= RESULTS ================= */
 
 studentRoutes.get("/me/results", authMiddleware, getMyResultsController);
+
+studentRoutes.get(
+  "/courses/:courseId/pricing",
+  authMiddleware,
+  getCourseProfileWithPricing,
+);
+
+/* ================= NOTIFICATIONS ================= */
+
+studentRoutes.get(
+  "/notifications",
+  authMiddleware,
+  getMyNotificationsController,
+);
+
+studentRoutes.get(
+  "/notifications/unread-count",
+  authMiddleware,
+  getUnreadCountController,
+);
+
+studentRoutes.patch(
+  "/notifications/read-all",
+  authMiddleware,
+  markAllNotificationsReadController,
+);
+
+studentRoutes.patch(
+  "/notifications/:recipientId/read",
+  authMiddleware,
+  markNotificationReadController,
+);
 
 export default studentRoutes;

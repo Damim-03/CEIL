@@ -25,8 +25,8 @@ import {
 import PageLoader from "../../../components/PageLoader";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { PricingModal } from "../components/Pricingmodal";
 
-// Type definitions
 type Level = (typeof LEVELS)[number];
 type Status = (typeof STATUSES)[number];
 type Step = "courses" | "levels" | "groups";
@@ -35,19 +35,19 @@ const LEVELS = ["A1", "A2", "B1", "B2", "C1"] as const;
 const STATUSES = ["ALL", "OPEN", "FULL", "CLOSED"] as const;
 
 const LEVEL_COLORS = {
-  A1: "from-green-500 to-emerald-600",
-  A2: "from-blue-500 to-cyan-600",
-  B1: "from-purple-500 to-indigo-600",
-  B2: "from-orange-500 to-amber-600",
-  C1: "from-red-500 to-rose-600",
+  A1: "from-[#8DB896] to-[#2B6F5E]",
+  A2: "from-[#2B6F5E] to-[#1a4a3d]",
+  B1: "from-[#C4A035] to-[#8B6914]",
+  B2: "from-[#6B5D4F] to-[#4a3f36]",
+  C1: "from-[#2B6F5E] to-[#C4A035]",
 } as const;
 
 const LEVEL_BG_COLORS = {
-  A1: "bg-green-50 border-green-200",
-  A2: "bg-blue-50 border-blue-200",
-  B1: "bg-purple-50 border-purple-200",
-  B2: "bg-orange-50 border-orange-200",
-  C1: "bg-red-50 border-red-200",
+  A1: "bg-[#8DB896]/8 border-[#8DB896]/25",
+  A2: "bg-[#2B6F5E]/5 border-[#2B6F5E]/20",
+  B1: "bg-[#C4A035]/5 border-[#C4A035]/20",
+  B2: "bg-[#D8CDC0]/10 border-[#D8CDC0]/40",
+  C1: "bg-[#2B6F5E]/5 border-[#C4A035]/20",
 } as const;
 
 interface Course {
@@ -57,18 +57,14 @@ interface Course {
   description?: string;
 }
 
-// ⚠️ IMPORTANT: API returns "name" not "group_name"
 interface Group {
   group_id: string;
-  name: string; // ✅ API field name
+  name: string;
   level: Level;
   status: "OPEN" | "CLOSED";
   current_capacity: number;
-  max_students: number; // ✅ API field name (not max_capacity)
-  teacher?: {
-    first_name: string;
-    last_name: string;
-  } | null;
+  max_students: number;
+  teacher?: { first_name: string; last_name: string } | null;
 }
 
 interface Enrollment {
@@ -89,9 +85,12 @@ const Courses = () => {
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<Status>("ALL");
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
+  const [selectedGroupForEnrollment, setSelectedGroupForEnrollment] = useState<
+    string | null
+  >(null);
 
   const enrollMutation = useEnrollInCourse();
-
   const { data: courses = [], isLoading: coursesLoading } = useCourses();
   const { data: enrollments = [], isLoading: enrollmentsLoading } =
     useStudentEnrollments();
@@ -103,7 +102,6 @@ const Courses = () => {
     const enrollment = enrollments.find(
       (e: Enrollment) => e.course_id === course.course_id,
     );
-
     if (enrollment) {
       if (enrollment.group_id) {
         toast.info(`You're already enrolled in ${course.course_name}!`, {
@@ -140,7 +138,6 @@ const Courses = () => {
         }
       }
     }
-
     setSelectedCourse(course);
     setStep("levels");
     setSelectedLevel(null);
@@ -172,615 +169,337 @@ const Courses = () => {
       });
       return;
     }
-
     const selectedGroup = groups.find((g: Group) => g.group_id === groupId);
-
     if (!selectedGroup) {
-      toast.error("Group not found", {
-        description: "Please try again or select a different group",
-      });
+      toast.error("Group not found");
       return;
     }
-
     if (selectedGroup.current_capacity >= selectedGroup.max_students) {
-      toast.error("Group is full", {
-        description:
-          "This group has reached maximum capacity. Please select another group.",
-      });
+      toast.error("Group is full");
       return;
     }
-
     if (selectedGroup.status === "CLOSED") {
-      toast.error("Group is closed", {
-        description:
-          "This group is not accepting new students. Please select another group.",
-      });
+      toast.error("Group is closed");
       return;
     }
+    setSelectedGroupForEnrollment(groupId);
+    setIsPricingModalOpen(true);
+  };
 
+  const confirmEnrollment = async () => {
+    if (!selectedGroupForEnrollment || !selectedCourse) return;
+    const selectedGroup = groups.find(
+      (g: Group) => g.group_id === selectedGroupForEnrollment,
+    );
     enrollMutation.mutate(
       {
         course_id: selectedCourse.course_id,
-        group_id: groupId,
+        group_id: selectedGroupForEnrollment,
       },
       {
-        onSuccess: (data) => {
+        onSuccess: () => {
+          setIsPricingModalOpen(false);
+          setSelectedGroupForEnrollment(null);
           toast.success("Successfully enrolled!", {
-            description: `You've been enrolled in ${selectedGroup.name}`,
+            description: `You've been enrolled in ${selectedGroup?.name}`,
             duration: 3000,
           });
-
-          setTimeout(() => {
-            navigate("/dashboard/enrollments", { replace: true });
-          }, 1500);
+          setTimeout(
+            () => navigate("/dashboard/enrollments", { replace: true }),
+            1500,
+          );
         },
         onError: (error: any) => {
-          if (error.response?.status === 409) {
-            toast.error("Already enrolled", {
-              description: "You are already enrolled in this course or group.",
-            });
-          } else if (error.response?.status === 400) {
+          if (error.response?.status === 409) toast.error("Already enrolled");
+          else if (error.response?.status === 400) {
             const message =
               error.response?.data?.message || error.response?.data?.error;
-            if (
-              message?.toLowerCase().includes("full") ||
-              message?.toLowerCase().includes("capacity")
-            ) {
-              toast.error("Group is full", {
-                description:
-                  "This group reached capacity just now. Please try another group.",
-              });
-            } else {
-              toast.error("Enrollment failed", {
-                description: message || "Please try again or contact support.",
-              });
-            }
+            toast.error("Enrollment failed", {
+              description: message || "Please try again.",
+            });
           }
+          setIsPricingModalOpen(false);
+          setSelectedGroupForEnrollment(null);
         },
       },
     );
   };
 
-  if (coursesLoading || enrollmentsLoading) {
-    return <PageLoader />;
-  }
+  if (coursesLoading || enrollmentsLoading) return <PageLoader />;
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
-      {/* Header with Breadcrumb */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-6 overflow-hidden">
+        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20">
+            <GraduationCap className="w-6 h-6 text-white" />
+          </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <BookOpen className="w-8 h-8 text-teal-600" />
-              {step === "courses" && "Available Courses"}
-              {step === "levels" &&
-                selectedCourse &&
-                `Levels: ${selectedCourse.course_name}`}
-              {step === "groups" &&
-                selectedLevel &&
-                `Groups: Level ${selectedLevel}`}
+            <h1 className="text-2xl font-bold text-[#1B1B1B]">
+              {step === "courses"
+                ? "Browse Courses"
+                : step === "levels"
+                  ? `Select Level — ${selectedCourse?.course_name}`
+                  : `Select Group — Level ${selectedLevel}`}
             </h1>
-            <p className="text-gray-600 mt-1">
-              {step === "courses" &&
-                "Select a course to view available levels and groups"}
-              {step === "levels" &&
-                selectedCourse &&
-                `Choose your proficiency level for ${selectedCourse.course_name}`}
-              {step === "groups" &&
-                selectedLevel &&
-                `Enroll in an available group for Level ${selectedLevel}`}
+            <p className="text-sm text-[#BEB29E] mt-0.5">
+              {step === "courses"
+                ? "Choose a course to start your learning journey"
+                : step === "levels"
+                  ? "Pick your proficiency level"
+                  : "Join a group that fits your schedule"}
             </p>
           </div>
         </div>
-
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm">
-          <button
-            onClick={() => {
-              setStep("courses");
-              setSelectedCourse(null);
-              setSelectedLevel(null);
-            }}
-            className={`${
-              step === "courses"
-                ? "text-teal-600 font-semibold cursor-default"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-            disabled={step === "courses"}
-          >
-            Courses
-          </button>
-
-          {selectedCourse && (step === "levels" || step === "groups") && (
-            <>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-              <button
-                onClick={() => step === "groups" && handleBack()}
-                className={`${
-                  step === "levels"
-                    ? "text-teal-600 font-semibold cursor-default"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-                disabled={step === "levels"}
-              >
-                {selectedCourse.course_name}
-              </button>
-            </>
-          )}
-
-          {selectedLevel && step === "groups" && (
-            <>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-              <span className="text-teal-600 font-semibold">
-                Level {selectedLevel}
-              </span>
-            </>
-          )}
-        </div>
-
-        {/* Back Button */}
-        {step !== "courses" && (
-          <Button
-            variant="outline"
-            onClick={handleBack}
-            className="gap-2 w-fit"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to {step === "groups" ? "Levels" : "Courses"}
-          </Button>
-        )}
       </div>
 
-      {/* Step 1: Courses List */}
+      {step !== "courses" && (
+        <Button
+          variant="ghost"
+          onClick={handleBack}
+          className="gap-2 text-[#6B5D4F] hover:text-[#1B1B1B] hover:bg-[#D8CDC0]/10 rounded-xl"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back
+        </Button>
+      )}
+
       {step === "courses" && (
-        <CoursesGrid
-          courses={courses}
-          enrollments={enrollments}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          onSelectCourse={handleSelectCourse}
-        />
+        <CoursesList courses={courses} onSelectCourse={handleSelectCourse} />
       )}
-
-      {/* Step 2: Levels Selection */}
       {step === "levels" && selectedCourse && (
-        <LevelsGrid
-          course={selectedCourse}
-          groups={groups}
-          isLoading={groupsLoading}
+        <LevelSelection
+          levels={LEVELS}
           onSelectLevel={handleSelectLevel}
+          selectedLevel={selectedLevel}
         />
       )}
-
-      {/* Step 3: Groups List */}
-      {step === "groups" && selectedCourse && selectedLevel && (
+      {step === "groups" && selectedLevel && (
         <GroupsList
           groups={groups}
-          selectedLevel={selectedLevel}
-          isLoading={groupsLoading}
+          level={selectedLevel}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           selectedStatus={selectedStatus}
           setSelectedStatus={setSelectedStatus}
           onEnroll={handleEnrollInGroup}
           isEnrolling={enrollMutation.isPending}
+          isLoading={groupsLoading}
         />
       )}
+
+      <PricingModal
+        isOpen={isPricingModalOpen}
+        onClose={() => {
+          setIsPricingModalOpen(false);
+          setSelectedGroupForEnrollment(null);
+        }}
+        onConfirm={confirmEnrollment}
+        courseId={selectedCourse?.course_id || null}
+        courseName={selectedCourse?.course_name || ""}
+        groupName={
+          groups.find((g: Group) => g.group_id === selectedGroupForEnrollment)
+            ?.name || ""
+        }
+        isEnrolling={enrollMutation.isPending}
+      />
     </div>
   );
 };
 
-/* ==================== COURSES GRID ==================== */
-interface CoursesGridProps {
-  courses: Course[];
-  enrollments: Enrollment[];
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  onSelectCourse: (course: Course) => void;
-}
+/* ==================== COURSES LIST ==================== */
 
-const CoursesGrid = ({
+const CoursesList = ({
   courses,
-  enrollments,
-  searchTerm,
-  setSearchTerm,
   onSelectCourse,
-}: CoursesGridProps) => {
-  const filteredCourses = courses.filter(
-    (course) =>
-      course.course_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.course_code?.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
-  const getEnrollmentStatus = (courseId: string) => {
-    return enrollments.find((e: Enrollment) => e.course_id === courseId);
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Search courses by name or code..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-600">
-          Showing{" "}
-          <span className="font-semibold text-gray-900">
-            {filteredCourses.length}
-          </span>{" "}
-          course{filteredCourses.length !== 1 ? "s" : ""}
+}: {
+  courses: Course[];
+  onSelectCourse: (c: Course) => void;
+}) => {
+  if (!courses || courses.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-12 text-center">
+        <GraduationCap className="w-16 h-16 mx-auto text-[#D8CDC0] mb-4" />
+        <h3 className="text-lg font-semibold text-[#1B1B1B] mb-2">
+          No courses available
+        </h3>
+        <p className="text-[#6B5D4F]">
+          Check back later for new course offerings
         </p>
       </div>
+    );
+  }
 
-      {filteredCourses.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-          <GraduationCap className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            No courses available
-          </h3>
-          <p className="text-gray-600">
-            Check back later or contact your administrator
-          </p>
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {courses.map((course) => (
+        <div
+          key={course.course_id}
+          onClick={() => onSelectCourse(course)}
+          className="group relative border border-[#D8CDC0]/60 rounded-2xl p-6 hover:border-[#2B6F5E]/30 hover:shadow-lg hover:shadow-[#2B6F5E]/5 transition-all cursor-pointer bg-white overflow-hidden"
+        >
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <h3 className="font-bold text-lg text-[#1B1B1B] mb-2 group-hover:text-[#2B6F5E] transition-colors">
+                {course.course_name}
+              </h3>
+              {course.course_code && (
+                <p className="text-sm text-[#BEB29E] font-mono">
+                  {course.course_code}
+                </p>
+              )}
+            </div>
+            <ChevronRight className="w-5 h-5 text-[#D8CDC0] group-hover:text-[#2B6F5E] group-hover:translate-x-1 transition-all" />
+          </div>
+          {course.description && (
+            <p className="text-sm text-[#6B5D4F] line-clamp-2 mb-4">
+              {course.description}
+            </p>
+          )}
+          <div className="flex items-center gap-2 text-sm text-[#BEB29E]">
+            <BookOpen className="w-4 h-4" /> <span>Click to view levels</span>
+          </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCourses.map((course) => {
-            const enrollment = getEnrollmentStatus(course.course_id);
-            const isEnrolled = !!enrollment;
-            const hasGroup = enrollment?.group_id;
-
-            return (
-              <div
-                key={course.course_id}
-                onClick={() => onSelectCourse(course)}
-                className={`bg-white rounded-xl border-2 p-6 transition-all cursor-pointer ${
-                  isEnrolled
-                    ? hasGroup
-                      ? "border-green-300 bg-green-50"
-                      : "border-blue-300 bg-blue-50"
-                    : "border-gray-200 hover:border-teal-500 hover:shadow-lg"
-                }`}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && onSelectCourse(course)}
-                aria-label={`Select course: ${course.course_name}`}
-              >
-                <div className="flex items-start gap-4">
-                  <div
-                    className={`w-14 h-14 rounded-lg flex items-center justify-center text-white shrink-0 shadow-md ${
-                      isEnrolled
-                        ? hasGroup
-                          ? "bg-linear-to-br from-green-500 to-emerald-600"
-                          : "bg-linear-to-br from-blue-500 to-indigo-600"
-                        : "bg-linear-to-br from-teal-500 to-cyan-600"
-                    }`}
-                  >
-                    <GraduationCap className="w-7 h-7" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 text-lg mb-1 truncate hover:text-teal-600 transition-colors">
-                      {course.course_name}
-                    </h3>
-                    {course.course_code && (
-                      <p className="text-sm text-gray-500 mb-1">
-                        Code: {course.course_code}
-                      </p>
-                    )}
-                    {course.description && (
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        {course.description}
-                      </p>
-                    )}
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400 mt-1 shrink-0" />
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  {isEnrolled ? (
-                    <div
-                      className={`flex items-center gap-2 ${
-                        hasGroup ? "text-green-700" : "text-blue-700"
-                      }`}
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <p className="text-xs font-semibold">
-                        {hasGroup
-                          ? `Enrolled - ${enrollment.group_name || "Group Assigned"}`
-                          : `Status: ${enrollment.status.toUpperCase()}`}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-gray-500 italic">
-                      Click to enroll in this course
-                    </p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      ))}
     </div>
   );
 };
 
-/* ==================== LEVELS GRID ==================== */
-interface LevelsGridProps {
-  course: Course;
-  groups: Group[];
-  isLoading: boolean;
-  onSelectLevel: (level: Level) => void;
-}
+/* ==================== LEVEL SELECTION ==================== */
 
-const LevelsGrid = ({
-  course,
-  groups,
-  isLoading,
+const LevelSelection = ({
+  levels,
   onSelectLevel,
-}: LevelsGridProps) => {
-  if (isLoading) {
-    return <PageLoader />;
-  }
-
-  const availableLevels = Array.from(
-    new Set(groups.map((g) => g.level)),
-  ).filter((level): level is Level => LEVELS.includes(level));
-
-  const levelCounts = groups.reduce<Record<string, number>>((acc, group) => {
-    const level = group.level;
-    acc[level] = (acc[level] || 0) + 1;
-    return acc;
-  }, {});
-
-  const openGroupsCounts = groups.reduce<Record<string, number>>(
-    (acc, group) => {
-      const isFull = group.current_capacity >= group.max_students;
-      const isOpen = group.status === "OPEN" && !isFull;
-      if (isOpen) {
-        const level = group.level;
-        acc[level] = (acc[level] || 0) + 1;
-      }
-      return acc;
-    },
-    {},
-  );
-
+  selectedLevel,
+}: {
+  levels: readonly Level[];
+  onSelectLevel: (l: Level) => void;
+  selectedLevel: Level | null;
+}) => {
   return (
-    <div className="space-y-6">
-      <div className="bg-linear-to-br from-teal-500 to-cyan-600 rounded-xl p-6 text-white shadow-lg">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur-sm">
-            <GraduationCap className="w-8 h-8" />
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      {levels.map((level) => (
+        <button
+          key={level}
+          onClick={() => onSelectLevel(level)}
+          className={`group relative overflow-hidden rounded-2xl p-8 transition-all duration-300 border-2 ${
+            selectedLevel === level
+              ? "ring-4 ring-offset-2 ring-[#2B6F5E] scale-105 shadow-xl"
+              : "hover:scale-105 hover:shadow-lg"
+          } ${LEVEL_BG_COLORS[level]}`}
+        >
+          <div
+            className={`absolute inset-0 bg-gradient-to-br ${LEVEL_COLORS[level]} opacity-0 group-hover:opacity-10 transition-opacity`}
+          />
+          <div className="relative z-10 text-center">
+            <div
+              className={`inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${LEVEL_COLORS[level]} text-white text-3xl font-bold shadow-lg mb-4`}
+            >
+              {level}
+            </div>
+            <h3 className="font-bold text-lg text-[#1B1B1B]">Level {level}</h3>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold">{course.course_name}</h2>
-            {course.course_code && (
-              <p className="text-teal-100 text-sm">{course.course_code}</p>
-            )}
-            {course.description && (
-              <p className="text-white/90 text-sm mt-2">{course.description}</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {availableLevels.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-          <Filter className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            No levels available
-          </h3>
-          <p className="text-gray-600">
-            This course doesn't have any groups yet
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {LEVELS.filter((level) => availableLevels.includes(level)).map(
-            (level) => {
-              const totalGroups = levelCounts[level] || 0;
-              const openGroups = openGroupsCounts[level] || 0;
-              const hasAvailableGroups = openGroups > 0;
-
-              return (
-                <button
-                  key={level}
-                  onClick={() => onSelectLevel(level)}
-                  disabled={!hasAvailableGroups}
-                  className={`group rounded-xl border-2 p-6 text-left transition-all ${
-                    LEVEL_BG_COLORS[level]
-                  } ${
-                    hasAvailableGroups
-                      ? "hover:shadow-lg cursor-pointer hover:border-gray-300"
-                      : "opacity-60 cursor-not-allowed border-gray-200"
-                  }`}
-                  aria-label={`Select Level ${level} (${openGroups} available groups)`}
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span
-                        className={`inline-flex items-center px-4 py-2 rounded-full text-lg font-bold bg-linear-to-br ${
-                          LEVEL_COLORS[level]
-                        } text-white shadow-md ${
-                          hasAvailableGroups ? "group-hover:scale-110" : ""
-                        } transition-transform`}
-                      >
-                        Level {level}
-                      </span>
-                      {hasAvailableGroups ? (
-                        <ChevronRight className="w-6 h-6 text-gray-400 group-hover:text-gray-900 group-hover:translate-x-1 transition-all" />
-                      ) : (
-                        <Lock className="w-6 h-6 text-gray-400" />
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          Total Groups
-                        </span>
-                        <span className="font-semibold text-gray-900">
-                          {totalGroups}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 flex items-center gap-1">
-                          <Unlock className="w-4 h-4" />
-                          Available
-                        </span>
-                        <span
-                          className={`font-semibold ${
-                            hasAvailableGroups
-                              ? "text-green-700"
-                              : "text-red-700"
-                          }`}
-                        >
-                          {openGroups}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-gray-300">
-                      {hasAvailableGroups ? (
-                        <p className="text-xs text-gray-600">
-                          Click to view available groups
-                        </p>
-                      ) : (
-                        <p className="text-xs text-red-600 flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" />
-                          All groups are full or closed
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              );
-            },
-          )}
-        </div>
-      )}
+        </button>
+      ))}
     </div>
   );
 };
 
 /* ==================== GROUPS LIST ==================== */
-interface GroupsListProps {
-  groups: Group[];
-  selectedLevel: Level;
-  isLoading: boolean;
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  selectedStatus: Status;
-  setSelectedStatus: (status: Status) => void;
-  onEnroll: (groupId: string) => void;
-  isEnrolling: boolean;
-}
 
 const GroupsList = ({
   groups,
-  selectedLevel,
-  isLoading,
+  level,
   searchTerm,
   setSearchTerm,
   selectedStatus,
   setSelectedStatus,
   onEnroll,
   isEnrolling,
-}: GroupsListProps) => {
-  if (isLoading) {
-    return <PageLoader />;
-  }
+  isLoading,
+}: {
+  groups: Group[];
+  level: Level;
+  searchTerm: string;
+  setSearchTerm: (t: string) => void;
+  selectedStatus: Status;
+  setSelectedStatus: (s: Status) => void;
+  onEnroll: (id: string) => void;
+  isEnrolling: boolean;
+  isLoading: boolean;
+}) => {
+  if (isLoading) return <PageLoader />;
 
-  // Filter by level first
-  const levelGroups = groups.filter((g) => g.level === selectedLevel);
-
-  // Then apply search and status filters
-  // ✅ FIX: Use "name" field instead of "group_name"
+  const levelGroups = groups.filter((g) => g.level === level);
   const filteredGroups = levelGroups.filter((group) => {
-    const matchesSearch =
-      group.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      group.teacher?.first_name
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      group.teacher?.last_name
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase());
-
-    const isFull = group.current_capacity >= group.max_students;
-    const actualStatus =
-      group.status === "CLOSED" ? "CLOSED" : isFull ? "FULL" : "OPEN";
-    const matchesStatus =
-      selectedStatus === "ALL" || actualStatus === selectedStatus;
-
+    const matchesSearch = group.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    let matchesStatus = true;
+    if (selectedStatus !== "ALL") {
+      const isFull = group.current_capacity >= group.max_students;
+      const isClosed = group.status === "CLOSED";
+      if (selectedStatus === "OPEN")
+        matchesStatus = !isFull && !isClosed && group.status === "OPEN";
+      else if (selectedStatus === "FULL") matchesStatus = isFull;
+      else if (selectedStatus === "CLOSED") matchesStatus = isClosed;
+    }
     return matchesSearch && matchesStatus;
   });
 
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#BEB29E]" />
             <Input
               type="text"
-              placeholder="Search by group name or instructor..."
+              placeholder="Search groups..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
+              className="pl-10 border-[#D8CDC0]/60 focus:border-[#2B6F5E] focus:ring-[#2B6F5E]/20 rounded-xl"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-400" />
+          <div className="relative">
+            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#BEB29E] pointer-events-none" />
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value as Status)}
-              className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
-              aria-label="Filter groups by status"
+              className="w-full pl-10 pr-10 py-2.5 border border-[#D8CDC0]/60 rounded-xl focus:ring-2 focus:ring-[#2B6F5E]/20 focus:border-[#2B6F5E] appearance-none bg-white cursor-pointer text-sm"
             >
-              {STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {status === "ALL" ? "All Status" : status}
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s === "ALL" ? "All Groups" : `${s} Groups`}
                 </option>
               ))}
             </select>
           </div>
         </div>
 
-        {/* Active Filters */}
         {(selectedStatus !== "ALL" || searchTerm) && (
-          <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-            <span className="text-xs text-gray-500">Active filters:</span>
+          <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-[#D8CDC0]/30">
+            <span className="text-xs text-[#BEB29E]">Active filters:</span>
             {selectedStatus !== "ALL" && (
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+              <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-[#2B6F5E]/8 text-[#2B6F5E]">
                 Status: {selectedStatus}
                 <button
                   onClick={() => setSelectedStatus("ALL")}
-                  className="ml-1 hover:text-blue-900"
-                  aria-label={`Remove ${selectedStatus} filter`}
+                  className="ml-1 hover:text-[#1B1B1B]"
                 >
                   ×
                 </button>
               </span>
             )}
             {searchTerm && (
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-800">
+              <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-[#C4A035]/8 text-[#C4A035]">
                 Search: "{searchTerm}"
                 <button
                   onClick={() => setSearchTerm("")}
-                  className="ml-1 hover:text-purple-900"
-                  aria-label="Clear search"
+                  className="ml-1 hover:text-[#1B1B1B]"
                 >
                   ×
                 </button>
@@ -790,32 +509,30 @@ const GroupsList = ({
         )}
       </div>
 
-      {/* Results Count */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-[#6B5D4F]">
           Found{" "}
-          <span className="font-semibold text-gray-900">
+          <span className="font-semibold text-[#1B1B1B]">
             {filteredGroups.length}
           </span>{" "}
           group{filteredGroups.length !== 1 ? "s" : ""}
         </p>
       </div>
 
-      {/* Groups Grid */}
       {filteredGroups.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-          <Users className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-12 text-center">
+          <Users className="w-16 h-16 mx-auto text-[#D8CDC0] mb-4" />
+          <h3 className="text-lg font-semibold text-[#1B1B1B] mb-2">
             No groups found
           </h3>
-          <p className="text-gray-600">
+          <p className="text-[#6B5D4F]">
             {levelGroups.length === 0
-              ? `No groups available for Level ${selectedLevel}`
+              ? `No groups available for Level ${level}`
               : "Try adjusting your filters or search term"}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredGroups.map((group) => (
             <GroupCard
               key={group.group_id}
@@ -831,13 +548,16 @@ const GroupsList = ({
 };
 
 /* ==================== GROUP CARD ==================== */
-interface GroupCardProps {
-  group: Group;
-  onEnroll: (groupId: string) => void;
-  isEnrolling: boolean;
-}
 
-const GroupCard = ({ group, onEnroll, isEnrolling }: GroupCardProps) => {
+const GroupCard = ({
+  group,
+  onEnroll,
+  isEnrolling,
+}: {
+  group: Group;
+  onEnroll: (id: string) => void;
+  isEnrolling: boolean;
+}) => {
   const currentCapacity = group.current_capacity;
   const maxCapacity = group.max_students;
   const capacityPercent = (currentCapacity / maxCapacity) * 100;
@@ -848,49 +568,39 @@ const GroupCard = ({ group, onEnroll, isEnrolling }: GroupCardProps) => {
 
   return (
     <div
-      className={`border-2 rounded-xl p-5 transition-all ${
-        isOpen
-          ? "hover:shadow-md hover:border-gray-300"
-          : "opacity-75 border-gray-200"
-      } ${LEVEL_BG_COLORS[group.level]}`}
+      className={`border-2 rounded-2xl p-5 transition-all ${isOpen ? "hover:shadow-md hover:border-[#2B6F5E]/30" : "opacity-75"} ${LEVEL_BG_COLORS[group.level]}`}
     >
-      {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-gray-900 text-lg mb-1 truncate">
+          <h3 className="font-bold text-[#1B1B1B] text-lg mb-1 truncate">
             {group.name}
           </h3>
           <div className="flex items-center gap-2 flex-wrap">
             <span
-              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-linear-to-br ${
-                LEVEL_COLORS[group.level]
-              } text-white shadow-sm`}
+              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gradient-to-br ${LEVEL_COLORS[group.level]} text-white shadow-sm`}
             >
               {group.level}
             </span>
             <span
               className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                 isClosed
-                  ? "bg-gray-100 text-gray-800"
+                  ? "bg-[#D8CDC0]/20 text-[#6B5D4F]"
                   : isFull
-                    ? "bg-red-100 text-red-800"
-                    : "bg-green-100 text-green-800"
+                    ? "bg-red-50 text-red-700"
+                    : "bg-[#8DB896]/12 text-[#2B6F5E]"
               }`}
             >
               {isClosed ? (
                 <>
-                  <Lock className="w-3 h-3 mr-1" />
-                  CLOSED
+                  <Lock className="w-3 h-3 mr-1" /> CLOSED
                 </>
               ) : isFull ? (
                 <>
-                  <Lock className="w-3 h-3 mr-1" />
-                  FULL
+                  <Lock className="w-3 h-3 mr-1" /> FULL
                 </>
               ) : (
                 <>
-                  <Unlock className="w-3 h-3 mr-1" />
-                  OPEN
+                  <Unlock className="w-3 h-3 mr-1" /> OPEN
                 </>
               )}
             </span>
@@ -899,20 +609,20 @@ const GroupCard = ({ group, onEnroll, isEnrolling }: GroupCardProps) => {
       </div>
 
       {/* Teacher */}
-      <div className="mb-4 p-3 bg-white/70 rounded-lg">
-        <p className="text-xs text-gray-500 mb-1">Instructor</p>
+      <div className="mb-4 p-3 bg-white/70 rounded-xl">
+        <p className="text-xs text-[#BEB29E] mb-1">Instructor</p>
         <div className="flex items-center gap-2 text-sm">
           {group.teacher ? (
             <>
-              <UserCheck className="w-4 h-4 text-green-600 shrink-0" />
-              <span className="font-medium text-gray-900 truncate">
+              <UserCheck className="w-4 h-4 text-[#2B6F5E] shrink-0" />
+              <span className="font-medium text-[#1B1B1B] truncate">
                 {group.teacher.first_name} {group.teacher.last_name}
               </span>
             </>
           ) : (
             <>
-              <User className="w-4 h-4 text-gray-400 shrink-0" />
-              <span className="text-gray-500 italic">Not assigned</span>
+              <User className="w-4 h-4 text-[#BEB29E] shrink-0" />
+              <span className="text-[#BEB29E] italic">Not assigned</span>
             </>
           )}
         </div>
@@ -921,33 +631,31 @@ const GroupCard = ({ group, onEnroll, isEnrolling }: GroupCardProps) => {
       {/* Capacity */}
       <div className="mb-4">
         <div className="flex items-center justify-between text-sm mb-2">
-          <span className="text-gray-600 flex items-center gap-1">
-            <Users className="w-4 h-4 shrink-0" />
-            Capacity
+          <span className="text-[#6B5D4F] flex items-center gap-1">
+            <Users className="w-4 h-4 shrink-0" /> Capacity
           </span>
-          <span className="font-semibold text-gray-900">
+          <span className="font-semibold text-[#1B1B1B]">
             {currentCapacity} / {maxCapacity}
           </span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+        <div className="w-full bg-[#D8CDC0]/30 rounded-full h-2 overflow-hidden">
           <div
             className={`h-full transition-all duration-300 rounded-full ${
               capacityPercent >= 100
-                ? "bg-linear-to-r from-red-500 to-rose-600"
+                ? "bg-gradient-to-r from-red-500 to-red-600"
                 : capacityPercent >= 80
-                  ? "bg-linear-to-r from-orange-500 to-amber-600"
-                  : "bg-linear-to-r from-blue-500 to-indigo-600"
+                  ? "bg-gradient-to-r from-[#C4A035] to-[#C4A035]/80"
+                  : "bg-gradient-to-r from-[#2B6F5E] to-[#8DB896]"
             }`}
             style={{ width: `${Math.min(capacityPercent, 100)}%` }}
           />
         </div>
         <p
-          className={`text-xs mt-1 ${availableSeats <= 0 ? "text-red-600 font-medium" : "text-gray-500"}`}
+          className={`text-xs mt-1 ${availableSeats <= 0 ? "text-red-600 font-medium" : "text-[#BEB29E]"}`}
         >
           {availableSeats <= 0 ? (
             <span className="flex items-center gap-1">
-              <AlertCircle className="w-3 h-3" />
-              No seats available
+              <AlertCircle className="w-3 h-3" /> No seats available
             </span>
           ) : (
             `${availableSeats} seat${availableSeats > 1 ? "s" : ""} available`
@@ -955,39 +663,29 @@ const GroupCard = ({ group, onEnroll, isEnrolling }: GroupCardProps) => {
         </p>
       </div>
 
-      {/* ENROLLMENT BUTTON */}
+      {/* Enroll Button */}
       <Button
         onClick={() => onEnroll(group.group_id)}
         disabled={!isOpen || isEnrolling}
-        className={`w-full gap-2 text-base font-semibold ${
+        className={`w-full gap-2 text-sm font-semibold rounded-xl ${
           isOpen
-            ? "bg-linear-to-br from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 shadow-md hover:shadow-lg"
-            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            ? "bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white shadow-md shadow-[#2B6F5E]/20 hover:shadow-lg"
+            : "bg-[#D8CDC0]/20 text-[#BEB29E] cursor-not-allowed"
         }`}
-        aria-label={
-          !isOpen
-            ? isClosed
-              ? `Group ${group.name} is closed`
-              : `Group ${group.name} is full`
-            : isEnrolling
-              ? `Enrolling in ${group.name}...`
-              : `Enroll in group ${group.name}`
-        }
       >
         {isEnrolling ? (
           <>
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            <span>Enrolling...</span>
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{" "}
+            Enrolling...
           </>
         ) : !isOpen ? (
           <>
-            <Lock className="w-5 h-5" />
-            <span>{isClosed ? "Group Closed" : "Group Full"}</span>
+            <Lock className="w-4 h-4" />{" "}
+            {isClosed ? "Group Closed" : "Group Full"}
           </>
         ) : (
           <>
-            <CheckCircle2 className="w-5 h-5" />
-            <span>Enroll in This Group</span>
+            <CheckCircle2 className="w-4 h-4" /> Enroll in This Group
           </>
         )}
       </Button>

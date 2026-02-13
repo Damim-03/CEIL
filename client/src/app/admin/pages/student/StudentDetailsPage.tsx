@@ -1,4 +1,5 @@
 import { Link, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import PageLoader from "../../../../components/PageLoader";
 import { Button } from "../../../../components/ui/button";
 import { useAdminStudent } from "../../../../hooks/admin/useAdmin";
@@ -21,32 +22,43 @@ import EditStudentModal from "../../components/EditStudentModal";
 import { UserIDCardFlip } from "../../components/UserIDCardFlip";
 
 const StudentDetailsPage = () => {
+  const { t, i18n } = useTranslation();
   const { studentId } = useParams();
   const { data: student, isLoading, refetch } = useAdminStudent(studentId);
-
   const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const locale =
+    i18n.language === "ar"
+      ? "ar-DZ"
+      : i18n.language === "fr"
+        ? "fr-FR"
+        : "en-US";
 
   if (isLoading) return <PageLoader />;
 
   if (!student) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <div className="text-center space-y-6 p-8 bg-white rounded-3xl shadow-2xl max-w-md">
-          <div className="w-24 h-24 mx-auto rounded-full bg-linear-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-            <GraduationCap className="w-12 h-12 text-gray-500" />
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-6 p-8 bg-white rounded-3xl shadow-xl border border-[#D8CDC0]/60 max-w-md">
+          <div className="w-24 h-24 mx-auto rounded-full bg-[#D8CDC0]/20 flex items-center justify-center">
+            <GraduationCap className="w-12 h-12 text-[#BEB29E]" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Student not found
+            <h2 className="text-3xl font-bold text-[#1B1B1B] mb-2">
+              {t("admin.studentDetails.studentNotFound")}
             </h2>
-            <p className="text-gray-600 text-lg">
-              The student you're looking for doesn't exist.
+            <p className="text-[#6B5D4F] text-lg">
+              {t("admin.studentDetails.studentNotFoundDesc")}
             </p>
           </div>
           <Link to="/admin/students">
-            <Button variant="outline" size="lg" className="gap-2 mt-4">
+            <Button
+              variant="outline"
+              size="lg"
+              className="gap-2 mt-4 border-[#D8CDC0]/60 hover:bg-[#D8CDC0]/10"
+            >
               <ArrowLeft className="w-4 h-4" />
-              Back to Students
+              {t("admin.studentDetails.backToStudents")}
             </Button>
           </Link>
         </div>
@@ -54,99 +66,94 @@ const StudentDetailsPage = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 pb-12">
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-        {/* Header with Back Button */}
-        <div className="flex items-center justify-between">
-          <Link to="/admin/students">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-2 hover:bg-zinc-950/80 transition-all shadow-sm"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Students
-            </Button>
-          </Link>
-        </div>
+  const enrolledDays = student.created_at
+    ? Math.floor(
+        (new Date().getTime() - new Date(student.created_at).getTime()) /
+          (1000 * 60 * 60 * 24),
+      )
+    : null;
 
-        {/* Hero Section - Profile Card */}
-        <div className="bg-white rounded-3xl shadow-2xl border border-gray-200/50 overflow-hidden backdrop-blur-sm hover:shadow-3xl transition-all duration-300">
-          {/* Cover with gradient */}
-          <div className="h-40 bg-linear-to-r from-green-600 via-emerald-600 to-teal-600 relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/5"></div>
-            <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-white/30"></div>
-            {/* Decorative circles */}
-            <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-            <div className="absolute -left-10 top-20 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+  return (
+    <div className="pb-12">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <Link to="/admin/students">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2 text-[#6B5D4F] hover:bg-[#D8CDC0]/15 hover:text-[#1B1B1B]"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {t("admin.studentDetails.backToStudents")}
+          </Button>
+        </Link>
+
+        {/* Hero Card */}
+        <div className="bg-white rounded-2xl shadow-xl border border-[#D8CDC0]/60 overflow-hidden">
+          <div className="h-36 bg-gradient-to-r from-[#2B6F5E] via-[#2B6F5E]/90 to-[#2B6F5E]/80 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/10"></div>
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#C4A035]/15 rounded-full blur-2xl"></div>
+            <div className="absolute -left-10 top-20 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#C4A035] via-[#C4A035]/60 to-transparent"></div>
           </div>
 
-          {/* Profile Info */}
           <div className="px-6 sm:px-8 pb-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6 -mt-20 relative">
-              {/* Avatar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6 -mt-16 relative">
               <div className="relative group">
                 {student.user?.google_avatar ? (
                   <img
                     src={student.user.google_avatar}
                     alt={`${student.first_name || ""} ${student.last_name || ""}`}
-                    className="w-36 h-36 rounded-3xl object-cover border-4 border-white shadow-2xl group-hover:scale-105 transition-transform duration-300"
+                    className="w-32 h-32 rounded-2xl object-cover border-4 border-white shadow-xl group-hover:shadow-2xl transition-all duration-300"
                   />
                 ) : (
-                  <div className="w-36 h-36 rounded-3xl bg-linear-to-br from-green-500 via-emerald-600 to-teal-600 flex items-center justify-center text-white text-5xl font-bold shadow-2xl border-4 border-white group-hover:scale-105 transition-transform duration-300">
+                  <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center text-white text-4xl font-bold shadow-xl border-4 border-white group-hover:shadow-2xl transition-all duration-300">
                     {student.first_name?.charAt(0) || "?"}
                     {student.last_name?.charAt(0) || ""}
                   </div>
                 )}
-                <div className="absolute -bottom-3 -right-3 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-xl border-4 border-white">
+                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-white">
                   {student.status === "Active" ? (
-                    <div className="w-5 h-5 bg-green-500 rounded-full animate-pulse"></div>
+                    <div className="w-4 h-4 bg-[#8DB896] rounded-full animate-pulse"></div>
                   ) : (
-                    <div className="w-5 h-5 bg-gray-400 rounded-full"></div>
+                    <div className="w-4 h-4 bg-[#BEB29E] rounded-full"></div>
                   )}
                 </div>
               </div>
 
-              {/* Student Info */}
               <div className="flex-1 sm:mt-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <h1 className="text-4xl sm:text-5xl font-bold text-gray-900">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h1 className="text-3xl sm:text-4xl font-bold text-[#1B1B1B]">
                         {student.first_name || ""}{" "}
                         {student.last_name || "Unknown"}
                       </h1>
-                      <GraduationCap className="w-8 h-8 text-green-600" />
+                      <GraduationCap className="w-7 h-7 text-[#C4A035]" />
                     </div>
-                    <p className="text-gray-600 text-lg mb-4">
-                      Student ID: {student.student_id}
+                    <p className="text-[#6B5D4F] text-sm mb-3">
+                      {t("admin.studentDetails.studentId", {
+                        id: student.student_id,
+                      })}
                     </p>
                     <div className="flex flex-wrap items-center gap-3 mb-4">
                       <span
-                        className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold shadow-sm ${
-                          student.status === "Active"
-                            ? "bg-green-100 text-green-800 border border-green-200"
-                            : "bg-gray-100 text-gray-800 border border-gray-200"
-                        }`}
+                        className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold ${student.status === "Active" ? "bg-[#8DB896]/15 text-[#2B6F5E] border border-[#8DB896]/30" : "bg-[#D8CDC0]/30 text-[#6B5D4F] border border-[#D8CDC0]/50"}`}
                       >
-                        {student.status || "unknown"}
+                        {student.status || t("admin.studentDetails.unknown")}
                       </span>
                     </div>
-
-                    {/* Enrolled Since */}
                     {student.created_at && (
-                      <div className="inline-flex items-center gap-3 bg-linear-to-r from-green-50 to-emerald-50 backdrop-blur-sm rounded-2xl px-5 py-3 border border-green-200/50 shadow-sm hover:shadow-md transition-all">
-                        <div className="w-11 h-11 rounded-xl bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center shrink-0 shadow-md">
-                          <Calendar className="w-5 h-5 text-white" />
+                      <div className="inline-flex items-center gap-3 bg-[#2B6F5E]/5 rounded-xl px-4 py-2.5 border border-[#2B6F5E]/15">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shrink-0 shadow-md shadow-[#2B6F5E]/20">
+                          <Calendar className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-green-700 uppercase tracking-wide">
-                            Enrolled Since
+                          <p className="text-[10px] font-bold text-[#2B6F5E] uppercase tracking-wider">
+                            {t("admin.studentDetails.enrolledSince")}
                           </p>
-                          <p className="text-base font-bold text-gray-900">
+                          <p className="text-sm font-bold text-[#1B1B1B]">
                             {new Date(student.created_at).toLocaleDateString(
-                              "en-US",
+                              locale,
                               {
                                 year: "numeric",
                                 month: "long",
@@ -154,37 +161,32 @@ const StudentDetailsPage = () => {
                               },
                             )}
                           </p>
-                          <p className="text-xs text-green-600 font-medium">
-                            {Math.floor(
-                              (new Date().getTime() -
-                                new Date(student.created_at).getTime()) /
-                                (1000 * 60 * 60 * 24),
-                            )}{" "}
-                            days ago
+                          <p className="text-[10px] text-[#2B6F5E]">
+                            {t("admin.studentDetails.daysAgo", {
+                              count: enrolledDays,
+                            })}
                           </p>
                         </div>
                       </div>
                     )}
                   </div>
-
-                  {/* Action Buttons */}
                   <div className="flex gap-3">
                     <Button
                       variant="outline"
                       size="lg"
                       onClick={() => setIsEditOpen(true)}
-                      className="gap-2 shadow-lg hover:shadow-xl transition-all px-6"
+                      className="gap-2 border-[#D8CDC0]/60 text-[#1B1B1B] hover:bg-[#C4A035]/8 hover:border-[#C4A035]/40 hover:text-[#C4A035] transition-all"
                     >
-                      <Edit className="w-5 h-5" />
-                      Edit
+                      <Edit className="w-4 h-4" />
+                      {t("admin.studentDetails.edit")}
                     </Button>
                     <Button
-                      variant="destructive"
+                      variant="outline"
                       size="lg"
-                      className="gap-2 shadow-lg hover:shadow-xl transition-all px-6"
+                      className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
                     >
-                      <Trash2 className="w-5 h-5" />
-                      Delete
+                      <Trash2 className="w-4 h-4" />
+                      {t("admin.students.delete")}
                     </Button>
                   </div>
                 </div>
@@ -195,227 +197,158 @@ const StudentDetailsPage = () => {
 
         {/* Details Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Student Information */}
-          <div className="lg:col-span-2 bg-white rounded-3xl shadow-xl border border-gray-200/50 p-6 sm:p-10 hover:shadow-2xl transition-all duration-300">
+          <div className="lg:col-span-2 relative bg-white rounded-2xl shadow-lg border border-[#D8CDC0]/60 p-6 sm:p-8 overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
-                <User className="w-6 h-6 text-white" />
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-md shadow-[#2B6F5E]/20">
+                <User className="w-5 h-5 text-white" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900">
-                Student Information
+              <h2 className="text-2xl font-bold text-[#1B1B1B]">
+                {t("admin.studentDetails.studentInfo")}
               </h2>
             </div>
-
-            <div className="space-y-6">
-              {/* Email */}
-              <div className="group hover:bg-linear-to-r hover:from-blue-50 hover:to-indigo-50 -mx-6 px-6 py-5 rounded-2xl transition-all duration-300">
-                <div className="flex items-start gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-blue-100 to-blue-200 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                    <Mail className="w-7 h-7 text-blue-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
-                      Email Address
-                    </p>
-                    <p className="text-xl font-semibold text-gray-900 break-all">
-                      {student.email || "—"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Phone */}
-              <div className="group hover:bg-linear-to-r hover:from-green-50 hover:to-emerald-50 -mx-6 px-6 py-5 rounded-2xl transition-all duration-300">
-                <div className="flex items-start gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-green-100 to-green-200 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                    <Phone className="w-7 h-7 text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">
-                      Phone Number
-                    </p>
-                    <p className="text-xl font-semibold text-gray-900">
-                      {student.phone_number || "—"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Date of Birth */}
+            <div className="space-y-2">
+              <InfoRow
+                icon={Mail}
+                label={t("admin.studentDetails.emailAddress")}
+                value={student.email || "—"}
+                color="teal"
+              />
+              <InfoRow
+                icon={Phone}
+                label={t("admin.studentDetails.phoneNumber")}
+                value={student.phone_number || "—"}
+                color="mustard"
+              />
               {student.date_of_birth && (
-                <div className="group hover:bg-linear-to-r hover:from-purple-50 hover:to-pink-50 -mx-6 px-6 py-5 rounded-2xl transition-all duration-300">
-                  <div className="flex items-start gap-5">
-                    <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-purple-100 to-purple-200 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                      <Calendar className="w-7 h-7 text-purple-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-2">
-                        Date of Birth
-                      </p>
-                      <p className="text-xl font-semibold text-gray-900">
-                        {new Date(student.date_of_birth).toLocaleDateString(
-                          "en-US",
-                          {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          },
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <InfoRow
+                  icon={Calendar}
+                  label={t("admin.studentDetails.dateOfBirth")}
+                  value={new Date(student.date_of_birth).toLocaleDateString(
+                    locale,
+                    { year: "numeric", month: "long", day: "numeric" },
+                  )}
+                  color="teal"
+                />
               )}
-
-              {/* Address */}
               {student.address && (
-                <div className="group hover:bg-linear-to-r hover:from-orange-50 hover:to-amber-50 -mx-6 px-6 py-5 rounded-2xl transition-all duration-300">
-                  <div className="flex items-start gap-5">
-                    <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-orange-100 to-orange-200 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                      <MapPin className="w-7 h-7 text-orange-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-2">
-                        Address
-                      </p>
-                      <p className="text-xl font-semibold text-gray-900">
-                        {student.address}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <InfoRow
+                  icon={MapPin}
+                  label={t("admin.studentDetails.address")}
+                  value={student.address}
+                  color="mustard"
+                />
               )}
-
-              {/* Emergency Contact */}
               {student.emergency_contact && (
-                <div className="group hover:bg-linear-to-r hover:from-red-50 hover:to-rose-50 -mx-6 px-6 py-5 rounded-2xl transition-all duration-300">
-                  <div className="flex items-start gap-5">
-                    <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-red-100 to-red-200 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                      <AlertCircle className="w-7 h-7 text-red-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-bold text-red-600 uppercase tracking-wider mb-2">
-                        Emergency Contact
-                      </p>
-                      <p className="text-xl font-semibold text-gray-900">
-                        {student.emergency_contact}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <InfoRow
+                  icon={AlertCircle}
+                  label={t("admin.studentDetails.emergencyContact")}
+                  value={student.emergency_contact}
+                  color="teal"
+                />
               )}
+            </div>
 
-              {/* Student ID Card */}
-              <div className="mt-10 pt-8 border-t-2 border-gradient-to-r from-gray-100 via-gray-200 to-gray-100">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-linear-to-br from-green-400 via-emerald-500 to-teal-600 mb-5 shadow-2xl hover:scale-110 transition-transform duration-300">
-                    <Shield className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-3">
-                    Student ID Card
-                  </h3>
-                  <p className="text-base text-gray-600 max-w-md mx-auto leading-relaxed">
-                    Official student identification card with complete profile
-                    information
-                  </p>
-                  <div className="flex items-center justify-center gap-2 mt-4">
-                    <div className="h-1.5 w-12 bg-linear-to-r from-green-500 to-emerald-500 rounded-full"></div>
-                    <div className="h-1.5 w-1.5 bg-emerald-400 rounded-full"></div>
-                    <div className="h-1.5 w-1.5 bg-emerald-400 rounded-full"></div>
-                  </div>
+            <div className="mt-10 pt-8 border-t-2 border-[#D8CDC0]/30">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 mb-4 shadow-xl shadow-[#2B6F5E]/20">
+                  <Shield className="w-8 h-8 text-white" />
                 </div>
-
-                <div className="max-w-md mx-auto">
-                  <UserIDCardFlip
-                    profile={{
-                      user_id: student.student_id,
-                      email: student.email || "",
-                      google_avatar: student.user?.google_avatar,
-                      role: "STUDENT",
-                      is_active: student.status === "Active",
-                    }}
-                  />
+                <h3 className="text-2xl font-bold text-[#1B1B1B] mb-2">
+                  {t("admin.studentDetails.studentIdCard")}
+                </h3>
+                <p className="text-sm text-[#6B5D4F] max-w-md mx-auto">
+                  {t("admin.studentDetails.studentIdCardDesc")}
+                </p>
+                <div className="flex items-center justify-center gap-2 mt-3">
+                  <div className="h-1 w-10 bg-gradient-to-r from-[#2B6F5E] to-[#C4A035] rounded-full"></div>
+                  <div className="h-1 w-1 bg-[#C4A035] rounded-full"></div>
+                  <div className="h-1 w-1 bg-[#C4A035] rounded-full"></div>
                 </div>
+              </div>
+              <div className="max-w-md mx-auto">
+                <UserIDCardFlip
+                  profile={{
+                    user_id: student.student_id,
+                    email: student.email || "",
+                    google_avatar: student.user?.google_avatar,
+                    role: "STUDENT",
+                    is_active: student.status === "Active",
+                  }}
+                />
               </div>
             </div>
           </div>
 
-          {/* Side Info Cards */}
           <div className="space-y-6">
-            {/* Status Card */}
-            <div
-              className={`rounded-3xl shadow-2xl p-6 text-white hover:shadow-3xl hover:scale-105 transition-all duration-300 ${
-                student.status === "Active"
-                  ? "bg-linear-to-br from-green-500 via-emerald-600 to-teal-600"
-                  : "bg-linear-to-br from-gray-500 via-slate-600 to-zinc-600"
-              }`}
-            >
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                  <Activity className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-xl font-bold">Student Status</h3>
+            <div className="relative overflow-hidden rounded-2xl shadow-xl p-6 text-white bg-gradient-to-br from-[#2B6F5E] via-[#2B6F5E] to-[#2B6F5E]/90">
+              <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C4A035]"></div>
+              <div className="absolute inset-0 opacity-[0.06]">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
               </div>
-              <div className="space-y-4">
-                <div className="bg-white/20 backdrop-blur-md rounded-2xl p-5 shadow-lg">
-                  <p className="text-sm opacity-90 mb-2 font-medium">
-                    Current Status
-                  </p>
-                  <p className="text-3xl font-bold capitalize">
-                    {student.status || "unknown"}
-                  </p>
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center border border-white/10">
+                    <Activity className="w-5 h-5 text-[#C4A035]" />
+                  </div>
+                  <h3 className="text-lg font-bold">
+                    {t("admin.studentDetails.studentStatus")}
+                  </h3>
                 </div>
-                <div className="text-sm opacity-95 leading-relaxed bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  {student.status === "Active"
-                    ? "This student is currently enrolled and active"
-                    : "This student account is inactive"}
+                <div className="space-y-3">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/5">
+                    <p className="text-xs text-white/60 mb-1">
+                      {t("admin.studentDetails.currentStatus")}
+                    </p>
+                    <p className="text-2xl font-bold text-[#C4A035] capitalize">
+                      {student.status || t("admin.studentDetails.unknown")}
+                    </p>
+                  </div>
+                  <div className="text-sm text-white/70 bg-white/5 rounded-lg p-3">
+                    {student.status === "Active"
+                      ? t("admin.studentDetails.statusActiveDesc")
+                      : t("admin.studentDetails.statusInactiveDesc")}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Quick Info Card */}
-            <div className="bg-white rounded-3xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
+            <div className="relative bg-white rounded-2xl shadow-lg border border-[#D8CDC0]/60 p-6 overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#C4A035] to-[#C4A035]/60"></div>
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                  <GraduationCap className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-md shadow-[#C4A035]/20">
+                  <GraduationCap className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Quick Info</h3>
+                <h3 className="text-lg font-bold text-[#1B1B1B]">
+                  {t("admin.studentDetails.quickInfo")}
+                </h3>
               </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b-2 border-gray-100">
-                  <span className="text-sm text-gray-600 font-medium">
-                    Student Type
+              <div className="space-y-3">
+                <div className="flex items-center justify-between py-2.5 border-b border-[#D8CDC0]/30">
+                  <span className="text-sm text-[#6B5D4F]">
+                    {t("admin.studentDetails.type")}
                   </span>
-                  <span className="text-sm font-bold text-gray-900 bg-indigo-100 px-3 py-1 rounded-lg">
-                    Student
+                  <span className="text-sm font-bold text-[#2B6F5E] bg-[#2B6F5E]/8 px-3 py-1 rounded-lg">
+                    {t("admin.studentDetails.student")}
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-3 border-b-2 border-gray-100">
-                  <span className="text-sm text-gray-600 font-medium">
-                    Status
+                <div className="flex items-center justify-between py-2.5 border-b border-[#D8CDC0]/30">
+                  <span className="text-sm text-[#6B5D4F]">
+                    {t("admin.studentDetails.status")}
                   </span>
                   <span
-                    className={`text-sm font-bold px-3 py-1 rounded-lg ${
-                      student.status === "Active"
-                        ? "text-green-700 bg-green-100"
-                        : "text-gray-700 bg-gray-100"
-                    }`}
+                    className={`text-sm font-bold px-3 py-1 rounded-lg ${student.status === "Active" ? "text-[#2B6F5E] bg-[#8DB896]/15" : "text-[#6B5D4F] bg-[#D8CDC0]/30"}`}
                   >
-                    {student.status || "unknown"}
+                    {student.status || t("admin.studentDetails.unknown")}
                   </span>
                 </div>
-                {student.created_at && (
-                  <div className="flex items-center justify-between py-3">
-                    <span className="text-sm text-gray-600 font-medium">
-                      Enrollment Age
+                {enrolledDays !== null && (
+                  <div className="flex items-center justify-between py-2.5">
+                    <span className="text-sm text-[#6B5D4F]">
+                      {t("admin.studentDetails.enrollmentAge")}
                     </span>
-                    <span className="text-sm font-bold text-gray-900 bg-blue-100 px-3 py-1 rounded-lg">
-                      {Math.floor(
-                        (new Date().getTime() -
-                          new Date(student.created_at).getTime()) /
-                          (1000 * 60 * 60 * 24),
-                      )}{" "}
-                      days
+                    <span className="text-sm font-bold text-[#C4A035] bg-[#C4A035]/8 px-3 py-1 rounded-lg">
+                      {t("admin.studentDetails.days", { count: enrolledDays })}
                     </span>
                   </div>
                 )}
@@ -425,17 +358,65 @@ const StudentDetailsPage = () => {
         </div>
       </div>
 
-      {/* Edit Student Modal */}
       <EditStudentModal
         open={isEditOpen}
         onClose={() => setIsEditOpen(false)}
         student={student}
-        onSuccess={() => {
-          refetch();
-        }}
+        onSuccess={() => refetch()}
       />
     </div>
   );
 };
 
 export default StudentDetailsPage;
+
+function InfoRow({
+  icon: Icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  color: "teal" | "mustard";
+}) {
+  const styles = {
+    teal: {
+      iconBg: "bg-[#2B6F5E]/10",
+      icon: "text-[#2B6F5E]",
+      label: "text-[#2B6F5E]",
+      hover: "hover:bg-[#2B6F5E]/8",
+    },
+    mustard: {
+      iconBg: "bg-[#C4A035]/10",
+      icon: "text-[#C4A035]",
+      label: "text-[#C4A035]",
+      hover: "hover:bg-[#C4A035]/8",
+    },
+  };
+  const s = styles[color];
+  return (
+    <div
+      className={`group ${s.hover} -mx-4 px-4 py-4 rounded-xl transition-all duration-200`}
+    >
+      <div className="flex items-start gap-4">
+        <div
+          className={`w-11 h-11 rounded-xl ${s.iconBg} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}
+        >
+          <Icon className={`w-5 h-5 ${s.icon}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p
+            className={`text-[10px] font-bold ${s.label} uppercase tracking-wider mb-1`}
+          >
+            {label}
+          </p>
+          <p className="text-lg font-semibold text-[#1B1B1B] break-all">
+            {value}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

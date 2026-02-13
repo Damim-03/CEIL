@@ -12,9 +12,10 @@ import {
   FileX,
   PenLine,
 } from "lucide-react";
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
-import { useAdminCourses } from "../../../hooks/admin/useAdmin";
+import { Button } from "../../../../components/ui/button";
+import { Input } from "../../../../components/ui/input";
+import { useAdminCourses } from "../../../../hooks/admin/useAdmin";
+import { useTranslation } from "react-i18next";
 
 // ─── Status Badge ───
 const StatusBadge = ({
@@ -24,11 +25,13 @@ const StatusBadge = ({
   hasProfile: boolean;
   isPublished: boolean;
 }) => {
+  const { t } = useTranslation();
+
   if (!hasProfile) {
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
         <FileX className="w-3 h-3" />
-        No Profile
+        {t("admin.formations.status.noProfile")}
       </span>
     );
   }
@@ -36,14 +39,14 @@ const StatusBadge = ({
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:ring-emerald-800">
         <Eye className="w-3 h-3" />
-        Published
+        {t("admin.formations.status.published")}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:ring-amber-800">
       <PenLine className="w-3 h-3" />
-      Draft
+      {t("admin.formations.status.draft")}
     </span>
   );
 };
@@ -70,19 +73,22 @@ const StatCard = ({
       dot: "bg-primary",
     },
     emerald: {
-      active: "border-emerald-400 bg-emerald-50 ring-2 ring-emerald-200 shadow-sm dark:bg-emerald-950/30 dark:border-emerald-600",
+      active:
+        "border-emerald-400 bg-emerald-50 ring-2 ring-emerald-200 shadow-sm dark:bg-emerald-950/30 dark:border-emerald-600",
       idle: "border-border bg-card hover:border-emerald-300 hover:shadow-sm",
       text: "text-emerald-600 dark:text-emerald-400",
       dot: "bg-emerald-500",
     },
     amber: {
-      active: "border-amber-400 bg-amber-50 ring-2 ring-amber-200 shadow-sm dark:bg-amber-950/30 dark:border-amber-600",
+      active:
+        "border-amber-400 bg-amber-50 ring-2 ring-amber-200 shadow-sm dark:bg-amber-950/30 dark:border-amber-600",
       idle: "border-border bg-card hover:border-amber-300 hover:shadow-sm",
       text: "text-amber-600 dark:text-amber-400",
       dot: "bg-amber-500",
     },
     zinc: {
-      active: "border-zinc-400 bg-zinc-50 ring-2 ring-zinc-200 shadow-sm dark:bg-zinc-800 dark:border-zinc-600",
+      active:
+        "border-zinc-400 bg-zinc-50 ring-2 ring-zinc-200 shadow-sm dark:bg-zinc-800 dark:border-zinc-600",
       idle: "border-border bg-card hover:border-zinc-300 hover:shadow-sm",
       text: "text-zinc-500 dark:text-zinc-400",
       dot: "bg-zinc-400",
@@ -114,11 +120,12 @@ const StatCard = ({
 };
 
 export default function FormationsPage() {
+  const { t } = useTranslation();
   const { data: courses, isLoading } = useAdminCourses();
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<
-    "all" | "published" | "draft" | "none"
-  >("all");
+  const [filter, setFilter] = useState<"all" | "published" | "draft" | "none">(
+    "all",
+  );
 
   const filtered = (courses || []).filter((course: any) => {
     const matchSearch =
@@ -152,44 +159,46 @@ export default function FormationsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground tracking-tight">
-              Formations
+              {t("admin.formations.title")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              Manage public profiles, pricing & publishing
+              {t("admin.formations.subtitle")}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>{totalCourses} courses total</span>
+          <span>
+            {t("admin.formations.coursesTotal", { count: totalCourses })}
+          </span>
         </div>
       </div>
 
       {/* ─── Stats ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          label="All Courses"
+          label={t("admin.formations.stats.allCourses")}
           count={totalCourses}
           color="primary"
           active={filter === "all"}
           onClick={() => setFilter("all")}
         />
         <StatCard
-          label="Published"
+          label={t("admin.formations.stats.published")}
           count={publishedCount}
           color="emerald"
           active={filter === "published"}
           onClick={() => setFilter("published")}
         />
         <StatCard
-          label="Draft"
+          label={t("admin.formations.stats.draft")}
           count={draftCount}
           color="amber"
           active={filter === "draft"}
           onClick={() => setFilter("draft")}
         />
         <StatCard
-          label="No Profile"
+          label={t("admin.formations.stats.noProfile")}
           count={noProfileCount}
           color="zinc"
           active={filter === "none"}
@@ -203,7 +212,7 @@ export default function FormationsPage() {
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search courses by name or code..."
+          placeholder={t("admin.formations.searchPlaceholder")}
           className="pl-11 h-11 rounded-xl bg-card border-border/60 transition-all"
         />
       </div>
@@ -216,7 +225,7 @@ export default function FormationsPage() {
             <Loader2 className="w-12 h-12 animate-spin text-primary absolute inset-0" />
           </div>
           <p className="text-sm text-muted-foreground">
-            Loading formations...
+            {t("admin.formations.loading")}
           </p>
         </div>
       ) : filtered.length === 0 ? (
@@ -226,12 +235,12 @@ export default function FormationsPage() {
           </div>
           <div className="text-center">
             <p className="text-lg font-medium text-foreground">
-              No formations found
+              {t("admin.formations.noFormations")}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
               {search
-                ? "Try a different search term"
-                : "Create a course first from the Courses section"}
+                ? t("admin.formations.tryDifferentSearch")
+                : t("admin.formations.createCourseFirst")}
             </p>
           </div>
         </div>
@@ -239,12 +248,16 @@ export default function FormationsPage() {
         <div className="bg-card rounded-2xl border border-border/60 overflow-hidden shadow-sm">
           {/* Table Header */}
           <div className="hidden sm:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_140px] gap-4 px-6 py-3.5 bg-muted/40 border-b text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            <span>Course</span>
-            <span>Code</span>
-            <span>Language</span>
-            <span>Level</span>
-            <span className="text-center">Status</span>
-            <span className="text-center">Action</span>
+            <span>{t("admin.formations.table.course")}</span>
+            <span>{t("admin.formations.table.code")}</span>
+            <span>{t("admin.formations.table.language")}</span>
+            <span>{t("admin.formations.table.level")}</span>
+            <span className="text-center">
+              {t("admin.formations.table.status")}
+            </span>
+            <span className="text-center">
+              {t("admin.formations.table.action")}
+            </span>
           </div>
 
           {/* Table Rows */}
@@ -337,18 +350,16 @@ export default function FormationsPage() {
                           : "shadow-sm hover:shadow-md"
                       }`}
                     >
-                      <Link
-                        to={`/admin/formations/${course.course_id}/edit`}
-                      >
+                      <Link to={`/admin/formations/${course.course_id}/edit`}>
                         {hasProfile ? (
                           <>
                             <ArrowUpRight className="w-3.5 h-3.5" />
-                            Edit
+                            {t("admin.formations.actions.edit")}
                           </>
                         ) : (
                           <>
                             <Plus className="w-3.5 h-3.5" />
-                            Create Profile
+                            {t("admin.formations.actions.createProfile")}
                           </>
                         )}
                       </Link>
@@ -362,14 +373,17 @@ export default function FormationsPage() {
           {/* Footer */}
           <div className="px-6 py-3 bg-muted/20 border-t text-xs text-muted-foreground flex items-center justify-between">
             <span>
-              Showing {filtered.length} of {totalCourses} courses
+              {t("admin.formations.showing", {
+                filtered: filtered.length,
+                total: totalCourses,
+              })}
             </span>
             {filter !== "all" && (
               <button
                 onClick={() => setFilter("all")}
                 className="text-primary hover:underline font-medium"
               >
-                Clear filter
+                {t("admin.formations.clearFilter")}
               </button>
             )}
           </div>

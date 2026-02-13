@@ -1,12 +1,5 @@
-/* ===============================================================
-   SESSIONS PAGE - WITH QUICK ATTENDANCE (FIXED)
-   
-   ✅ Quick Attendance: pick group → auto-create session → mark attendance
-   ✅ createSession only needs group_id + session_date + topic
-   ✅ Detects if today's session already exists
-=============================================================== */
-
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Plus,
   Calendar,
@@ -38,10 +31,7 @@ import DeleteConfirmDialog from "../../components/DeleteConfirmDialog";
 import type { Session } from "../../../../types/Types";
 import { toast } from "sonner";
 
-/* ===============================================================
-   QUICK ATTENDANCE MODAL
-=============================================================== */
-
+/* ─── Quick Attendance Modal ─── */
 const QuickAttendanceModal = ({
   open,
   onClose,
@@ -53,9 +43,9 @@ const QuickAttendanceModal = ({
   onSessionReady: (session: Session) => void;
   sessions: Session[];
 }) => {
+  const { t } = useTranslation();
   const { data: groups = [], isLoading: groupsLoading } = useAdminGroups();
   const createSession = useCreateSession();
-
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
 
@@ -63,9 +53,10 @@ const QuickAttendanceModal = ({
 
   const filteredGroups = groups.filter((g) => {
     const s = search.toLowerCase();
-    const name = g.name?.toLowerCase() || "";
-    const course = (g as any).course?.course_name?.toLowerCase() || "";
-    return name.includes(s) || course.includes(s);
+    return (
+      (g.name?.toLowerCase() || "").includes(s) ||
+      ((g as any).course?.course_name?.toLowerCase() || "").includes(s)
+    );
   });
 
   const getTodaySession = (groupId: string): Session | undefined => {
@@ -83,13 +74,11 @@ const QuickAttendanceModal = ({
 
   const handleGroupClick = async (group: any) => {
     const existing = getTodaySession(group.group_id);
-
     if (existing) {
       onSessionReady(existing);
       onClose();
       return;
     }
-
     setCreating(true);
     try {
       const now = new Date();
@@ -98,12 +87,10 @@ const QuickAttendanceModal = ({
         session_date: now.toISOString(),
         topic: `Session - ${now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
       });
-
       toast.success("Session created for today");
       onSessionReady(newSession);
       onClose();
     } catch (err: any) {
-      console.error("Quick session error:", err);
       toast.error(err?.response?.data?.message || "Failed to create session");
     } finally {
       setCreating(false);
@@ -117,40 +104,38 @@ const QuickAttendanceModal = ({
         onClick={onClose}
       />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-gray-100 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-500 to-violet-600">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-[#D8CDC0]/60 overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#D8CDC0]/30 bg-gradient-to-r from-[#C4A035] to-[#C4A035]/90">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                 <Zap className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-white">
-                  Quick Attendance
+                  {t("admin.sessions.quickAttendanceTitle")}
                 </h3>
                 <p className="text-sm text-white/80">
-                  Select a group to take today's attendance
+                  {t("admin.sessions.quickAttendanceDesc")}
                 </p>
               </div>
             </div>
           </div>
-
           <div className="px-6 pt-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E]" />
               <Input
-                placeholder="Search groups or courses..."
+                placeholder={t("admin.sessions.searchGroupsCourses")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 h-10"
+                className="pl-10 h-10 border-[#D8CDC0]/60 focus:border-[#2B6F5E] focus:ring-[#2B6F5E]/20"
                 autoFocus
               />
             </div>
           </div>
-
           <div className="px-6 py-4 max-h-80 overflow-y-auto">
             {groupsLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+                <Loader2 className="w-6 h-6 animate-spin text-[#2B6F5E]" />
               </div>
             ) : filteredGroups.length > 0 ? (
               <div className="space-y-2">
@@ -162,22 +147,21 @@ const QuickAttendanceModal = ({
                   const teacherName = teacher
                     ? `${teacher.first_name} ${teacher.last_name}`
                     : null;
-
                   return (
                     <button
                       key={group.group_id}
                       onClick={() => handleGroupClick(group)}
                       disabled={creating}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50 transition-all text-left disabled:opacity-50"
+                      className="w-full flex items-center gap-3 p-3 rounded-xl border border-[#D8CDC0]/40 hover:border-[#2B6F5E]/30 hover:bg-[#2B6F5E]/3 transition-all text-left disabled:opacity-50"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shrink-0">
                         <Users className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 truncate">
+                        <p className="font-semibold text-[#1B1B1B] truncate">
                           {group.name}
                         </p>
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <div className="flex items-center gap-2 text-xs text-[#6B5D4F]">
                           <span>{courseName}</span>
                           {group.level && (
                             <>
@@ -195,14 +179,14 @@ const QuickAttendanceModal = ({
                       </div>
                       <div className="shrink-0">
                         {todaySession ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-green-50 border border-green-200 text-xs font-semibold text-green-700">
-                            <UserCheck className="w-3 h-3" />
-                            Today
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#8DB896]/15 border border-[#8DB896]/30 text-xs font-semibold text-[#2B6F5E]">
+                            <UserCheck className="w-3 h-3" />{" "}
+                            {t("admin.sessions.today")}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-xs font-semibold text-indigo-700">
-                            <Plus className="w-3 h-3" />
-                            New
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#C4A035]/10 border border-[#C4A035]/20 text-xs font-semibold text-[#C4A035]">
+                            <Plus className="w-3 h-3" />{" "}
+                            {t("admin.sessions.new")}
                           </span>
                         )}
                       </div>
@@ -212,28 +196,32 @@ const QuickAttendanceModal = ({
               </div>
             ) : (
               <div className="text-center py-12">
-                <Users className="w-12 h-12 mx-auto text-gray-200 mb-3" />
-                <p className="font-medium text-gray-500">No groups found</p>
-                <p className="text-sm text-gray-400 mt-1">
-                  {search ? "Try a different search" : "Create groups first"}
+                <Users className="w-12 h-12 mx-auto text-[#D8CDC0] mb-3" />
+                <p className="font-medium text-[#6B5D4F]">
+                  {t("admin.sessions.noGroupsFound")}
+                </p>
+                <p className="text-sm text-[#BEB29E] mt-1">
+                  {search
+                    ? t("admin.sessions.noGroupsSearchDesc")
+                    : t("admin.sessions.noGroupsEmptyDesc")}
                 </p>
               </div>
             )}
           </div>
-
-          <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
-            <p className="text-xs text-gray-400">
+          <div className="px-6 py-3 border-t border-[#D8CDC0]/30 bg-[#D8CDC0]/8 flex items-center justify-between">
+            <p className="text-xs text-[#BEB29E]">
               {creating
-                ? "Creating session..."
-                : `${filteredGroups.length} groups`}
+                ? t("admin.sessions.creatingSession")
+                : `${filteredGroups.length} ${t("admin.sessions.groups")}`}
             </p>
             <Button
               variant="ghost"
               size="sm"
               onClick={onClose}
               disabled={creating}
+              className="text-[#6B5D4F] hover:bg-[#D8CDC0]/15"
             >
-              Cancel
+              {t("admin.sessions.cancel")}
             </Button>
           </div>
         </div>
@@ -242,11 +230,16 @@ const QuickAttendanceModal = ({
   );
 };
 
-/* ===============================================================
-   MAIN PAGE
-=============================================================== */
-
+/* ─── Main Page ─── */
 const SessionsPage = () => {
+  const { t, i18n } = useTranslation();
+  const locale =
+    i18n.language === "ar"
+      ? "ar-DZ"
+      : i18n.language === "fr"
+        ? "fr-FR"
+        : "en-US";
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
@@ -259,7 +252,7 @@ const SessionsPage = () => {
 
   const formatDate = (dateString: string) => {
     try {
-      return new Date(dateString).toLocaleDateString("en-US", {
+      return new Date(dateString).toLocaleDateString(locale, {
         weekday: "short",
         month: "short",
         day: "numeric",
@@ -269,10 +262,9 @@ const SessionsPage = () => {
       return "Invalid Date";
     }
   };
-
   const formatTime = (dateString: string) => {
     try {
-      return new Date(dateString).toLocaleTimeString("en-US", {
+      return new Date(dateString).toLocaleTimeString(locale, {
         hour: "2-digit",
         minute: "2-digit",
       });
@@ -298,7 +290,7 @@ const SessionsPage = () => {
     if (!selectedSession) return;
     try {
       await deleteSession.mutateAsync(selectedSession.session_id);
-      toast.success("✅ Session deleted successfully");
+      toast.success("Session deleted successfully");
       setIsDeleteOpen(false);
       setSelectedSession(null);
     } catch (error: any) {
@@ -306,17 +298,13 @@ const SessionsPage = () => {
     }
   };
 
-  const handleSuccess = () => {
-    refetch();
-  };
-
+  const handleSuccess = () => refetch();
   const handleQuickSessionReady = (session: Session) => {
     refetch().then(() => {
       setSelectedSession(session);
       setIsAttendanceOpen(true);
     });
   };
-
   const hasAttendanceRecords = (session: Session) =>
     session._count && session._count.attendance > 0;
 
@@ -350,77 +338,55 @@ const SessionsPage = () => {
     };
   };
 
-  if (isLoading) {
+  if (isLoading)
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <div className="h-8 w-48 bg-gray-200 rounded-lg animate-pulse mb-2" />
-            <div className="h-4 w-96 bg-gray-200 rounded-lg animate-pulse" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="bg-white rounded-xl p-5 border border-gray-200 animate-pulse"
-              >
-                <div className="h-4 w-24 bg-gray-200 rounded mb-2" />
-                <div className="h-8 w-16 bg-gray-200 rounded" />
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="bg-white rounded-2xl p-6 border border-gray-200 animate-pulse"
-              >
-                <div className="h-6 w-32 bg-gray-200 rounded mb-4" />
-                <div className="space-y-2">
-                  <div className="h-4 w-full bg-gray-200 rounded" />
-                  <div className="h-4 w-3/4 bg-gray-200 rounded" />
-                </div>
-              </div>
-            ))}
-          </div>
+      <div className="space-y-6">
+        <div className="mb-8">
+          <div className="h-8 w-48 bg-[#D8CDC0]/30 rounded-lg animate-pulse mb-2" />
+          <div className="h-4 w-96 bg-[#D8CDC0]/20 rounded-lg animate-pulse" />
         </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white rounded-2xl p-8 border border-red-200 text-center">
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-gray-900 mb-2">
-              Failed to load sessions
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {(error as any)?.message || "Something went wrong"}
-            </p>
-            <Button
-              onClick={() => refetch()}
-              className="bg-indigo-600 hover:bg-indigo-700"
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="bg-white rounded-2xl p-5 border border-[#D8CDC0]/60 animate-pulse"
             >
-              Try Again
-            </Button>
-          </div>
+              <div className="h-4 w-24 bg-[#D8CDC0]/30 rounded mb-2" />
+              <div className="h-8 w-16 bg-[#D8CDC0]/20 rounded" />
+            </div>
+          ))}
         </div>
       </div>
     );
-  }
+
+  if (error)
+    return (
+      <div className="bg-white rounded-2xl p-8 border border-red-200 text-center">
+        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+        <h3 className="text-lg font-bold text-[#1B1B1B] mb-2">
+          {t("admin.sessions.failedToLoad")}
+        </h3>
+        <p className="text-[#6B5D4F] mb-4">
+          {(error as any)?.message || "Something went wrong"}
+        </p>
+        <Button
+          onClick={() => refetch()}
+          className="bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white"
+        >
+          {t("admin.sessions.tryAgain")}
+        </Button>
+      </div>
+    );
 
   const stats = {
     total: sessions.length,
     today: sessions.filter((s) => {
-      const t = new Date();
+      const td = new Date();
       const sd = new Date(s.session_date);
       return (
-        sd.getDate() === t.getDate() &&
-        sd.getMonth() === t.getMonth() &&
-        sd.getFullYear() === t.getFullYear()
+        sd.getDate() === td.getDate() &&
+        sd.getMonth() === td.getMonth() &&
+        sd.getFullYear() === td.getFullYear()
       );
     }).length,
     withAttendance: sessions.filter((s) => hasAttendanceRecords(s)).length,
@@ -429,288 +395,300 @@ const SessionsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-white" />
-              </div>
-              Sessions
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Schedule and track sessions and attendance
-            </p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-6 overflow-hidden">
+        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20">
+              <Calendar className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-[#1B1B1B]">
+                {t("admin.sessions.title")}
+              </h1>
+              <p className="text-sm text-[#BEB29E] mt-0.5">
+                {t("admin.sessions.subtitle")}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <Button
               onClick={() => setIsQuickAttendanceOpen(true)}
-              className="gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all"
+              className="gap-2 bg-[#C4A035] hover:bg-[#C4A035]/90 text-white shadow-md shadow-[#C4A035]/20"
             >
-              <Zap className="w-5 h-5" />
-              Quick Attendance
+              <Zap className="w-4 h-4" />
+              {t("admin.sessions.quickAttendance")}
             </Button>
             <Button
               onClick={() => setIsCreateOpen(true)}
-              className="gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 shadow-lg hover:shadow-xl transition-all"
+              className="gap-2 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white shadow-md shadow-[#2B6F5E]/20"
             >
-              <Plus className="w-5 h-5" />
-              Create Session
+              <Plus className="w-4 h-4" />
+              {t("admin.sessions.createSession")}
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500 uppercase">
-                  Total Sessions
-                </p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
-                  {stats.total}
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-blue-600" />
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          {
+            label: t("admin.sessions.totalSessions"),
+            value: stats.total,
+            icon: Calendar,
+            color: "teal" as const,
+          },
+          {
+            label: t("admin.sessions.todaySessions"),
+            value: stats.today,
+            icon: Clock,
+            color: "mustard" as const,
+          },
+          {
+            label: t("admin.sessions.withAttendance"),
+            value: stats.withAttendance,
+            icon: UserCheck,
+            color: "green" as const,
+          },
+          {
+            label: t("admin.sessions.upcoming"),
+            value: stats.upcoming,
+            icon: Calendar,
+            color: "beige" as const,
+          },
+        ].map((stat) => {
+          const colors = {
+            teal: {
+              bar: "from-[#2B6F5E] to-[#2B6F5E]/70",
+              bg: "bg-[#2B6F5E]/8",
+              icon: "text-[#2B6F5E]",
+            },
+            mustard: {
+              bar: "from-[#C4A035] to-[#C4A035]/70",
+              bg: "bg-[#C4A035]/8",
+              icon: "text-[#C4A035]",
+            },
+            green: {
+              bar: "from-[#8DB896] to-[#8DB896]/70",
+              bg: "bg-[#8DB896]/12",
+              icon: "text-[#3D7A4A]",
+            },
+            beige: {
+              bar: "from-[#BEB29E] to-[#BEB29E]/70",
+              bg: "bg-[#D8CDC0]/20",
+              icon: "text-[#6B5D4F]",
+            },
+          };
+          const c = colors[stat.color];
+          return (
+            <div
+              key={stat.label}
+              className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-5 overflow-hidden group hover:shadow-md transition-all"
+            >
+              <div
+                className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${c.bar} opacity-60 group-hover:opacity-100 transition-opacity`}
+              ></div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-[#6B5D4F] uppercase tracking-wide">
+                    {stat.label}
+                  </p>
+                  <p className="text-2xl font-bold text-[#1B1B1B] mt-1">
+                    {stat.value}
+                  </p>
+                </div>
+                <div
+                  className={`w-11 h-11 rounded-xl ${c.bg} flex items-center justify-center`}
+                >
+                  <stat.icon className={`w-5 h-5 ${c.icon}`} />
+                </div>
               </div>
             </div>
-          </div>
-          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500 uppercase">
-                  Today's Sessions
-                </p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
-                  {stats.today}
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center">
-                <Clock className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500 uppercase">
-                  With Attendance
-                </p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
-                  {stats.withAttendance}
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center">
-                <UserCheck className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500 uppercase">
-                  Upcoming
-                </p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
-                  {stats.upcoming}
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-lg bg-yellow-50 flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-yellow-600" />
-              </div>
-            </div>
+          );
+        })}
+      </div>
+
+      {/* Sessions List */}
+      {sessions.length === 0 ? (
+        <div className="bg-white rounded-2xl p-12 border border-[#D8CDC0]/60 text-center">
+          <Calendar className="w-16 h-16 text-[#D8CDC0] mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-[#1B1B1B] mb-2">
+            {t("admin.sessions.noSessions")}
+          </h3>
+          <p className="text-[#6B5D4F] mb-6">
+            {t("admin.sessions.noSessionsDesc")}
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <Button
+              onClick={() => setIsQuickAttendanceOpen(true)}
+              className="gap-2 bg-[#C4A035] hover:bg-[#C4A035]/90 text-white"
+            >
+              <Zap className="w-4 h-4" /> {t("admin.sessions.quickAttendance")}
+            </Button>
+            <Button
+              onClick={() => setIsCreateOpen(true)}
+              className="gap-2 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white"
+            >
+              <Plus className="w-4 h-4" /> {t("admin.sessions.createSession")}
+            </Button>
           </div>
         </div>
-
-        {/* Sessions List */}
-        {sessions.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 border border-gray-200 text-center">
-            <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-gray-900 mb-2">
-              No sessions found
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Create your first session to get started
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <Button
-                onClick={() => setIsQuickAttendanceOpen(true)}
-                className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sessions.map((session) => {
+            const data = getSessionData(session);
+            const hasAttendance = hasAttendanceRecords(session);
+            const isPast = new Date(session.session_date) < new Date();
+            return (
+              <div
+                key={session.session_id}
+                className={`bg-white rounded-2xl border border-[#D8CDC0]/60 overflow-hidden hover:shadow-lg transition-all group ${isPast ? "opacity-75" : ""}`}
               >
-                <Zap className="w-4 h-4" />
-                Quick Attendance
-              </Button>
-              <Button
-                onClick={() => setIsCreateOpen(true)}
-                className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-              >
-                <Plus className="w-4 h-4" />
-                Create Session
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sessions.map((session) => {
-              const data = getSessionData(session);
-              const hasAttendance = hasAttendanceRecords(session);
-              const isPast = new Date(session.session_date) < new Date();
-
-              return (
-                <div
-                  key={session.session_id}
-                  className={`bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all group ${isPast ? "opacity-75" : ""}`}
-                >
-                  <div className="bg-gradient-to-br from-indigo-500 to-violet-600 p-5 text-white">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-lg mb-1 line-clamp-2">
-                          {data.courseName}
-                        </h3>
-                        <div className="flex flex-wrap items-center gap-2 text-sm">
-                          <span className="text-indigo-100 truncate">
-                            {data.groupName}
-                          </span>
-                          {data.groupLevel && (
-                            <>
-                              <span className="text-indigo-200">•</span>
-                              <span className="text-indigo-100">
-                                {data.groupLevel}
-                              </span>
-                            </>
-                          )}
-                        </div>
+                <div className="bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/90 p-5 text-white">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-lg mb-1 line-clamp-2">
+                        {data.courseName}
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-2 text-sm">
+                        <span className="text-white/70">{data.groupName}</span>
+                        {data.groupLevel && (
+                          <>
+                            <span className="text-white/40">•</span>
+                            <span className="text-white/70">
+                              {data.groupLevel}
+                            </span>
+                          </>
+                        )}
                       </div>
-                      {hasAttendance && (
-                        <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0 ml-2">
-                          <UserCheck className="w-4 h-4" />
+                    </div>
+                    {hasAttendance && (
+                      <div className="w-8 h-8 rounded-lg bg-[#C4A035]/30 flex items-center justify-center shrink-0 ml-2">
+                        <UserCheck className="w-4 h-4 text-[#C4A035]" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm flex-wrap text-white/80">
+                    <Calendar className="w-4 h-4" />
+                    <span>{formatDate(data.sessionDate)}</span>
+                    <span className="text-white/40">•</span>
+                    <Clock className="w-4 h-4" />
+                    <span>{formatTime(data.sessionDate)}</span>
+                  </div>
+                  {isPast && (
+                    <div className="mt-2 text-xs bg-white/15 rounded px-2 py-1 inline-block">
+                      {t("admin.sessions.completed")}
+                    </div>
+                  )}
+                </div>
+                <div className="p-5 space-y-3">
+                  {data.hasTeacher ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <User className="w-4 h-4 text-[#2B6F5E] shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-[#1B1B1B] truncate">
+                          {data.teacherName}
+                        </p>
+                        {data.teacherEmail && (
+                          <p className="text-xs text-[#BEB29E] truncate">
+                            {data.teacherEmail}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-sm p-2 bg-[#C4A035]/8 rounded-lg border border-[#C4A035]/20">
+                      <UserX className="w-4 h-4 text-[#C4A035] shrink-0" />
+                      <span className="text-[#C4A035] text-xs font-medium">
+                        {t("admin.sessions.noTeacher")}
+                      </span>
+                    </div>
+                  )}
+                  {data.topic && (
+                    <div className="flex items-start gap-2 text-sm">
+                      <FileText className="w-4 h-4 text-[#2B6F5E] mt-0.5 shrink-0" />
+                      <p className="text-[#6B5D4F] line-clamp-2 flex-1">
+                        {data.topic}
+                      </p>
+                    </div>
+                  )}
+                  {data.studentCount > 0 && (
+                    <div className="flex items-center justify-between text-sm p-2 bg-[#D8CDC0]/10 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-[#2B6F5E] shrink-0" />
+                        <span className="text-[#6B5D4F] font-medium">
+                          {data.studentCount}{" "}
+                          {data.studentCount !== 1
+                            ? t("admin.sessions.students_plural")
+                            : t("admin.sessions.students")}
+                        </span>
+                      </div>
+                      <span className="text-xs text-[#BEB29E]">
+                        / {data.maxStudents} {t("admin.sessions.max")}
+                      </span>
+                    </div>
+                  )}
+                  {hasAttendance && (
+                    <div className="pt-3 border-t border-[#D8CDC0]/30">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-[#6B5D4F]">
+                          {t("admin.sessions.attendance")}
+                        </span>
+                        <span className="text-sm font-bold text-[#2B6F5E]">
+                          {data.attendanceCount}
+                          {data.studentCount > 0 && ` / ${data.studentCount}`}
+                        </span>
+                      </div>
+                      {data.studentCount > 0 && (
+                        <div className="h-2 bg-[#D8CDC0]/20 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#2B6F5E] to-[#8DB896] rounded-full transition-all"
+                            style={{
+                              width: `${Math.min((data.attendanceCount / data.studentCount) * 100, 100)}%`,
+                            }}
+                          />
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-sm flex-wrap">
-                      <Calendar className="w-4 h-4" />
-                      <span>{formatDate(data.sessionDate)}</span>
-                      <span className="text-indigo-200">•</span>
-                      <Clock className="w-4 h-4" />
-                      <span>{formatTime(data.sessionDate)}</span>
-                    </div>
-                    {isPast && (
-                      <div className="mt-2 text-xs bg-white/20 rounded px-2 py-1 inline-block">
-                        Completed
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-5 space-y-3">
-                    {data.hasTeacher ? (
-                      <div className="flex items-center gap-2 text-sm">
-                        <User className="w-4 h-4 text-indigo-500 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">
-                            {data.teacherName}
-                          </p>
-                          {data.teacherEmail && (
-                            <p className="text-xs text-gray-500 truncate">
-                              {data.teacherEmail}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-sm p-2 bg-amber-50 rounded-lg border border-amber-200">
-                        <UserX className="w-4 h-4 text-amber-600 shrink-0" />
-                        <span className="text-amber-700 text-xs font-medium">
-                          No teacher assigned
-                        </span>
-                      </div>
-                    )}
-                    {data.topic && (
-                      <div className="flex items-start gap-2 text-sm">
-                        <FileText className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
-                        <p className="text-gray-700 line-clamp-2 flex-1">
-                          {data.topic}
-                        </p>
-                      </div>
-                    )}
-                    {data.studentCount > 0 && (
-                      <div className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-indigo-500 shrink-0" />
-                          <span className="text-gray-700 font-medium">
-                            {data.studentCount} student
-                            {data.studentCount !== 1 ? "s" : ""}
-                          </span>
-                        </div>
-                        <span className="text-xs text-gray-500">
-                          / {data.maxStudents} max
-                        </span>
-                      </div>
-                    )}
-                    {hasAttendance && (
-                      <div className="pt-3 border-t border-gray-100">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium text-gray-500">
-                            Attendance
-                          </span>
-                          <span className="text-sm font-bold text-indigo-600">
-                            {data.attendanceCount}
-                            {data.studentCount > 0 && ` / ${data.studentCount}`}
-                          </span>
-                        </div>
-                        {data.studentCount > 0 && (
-                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-indigo-500 to-violet-600 rounded-full transition-all"
-                              style={{
-                                width: `${Math.min((data.attendanceCount / data.studentCount) * 100, 100)}%`,
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="px-5 pb-5 flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleViewAttendance(session)}
-                      className="flex-1 gap-2 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border-0"
-                    >
-                      <Eye className="w-4 h-4" />
-                      Attendance
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleEdit(session)}
-                      className="gap-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 border-0"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleDeleteClick(session)}
-                      disabled={hasAttendance}
-                      className="gap-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={
-                        hasAttendance
-                          ? "Cannot delete session with attendance records"
-                          : "Delete session"
-                      }
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                <div className="px-5 pb-5 flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => handleViewAttendance(session)}
+                    className="flex-1 gap-2 rounded-xl bg-[#2B6F5E]/8 text-[#2B6F5E] hover:bg-[#2B6F5E]/15 border-0"
+                  >
+                    <Eye className="w-4 h-4" /> {t("admin.sessions.attendance")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleEdit(session)}
+                    className="gap-2 rounded-xl bg-[#D8CDC0]/15 text-[#6B5D4F] hover:bg-[#D8CDC0]/25 border-0"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleDeleteClick(session)}
+                    disabled={hasAttendance}
+                    className="gap-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={
+                      hasAttendance
+                        ? t("admin.sessions.cannotDelete")
+                        : t("admin.sessions.deleteSession")
+                    }
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <SessionFormModal
         open={isCreateOpen}

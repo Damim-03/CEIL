@@ -1,5 +1,6 @@
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import PageLoader from "../../../../components/PageLoader";
 import { Button } from "../../../../components/ui/button";
 import {
@@ -24,6 +25,7 @@ import {
   ChevronUp,
   UserCheck,
   UserX,
+  ExternalLink,
 } from "lucide-react";
 import CourseFormModal from "../../components/CourseFormModal";
 import GroupFormModal from "../../components/GroupFormModal";
@@ -33,34 +35,33 @@ import type {
   Level,
 } from "../../../../types/Types";
 import { toast } from "sonner";
+import { DEFAULT_LANG } from "../../../../i18n/i18n";
 
 const LEVELS: readonly Level[] = ["A1", "A2", "B1", "B2", "C1"];
-
 const LEVEL_COLORS: Record<Level, string> = {
-  A1: "from-green-500 to-emerald-600",
-  A2: "from-blue-500 to-cyan-600",
-  B1: "from-purple-500 to-indigo-600",
-  B2: "from-orange-500 to-amber-600",
-  C1: "from-red-500 to-rose-600",
+  A1: "from-[#8DB896] to-[#2B6F5E]",
+  A2: "from-[#2B6F5E] to-[#2B6F5E]/80",
+  B1: "from-[#C4A035] to-[#C4A035]/80",
+  B2: "from-[#BEB29E] to-[#6B5D4F]",
+  C1: "from-[#1B1B1B] to-[#1B1B1B]/80",
 };
-
 const LEVEL_BG_COLORS: Record<Level, string> = {
-  A1: "bg-green-50",
-  A2: "bg-blue-50",
-  B1: "bg-purple-50",
-  B2: "bg-orange-50",
-  C1: "bg-red-50",
+  A1: "bg-[#8DB896]/8",
+  A2: "bg-[#2B6F5E]/5",
+  B1: "bg-[#C4A035]/5",
+  B2: "bg-[#D8CDC0]/15",
+  C1: "bg-[#1B1B1B]/3",
 };
-
 const LEVEL_BORDER_COLORS: Record<Level, string> = {
-  A1: "border-green-200",
-  A2: "border-blue-200",
-  B1: "border-purple-200",
-  B2: "border-orange-200",
-  C1: "border-red-200",
+  A1: "border-[#8DB896]/30",
+  A2: "border-[#2B6F5E]/20",
+  B1: "border-[#C4A035]/20",
+  B2: "border-[#D8CDC0]/50",
+  C1: "border-[#1B1B1B]/15",
 };
 
 const CourseDetailsPage = () => {
+  const { t } = useTranslation();
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const { data: course, isLoading } = useAdminCourse(courseId!);
@@ -69,30 +70,19 @@ const CourseDetailsPage = () => {
   const createGroup = useCreateGroup();
 
   const getStudentCount = (group: any): number => {
-    // Try current_capacity first (most common field from API)
-    if (group.current_capacity !== undefined) {
-      return group.current_capacity;
-    }
-
-    // Try students array
-    if (group.students && Array.isArray(group.students)) {
+    if (group.current_capacity !== undefined) return group.current_capacity;
+    if (group.students && Array.isArray(group.students))
       return group.students.length;
-    }
-
-    // Try enrollments array
-    if (group.enrollments && Array.isArray(group.enrollments)) {
+    if (group.enrollments && Array.isArray(group.enrollments))
       return group.enrollments.filter(
         (e: any) =>
           e.registration_status === "VALIDATED" ||
           e.registration_status === "PAID" ||
           e.registration_status === "FINISHED",
       ).length;
-    }
-
     if (group._count?.enrollments !== undefined)
       return group._count.enrollments;
     if (group._count?.students !== undefined) return group._count.students;
-
     return 0;
   };
 
@@ -106,18 +96,23 @@ const CourseDetailsPage = () => {
   if (!course || !course.course_id) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-4">
-          <div className="text-6xl">🔍</div>
-          <h2 className="text-2xl font-semibold text-gray-900">
-            Course not found
+        <div className="text-center space-y-4 p-8 bg-white rounded-2xl border border-[#D8CDC0]/60">
+          <div className="w-16 h-16 mx-auto rounded-full bg-[#D8CDC0]/20 flex items-center justify-center">
+            <BookOpen className="w-8 h-8 text-[#BEB29E]" />
+          </div>
+          <h2 className="text-2xl font-semibold text-[#1B1B1B]">
+            {t("admin.courseDetails.courseNotFound")}
           </h2>
-          <p className="text-gray-600">
-            The course you're looking for doesn't exist.
+          <p className="text-[#6B5D4F]">
+            {t("admin.courseDetails.courseNotFoundDesc")}
           </p>
           <Link to="/admin/courses">
-            <Button variant="outline">
+            <Button
+              variant="outline"
+              className="border-[#D8CDC0]/60 hover:bg-[#D8CDC0]/10"
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Courses
+              {t("admin.courseDetails.backToCourses")}
             </Button>
           </Link>
         </div>
@@ -125,13 +120,10 @@ const CourseDetailsPage = () => {
     );
   }
 
-  // ✅ FIX: Group courses by level (use correct field names)
   const groupsByLevel =
     course.groups?.reduce(
       (acc, group) => {
-        if (!acc[group.level]) {
-          acc[group.level] = [];
-        }
+        if (!acc[group.level]) acc[group.level] = [];
         acc[group.level].push(group);
         return acc;
       },
@@ -142,60 +134,45 @@ const CourseDetailsPage = () => {
     setSelectedLevel(level);
     setGroupFormOpen(true);
   };
-
   const handleGroupSubmit = async (payload: CreateGroupPayload) => {
     try {
       await createGroup.mutateAsync(payload);
       setGroupFormOpen(false);
       setSelectedLevel(null);
-      toast.success("Group created successfully!");
+      toast.success(t("admin.courseDetails.groupCreated"));
     } catch (error) {
-      toast.error("Failed to create group");
-      console.error(error);
+      toast.error(t("admin.courseDetails.groupCreateFailed"));
     }
   };
-
   const handleDelete = async () => {
     if (
       !window.confirm(
-        `Are you sure you want to delete "${course.course_name}"? This action cannot be undone.`,
+        t("admin.courses.deleteConfirm", { name: course.course_name }),
       )
-    ) {
+    )
       return;
-    }
-
     try {
       await deleteCourse.mutateAsync(course.course_id);
-      toast.success("Course deleted successfully!");
+      toast.success(t("admin.courseDetails.courseDeleted"));
       navigate("/admin/courses");
     } catch (error) {
-      toast.error("Failed to delete course");
-      console.error(error);
+      toast.error(t("admin.courseDetails.courseDeleteFailed"));
     }
   };
-
   const handleUpdate = async (payload: UpdateCoursePayload) => {
     try {
-      await updateCourse.mutateAsync({
-        courseId: course.course_id,
-        payload,
-      });
+      await updateCourse.mutateAsync({ courseId: course.course_id, payload });
       setEditOpen(false);
-      toast.success("Course updated successfully!");
+      toast.success(t("admin.courseDetails.courseUpdated"));
     } catch (error) {
-      toast.error("Failed to update course");
-      console.error(error);
+      toast.error(t("admin.courseDetails.courseUpdateFailed"));
     }
   };
-
   const toggleLevel = (level: string) => {
-    const newExpanded = new Set(expandedLevels);
-    if (newExpanded.has(level)) {
-      newExpanded.delete(level);
-    } else {
-      newExpanded.add(level);
-    }
-    setExpandedLevels(newExpanded);
+    const n = new Set(expandedLevels);
+    if (n.has(level)) n.delete(level);
+    else n.add(level);
+    setExpandedLevels(n);
   };
 
   const totalGroups = course.groups?.length || 0;
@@ -203,36 +180,55 @@ const CourseDetailsPage = () => {
     course.groups?.filter((g) => g.teacher_id)?.length || 0;
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* Header with Back Button */}
-      <div className="flex items-center gap-4">
+    <div className="max-w-6xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
         <Link to="/admin/courses">
-          <Button variant="ghost" size="sm" className="gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2 text-[#6B5D4F] hover:bg-[#D8CDC0]/15 hover:text-[#1B1B1B]"
+          >
             <ArrowLeft className="w-4 h-4" />
-            Back to Courses
+            {t("admin.courseDetails.backToCourses")}
           </Button>
         </Link>
+        <Button
+          asChild
+          variant="outline"
+          size="sm"
+          className="gap-2 border-[#2B6F5E]/30 text-[#2B6F5E] hover:bg-[#2B6F5E]/8"
+        >
+          <Link
+            to={`/${DEFAULT_LANG}/courses/${course.course_id}`}
+            target="_blank"
+          >
+            <ExternalLink className="w-4 h-4" />
+            {t("admin.courseDetails.viewPublicPage")}
+          </Link>
+        </Button>
       </div>
 
-      {/* Main Card */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        {/* Header Section */}
-        <div className="bg-gradient-to-r from-teal-50 to-cyan-50 px-6 py-8 border-b border-gray-200">
+      <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 overflow-hidden">
+        {/* Header */}
+        <div className="relative bg-gradient-to-r from-[#2B6F5E]/5 to-[#C4A035]/5 px-6 py-8 border-b border-[#D8CDC0]/40">
+          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-white shadow-lg">
-                <BookOpen className="w-10 h-10" />
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center text-white shadow-xl shadow-[#2B6F5E]/20">
+                <BookOpen className="w-8 h-8" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
+                <h1 className="text-3xl font-bold text-[#1B1B1B]">
                   {course.course_name}
                 </h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  Course ID: {course.course_id.slice(0, 8)}
+                <p className="text-sm text-[#6B5D4F] mt-1">
+                  {t("admin.courseDetails.courseId", {
+                    id: course.course_id.slice(0, 8),
+                  })}
                 </p>
                 {course.course_code && (
                   <div className="mt-2">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-[#C4A035]/10 text-[#C4A035] border border-[#C4A035]/20">
                       <Tag className="w-3 h-3 mr-1" />
                       {course.course_code}
                     </span>
@@ -242,8 +238,10 @@ const CourseDetailsPage = () => {
             </div>
             {course.credits !== null && course.credits !== undefined && (
               <div className="text-right">
-                <p className="text-sm text-gray-600">Credits</p>
-                <p className="text-3xl font-bold text-teal-600">
+                <p className="text-sm text-[#6B5D4F]">
+                  {t("admin.courseDetails.credits")}
+                </p>
+                <p className="text-3xl font-bold text-[#2B6F5E]">
                   {course.credits}
                 </p>
               </div>
@@ -252,37 +250,36 @@ const CourseDetailsPage = () => {
         </div>
 
         {/* Groups Section */}
-        <div className="border-b border-gray-200 px-6 py-5">
+        <div className="border-b border-[#D8CDC0]/40 px-6 py-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Layers className="w-5 h-5 text-gray-600" />
-                Course Groups by Level
+              <h2 className="text-lg font-semibold text-[#1B1B1B] flex items-center gap-2">
+                <Layers className="w-5 h-5 text-[#C4A035]" />
+                {t("admin.courseDetails.groupsByLevel")}
               </h2>
-              <p className="text-sm text-gray-500 mt-0.5">
-                Create and manage multiple groups for each proficiency level
+              <p className="text-sm text-[#BEB29E] mt-0.5">
+                {t("admin.courseDetails.groupsByLevelDesc")}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-gray-500">Total Groups</p>
-              <p className="text-2xl font-bold text-gray-900">{totalGroups}</p>
+              <p className="text-sm text-[#6B5D4F]">
+                {t("admin.courseDetails.totalGroups")}
+              </p>
+              <p className="text-2xl font-bold text-[#1B1B1B]">{totalGroups}</p>
             </div>
           </div>
 
-          {/* Groups by Level */}
           <div className="space-y-3">
             {LEVELS.map((level) => {
               const levelGroups = groupsByLevel[level] || [];
               const isExpanded = expandedLevels.has(level);
               const isCreating =
                 createGroup.isPending && selectedLevel === level;
-
               return (
                 <div
                   key={level}
-                  className={`rounded-lg border-2 overflow-hidden transition-all ${LEVEL_BORDER_COLORS[level]} ${LEVEL_BG_COLORS[level]}`}
+                  className={`rounded-xl border-2 overflow-hidden transition-all ${LEVEL_BORDER_COLORS[level]} ${LEVEL_BG_COLORS[level]}`}
                 >
-                  {/* Level Header */}
                   <div
                     className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/50 transition-colors"
                     onClick={() => toggleLevel(level)}
@@ -294,11 +291,13 @@ const CourseDetailsPage = () => {
                         {level}
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900">
-                          Level {level}
+                        <p className="font-semibold text-[#1B1B1B]">
+                          {t("admin.courseDetails.level", { level })}
                         </p>
-                        <p className="text-sm text-gray-600">
-                          {levelGroups.length} group(s)
+                        <p className="text-sm text-[#6B5D4F]">
+                          {t("admin.courseDetails.groupCount", {
+                            count: levelGroups.length,
+                          })}
                         </p>
                       </div>
                     </div>
@@ -310,82 +309,81 @@ const CourseDetailsPage = () => {
                           handleCreateGroup(level);
                         }}
                         disabled={isCreating}
-                        className="gap-1.5 h-8 text-xs bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                        className="gap-1.5 h-8 text-xs bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white"
                       >
                         {isCreating ? (
                           <>
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                            Creating...
+                            <Loader2 className="w-3 h-3 animate-spin" />{" "}
+                            {t("admin.courseDetails.creating")}
                           </>
                         ) : (
                           <>
-                            <Plus className="w-3 h-3" />
-                            Add Group
+                            <Plus className="w-3 h-3" />{" "}
+                            {t("admin.courseDetails.addGroup")}
                           </>
                         )}
                       </Button>
                       {isExpanded ? (
-                        <ChevronUp className="w-5 h-5 text-gray-400" />
+                        <ChevronUp className="w-5 h-5 text-[#BEB29E]" />
                       ) : (
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                        <ChevronDown className="w-5 h-5 text-[#BEB29E]" />
                       )}
                     </div>
                   </div>
-
-                  {/* Groups List */}
                   {isExpanded && (
-                    <div className="bg-white border-t border-gray-200">
+                    <div className="bg-white border-t border-[#D8CDC0]/30">
                       {levelGroups.length > 0 ? (
-                        <div className="divide-y divide-gray-100">
+                        <div className="divide-y divide-[#D8CDC0]/30">
                           {levelGroups.map((group, index) => {
-                            // ✅ FIX: Use _count.students instead of current_capacity
                             const currentCapacity = getStudentCount(group);
                             const maxStudents = group.max_students || 25;
-
                             return (
                               <div
                                 key={group.group_id}
-                                className="p-4 hover:bg-gray-50 transition-colors"
+                                className="p-4 hover:bg-[#D8CDC0]/8 transition-colors"
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-3 flex-1">
-                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-semibold text-sm">
+                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#D8CDC0]/20 text-[#6B5D4F] font-semibold text-sm">
                                       {index + 1}
                                     </div>
                                     <div className="flex-1">
-                                      {/* ✅ FIX: Use 'name' instead of 'group_name' */}
-                                      <p className="font-medium text-gray-900">
+                                      <p className="font-medium text-[#1B1B1B]">
                                         {group.name}
                                       </p>
                                       <div className="flex items-center gap-4 mt-1 flex-wrap">
-                                        <div className="flex items-center gap-1 text-sm text-gray-600">
-                                          <Users className="w-4 h-4" />
-                                          <span className="font-semibold">
+                                        <div className="flex items-center gap-1 text-sm text-[#6B5D4F]">
+                                          <Users className="w-4 h-4 text-[#BEB29E]" />
+                                          <span className="font-semibold text-[#1B1B1B]">
                                             {currentCapacity}
                                           </span>
-                                          <span className="text-gray-400">
+                                          <span className="text-[#BEB29E]">
                                             /
                                           </span>
-                                          <span className="font-semibold">
+                                          <span className="font-semibold text-[#1B1B1B]">
                                             {maxStudents}
                                           </span>
-                                          <span>students</span>
+                                          <span>
+                                            {t("admin.courseDetails.students")}
+                                          </span>
                                         </div>
-
-                                        {/* Teacher Status */}
                                         <div className="flex items-center gap-1 text-sm">
                                           {group.teacher_id ? (
                                             <>
-                                              <UserCheck className="w-4 h-4 text-green-600" />
-                                              <span className="text-green-700 font-medium">
-                                                Teacher assigned
+                                              <UserCheck className="w-4 h-4 text-[#2B6F5E]" />
+                                              <span className="text-[#2B6F5E] font-medium">
+                                                {t(
+                                                  "admin.courseDetails.teacherAssigned",
+                                                )}
                                               </span>
                                             </>
                                           ) : (
                                             <>
-                                              <UserX className="w-4 h-4 text-amber-600" />
-                                              <span className="text-amber-700 font-medium">
-                                                No teacher
+                                              <UserX className="w-4 h-4 text-[#C4A035]" />
+                                              <span className="text-[#C4A035] font-medium">
+                                                {t(
+                                                  "admin.courseDetails.noTeacher",
+                                                )}
                                               </span>
                                             </>
                                           )}
@@ -397,12 +395,12 @@ const CourseDetailsPage = () => {
                                     asChild
                                     size="sm"
                                     variant="outline"
-                                    className="gap-2"
+                                    className="gap-2 border-[#2B6F5E]/30 text-[#2B6F5E] hover:bg-[#2B6F5E]/8"
                                   >
                                     <Link
                                       to={`/admin/groups/${group.group_id}`}
                                     >
-                                      View Details
+                                      {t("admin.courseDetails.viewDetails")}
                                     </Link>
                                   </Button>
                                 </div>
@@ -411,13 +409,13 @@ const CourseDetailsPage = () => {
                           })}
                         </div>
                       ) : (
-                        <div className="p-8 text-center text-gray-500">
-                          <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <div className="p-8 text-center text-[#BEB29E]">
+                          <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
                           <p className="text-sm">
-                            No groups created for this level yet
+                            {t("admin.courseDetails.noGroupsYet")}
                           </p>
                           <p className="text-xs mt-1">
-                            Click "Add Group" to create the first group
+                            {t("admin.courseDetails.noGroupsHint")}
                           </p>
                         </div>
                       )}
@@ -428,149 +426,143 @@ const CourseDetailsPage = () => {
             })}
           </div>
 
-          {/* Summary */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="mt-4 pt-4 border-t border-[#D8CDC0]/30">
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-600">
-                  <span className="font-semibold text-gray-900">
+                <Layers className="w-4 h-4 text-[#BEB29E]" />
+                <span className="text-[#6B5D4F]">
+                  <span className="font-semibold text-[#1B1B1B]">
                     {Object.keys(groupsByLevel).length}
                   </span>{" "}
-                  of{" "}
-                  <span className="font-semibold text-gray-900">
+                  {t("admin.courseDetails.levelsOf")}{" "}
+                  <span className="font-semibold text-[#1B1B1B]">
                     {LEVELS.length}
                   </span>{" "}
-                  levels
+                  {t("admin.courseDetails.levels")}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-600">
-                  <span className="font-semibold text-gray-900">
+                <Users className="w-4 h-4 text-[#BEB29E]" />
+                <span className="text-[#6B5D4F]">
+                  <span className="font-semibold text-[#1B1B1B]">
                     {totalGroups}
                   </span>{" "}
-                  total groups
+                  {t("admin.courseDetails.totalGroupsLabel")}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <UserCheck className="w-4 h-4 text-green-600" />
-                <span className="text-gray-600">
-                  <span className="font-semibold text-gray-900">
+                <UserCheck className="w-4 h-4 text-[#2B6F5E]" />
+                <span className="text-[#6B5D4F]">
+                  <span className="font-semibold text-[#1B1B1B]">
                     {groupsWithTeachers}
                   </span>{" "}
-                  with teachers
+                  {t("admin.courseDetails.withTeachers")}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-600 text-xs">
-                  Click level to expand/collapse
+                <CheckCircle2 className="w-4 h-4 text-[#BEB29E]" />
+                <span className="text-[#BEB29E] text-xs">
+                  {t("admin.courseDetails.clickToExpand")}
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Details Section */}
+        {/* Details */}
         <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Course Information
+          <h2 className="text-lg font-semibold text-[#1B1B1B] mb-4">
+            {t("admin.courseDetails.courseInfo")}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Course Name */}
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                <BookOpen className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 rounded-xl bg-[#2B6F5E]/8 flex items-center justify-center shrink-0">
+                <BookOpen className="w-5 h-5 text-[#2B6F5E]" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-500">Course Name</p>
-                <p className="text-base text-gray-900 mt-1">
+                <p className="text-sm font-medium text-[#6B5D4F]">
+                  {t("admin.courseDetails.courseName")}
+                </p>
+                <p className="text-base text-[#1B1B1B] mt-1">
                   {course.course_name}
                 </p>
               </div>
             </div>
-
-            {/* Course Code */}
             {course.course_code && (
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
-                  <Tag className="w-5 h-5 text-purple-600" />
+                <div className="w-10 h-10 rounded-xl bg-[#C4A035]/8 flex items-center justify-center shrink-0">
+                  <Tag className="w-5 h-5 text-[#C4A035]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-500">
-                    Course Code
+                  <p className="text-sm font-medium text-[#6B5D4F]">
+                    {t("admin.courseDetails.courseCode")}
                   </p>
-                  <p className="text-base text-gray-900 mt-1">
+                  <p className="text-base text-[#1B1B1B] mt-1">
                     {course.course_code}
                   </p>
                 </div>
               </div>
             )}
-
-            {/* Credits */}
             {course.credits !== null && course.credits !== undefined && (
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center shrink-0">
-                  <Award className="w-5 h-5 text-teal-600" />
+                <div className="w-10 h-10 rounded-xl bg-[#8DB896]/12 flex items-center justify-center shrink-0">
+                  <Award className="w-5 h-5 text-[#3D7A4A]" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-500">
-                    Credit Hours
+                  <p className="text-sm font-medium text-[#6B5D4F]">
+                    {t("admin.courseDetails.creditHours")}
                   </p>
-                  <p className="text-base text-gray-900 mt-1">
+                  <p className="text-base text-[#1B1B1B] mt-1">
                     {course.credits}
                   </p>
                 </div>
               </div>
             )}
-
-            {/* Total Groups */}
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                <Users className="w-5 h-5 text-green-600" />
+              <div className="w-10 h-10 rounded-xl bg-[#D8CDC0]/20 flex items-center justify-center shrink-0">
+                <Users className="w-5 h-5 text-[#6B5D4F]" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-500">
-                  Total Groups
+                <p className="text-sm font-medium text-[#6B5D4F]">
+                  {t("admin.courseDetails.totalGroups")}
                 </p>
-                <p className="text-base text-gray-900 mt-1">{totalGroups}</p>
+                <p className="text-base text-[#1B1B1B] mt-1">{totalGroups}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Actions Section */}
-        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+        {/* Actions */}
+        <div className="bg-[#D8CDC0]/10 px-6 py-4 border-t border-[#D8CDC0]/40">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <p className="text-sm text-gray-600">
-              Manage course information, groups, and curriculum
+            <p className="text-sm text-[#6B5D4F]">
+              {t("admin.courseDetails.manageDesc")}
             </p>
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="gap-2"
+                className="gap-2 border-[#D8CDC0]/60 text-[#1B1B1B] hover:bg-[#C4A035]/8 hover:border-[#C4A035]/40 hover:text-[#C4A035]"
                 onClick={() => setEditOpen(true)}
               >
                 <Edit className="w-4 h-4" />
-                Edit Course
+                {t("admin.courseDetails.editCourse")}
               </Button>
-
               <Button
-                variant="destructive"
-                className="gap-2"
+                variant="outline"
+                className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
                 onClick={handleDelete}
                 disabled={deleteCourse.isPending}
               >
                 <Trash2 className="w-4 h-4" />
-                {deleteCourse.isPending ? "Deleting..." : "Delete Course"}
+                {deleteCourse.isPending
+                  ? t("admin.courses.deleting")
+                  : t("admin.courseDetails.deleteCourse")}
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Edit Course Modal */}
       <CourseFormModal
         open={editOpen}
         onClose={() => setEditOpen(false)}
@@ -583,8 +575,6 @@ const CourseDetailsPage = () => {
         }}
         mode="edit"
       />
-
-      {/* Create Group Modal */}
       <GroupFormModal
         open={groupFormOpen}
         onClose={() => {

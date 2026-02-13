@@ -44,11 +44,12 @@ import { cn } from "../../../../lib/utils/utils";
 import {
   useAdminDocuments,
   useDeleteDocument,
-  useApproveDocument, // ✅ CHANGED
-  useRejectDocument, // ✅ ADDED
+  useApproveDocument,
+  useRejectDocument,
 } from "../../../../hooks/admin/useAdmin";
 import type { AdminDocument } from "../../../../types/Types";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 // Type for grouped documents
 type GroupedDocuments = {
@@ -64,6 +65,7 @@ type GroupedDocuments = {
 };
 
 const AdminDocuments = () => {
+  const { t } = useTranslation();
   const {
     data: documents = [],
     isLoading,
@@ -72,23 +74,23 @@ const AdminDocuments = () => {
   } = useAdminDocuments();
   const { mutate: deleteDocument, isPending: isDeleting } = useDeleteDocument();
   const { mutate: approveDocument, isPending: isApproving } =
-    useApproveDocument(); // ✅ CHANGED
+    useApproveDocument();
   const { mutate: rejectDocument, isPending: isRejecting } =
-    useRejectDocument(); // ✅ ADDED
+    useRejectDocument();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [approveDialogOpen, setApproveDialogOpen] = useState(false); // ✅ CHANGED
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false); // ✅ ADDED
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] =
     useState<AdminDocument | null>(null);
   const [documentToApprove, setDocumentToApprove] =
-    useState<AdminDocument | null>(null); // ✅ CHANGED
+    useState<AdminDocument | null>(null);
   const [documentToReject, setDocumentToReject] =
-    useState<AdminDocument | null>(null); // ✅ ADDED
-  const [rejectReason, setRejectReason] = useState(""); // ✅ ADDED
+    useState<AdminDocument | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   // Get file type icon
   const getFileIcon = (fileType: AdminDocument["fileType"]) => {
@@ -137,7 +139,7 @@ const AdminDocuments = () => {
         variant="outline"
         className={cn("text-xs font-medium", variants[displayStatus])}
       >
-        {displayStatus}
+        {t(`admin.documents.status.${displayStatus.toLowerCase()}`)}
       </Badge>
     );
   };
@@ -224,39 +226,39 @@ const AdminDocuments = () => {
     window.document.body.removeChild(link);
   };
 
-  // ✅ CHANGED: Handle approve click
+  // Handle approve click
   const handleApproveClick = (document: AdminDocument) => {
     setDocumentToApprove(document);
     setApproveDialogOpen(true);
   };
 
-  // ✅ CHANGED: Handle approve confirm
+  // Handle approve confirm
   const handleApproveConfirm = () => {
     if (!documentToApprove) return;
 
     approveDocument(documentToApprove.id, {
       onSuccess: () => {
-        toast.success("Document approved successfully");
+        toast.success(t("admin.documents.toast.approveSuccess"));
         setApproveDialogOpen(false);
         setDocumentToApprove(null);
       },
       onError: (error: any) => {
         console.error("Error approving document:", error);
-        toast.error(error?.message || "Failed to approve document");
+        toast.error(error?.message || t("admin.documents.toast.approveFailed"));
       },
     });
   };
 
-  // ✅ ADDED: Handle reject click
+  // Handle reject click
   const handleRejectClick = (document: AdminDocument) => {
     setDocumentToReject(document);
     setRejectDialogOpen(true);
   };
 
-  // ✅ ADDED: Handle reject confirm
+  // Handle reject confirm
   const handleRejectConfirm = () => {
     if (!documentToReject || !rejectReason.trim()) {
-      toast.error("Please provide a rejection reason");
+      toast.error(t("admin.documents.toast.provideReason"));
       return;
     }
 
@@ -264,14 +266,16 @@ const AdminDocuments = () => {
       { documentId: documentToReject.id, reason: rejectReason },
       {
         onSuccess: () => {
-          toast.success("Document rejected successfully");
+          toast.success(t("admin.documents.toast.rejectSuccess"));
           setRejectDialogOpen(false);
           setDocumentToReject(null);
           setRejectReason("");
         },
         onError: (error: any) => {
           console.error("Error rejecting document:", error);
-          toast.error(error?.message || "Failed to reject document");
+          toast.error(
+            error?.message || t("admin.documents.toast.rejectFailed"),
+          );
         },
       },
     );
@@ -289,13 +293,13 @@ const AdminDocuments = () => {
 
     deleteDocument(documentToDelete.id, {
       onSuccess: () => {
-        toast.success("Document deleted successfully");
+        toast.success(t("admin.documents.toast.deleteSuccess"));
         setDeleteDialogOpen(false);
         setDocumentToDelete(null);
       },
       onError: (error: any) => {
         console.error("Error deleting document:", error);
-        toast.error(error?.message || "Failed to delete document");
+        toast.error(error?.message || t("admin.documents.toast.deleteFailed"));
       },
     });
   };
@@ -318,7 +322,7 @@ const AdminDocuments = () => {
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              Loading documents...
+              {t("admin.documents.loading")}
             </p>
           </div>
         </main>
@@ -336,19 +340,19 @@ const AdminDocuments = () => {
               <AlertCircle className="h-8 w-8 text-red-500" />
             </div>
             <h3 className="text-lg font-semibold mb-1 text-red-600">
-              Error loading documents
+              {t("admin.documents.errorTitle")}
             </h3>
             <p className="text-sm text-muted-foreground text-center max-w-sm mb-4">
               {error instanceof Error
                 ? error.message
-                : "Failed to load documents. Please try again later."}
+                : t("admin.documents.errorDesc")}
             </p>
             <Button
               onClick={() => window.location.reload()}
               variant="outline"
               size="sm"
             >
-              Retry
+              {t("admin.documents.retry")}
             </Button>
           </div>
         </main>
@@ -362,10 +366,10 @@ const AdminDocuments = () => {
         {/* Page Header */}
         <div className="space-y-1">
           <h2 className="text-2xl font-semibold tracking-tight">
-            Student Documents
+            {t("admin.documents.title")}
           </h2>
           <p className="text-sm text-muted-foreground">
-            View, review, and manage all uploaded student documents
+            {t("admin.documents.subtitle")}
           </p>
         </div>
 
@@ -374,7 +378,7 @@ const AdminDocuments = () => {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by student name or email"
+              placeholder={t("admin.documents.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -390,8 +394,12 @@ const AdminDocuments = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="newest">
+                {t("admin.documents.newestFirst")}
+              </SelectItem>
+              <SelectItem value="oldest">
+                {t("admin.documents.oldestFirst")}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -404,7 +412,7 @@ const AdminDocuments = () => {
               <div className="bg-card border rounded-lg p-4">
                 <h3 className="text-sm font-semibold text-muted-foreground mb-4 flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  STUDENTS ({sortedStudentIds.length})
+                  {t("admin.documents.students")} ({sortedStudentIds.length})
                 </h3>
                 <div className="space-y-2 max-h-150 overflow-y-auto">
                   {sortedStudentIds.map((studentId) => {
@@ -447,7 +455,9 @@ const AdminDocuments = () => {
                                 className="text-xs bg-blue-50 text-blue-700 border-blue-200"
                               >
                                 {stats.total}{" "}
-                                {stats.total === 1 ? "File" : "Files"}
+                                {stats.total === 1
+                                  ? t("admin.documents.file")
+                                  : t("admin.documents.files")}
                               </Badge>
                             </div>
                           </div>
@@ -501,21 +511,25 @@ const AdminDocuments = () => {
                             return (
                               <>
                                 <Badge className="bg-blue-50 text-blue-700 border-blue-200">
-                                  {stats.total} Total
+                                  {stats.total}{" "}
+                                  {t("admin.documents.statsTotal")}
                                 </Badge>
                                 {stats.approved > 0 && (
                                   <Badge className="bg-green-50 text-green-700 border-green-200">
-                                    {stats.approved} Approved
+                                    {stats.approved}{" "}
+                                    {t("admin.documents.statsApproved")}
                                   </Badge>
                                 )}
                                 {stats.pending > 0 && (
                                   <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                                    {stats.pending} Pending
+                                    {stats.pending}{" "}
+                                    {t("admin.documents.statsPending")}
                                   </Badge>
                                 )}
                                 {stats.rejected > 0 && (
                                   <Badge className="bg-red-50 text-red-700 border-red-200">
-                                    {stats.rejected} Rejected
+                                    {stats.rejected}{" "}
+                                    {t("admin.documents.statsRejected")}
                                   </Badge>
                                 )}
                               </>
@@ -554,14 +568,14 @@ const AdminDocuments = () => {
                               </div>
                             </div>
 
-                            {/* Actions - ✅ CHANGED */}
+                            {/* Actions */}
                             <div className="flex items-center gap-1">
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleView(document)}
                                 className="h-8 w-8"
-                                title="View document"
+                                title={t("admin.documents.actions.view")}
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -570,7 +584,7 @@ const AdminDocuments = () => {
                                 size="icon"
                                 onClick={() => handleDownload(document)}
                                 className="h-8 w-8"
-                                title="Download document"
+                                title={t("admin.documents.actions.download")}
                               >
                                 <Download className="h-4 w-4" />
                               </Button>
@@ -579,7 +593,7 @@ const AdminDocuments = () => {
                                 size="icon"
                                 onClick={() => handleApproveClick(document)}
                                 className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-                                title="Approve document"
+                                title={t("admin.documents.actions.approve")}
                               >
                                 <CheckCircle className="h-4 w-4" />
                               </Button>
@@ -588,7 +602,7 @@ const AdminDocuments = () => {
                                 size="icon"
                                 onClick={() => handleRejectClick(document)}
                                 className="h-8 w-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                                title="Reject document"
+                                title={t("admin.documents.actions.reject")}
                               >
                                 <XCircle className="h-4 w-4" />
                               </Button>
@@ -597,7 +611,7 @@ const AdminDocuments = () => {
                                 size="icon"
                                 onClick={() => handleDeleteClick(document)}
                                 className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                title="Delete document"
+                                title={t("admin.documents.actions.delete")}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -616,11 +630,10 @@ const AdminDocuments = () => {
                       <File className="h-8 w-8 text-muted-foreground" />
                     </div>
                     <h3 className="text-lg font-semibold mb-2">
-                      Select a Student
+                      {t("admin.documents.selectStudent")}
                     </h3>
                     <p className="text-sm text-muted-foreground max-w-sm">
-                      Choose a student from the list to view their uploaded
-                      documents
+                      {t("admin.documents.selectStudentDesc")}
                     </p>
                   </div>
                 </div>
@@ -633,23 +646,27 @@ const AdminDocuments = () => {
             <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
               <FolderOpen className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-1">No documents found</h3>
+            <h3 className="text-lg font-semibold mb-1">
+              {t("admin.documents.noDocuments")}
+            </h3>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
               {searchQuery
-                ? "Try adjusting your search query"
-                : "Student-uploaded documents will appear here"}
+                ? t("admin.documents.tryAdjustSearch")
+                : t("admin.documents.docsWillAppear")}
             </p>
           </div>
         )}
       </main>
 
-      {/* ✅ CHANGED: Approve Confirmation Dialog */}
+      {/* Approve Confirmation Dialog */}
       <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Approve Document</DialogTitle>
+            <DialogTitle>
+              {t("admin.documents.approveDialog.title")}
+            </DialogTitle>
             <DialogDescription>
-              Are you sure you want to approve this document?
+              {t("admin.documents.approveDialog.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -675,7 +692,7 @@ const AdminDocuments = () => {
               onClick={() => setApproveDialogOpen(false)}
               disabled={isApproving}
             >
-              Cancel
+              {t("admin.documents.cancel")}
             </Button>
             <Button
               onClick={handleApproveConfirm}
@@ -685,23 +702,23 @@ const AdminDocuments = () => {
               {isApproving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Approving...
+                  {t("admin.documents.approveDialog.approving")}
                 </>
               ) : (
-                "Approve"
+                t("admin.documents.approveDialog.approve")
               )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* ✅ ADDED: Reject Confirmation Dialog */}
+      {/* Reject Confirmation Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject Document</DialogTitle>
+            <DialogTitle>{t("admin.documents.rejectDialog.title")}</DialogTitle>
             <DialogDescription>
-              Please provide a reason for rejecting this document.
+              {t("admin.documents.rejectDialog.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -721,12 +738,14 @@ const AdminDocuments = () => {
 
               <div>
                 <label className="text-sm font-medium mb-2 block">
-                  Rejection Reason
+                  {t("admin.documents.rejectDialog.reasonLabel")}
                 </label>
                 <textarea
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="Enter reason for rejection (e.g., Photo is not clear, ID expired, etc.)"
+                  placeholder={t(
+                    "admin.documents.rejectDialog.reasonPlaceholder",
+                  )}
                   className="w-full p-3 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                   rows={4}
                 />
@@ -743,7 +762,7 @@ const AdminDocuments = () => {
               }}
               disabled={isRejecting}
             >
-              Cancel
+              {t("admin.documents.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -753,10 +772,10 @@ const AdminDocuments = () => {
               {isRejecting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Rejecting...
+                  {t("admin.documents.rejectDialog.rejecting")}
                 </>
               ) : (
-                "Reject Document"
+                t("admin.documents.rejectDialog.rejectBtn")
               )}
             </Button>
           </DialogFooter>
@@ -767,10 +786,9 @@ const AdminDocuments = () => {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Document</DialogTitle>
+            <DialogTitle>{t("admin.documents.deleteDialog.title")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this document? This action cannot
-              be undone.
+              {t("admin.documents.deleteDialog.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -796,7 +814,7 @@ const AdminDocuments = () => {
               onClick={() => setDeleteDialogOpen(false)}
               disabled={isDeleting}
             >
-              Cancel
+              {t("admin.documents.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -806,10 +824,10 @@ const AdminDocuments = () => {
               {isDeleting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Deleting...
+                  {t("admin.documents.deleteDialog.deleting")}
                 </>
               ) : (
-                "Delete"
+                t("admin.documents.deleteDialog.deleteBtn")
               )}
             </Button>
           </DialogFooter>

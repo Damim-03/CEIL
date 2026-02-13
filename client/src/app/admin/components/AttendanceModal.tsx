@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +30,6 @@ interface AttendanceModalProps {
   onClose: () => void;
   session: Session | null;
 }
-
 interface AttendanceRecord {
   student_id: string;
   student_name: string;
@@ -42,92 +42,77 @@ export default function AttendanceModal({
   onClose,
   session,
 }: AttendanceModalProps) {
+  const { t, i18n } = useTranslation();
+  const locale =
+    i18n.language === "ar"
+      ? "ar-DZ"
+      : i18n.language === "fr"
+        ? "fr-FR"
+        : "en-US";
   const [attendanceRecords, setAttendanceRecords] = useState<
     AttendanceRecord[]
   >([]);
   const [isSaving, setIsSaving] = useState(false);
-
-  // Fetch existing attendance if available
   const { data: existingAttendance, isLoading } = useAdminSessionAttendance(
     session?.session_id,
   );
-
   const markAttendance = useAdminMarkAttendance();
 
-  // ✅ FIXED: Initialize attendance records from group enrollments
   useEffect(() => {
     if (!session?.group?.enrollments) {
       setAttendanceRecords([]);
       return;
     }
-
-    // Filter only VALIDATED/PAID/FINISHED enrollments
     const validEnrollments = session.group.enrollments.filter(
       (enrollment: any) =>
         enrollment.registration_status === "VALIDATED" ||
         enrollment.registration_status === "PAID" ||
         enrollment.registration_status === "FINISHED",
     );
-
-    // Map enrollments to attendance records
     const records: AttendanceRecord[] = validEnrollments
       .map((enrollment: any) => {
         const student = enrollment.student;
         if (!student) return null;
-
-        // Check if attendance already exists for this student
         const existingRecord = existingAttendance?.find(
           (a: any) => a.student_id === student.student_id,
         );
-
         return {
           student_id: student.student_id,
           student_name: `${student.first_name} ${student.last_name}`,
           student_email: student.email || "",
-          status: existingRecord?.status || "ABSENT", // Default to ABSENT
+          status: existingRecord?.status || "ABSENT",
         };
       })
       .filter((record): record is AttendanceRecord => record !== null);
-
     setAttendanceRecords(records);
   }, [session, existingAttendance]);
 
-  // Toggle attendance status for a student
   const toggleAttendance = (studentId: string) => {
     setAttendanceRecords((prev) =>
-      prev.map((record) =>
-        record.student_id === studentId
-          ? {
-              ...record,
-              status: record.status === "PRESENT" ? "ABSENT" : "PRESENT",
-            }
-          : record,
+      prev.map((r) =>
+        r.student_id === studentId
+          ? { ...r, status: r.status === "PRESENT" ? "ABSENT" : "PRESENT" }
+          : r,
       ),
     );
   };
 
-  // Save all attendance records
   const handleSave = async () => {
     if (!session) return;
-
     setIsSaving(true);
-
     try {
-      // Mark attendance for each student
-      const promises = attendanceRecords.map((record) =>
-        markAttendance.mutateAsync({
-          session_id: session.session_id,
-          student_id: record.student_id,
-          status: record.status,
-        }),
+      await Promise.all(
+        attendanceRecords.map((record) =>
+          markAttendance.mutateAsync({
+            session_id: session.session_id,
+            student_id: record.student_id,
+            status: record.status,
+          }),
+        ),
       );
-
-      await Promise.all(promises);
-
       toast.success("Attendance saved successfully");
       onClose();
     } catch (error: any) {
-      console.error("Error saving attendance:", error);
       toast.error(
         error?.response?.data?.message || "Failed to save attendance",
       );
@@ -136,45 +121,33 @@ export default function AttendanceModal({
     }
   };
 
-  // Mark all as present
-  const markAllPresent = () => {
+  const markAllPresent = () =>
     setAttendanceRecords((prev) =>
-      prev.map((record) => ({ ...record, status: "PRESENT" })),
+      prev.map((r) => ({ ...r, status: "PRESENT" })),
     );
-  };
-
-  // Mark all as absent
-  const markAllAbsent = () => {
+  const markAllAbsent = () =>
     setAttendanceRecords((prev) =>
-      prev.map((record) => ({ ...record, status: "ABSENT" })),
+      prev.map((r) => ({ ...r, status: "ABSENT" })),
     );
-  };
 
-  // Calculate statistics
   const stats = {
     total: attendanceRecords.length,
     present: attendanceRecords.filter((r) => r.status === "PRESENT").length,
     absent: attendanceRecords.filter((r) => r.status === "ABSENT").length,
   };
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString(locale, {
       weekday: "short",
       month: "short",
       day: "numeric",
       year: "numeric",
     });
-  };
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("en-US", {
+  const formatTime = (dateString: string) =>
+    new Date(dateString).toLocaleTimeString(locale, {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
 
   if (!session) return null;
 
@@ -184,14 +157,13 @@ export default function AttendanceModal({
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-2">
             <UserCheck className="w-6 h-6 text-indigo-600" />
-            Mark Attendance
+            {t("admin.attendanceModal.markAttendance")}
           </DialogTitle>
           <DialogDescription>
-            Mark student attendance for this session
+            {t("admin.attendanceModal.markAttendanceDesc")}
           </DialogDescription>
         </DialogHeader>
 
-        {/* Session Info */}
         <div className="bg-linear-to-br from-indigo-50 to-violet-50 rounded-lg p-4 border border-indigo-200">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm">
@@ -200,7 +172,6 @@ export default function AttendanceModal({
                 {session.group?.course?.course_name} - {session.group?.name}
               </span>
             </div>
-
             <div className="flex items-center gap-4 text-sm text-indigo-700">
               <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
@@ -211,34 +182,38 @@ export default function AttendanceModal({
                 <span>{formatTime(session.session_date)}</span>
               </div>
             </div>
-
             {session.topic && (
               <div className="text-sm text-indigo-700">
-                <span className="font-medium">Topic:</span> {session.topic}
+                <span className="font-medium">
+                  {t("admin.attendanceModal.topic")}
+                </span>{" "}
+                {session.topic}
               </div>
             )}
           </div>
         </div>
 
-        {/* Statistics */}
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
             <p className="text-xs text-blue-600 font-medium mb-1">
-              Total Students
+              {t("admin.attendanceModal.totalStudents")}
             </p>
             <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
           </div>
           <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-            <p className="text-xs text-green-600 font-medium mb-1">Present</p>
+            <p className="text-xs text-green-600 font-medium mb-1">
+              {t("admin.attendanceModal.present")}
+            </p>
             <p className="text-2xl font-bold text-green-900">{stats.present}</p>
           </div>
           <div className="bg-red-50 rounded-lg p-3 border border-red-200">
-            <p className="text-xs text-red-600 font-medium mb-1">Absent</p>
+            <p className="text-xs text-red-600 font-medium mb-1">
+              {t("admin.attendanceModal.absent")}
+            </p>
             <p className="text-2xl font-bold text-red-900">{stats.absent}</p>
           </div>
         </div>
 
-        {/* Quick Actions */}
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -247,7 +222,7 @@ export default function AttendanceModal({
             className="flex-1 gap-2 border-green-200 text-green-700 hover:bg-green-50"
           >
             <UserCheck className="w-4 h-4" />
-            Mark All Present
+            {t("admin.attendanceModal.markAllPresent")}
           </Button>
           <Button
             variant="outline"
@@ -256,40 +231,40 @@ export default function AttendanceModal({
             className="flex-1 gap-2 border-red-200 text-red-700 hover:bg-red-50"
           >
             <UserX className="w-4 h-4" />
-            Mark All Absent
+            {t("admin.attendanceModal.markAllAbsent")}
           </Button>
         </div>
 
-        {/* Loading State */}
         {isLoading && (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
-            <span className="ml-2 text-gray-600">Loading students...</span>
+            <span className="ml-2 text-gray-600">
+              {t("admin.attendanceModal.loadingStudents")}
+            </span>
           </div>
         )}
 
-        {/* Empty State */}
         {!isLoading && attendanceRecords.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <AlertCircle className="w-12 h-12 text-gray-400 mb-3" />
             <h3 className="text-lg font-semibold text-gray-900 mb-1">
-              No Students Found
+              {t("admin.attendanceModal.noStudents")}
             </h3>
             <p className="text-sm text-gray-600">
-              This group doesn't have any students yet.
+              {t("admin.attendanceModal.noStudentsDesc")}
             </p>
           </div>
         )}
 
-        {/* Student List */}
         {!isLoading && attendanceRecords.length > 0 && (
           <div className="border border-gray-200 rounded-lg overflow-hidden">
             <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
               <p className="text-sm font-medium text-gray-700">
-                Students ({attendanceRecords.length})
+                {t("admin.attendanceModal.studentsCount", {
+                  count: attendanceRecords.length,
+                })}
               </p>
             </div>
-
             <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
               {attendanceRecords.map((record) => (
                 <div
@@ -306,7 +281,6 @@ export default function AttendanceModal({
                       </p>
                     )}
                   </div>
-
                   <div className="flex gap-2">
                     <Button
                       size="sm"
@@ -321,9 +295,8 @@ export default function AttendanceModal({
                       }
                     >
                       <UserCheck className="w-4 h-4" />
-                      Present
+                      {t("admin.attendanceModal.present")}
                     </Button>
-
                     <Button
                       size="sm"
                       variant={
@@ -337,7 +310,7 @@ export default function AttendanceModal({
                       }
                     >
                       <UserX className="w-4 h-4" />
-                      Absent
+                      {t("admin.attendanceModal.absent")}
                     </Button>
                   </div>
                 </div>
@@ -346,10 +319,9 @@ export default function AttendanceModal({
           </div>
         )}
 
-        {/* Footer */}
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isSaving}>
-            Cancel
+            {t("admin.attendanceModal.cancel")}
           </Button>
           <Button
             onClick={handleSave}
@@ -359,12 +331,12 @@ export default function AttendanceModal({
             {isSaving ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
+                {t("admin.attendanceModal.saving")}
               </>
             ) : (
               <>
                 <UserCheck className="w-4 h-4" />
-                Save Attendance
+                {t("admin.attendanceModal.saveAttendance")}
               </>
             )}
           </Button>

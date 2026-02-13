@@ -12,6 +12,7 @@ datasource db {
   provider = "postgresql"
 }
 
+
 // ================================================================
 // STUDENT - No direct group_id
 // Groups accessed via enrollments
@@ -73,19 +74,17 @@ model Teacher {
 // COURSE
 // ================================================================
 model Course {
-  course_id   String       @id @default(uuid()) @db.Uuid
-  course_code String?      @unique @db.VarChar(20)
-  course_name String       @db.VarChar(100)
+  course_id   String        @id @default(uuid()) @db.Uuid
+  course_code String?       @unique @db.VarChar(20)
+  course_name String        @db.VarChar(100)
   credits     Int?
+  fee_amount  Decimal?      @db.Decimal(10, 2) @default(1000)
 
-  fee_amount  Decimal? @db.Decimal(10, 2) @default(1000)
-
-  profile     CourseProfile?
-  
-  // Relations
-  enrollments Enrollment[]
-  exams       Exam[]
-  groups      Group[]
+  profile       CourseProfile?
+  enrollments   Enrollment[]
+  exams         Exam[]
+  groups        Group[]
+  notifications Notification[]
 
   @@map("Course")
 }
@@ -141,6 +140,8 @@ model CoursePricing {
 
   profile      CourseProfile @relation(fields: [profile_id], references: [profile_id], onDelete: Cascade)
 
+
+  enrollments  Enrollment[]  // ✅ جديد (back-relation)   
   @@map("CoursePricing")
 }
 
@@ -172,15 +173,13 @@ model Group {
   status        GroupStatus  @default(OPEN)
   teacher_id    String?      @db.Uuid
   level         Level
-  
-  // ❌ REMOVED: students Student[]
-  
-  // Relations
-  enrollments   Enrollment[] // ✅ Access students via this
+
+  enrollments   Enrollment[]
   sessions      Session[]
   course        Course       @relation(fields: [course_id], references: [course_id])
   department    Department?  @relation(fields: [department_id], references: [department_id])
   teacher       Teacher?     @relation(fields: [teacher_id], references: [teacher_id])
+  notifications Notification[]
 
   @@map("Group")
 }
@@ -199,6 +198,9 @@ model Enrollment {
   start_date          DateTime?
   end_date            DateTime?
   registration_status RegistrationStatus    @default(PENDING)
+
+  pricing_id          String?               @db.Uuid  // ✅ جديد
+pricing             CoursePricing?        @relation(fields: [pricing_id], references: [pricing_id], onDelete: SetNull) // ✅ جديد
   
   // Relations
   course              Course                @relation(fields: [course_id], references: [course_id])
@@ -382,11 +384,11 @@ model User {
   student_id     String?        @unique @db.Uuid
   teacher_id     String?        @unique @db.Uuid
   created_at     DateTime       @default(now())
-  
-  // Relations
+
   refresh_tokens RefreshToken[]
   student        Student?       @relation(fields: [student_id], references: [student_id])
   teacher        Teacher?       @relation(fields: [teacher_id], references: [teacher_id])
+  notifications  NotificationRecipient[]
 
   @@map("User")
 }
@@ -430,6 +432,73 @@ model Announcement {
   updated_at        DateTime  @updatedAt
 
   @@map("announcements")
+}
+
+model Notification {
+  notification_id   String               @id @default(uuid()) @db.Uuid
+  
+  // Content
+  title             String               @db.VarChar(200)
+  title_ar          String?              @db.VarChar(200)
+  message           String               @db.Text
+  message_ar        String?              @db.Text
+  
+  // Targeting
+  target_type       NotificationTarget   // ALL_STUDENTS, ALL_TEACHERS, SPECIFIC_STUDENTS, SPECIFIC_TEACHERS, GROUP, COURSE
+  
+  // Optional filters (used based on target_type)
+  course_id         String?              @db.Uuid
+  group_id          String?              @db.Uuid
+  
+  // Meta
+  priority          NotificationPriority @default(NORMAL)
+  created_by        String?              @db.Uuid
+  created_at        DateTime             @default(now())
+  
+  // Relations
+  course            Course?              @relation(fields: [course_id], references: [course_id], onDelete: SetNull)
+  group             Group?               @relation(fields: [group_id], references: [group_id], onDelete: SetNull)
+  recipients        NotificationRecipient[]
+
+  @@map("Notification")
+}
+
+// ================================================================
+// NOTIFICATION RECIPIENT - Track who received & read
+// ================================================================
+model NotificationRecipient {
+  recipient_id      String             @id @default(uuid()) @db.Uuid
+  notification_id   String             @db.Uuid
+  user_id           String             @db.Uuid
+  is_read           Boolean            @default(false)
+  read_at           DateTime?
+  
+  // Relations
+  notification      Notification       @relation(fields: [notification_id], references: [notification_id], onDelete: Cascade)
+  user              User               @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@unique([notification_id, user_id])
+  @@index([user_id, is_read])
+  @@map("NotificationRecipient")
+}
+
+// ================================================================
+// NEW ENUMS
+// ================================================================
+enum NotificationTarget {
+  ALL_STUDENTS
+  ALL_TEACHERS
+  SPECIFIC_STUDENTS
+  SPECIFIC_TEACHERS
+  GROUP           // All students in a specific group
+  COURSE          // All students enrolled in a course
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
 }
 
 // ================================================================

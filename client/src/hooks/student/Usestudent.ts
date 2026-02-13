@@ -4,9 +4,9 @@
    All student-related React Query hooks in one place.
    Organized by domain for easy navigation.
    
-   Replaces 11 separate files with 1 unified file.
+   ✅ UPDATED: useEnrollInCourse now supports pricing_id
    
-   Last updated: $(date)
+   Last updated: February 2026
 =============================================================== */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -23,20 +23,60 @@ const DOCUMENTS_KEY = ["student-documents"];
 const DASHBOARD_KEY = ["student-dashboard"];
 const COURSES_KEY = ["courses"];
 const COURSE_GROUPS_KEY = ["course-groups"];
+const COURSE_PRICING_KEY = ["course-pricing"];
 const STUDENT_ENROLLMENTS_KEY = ["student-enrollments"];
 const ENROLLMENT_DETAILS_KEY = ["enrollment-details"];
 const ATTENDANCE_KEY = ["student-attendance"];
 const FEES_KEY = ["student-fees"];
 const RESULTS_KEY = ["student-results"];
+const STUDENT_NOTIFICATIONS_KEY = ["student-notifications"];
+const STUDENT_UNREAD_COUNT_KEY = ["student-unread-count"];
 const ME_KEY = ["me"];
+
+/* ===============================================================
+   TYPE DEFINITIONS
+=============================================================== */
+
+interface CoursePricing {
+  pricing_id: string;
+  status_fr: string;
+  status_ar?: string;
+  status_en?: string;
+  price: number;
+  currency: string;
+  discount?: string;
+  sort_order: number;
+}
+
+interface CourseProfile {
+  profile_id: string;
+  course_id: string;
+  title_ar?: string;
+  description?: string;
+  description_ar?: string;
+  language?: string;
+  level?: string;
+  flag_emoji?: string;
+  price?: number;
+  currency?: string;
+  session_name?: string;
+  start_date?: string;
+  end_date?: string;
+  image_url?: string;
+  registration_open: boolean;
+  is_published: boolean;
+  pricing: CoursePricing[];
+  course: {
+    course_id: string;
+    course_name: string;
+    course_code?: string;
+  };
+}
 
 /* ===============================================================
    PROFILE
 =============================================================== */
 
-/**
- * Get student profile with update and avatar upload mutations
- */
 export const useStudentProfile = () => {
   const qc = useQueryClient();
 
@@ -55,7 +95,8 @@ export const useStudentProfile = () => {
     },
     onError: (error: any) => {
       toast.error("Update failed", {
-        description: error.response?.data?.message || "Failed to update profile.",
+        description:
+          error.response?.data?.message || "Failed to update profile.",
       });
     },
   });
@@ -69,7 +110,8 @@ export const useStudentProfile = () => {
     },
     onError: (error: any) => {
       toast.error("Upload failed", {
-        description: error.response?.data?.message || "Failed to upload avatar.",
+        description:
+          error.response?.data?.message || "Failed to upload avatar.",
       });
     },
   });
@@ -85,9 +127,6 @@ export const useStudentProfile = () => {
    DASHBOARD
 =============================================================== */
 
-/**
- * Get student dashboard with profile completion and enrollment status
- */
 export const useStudentDashboard = () => {
   return useQuery<DashboardResponse>({
     queryKey: DASHBOARD_KEY,
@@ -99,9 +138,6 @@ export const useStudentDashboard = () => {
    DOCUMENTS
 =============================================================== */
 
-/**
- * Get student documents with upload, delete, and reupload mutations
- */
 export const useStudentDocuments = () => {
   const qc = useQueryClient();
 
@@ -122,7 +158,8 @@ export const useStudentDocuments = () => {
     },
     onError: (error: any) => {
       toast.error("Upload failed", {
-        description: error.response?.data?.message || "Failed to upload documents.",
+        description:
+          error.response?.data?.message || "Failed to upload documents.",
       });
     },
   });
@@ -137,7 +174,8 @@ export const useStudentDocuments = () => {
     },
     onError: (error: any) => {
       toast.error("Delete failed", {
-        description: error.response?.data?.message || "Failed to delete document.",
+        description:
+          error.response?.data?.message || "Failed to delete document.",
       });
     },
   });
@@ -154,7 +192,8 @@ export const useStudentDocuments = () => {
     },
     onError: (error: any) => {
       toast.error("Re-upload failed", {
-        description: error.response?.data?.message || "Failed to re-upload document.",
+        description:
+          error.response?.data?.message || "Failed to re-upload document.",
       });
     },
   });
@@ -171,18 +210,12 @@ export const useStudentDocuments = () => {
    COURSES
 =============================================================== */
 
-/**
- * Get all available courses
- */
 export const useCourses = () =>
   useQuery({
     queryKey: COURSES_KEY,
     queryFn: studentApi.getCourses,
   });
 
-/**
- * Get groups for a specific course
- */
 export const useCourseGroups = (courseId?: string) =>
   useQuery({
     queryKey: [COURSE_GROUPS_KEY, courseId],
@@ -190,13 +223,26 @@ export const useCourseGroups = (courseId?: string) =>
     enabled: !!courseId,
   });
 
+export const useCoursePricing = (courseId: string | null) => {
+  return useQuery<CourseProfile>({
+    queryKey: [COURSE_PRICING_KEY, courseId],
+    queryFn: async () => {
+      if (!courseId) throw new Error("Course ID is required");
+      const data = await studentApi.getCoursePricing(courseId);
+      if (!data) throw new Error("No pricing data returned from server");
+      return data;
+    },
+    enabled: !!courseId,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+    throwOnError: false,
+  });
+};
+
 /* ===============================================================
    ENROLLMENTS
 =============================================================== */
 
-/**
- * Get all student enrollments
- */
 export const useStudentEnrollments = () =>
   useQuery({
     queryKey: STUDENT_ENROLLMENTS_KEY,
@@ -204,9 +250,6 @@ export const useStudentEnrollments = () =>
     retry: false,
   });
 
-/**
- * Get detailed information about a specific enrollment
- */
 export const useEnrollmentDetails = (enrollmentId?: string) =>
   useQuery({
     queryKey: [ENROLLMENT_DETAILS_KEY, enrollmentId],
@@ -215,41 +258,39 @@ export const useEnrollmentDetails = (enrollmentId?: string) =>
   });
 
 /**
- * PRIMARY ENROLLMENT MUTATION
- * 
- * Enroll in a course with optional group assignment.
- * This performs enrollment and group joining in a single transaction.
- * 
+ * ✅ UPDATED: PRIMARY ENROLLMENT MUTATION
+ *
+ * Now accepts pricing_id from PricingModal.
+ * The student selects their category (طالب/موظف/خارجي)
+ * and this choice is saved with the enrollment.
+ *
  * Usage:
- * - With group: mutate({ course_id: "...", group_id: "..." })
- * - Without group: mutate({ course_id: "..." })
- * 
- * Backend validations:
- * - Checks if student profile is complete
- * - Verifies documents are approved
- * - Ensures group is not full (if group_id provided)
- * - Prevents duplicate enrollments
- * - Validates group belongs to the course
+ * - With pricing: mutate({ course_id: "...", group_id: "...", pricing_id: "..." })
+ * - Without pricing: mutate({ course_id: "...", group_id: "..." })
  */
 export const useEnrollInCourse = () => {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: { course_id: string; group_id?: string }) => {
+    mutationFn: (payload: {
+      course_id: string;
+      group_id?: string;
+      level?: string;
+      pricing_id?: string; // ✅ NEW
+    }) => {
       console.log("🔵 ENROLLMENT REQUEST:", payload);
       return studentApi.enroll(payload);
     },
     onSuccess: (data) => {
       console.log("✅ ENROLLMENT SUCCESS:", data);
-      
-      // Invalidate all related queries to refresh UI
+
       qc.invalidateQueries({ queryKey: STUDENT_ENROLLMENTS_KEY });
       qc.invalidateQueries({ queryKey: COURSE_GROUPS_KEY });
       qc.invalidateQueries({ queryKey: PROFILE_KEY });
       qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
 
       toast.success("Enrollment successful!", {
-        description: data.group_id 
+        description: data.group_id
           ? "You have been enrolled in the course and joined the group."
           : "Your enrollment is pending review. You will be notified once approved.",
         duration: 5000,
@@ -263,10 +304,11 @@ export const useEnrollInCourse = () => {
         message: error.message,
       });
 
-      const msg = error.response?.data?.message || 
-                  error.response?.data?.error || 
-                  error.message || 
-                  "Failed to enroll. Please try again.";
+      const msg =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to enroll. Please try again.";
 
       toast.error("Enrollment Failed", {
         description: msg,
@@ -276,12 +318,6 @@ export const useEnrollInCourse = () => {
   });
 };
 
-/**
- * Cancel an enrollment
- * 
- * Allows student to cancel their enrollment before it's finalized.
- * If fees were paid, student will need to contact administration for refund.
- */
 export const useCancelEnrollment = () => {
   const qc = useQueryClient();
 
@@ -303,8 +339,9 @@ export const useCancelEnrollment = () => {
       });
     },
     onError: (error: any) => {
-      const msg = error.response?.data?.message || 
-                  "Failed to cancel enrollment. Please try again.";
+      const msg =
+        error.response?.data?.message ||
+        "Failed to cancel enrollment. Please try again.";
 
       toast.error("Cancellation Failed", {
         description: msg,
@@ -318,17 +355,6 @@ export const useCancelEnrollment = () => {
    GROUP MANAGEMENT
 =============================================================== */
 
-/**
- * Join a group (for students with approved enrollments)
- * 
- * Use this when:
- * - Student has VALIDATED or PAID enrollment without a group
- * - Student wants to join a specific group
- * 
- * @example
- * const { mutate: joinGroup } = useJoinGroup();
- * joinGroup("group-uuid");
- */
 export const useJoinGroup = () => {
   const qc = useQueryClient();
 
@@ -339,23 +365,24 @@ export const useJoinGroup = () => {
     },
     onSuccess: (data) => {
       console.log("✅ JOIN GROUP SUCCESS:", data);
-      
+
       qc.invalidateQueries({ queryKey: COURSE_GROUPS_KEY });
       qc.invalidateQueries({ queryKey: STUDENT_ENROLLMENTS_KEY });
       qc.invalidateQueries({ queryKey: PROFILE_KEY });
       qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
 
       toast.success("Joined group successfully!", {
-        description: `You are now in ${data.group_name ? `group "${data.group_name}"` : 'the group'}${data.level ? ` (Level ${data.level})` : ''}.`,
+        description: `You are now in ${data.group_name ? `group "${data.group_name}"` : "the group"}${data.level ? ` (Level ${data.level})` : ""}.`,
         duration: 5000,
       });
     },
     onError: (error: any) => {
       console.error("❌ JOIN GROUP FAILED:", error);
-      
-      const msg = error.response?.data?.message || 
-                  error.response?.data?.error ||
-                  "Failed to join the group. Please try again.";
+
+      const msg =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to join the group. Please try again.";
 
       toast.error("Join Group Failed", {
         description: msg,
@@ -365,12 +392,6 @@ export const useJoinGroup = () => {
   });
 };
 
-/**
- * Leave current group
- * 
- * Allows student to leave their current group.
- * Student can then join another group if desired.
- */
 export const useLeaveGroup = () => {
   const qc = useQueryClient();
 
@@ -390,8 +411,9 @@ export const useLeaveGroup = () => {
       });
     },
     onError: (error: any) => {
-      const msg = error.response?.data?.message || 
-                  "Failed to leave the group. Please try again.";
+      const msg =
+        error.response?.data?.message ||
+        "Failed to leave the group. Please try again.";
 
       toast.error("Leave Group Failed", {
         description: msg,
@@ -405,13 +427,6 @@ export const useLeaveGroup = () => {
    ATTENDANCE
 =============================================================== */
 
-/**
- * Get student attendance records with summary
- * 
- * Returns:
- * - records: List of attendance records
- * - summary: { total_sessions, present, absent, attendance_rate }
- */
 export const useStudentAttendance = () =>
   useQuery({
     queryKey: ATTENDANCE_KEY,
@@ -422,13 +437,6 @@ export const useStudentAttendance = () =>
    FEES
 =============================================================== */
 
-/**
- * Get student fees with payment summary
- * 
- * Returns:
- * - fees: List of fees
- * - summary: { total, paid, remaining, is_fully_paid }
- */
 export const useStudentFees = () =>
   useQuery({
     queryKey: FEES_KEY,
@@ -439,13 +447,6 @@ export const useStudentFees = () =>
    RESULTS
 =============================================================== */
 
-/**
- * Get exam results with average score
- * 
- * Returns:
- * - results: List of exam results
- * - summary: { total_exams, average_score }
- */
 export const useStudentResults = () =>
   useQuery({
     queryKey: RESULTS_KEY,
@@ -456,38 +457,70 @@ export const useStudentResults = () =>
    LEGACY HOOKS (Backward Compatibility)
 =============================================================== */
 
-/**
- * @deprecated Use useStudentProfile() instead
- */
 export const useMyProfile = () =>
   useQuery({
     queryKey: PROFILE_KEY,
     queryFn: studentApi.getProfile,
   });
 
-/**
- * @deprecated Use useStudentDocuments() instead
- */
 export const useMyDocuments = () =>
   useQuery({
     queryKey: DOCUMENTS_KEY,
     queryFn: studentApi.getDocuments,
   });
 
-/**
- * @deprecated Use useEnrollInCourse() instead
- */
 export function useEnroll() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (courseId: string) => studentApi.enroll({ course_id: courseId }),
+    mutationFn: (courseId: string) =>
+      studentApi.enroll({ course_id: courseId }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: STUDENT_ENROLLMENTS_KEY });
       qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
     },
   });
 }
+
+/* ===============================================================
+   NOTIFICATIONS
+=============================================================== */
+
+export const useStudentNotifications = (page = 1, unreadOnly = false) =>
+  useQuery({
+    queryKey: [...STUDENT_NOTIFICATIONS_KEY, page, unreadOnly],
+    queryFn: () => studentApi.getNotifications(page, unreadOnly),
+  });
+
+export const useStudentUnreadCount = () =>
+  useQuery({
+    queryKey: STUDENT_UNREAD_COUNT_KEY,
+    queryFn: studentApi.getUnreadCount,
+    refetchInterval: 30_000, // polling كل 30 ثانية
+  });
+
+export const useMarkStudentNotificationRead = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: studentApi.markNotificationRead,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: STUDENT_NOTIFICATIONS_KEY });
+      qc.invalidateQueries({ queryKey: STUDENT_UNREAD_COUNT_KEY });
+    },
+  });
+};
+
+export const useMarkAllStudentNotificationsRead = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: studentApi.markAllNotificationsRead,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: STUDENT_NOTIFICATIONS_KEY });
+      qc.invalidateQueries({ queryKey: STUDENT_UNREAD_COUNT_KEY });
+      toast.success("تم تحديد جميع الإشعارات كمقروءة");
+    },
+  });
+};
 
 /* ===============================================================
    EXPORTED QUERY KEYS
@@ -499,10 +532,13 @@ export {
   DASHBOARD_KEY,
   COURSES_KEY,
   COURSE_GROUPS_KEY,
+  COURSE_PRICING_KEY,
   STUDENT_ENROLLMENTS_KEY,
   ENROLLMENT_DETAILS_KEY,
   ATTENDANCE_KEY,
   FEES_KEY,
   RESULTS_KEY,
   ME_KEY,
+  STUDENT_NOTIFICATIONS_KEY,
+  STUDENT_UNREAD_COUNT_KEY,
 };
