@@ -16,6 +16,7 @@ import {
   Zap,
   Search,
   Loader2,
+  DoorOpen,
 } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
@@ -273,6 +274,19 @@ const SessionsPage = () => {
     }
   };
 
+  /* ── حساب المدة بالدقائق ── */
+  const getDurationLabel = (start: string, end: string | null | undefined) => {
+    if (!end) return null;
+    const diff = new Date(end).getTime() - new Date(start).getTime();
+    if (diff <= 0) return null;
+    const mins = Math.round(diff / 60000);
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h === 0) return `${m}د`;
+    if (m === 0) return `${h}س`;
+    return `${h}س ${m}د`;
+  };
+
   const handleViewAttendance = (session: Session) => {
     setSelectedSession(session);
     setIsAttendanceOpen(true);
@@ -332,6 +346,8 @@ const SessionsPage = () => {
       hasTeacher: !!group?.teacher,
       topic: session.topic || null,
       sessionDate: session.session_date,
+      endTime: (session as any).end_time || null,
+      roomName: (session as any).room?.name || null,
       studentCount: getStudentCount(session),
       attendanceCount: session._count?.attendance || 0,
       maxStudents: group?.max_students || 0,
@@ -542,6 +558,7 @@ const SessionsPage = () => {
             const data = getSessionData(session);
             const hasAttendance = hasAttendanceRecords(session);
             const isPast = new Date(session.session_date) < new Date();
+            const duration = getDurationLabel(data.sessionDate, data.endTime);
             return (
               <div
                 key={session.session_id}
@@ -565,20 +582,44 @@ const SessionsPage = () => {
                         )}
                       </div>
                     </div>
-                    {hasAttendance && (
-                      <div className="w-8 h-8 rounded-lg bg-[#C4A035]/30 flex items-center justify-center shrink-0 ml-2">
-                        <UserCheck className="w-4 h-4 text-[#C4A035]" />
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      {duration && (
+                        <span className="text-[10px] font-bold bg-white/20 px-2 py-1 rounded-lg">
+                          {duration}
+                        </span>
+                      )}
+                      {hasAttendance && (
+                        <div className="w-8 h-8 rounded-lg bg-[#C4A035]/30 flex items-center justify-center">
+                          <UserCheck className="w-4 h-4 text-[#C4A035]" />
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  {/* ═══ TIME DISPLAY: start → end ═══ */}
                   <div className="flex items-center gap-2 text-sm flex-wrap text-white/80">
                     <Calendar className="w-4 h-4" />
                     <span>{formatDate(data.sessionDate)}</span>
                     <span className="text-white/40">•</span>
                     <Clock className="w-4 h-4" />
                     <span>{formatTime(data.sessionDate)}</span>
+                    {data.endTime && (
+                      <>
+                        <span className="text-white/50">→</span>
+                        <span>{formatTime(data.endTime)}</span>
+                      </>
+                    )}
                   </div>
-                  {isPast && (
+
+                  {/* Room badge */}
+                  {data.roomName && (
+                    <div className="mt-2 inline-flex items-center gap-1.5 text-xs bg-white/15 rounded-lg px-2 py-1">
+                      <DoorOpen className="w-3 h-3" />
+                      <span>{data.roomName}</span>
+                    </div>
+                  )}
+
+                  {isPast && !data.roomName && (
                     <div className="mt-2 text-xs bg-white/15 rounded px-2 py-1 inline-block">
                       {t("admin.sessions.completed")}
                     </div>

@@ -48,6 +48,8 @@ import {
   // Announcements
   getTeacherAnnouncementsController, // ✅ NEW
   getTeacherAnnouncementByIdController, // ✅ NEW
+
+  getTeacherRoomsOverviewController 
 } from "../../controllers/Teachers/teacher.controller";
 import {
   getMyNotificationsController,
@@ -191,6 +193,12 @@ teacherRoutes.delete(
   roleGuard([Permissions.MANAGE_ATTENDANCE]),
   deleteTeacherSessionController,
 );
+
+teacherRoutes.get(
+  "/rooms/overview", 
+  authMiddleware, 
+  roleGuard([Permissions.VIEW_ROOMS]),
+  getTeacherRoomsOverviewController);
 
 /* ======================================================
    ATTENDANCE

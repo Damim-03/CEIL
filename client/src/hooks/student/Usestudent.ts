@@ -5,6 +5,7 @@
    Organized by domain for easy navigation.
    
    ✅ UPDATED: useEnrollInCourse now supports pricing_id
+   ✅ UPDATED: Aggressive refresh strategy (15s/20s/30s)
    
    Last updated: February 2026
 =============================================================== */
@@ -32,6 +33,14 @@ const RESULTS_KEY = ["student-results"];
 const STUDENT_NOTIFICATIONS_KEY = ["student-notifications"];
 const STUDENT_UNREAD_COUNT_KEY = ["student-unread-count"];
 const ME_KEY = ["me"];
+
+/* ===============================================================
+   🔄 REFRESH CONSTANTS
+=============================================================== */
+
+const FAST = 15_000; // 15s — بيانات حية
+const ACTIVE = 20_000; // 20s — بيانات تتغير كثيراً
+const NORMAL = 30_000; // 30s — بيانات عادية
 
 /* ===============================================================
    TYPE DEFINITIONS
@@ -74,7 +83,7 @@ interface CourseProfile {
 }
 
 /* ===============================================================
-   PROFILE
+   PROFILE — 🟢 30s
 =============================================================== */
 
 export const useStudentProfile = () => {
@@ -83,6 +92,9 @@ export const useStudentProfile = () => {
   const profileQuery = useQuery({
     queryKey: PROFILE_KEY,
     queryFn: studentApi.getProfile,
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
   const updateProfile = useMutation({
@@ -124,18 +136,21 @@ export const useStudentProfile = () => {
 };
 
 /* ===============================================================
-   DASHBOARD
+   DASHBOARD — 🟡 20s
 =============================================================== */
 
 export const useStudentDashboard = () => {
   return useQuery<DashboardResponse>({
     queryKey: DASHBOARD_KEY,
     queryFn: studentApi.getDashboard,
+    refetchInterval: ACTIVE,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 };
 
 /* ===============================================================
-   DOCUMENTS
+   DOCUMENTS — 🟢 30s
 =============================================================== */
 
 export const useStudentDocuments = () => {
@@ -144,6 +159,9 @@ export const useStudentDocuments = () => {
   const documentsQuery = useQuery({
     queryKey: DOCUMENTS_KEY,
     queryFn: studentApi.getDocuments,
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
   const uploadDocuments = useMutation({
@@ -207,13 +225,16 @@ export const useStudentDocuments = () => {
 };
 
 /* ===============================================================
-   COURSES
+   COURSES — 🟢 30s
 =============================================================== */
 
 export const useCourses = () =>
   useQuery({
     queryKey: COURSES_KEY,
     queryFn: studentApi.getCourses,
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useCourseGroups = (courseId?: string) =>
@@ -221,6 +242,9 @@ export const useCourseGroups = (courseId?: string) =>
     queryKey: [COURSE_GROUPS_KEY, courseId],
     queryFn: () => studentApi.getCourseGroups(courseId!),
     enabled: !!courseId,
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useCoursePricing = (courseId: string | null) => {
@@ -233,14 +257,15 @@ export const useCoursePricing = (courseId: string | null) => {
       return data;
     },
     enabled: !!courseId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: true,
     retry: 1,
     throwOnError: false,
   });
 };
 
 /* ===============================================================
-   ENROLLMENTS
+   ENROLLMENTS — 🟡 20s
 =============================================================== */
 
 export const useStudentEnrollments = () =>
@@ -248,6 +273,9 @@ export const useStudentEnrollments = () =>
     queryKey: STUDENT_ENROLLMENTS_KEY,
     queryFn: studentApi.getEnrollments,
     retry: false,
+    refetchInterval: ACTIVE,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useEnrollmentDetails = (enrollmentId?: string) =>
@@ -255,6 +283,9 @@ export const useEnrollmentDetails = (enrollmentId?: string) =>
     queryKey: [ENROLLMENT_DETAILS_KEY, enrollmentId],
     queryFn: () => studentApi.getEnrollmentDetails(enrollmentId!),
     enabled: !!enrollmentId,
+    refetchInterval: ACTIVE,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 /**
@@ -276,7 +307,7 @@ export const useEnrollInCourse = () => {
       course_id: string;
       group_id?: string;
       level?: string;
-      pricing_id?: string; // ✅ NEW
+      pricing_id?: string;
     }) => {
       console.log("🔵 ENROLLMENT REQUEST:", payload);
       return studentApi.enroll(payload);
@@ -424,33 +455,42 @@ export const useLeaveGroup = () => {
 };
 
 /* ===============================================================
-   ATTENDANCE
+   ATTENDANCE — 🔴 15s (حي)
 =============================================================== */
 
 export const useStudentAttendance = () =>
   useQuery({
     queryKey: ATTENDANCE_KEY,
     queryFn: studentApi.getAttendance,
+    refetchInterval: FAST,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 /* ===============================================================
-   FEES
+   FEES — 🟡 20s
 =============================================================== */
 
 export const useStudentFees = () =>
   useQuery({
     queryKey: FEES_KEY,
     queryFn: studentApi.getFees,
+    refetchInterval: ACTIVE,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 /* ===============================================================
-   RESULTS
+   RESULTS — 🟢 30s
 =============================================================== */
 
 export const useStudentResults = () =>
   useQuery({
     queryKey: RESULTS_KEY,
     queryFn: studentApi.getResults,
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 /* ===============================================================
@@ -461,12 +501,18 @@ export const useMyProfile = () =>
   useQuery({
     queryKey: PROFILE_KEY,
     queryFn: studentApi.getProfile,
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useMyDocuments = () =>
   useQuery({
     queryKey: DOCUMENTS_KEY,
     queryFn: studentApi.getDocuments,
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export function useEnroll() {
@@ -483,20 +529,23 @@ export function useEnroll() {
 }
 
 /* ===============================================================
-   NOTIFICATIONS
+   NOTIFICATIONS — 🟡 20s
 =============================================================== */
 
 export const useStudentNotifications = (page = 1, unreadOnly = false) =>
   useQuery({
     queryKey: [...STUDENT_NOTIFICATIONS_KEY, page, unreadOnly],
     queryFn: () => studentApi.getNotifications(page, unreadOnly),
+    refetchInterval: ACTIVE,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useStudentUnreadCount = () =>
   useQuery({
     queryKey: STUDENT_UNREAD_COUNT_KEY,
     queryFn: studentApi.getUnreadCount,
-    refetchInterval: 30_000, // polling كل 30 ثانية
+    refetchInterval: FAST, // 15s — أسرع للإشعارات الجديدة
   });
 
 export const useMarkStudentNotificationRead = () => {

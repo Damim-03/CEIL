@@ -141,6 +141,7 @@ import {
   deleteNotificationController,
   searchStudentsController,
 } from "../../controllers/admin/Notification.controller";
+import { getRoomsScheduleOverviewController, createRoomController, getAllRoomsController, getRoomByIdController, updateRoomController, deleteRoomController, getRoomScheduleController, checkRoomAvailabilityController } from "../../controllers/admin/Room.controller";
 
 const adminRoutes = Router();
 
@@ -947,6 +948,67 @@ adminRoutes.delete(
   authMiddleware,
   roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
   deleteNotificationController,
+);
+
+/* ======================================================
+    ROOMS (القاعات)
+  ====================================================== */
+
+// ⚠️ مهم: overview يجب أن يكون قبل :roomId
+adminRoutes.get(
+  "/rooms/schedule/overview",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_SESSIONS]),
+  getRoomsScheduleOverviewController,
+);
+
+adminRoutes.post(
+  "/rooms",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_SESSIONS]),
+  createRoomController,
+);
+
+adminRoutes.get(
+  "/rooms",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_SESSIONS]),
+  getAllRoomsController,
+);
+
+adminRoutes.get(
+  "/rooms/:roomId",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_SESSIONS]),
+  getRoomByIdController,
+);
+
+adminRoutes.put(
+  "/rooms/:roomId",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_SESSIONS]),
+  updateRoomController,
+);
+
+adminRoutes.delete(
+  "/rooms/:roomId",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_SESSIONS]),
+  deleteRoomController,
+);
+
+adminRoutes.get(
+  "/rooms/:roomId/schedule",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_SESSIONS]),
+  getRoomScheduleController,
+);
+
+adminRoutes.get(
+  "/rooms/:roomId/availability",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_SESSIONS]),
+  checkRoomAvailabilityController,
 );
 
 export default adminRoutes;

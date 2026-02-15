@@ -74,7 +74,7 @@ const formatDate = (date: string) =>
   });
 
 /* ===============================================================
-   MAIN DASHBOARD
+   MAIN DASHBOARD — ✅ DARK MODE
 =============================================================== */
 
 const AdminDashboard = () => {
@@ -122,28 +122,28 @@ const AdminDashboard = () => {
       { bg: string; text: string; labelKey: string }
     > = {
       PENDING: {
-        bg: "bg-[#C4A035]/15",
-        text: "text-[#9A7D2A]",
+        bg: "bg-[#C4A035]/15 dark:bg-[#C4A035]/20",
+        text: "text-[#9A7D2A] dark:text-[#D4A843]",
         labelKey: "admin.dashboard.pending",
       },
       VALIDATED: {
-        bg: "bg-[#2B6F5E]/15",
-        text: "text-[#2B6F5E]",
+        bg: "bg-[#2B6F5E]/15 dark:bg-[#4ADE80]/15",
+        text: "text-[#2B6F5E] dark:text-[#4ADE80]",
         labelKey: "admin.dashboard.validated",
       },
       PAID: {
-        bg: "bg-[#8DB896]/20",
-        text: "text-[#3D7A4A]",
+        bg: "bg-[#8DB896]/20 dark:bg-[#8DB896]/15",
+        text: "text-[#3D7A4A] dark:text-[#8DB896]",
         labelKey: "admin.dashboard.paid",
       },
       FINISHED: {
-        bg: "bg-[#D8CDC0]/40",
-        text: "text-[#6B5D4F]",
+        bg: "bg-[#D8CDC0]/40 dark:bg-[#555555]/30",
+        text: "text-[#6B5D4F] dark:text-[#AAAAAA]",
         labelKey: "admin.dashboard.finished",
       },
       REJECTED: {
-        bg: "bg-red-100",
-        text: "text-red-700",
+        bg: "bg-red-100 dark:bg-red-950/40",
+        text: "text-red-700 dark:text-red-400",
         labelKey: "admin.dashboard.rejected",
       },
     };
@@ -184,22 +184,22 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-6">
       {/* ================= HEADER ================= */}
-      <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-6 overflow-hidden">
+      <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10">
               <BarChart3 className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-[#1B1B1B] mb-0.5">
+              <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-0.5">
                 {t("admin.dashboard.title")}
               </h1>
-              <div className="flex items-center gap-2 text-sm text-[#6B5D4F]">
+              <div className="flex items-center gap-2 text-sm text-[#6B5D4F] dark:text-[#AAAAAA]">
                 <Calendar className="w-4 h-4 text-[#C4A035]" />
                 <span>{getCurrentDate()}</span>
               </div>
-              <p className="text-sm text-[#BEB29E] mt-0.5">
+              <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
                 {t("admin.dashboard.subtitle")}
               </p>
             </div>
@@ -250,20 +250,20 @@ const AdminDashboard = () => {
       {/* ================= ENROLLMENT PIPELINE + REVENUE ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Enrollment Pipeline */}
-        <div className="lg:col-span-2 relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-6 overflow-hidden">
+        <div className="lg:col-span-2 relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#C4A035] to-[#C4A035]/60"></div>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-md shadow-[#C4A035]/20">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-md shadow-[#C4A035]/20 dark:shadow-[#C4A035]/10">
                 <ClipboardList className="w-5 h-5 text-white" />
               </div>
-              <h3 className="text-lg font-bold text-[#1B1B1B]">
+              <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {t("admin.dashboard.enrollmentPipeline")}
               </h3>
             </div>
             <Link
               to="/admin/enrollments"
-              className="text-sm font-medium text-[#2B6F5E] hover:text-[#2B6F5E]/80 flex items-center gap-1 transition-colors"
+              className="text-sm font-medium text-[#2B6F5E] dark:text-[#4ADE80] hover:text-[#2B6F5E]/80 dark:hover:text-[#4ADE80]/80 flex items-center gap-1 transition-colors"
             >
               {t("admin.dashboard.viewAll")}{" "}
               <ArrowRight className="w-3.5 h-3.5" />
@@ -300,7 +300,7 @@ const AdminDashboard = () => {
 
           {enrollments.total > 0 && (
             <div className="mt-5">
-              <div className="flex h-3 rounded-full overflow-hidden bg-[#D8CDC0]/30">
+              <div className="flex h-3 rounded-full overflow-hidden bg-[#D8CDC0]/30 dark:bg-[#333333]">
                 {enrollments.pending > 0 && (
                   <div
                     className="bg-[#C4A035] transition-all"
@@ -338,7 +338,7 @@ const AdminDashboard = () => {
                   />
                 )}
               </div>
-              <div className="flex items-center gap-4 mt-2.5 text-xs text-[#6B5D4F]">
+              <div className="flex items-center gap-4 mt-2.5 text-xs text-[#6B5D4F] dark:text-[#AAAAAA]">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#C4A035]"></span>
                   {t("admin.dashboard.pending")}
@@ -360,8 +360,8 @@ const AdminDashboard = () => {
           )}
         </div>
 
-        {/* Revenue Card */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-[#2B6F5E] via-[#2B6F5E] to-[#2B6F5E]/90 rounded-2xl shadow-xl shadow-[#2B6F5E]/20 p-6 text-white">
+        {/* Revenue Card — gradient stays same, works in both modes */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#2B6F5E] via-[#2B6F5E] to-[#2B6F5E]/90 rounded-2xl shadow-xl shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10 p-6 text-white">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C4A035]"></div>
           <div className="absolute inset-0 opacity-[0.07]">
             <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -translate-y-20 translate-x-20"></div>
@@ -425,20 +425,20 @@ const AdminDashboard = () => {
       {/* ================= RECENT ACTIVITY + QUICK ACTIONS ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Enrollments */}
-        <div className="lg:col-span-2 relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-6 overflow-hidden">
+        <div className="lg:col-span-2 relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#2B6F5E]/60"></div>
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-md shadow-[#2B6F5E]/20">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-md shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10">
                 <Activity className="w-5 h-5 text-white" />
               </div>
-              <h3 className="text-lg font-bold text-[#1B1B1B]">
+              <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {t("admin.dashboard.recentEnrollments")}
               </h3>
             </div>
             <Link
               to="/admin/enrollments"
-              className="text-sm font-medium text-[#2B6F5E] hover:text-[#2B6F5E]/80 flex items-center gap-1 transition-colors"
+              className="text-sm font-medium text-[#2B6F5E] dark:text-[#4ADE80] hover:text-[#2B6F5E]/80 dark:hover:text-[#4ADE80]/80 flex items-center gap-1 transition-colors"
             >
               {t("admin.dashboard.viewAll")}{" "}
               <ArrowRight className="w-3.5 h-3.5" />
@@ -452,23 +452,23 @@ const AdminDashboard = () => {
                 .map((enrollment) => (
                   <div
                     key={enrollment.enrollment_id}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-[#D8CDC0]/40 hover:bg-[#D8CDC0]/10 transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222] transition-colors"
                   >
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#2B6F5E]/20 to-[#2B6F5E]/10 flex items-center justify-center shrink-0 border border-[#2B6F5E]/20">
-                      <span className="text-xs font-bold text-[#2B6F5E]">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#2B6F5E]/20 to-[#2B6F5E]/10 dark:from-[#4ADE80]/20 dark:to-[#4ADE80]/5 flex items-center justify-center shrink-0 border border-[#2B6F5E]/20 dark:border-[#4ADE80]/20">
+                      <span className="text-xs font-bold text-[#2B6F5E] dark:text-[#4ADE80]">
                         {enrollment.student.first_name[0]}
                         {enrollment.student.last_name[0]}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-[#1B1B1B] truncate">
+                        <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
                           {enrollment.student.first_name}{" "}
                           {enrollment.student.last_name}
                         </p>
                         <StatusBadge status={enrollment.registration_status} />
                       </div>
-                      <p className="text-xs text-[#6B5D4F] truncate">
+                      <p className="text-xs text-[#6B5D4F] dark:text-[#888888] truncate">
                         {enrollment.course.course_name}
                         {enrollment.pricing && (
                           <span className="text-[#C4A035] font-medium ml-1">
@@ -477,14 +477,14 @@ const AdminDashboard = () => {
                         )}
                       </p>
                     </div>
-                    <span className="text-[11px] text-[#BEB29E] shrink-0">
+                    <span className="text-[11px] text-[#BEB29E] dark:text-[#666666] shrink-0">
                       {formatRelativeTime(enrollment.enrollment_date)}
                     </span>
                   </div>
                 ))}
             </div>
           ) : (
-            <div className="text-center py-10 text-[#BEB29E]">
+            <div className="text-center py-10 text-[#BEB29E] dark:text-[#666666]">
               <FileText className="w-10 h-10 mx-auto mb-2 opacity-40" />
               <p className="text-sm">
                 {t("admin.dashboard.noRecentEnrollments")}
@@ -495,9 +495,9 @@ const AdminDashboard = () => {
 
         {/* Quick Actions + Recent Payments */}
         <div className="space-y-6">
-          <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-6 overflow-hidden">
+          <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#C4A035] to-[#C4A035]/60"></div>
-            <h3 className="text-lg font-bold text-[#1B1B1B] mb-4">
+            <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-4">
               {t("admin.dashboard.quickActions")}
             </h3>
             <div className="grid grid-cols-2 gap-2.5">
@@ -546,15 +546,15 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-6 overflow-hidden">
+          <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#8DB896] to-[#8DB896]/60"></div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-[#1B1B1B]">
+              <h3 className="text-sm font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {t("admin.dashboard.recentPayments")}
               </h3>
               <Link
                 to="/admin/fees"
-                className="text-xs text-[#2B6F5E] hover:text-[#2B6F5E]/80 font-medium transition-colors"
+                className="text-xs text-[#2B6F5E] dark:text-[#4ADE80] hover:text-[#2B6F5E]/80 dark:hover:text-[#4ADE80]/80 font-medium transition-colors"
               >
                 {t("admin.dashboard.viewAll")}
               </Link>
@@ -564,29 +564,29 @@ const AdminDashboard = () => {
                 {(recentFees as RecentFee[]).map((fee) => (
                   <div
                     key={fee.fee_id}
-                    className="flex items-center justify-between py-2 border-b border-[#D8CDC0]/30 last:border-0"
+                    className="flex items-center justify-between py-2 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A] last:border-0"
                   >
                     <div className="flex items-center gap-2">
-                      <BadgeCheck className="w-4 h-4 text-[#2B6F5E]" />
+                      <BadgeCheck className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
                       <div>
-                        <p className="text-xs font-semibold text-[#1B1B1B]">
+                        <p className="text-xs font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                           {fee.student.first_name} {fee.student.last_name}
                         </p>
-                        <p className="text-[10px] text-[#BEB29E]">
+                        <p className="text-[10px] text-[#BEB29E] dark:text-[#666666]">
                           {fee.paid_at
                             ? formatRelativeTime(fee.paid_at)
                             : "N/A"}
                         </p>
                       </div>
                     </div>
-                    <span className="text-xs font-bold text-[#2B6F5E]">
+                    <span className="text-xs font-bold text-[#2B6F5E] dark:text-[#4ADE80]">
                       {formatCurrency(fee.amount)}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-center text-xs text-[#BEB29E] py-4">
+              <p className="text-center text-xs text-[#BEB29E] dark:text-[#666666] py-4">
                 {t("admin.dashboard.noRecentPayments")}
               </p>
             )}
@@ -596,42 +596,45 @@ const AdminDashboard = () => {
 
       {/* ================= QUICK STATS + PLATFORM OVERVIEW ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-6 overflow-hidden">
+        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#C4A035] to-[#2B6F5E]"></div>
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-md shadow-[#C4A035]/20">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-md shadow-[#C4A035]/20 dark:shadow-[#C4A035]/10">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            <h3 className="text-lg font-bold text-[#1B1B1B]">
+            <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
               {t("admin.dashboard.quickStats")}
             </h3>
           </div>
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-[#2B6F5E]/5 rounded-xl p-4 border border-[#2B6F5E]/15">
-              <p className="text-xs text-[#2B6F5E] font-semibold mb-1">
+            <div className="bg-[#2B6F5E]/5 dark:bg-[#2B6F5E]/10 rounded-xl p-4 border border-[#2B6F5E]/15 dark:border-[#2B6F5E]/20">
+              <p className="text-xs text-[#2B6F5E] dark:text-[#4ADE80] font-semibold mb-1">
                 {t("admin.dashboard.teachers")}
               </p>
-              <p className="text-3xl font-bold text-[#1B1B1B]">{teachers}</p>
+              <p className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                {teachers}
+              </p>
             </div>
-            <div className="bg-[#C4A035]/5 rounded-xl p-4 border border-[#C4A035]/15">
-              <p className="text-xs text-[#C4A035] font-semibold mb-1">
+            <div className="bg-[#C4A035]/5 dark:bg-[#C4A035]/10 rounded-xl p-4 border border-[#C4A035]/15 dark:border-[#C4A035]/20">
+              <p className="text-xs text-[#C4A035] dark:text-[#D4A843] font-semibold mb-1">
                 {t("admin.dashboard.studentTeacherRatio")}
               </p>
-              <p className="text-3xl font-bold text-[#1B1B1B]">
+              <p className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {teachers > 0 ? (students / teachers).toFixed(1) : "0"}:1
               </p>
             </div>
-            <div className="bg-[#8DB896]/10 rounded-xl p-4 border border-[#8DB896]/20">
-              <p className="text-xs text-[#3D7A4A] font-semibold mb-1">
+            <div className="bg-[#8DB896]/10 dark:bg-[#8DB896]/10 rounded-xl p-4 border border-[#8DB896]/20 dark:border-[#8DB896]/15">
+              <p className="text-xs text-[#3D7A4A] dark:text-[#8DB896] font-semibold mb-1">
                 {t("admin.dashboard.avgPerCourse")}
               </p>
-              <p className="text-3xl font-bold text-[#1B1B1B]">
+              <p className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {courses > 0 ? (students / courses).toFixed(1) : "0"}
               </p>
             </div>
           </div>
         </div>
 
+        {/* Platform Overview — dark gradient card (looks great in both modes) */}
         <div className="relative overflow-hidden bg-gradient-to-br from-[#1B1B1B] via-[#1B1B1B] to-[#2B6F5E]/40 rounded-2xl shadow-xl p-6 text-white">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C4A035]"></div>
           <div className="absolute inset-0 opacity-[0.04]">
@@ -684,11 +687,11 @@ const AdminDashboard = () => {
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-1.5 h-8 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035] rounded-full"></div>
-            <h2 className="text-2xl font-bold text-[#1B1B1B]">
+            <h2 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
               {t("admin.dashboard.analyticsInsights")}
             </h2>
           </div>
-          <p className="text-[#6B5D4F] ml-5">
+          <p className="text-[#6B5D4F] dark:text-[#AAAAAA] ml-5">
             {t("admin.dashboard.analyticsDesc")}
           </p>
         </div>
@@ -704,22 +707,22 @@ const AdminDashboard = () => {
 
       {/* ================= PAYMENT ALERT ================= */}
       {Number(unpaidFees) > 0 && (
-        <div className="relative overflow-hidden bg-gradient-to-br from-[#C4A035]/10 to-[#C4A035]/5 border-2 border-[#C4A035]/30 rounded-2xl p-6">
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#C4A035]/10 to-[#C4A035]/5 dark:from-[#C4A035]/15 dark:to-[#C4A035]/5 border-2 border-[#C4A035]/30 dark:border-[#C4A035]/25 rounded-2xl p-6">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#C4A035] to-[#C4A035]/60"></div>
           <div className="relative flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shrink-0 shadow-lg shadow-[#C4A035]/20">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shrink-0 shadow-lg shadow-[#C4A035]/20 dark:shadow-[#C4A035]/10">
               <DollarSign className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-lg font-bold text-[#1B1B1B]">
+                <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                   {t("admin.dashboard.paymentAlert")}
                 </h3>
                 <span className="px-2.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full uppercase">
                   {t("admin.dashboard.actionNeeded")}
                 </span>
               </div>
-              <p className="text-[#6B5D4F] mb-3 text-sm leading-relaxed">
+              <p className="text-[#6B5D4F] dark:text-[#AAAAAA] mb-3 text-sm leading-relaxed">
                 {t("admin.dashboard.unpaidFeesCount", {
                   count: revenue.unpaidCount,
                 })}{" "}
@@ -745,7 +748,7 @@ const AdminDashboard = () => {
 export default AdminDashboard;
 
 /* ===============================================================
-   SUB-COMPONENTS
+   SUB-COMPONENTS — ✅ DARK MODE
 =============================================================== */
 
 function MainStatCard({
@@ -761,19 +764,19 @@ function MainStatCard({
 }) {
   const styles = {
     teal: {
-      bg: "bg-[#2B6F5E]/8",
-      icon: "text-[#2B6F5E]",
+      bg: "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10",
+      icon: "text-[#2B6F5E] dark:text-[#4ADE80]",
       bar: "from-[#2B6F5E] to-[#2B6F5E]/70",
     },
     mustard: {
-      bg: "bg-[#C4A035]/8",
-      icon: "text-[#C4A035]",
+      bg: "bg-[#C4A035]/8 dark:bg-[#D4A843]/10",
+      icon: "text-[#C4A035] dark:text-[#D4A843]",
       bar: "from-[#C4A035] to-[#C4A035]/70",
     },
   };
   const s = styles[variant];
   return (
-    <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-4 hover:shadow-md hover:shadow-[#D8CDC0]/30 transition-all overflow-hidden group">
+    <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-4 hover:shadow-md hover:shadow-[#D8CDC0]/30 dark:hover:shadow-black/20 transition-all overflow-hidden group">
       <div
         className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${s.bar} opacity-60 group-hover:opacity-100 transition-opacity`}
       ></div>
@@ -784,8 +787,12 @@ function MainStatCard({
           <Icon className={`w-5 h-5 ${s.icon}`} />
         </div>
       </div>
-      <p className="text-xs text-[#6B5D4F] mb-0.5">{label}</p>
-      <p className="text-2xl font-bold text-[#1B1B1B]">{value}</p>
+      <p className="text-xs text-[#6B5D4F] dark:text-[#888888] mb-0.5">
+        {label}
+      </p>
+      <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+        {value}
+      </p>
     </div>
   );
 }
@@ -805,24 +812,24 @@ function PipelineStep({
 }) {
   const styles = {
     mustard: {
-      bg: "bg-[#C4A035]/8 border-[#C4A035]/20",
-      text: "text-[#9A7D2A]",
-      icon: "text-[#C4A035]",
+      bg: "bg-[#C4A035]/8 border-[#C4A035]/20 dark:bg-[#C4A035]/10 dark:border-[#C4A035]/15",
+      text: "text-[#9A7D2A] dark:text-[#D4A843]",
+      icon: "text-[#C4A035] dark:text-[#D4A843]",
     },
     teal: {
-      bg: "bg-[#2B6F5E]/8 border-[#2B6F5E]/20",
-      text: "text-[#2B6F5E]",
-      icon: "text-[#2B6F5E]",
+      bg: "bg-[#2B6F5E]/8 border-[#2B6F5E]/20 dark:bg-[#4ADE80]/10 dark:border-[#4ADE80]/15",
+      text: "text-[#2B6F5E] dark:text-[#4ADE80]",
+      icon: "text-[#2B6F5E] dark:text-[#4ADE80]",
     },
     green: {
-      bg: "bg-[#8DB896]/15 border-[#8DB896]/25",
-      text: "text-[#3D7A4A]",
+      bg: "bg-[#8DB896]/15 border-[#8DB896]/25 dark:bg-[#8DB896]/10 dark:border-[#8DB896]/15",
+      text: "text-[#3D7A4A] dark:text-[#8DB896]",
       icon: "text-[#8DB896]",
     },
     beige: {
-      bg: "bg-[#D8CDC0]/20 border-[#D8CDC0]/40",
-      text: "text-[#6B5D4F]",
-      icon: "text-[#BEB29E]",
+      bg: "bg-[#D8CDC0]/20 border-[#D8CDC0]/40 dark:bg-[#555555]/15 dark:border-[#555555]/25",
+      text: "text-[#6B5D4F] dark:text-[#AAAAAA]",
+      icon: "text-[#BEB29E] dark:text-[#888888]",
     },
   };
   const s = styles[variant];
@@ -837,7 +844,9 @@ function PipelineStep({
       )}
       <Icon className={`w-5 h-5 mx-auto mb-2 ${s.icon}`} />
       <p className={`text-2xl font-bold ${s.text}`}>{count}</p>
-      <p className="text-[11px] font-medium text-[#6B5D4F] mt-1">{label}</p>
+      <p className="text-[11px] font-medium text-[#6B5D4F] dark:text-[#888888] mt-1">
+        {label}
+      </p>
     </div>
   );
 }
@@ -857,21 +866,21 @@ function QuickActionLink({
 }) {
   const styles = {
     mustard: {
-      bg: "bg-[#C4A035]/6",
-      hover: "hover:bg-[#C4A035]/12",
-      icon: "text-[#C4A035]",
+      bg: "bg-[#C4A035]/6 dark:bg-[#C4A035]/8",
+      hover: "hover:bg-[#C4A035]/12 dark:hover:bg-[#C4A035]/15",
+      icon: "text-[#C4A035] dark:text-[#D4A843]",
     },
     teal: {
-      bg: "bg-[#2B6F5E]/6",
-      hover: "hover:bg-[#2B6F5E]/12",
-      icon: "text-[#2B6F5E]",
+      bg: "bg-[#2B6F5E]/6 dark:bg-[#2B6F5E]/8",
+      hover: "hover:bg-[#2B6F5E]/12 dark:hover:bg-[#2B6F5E]/15",
+      icon: "text-[#2B6F5E] dark:text-[#4ADE80]",
     },
   };
   const s = styles[variant];
   return (
     <Link
       to={to}
-      className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border border-[#D8CDC0]/40 ${s.bg} ${s.hover} transition-all`}
+      className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] ${s.bg} ${s.hover} transition-all`}
     >
       {badge && badge > 0 && (
         <div className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-red-500 rounded-full flex items-center justify-center">
@@ -879,7 +888,9 @@ function QuickActionLink({
         </div>
       )}
       <Icon className={`w-5 h-5 ${s.icon}`} />
-      <span className="text-[11px] font-semibold text-[#1B1B1B]">{label}</span>
+      <span className="text-[11px] font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
+        {label}
+      </span>
     </Link>
   );
 }

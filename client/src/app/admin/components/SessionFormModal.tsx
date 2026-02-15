@@ -12,6 +12,9 @@ import {
   CheckCircle,
   AlertCircle,
   ChevronRight,
+  DoorOpen,
+  MapPin,
+  Clock,
 } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import {
@@ -19,6 +22,7 @@ import {
   useUpdateSession,
   useAdminGroups,
   useAdminCourses,
+  useAdminRooms,
 } from "../../../hooks/admin/useAdmin";
 import type { Session } from "../../../types/Types";
 
@@ -26,14 +30,18 @@ type SessionFormState = {
   course_id: string;
   group_id: string;
   session_date: string;
+  end_time: string;
   topic: string;
+  room_id: string;
 };
 type StatusType = "idle" | "loading" | "success" | "error";
 const EMPTY_FORM: SessionFormState = {
   course_id: "",
   group_id: "",
   session_date: "",
+  end_time: "",
   topic: "",
+  room_id: "",
 };
 
 interface SessionFormModalProps {
@@ -57,6 +65,7 @@ const SessionFormModal = ({
 
   const { data: courses = [], isLoading: isLoadingCourses } = useAdminCourses();
   const { data: groups = [], isLoading: isLoadingGroups } = useAdminGroups();
+  const { data: rooms = [], isLoading: isLoadingRooms } = useAdminRooms({ active_only: true });
   const createSession = useCreateSession();
   const updateSession = useUpdateSession();
   const isLoadingData = isLoadingCourses || isLoadingGroups;
@@ -72,6 +81,7 @@ const SessionFormModal = ({
   const selectedGroup = groups.find((g) => g.group_id === form.group_id);
   const groupTeacher = (selectedGroup as any)?.teacher;
   const selectedCourse = courses.find((c) => c.course_id === form.course_id);
+  const selectedRoom = rooms.find((r: any) => r.room_id === form.room_id);
 
   useEffect(() => {
     if (open) {
@@ -82,7 +92,11 @@ const SessionFormModal = ({
           session_date: session.session_date
             ? new Date(session.session_date).toISOString().slice(0, 16)
             : "",
+          end_time: (session as any).end_time
+            ? new Date((session as any).end_time).toISOString().slice(0, 16)
+            : "",
           topic: session.topic || "",
+          room_id: (session as any).room_id || (session as any).room?.room_id || "",
         });
       } else {
         setForm(EMPTY_FORM);
@@ -104,12 +118,30 @@ const SessionFormModal = ({
     if (status !== "idle") setStatus("idle");
   };
 
+  /* ── حساب المدة ── */
+  const durationMinutes = useMemo(() => {
+    if (!form.session_date || !form.end_time) return null;
+    const diff = new Date(form.end_time).getTime() - new Date(form.session_date).getTime();
+    if (diff <= 0) return null;
+    return Math.round(diff / 60000);
+  }, [form.session_date, form.end_time]);
+
+  const formatDuration = (mins: number) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h === 0) return `${m} دقيقة`;
+    if (m === 0) return `${h} ساعة`;
+    return `${h} ساعة و ${m} دقيقة`;
+  };
+
   const validate = () => {
     if (!isEditMode && !form.course_id)
       return t("admin.sessionForm.courseRequired");
     if (!isEditMode && !form.group_id)
       return t("admin.sessionForm.groupRequired");
     if (!form.session_date) return t("admin.sessionForm.dateRequired");
+    if (form.end_time && form.session_date && new Date(form.end_time) <= new Date(form.session_date))
+      return "وقت الانتهاء يجب أن يكون بعد وقت البداية";
     return null;
   };
 
@@ -128,14 +160,18 @@ const SessionFormModal = ({
           sessionId: session.session_id,
           payload: {
             session_date: new Date(form.session_date).toISOString(),
+            end_time: form.end_time ? new Date(form.end_time).toISOString() : null,
             topic: form.topic.trim() || undefined,
+            room_id: form.room_id || null,
           },
         });
       } else {
         await createSession.mutateAsync({
           group_id: form.group_id,
           session_date: new Date(form.session_date).toISOString(),
+          end_time: form.end_time ? new Date(form.end_time).toISOString() : undefined,
           topic: form.topic.trim() || undefined,
+          room_id: form.room_id || undefined,
         });
       }
       setStatus("success");
@@ -482,9 +518,10 @@ const SessionFormModal = ({
               </div>
             )}
 
-            {/* Date & Topic */}
+            {/* Date, End Time, Room & Topic */}
             {!isLoadingData && (form.group_id || isEditMode) && (
               <>
+                {/* ═══ START TIME ═══ */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
                     <Calendar className="w-4 h-4 text-indigo-500" />
@@ -500,6 +537,99 @@ const SessionFormModal = ({
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
+
+                {/* ═══ END TIME ═══ */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-orange-500" />
+                    وقت الانتهاء
+                    <span className="text-gray-400 text-xs font-normal">(اختياري)</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="end_time"
+                    value={form.end_time}
+                    onChange={handleChange}
+                    min={form.session_date || undefined}
+                    disabled={status === "loading" || status === "success" || !form.session_date}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-800 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 focus:bg-white transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  {!form.session_date && (
+                    <p className="text-[11px] text-gray-400">حدد وقت البداية أولاً</p>
+                  )}
+                  {durationMinutes && durationMinutes > 0 && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-100 text-xs">
+                      <Clock className="w-3.5 h-3.5 text-orange-500" />
+                      <span className="font-semibold text-orange-700">
+                        المدة: {formatDuration(durationMinutes)}
+                      </span>
+                    </div>
+                  )}
+                  {form.end_time && form.session_date && new Date(form.end_time) <= new Date(form.session_date) && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 border border-red-100 text-xs">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                      <span className="font-semibold text-red-600">
+                        وقت الانتهاء يجب أن يكون بعد وقت البداية
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* ═══ ROOM SELECT ═══ */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+                    <DoorOpen className="w-4 h-4 text-indigo-500" />
+                    القاعة
+                    <span className="text-gray-400 text-xs font-normal">(اختياري)</span>
+                  </label>
+                  {isLoadingRooms ? (
+                    <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50">
+                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      <span className="text-sm text-gray-400">جارٍ تحميل القاعات...</span>
+                    </div>
+                  ) : rooms.length > 0 ? (
+                    <>
+                      <select
+                        name="room_id"
+                        value={form.room_id}
+                        onChange={handleChange}
+                        disabled={status === "loading" || status === "success"}
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">بدون قاعة</option>
+                        {(rooms as any[]).map((room: any) => (
+                          <option key={room.room_id} value={room.room_id}>
+                            {room.name}
+                            {room.location ? ` — ${room.location}` : ""}
+                            {` (${room.capacity} مقعد)`}
+                          </option>
+                        ))}
+                      </select>
+                      {selectedRoom && (
+                        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-indigo-50/50 border border-indigo-100 text-xs text-indigo-700">
+                          <DoorOpen className="w-3.5 h-3.5 shrink-0" />
+                          <span className="font-medium">{(selectedRoom as any).name}</span>
+                          {(selectedRoom as any).location && (
+                            <>
+                              <span className="text-indigo-300">•</span>
+                              <MapPin className="w-3 h-3 shrink-0" />
+                              <span>{(selectedRoom as any).location}</span>
+                            </>
+                          )}
+                          <span className="text-indigo-300">•</span>
+                          <Users className="w-3 h-3 shrink-0" />
+                          <span>{(selectedRoom as any).capacity} مقعد</span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-xs text-gray-400">
+                      <DoorOpen className="w-4 h-4" />
+                      <span>لا توجد قاعات. يمكنك إضافتها من صفحة القاعات.</span>
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
                     <FileText className="w-4 h-4 text-indigo-500" />

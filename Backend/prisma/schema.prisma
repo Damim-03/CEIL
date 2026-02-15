@@ -12,42 +12,41 @@ datasource db {
   provider = "postgresql"
 }
 
-
 // ================================================================
 // STUDENT - No direct group_id
 // Groups accessed via enrollments
 // ================================================================
 model Student {
-  student_id      String              @id @default(uuid()) @db.Uuid
-  first_name      String              @db.VarChar(100)
-  last_name       String              @db.VarChar(100)
+  student_id      String        @id @default(uuid()) @db.Uuid
+  first_name      String        @db.VarChar(100)
+  last_name       String        @db.VarChar(100)
   date_of_birth   DateTime?
   gender          Gender?
-  user_id         String              @unique @db.Uuid
-  phone_number    String?             @db.VarChar(35)
-  email           String?             @db.VarChar(100)
-  secondary_email String?             @db.VarChar(100)
+  user_id         String        @unique @db.Uuid
+  phone_number    String?       @db.VarChar(35)
+  email           String?       @db.VarChar(100)
+  secondary_email String?       @db.VarChar(100)
   address         String?
-  nationality     String?             @db.VarChar(50)
+  nationality     String?       @db.VarChar(50)
   language        String?
   avatar_url      String?
-  education_level String?             @db.VarChar(100)
-  study_location  String?             @db.VarChar(100)
-  status          StudentStatus       @default(ACTIVE)
-  created_at      DateTime            @default(now())
-  updated_at      DateTime            @updatedAt
-  
+  education_level String?       @db.VarChar(100)
+  study_location  String?       @db.VarChar(100)
+  status          StudentStatus @default(ACTIVE)
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+
   // ❌ REMOVED: group_id String? @db.Uuid
   // ❌ REMOVED: group Group? @relation(fields: [group_id], references: [group_id])
-  
+
   // Relations
-  attendance      Attendance[]
-  documents       Document[]          @relation("StudentDocuments")
-  enrollments     Enrollment[]        // ✅ Access groups via this
-  fees            Fee[]
-  results         Result[]
-  permissions     StudentPermission[]
-  user            User?
+  attendance  Attendance[]
+  documents   Document[]          @relation("StudentDocuments")
+  enrollments Enrollment[] // ✅ Access groups via this
+  fees        Fee[]
+  results     Result[]
+  permissions StudentPermission[]
+  user        User?
 
   @@map("Student")
 }
@@ -62,10 +61,10 @@ model Teacher {
   email        String?  @db.VarChar(100)
   phone_number String?  @db.VarChar(35)
   created_at   DateTime @default(now())
-  
+
   // Relations
-  groups       Group[]
-  user         User?
+  groups Group[]
+  user   User?
 
   @@map("Teacher")
 }
@@ -74,11 +73,11 @@ model Teacher {
 // COURSE
 // ================================================================
 model Course {
-  course_id   String        @id @default(uuid()) @db.Uuid
-  course_code String?       @unique @db.VarChar(20)
-  course_name String        @db.VarChar(100)
+  course_id   String   @id @default(uuid()) @db.Uuid
+  course_code String?  @unique @db.VarChar(20)
+  course_name String   @db.VarChar(100)
   credits     Int?
-  fee_amount  Decimal?      @db.Decimal(10, 2) @default(1000)
+  fee_amount  Decimal? @default(1000) @db.Decimal(10, 2)
 
   profile       CourseProfile?
   enrollments   Enrollment[]
@@ -90,58 +89,58 @@ model Course {
 }
 
 model CourseProfile {
-  profile_id        String    @id @default(uuid()) @db.Uuid
-  course_id         String    @unique @db.Uuid
+  profile_id String @id @default(uuid()) @db.Uuid
+  course_id  String @unique @db.Uuid
 
-  title_ar          String?   @db.VarChar(200)
-  description       String?   @db.Text
-  description_ar    String?   @db.Text
+  title_ar       String? @db.VarChar(200)
+  description    String? @db.Text
+  description_ar String? @db.Text
 
-  language          String?   @db.VarChar(50)
-  level             String?   @db.VarChar(20)
-  flag_emoji        String?   @db.VarChar(10)
+  language   String? @db.VarChar(50)
+  level      String? @db.VarChar(20)
+  flag_emoji String? @db.VarChar(10)
 
-  price             Decimal?  @db.Decimal(10, 2) @default(0)
-  currency          String?   @db.VarChar(10) @default("DZD")
+  price    Decimal? @default(0) @db.Decimal(10, 2)
+  currency String?  @default("DZD") @db.VarChar(10)
 
-  session_name      String?   @db.VarChar(100)
-  start_date        DateTime?
-  end_date          DateTime?
+  session_name String?   @db.VarChar(100)
+  start_date   DateTime?
+  end_date     DateTime?
 
-  registration_open Boolean   @default(true)
-  is_published      Boolean   @default(false)
+  registration_open Boolean @default(true)
+  is_published      Boolean @default(false)
   image_url         String?
   image_public_id   String?
 
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  course            Course          @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
-  pricing           CoursePricing[]  // ← الإضافة الجديدة
+  course  Course          @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
+  pricing CoursePricing[] // ← الإضافة الجديدة
 
   @@map("CourseProfile")
 }
 
 model CoursePricing {
-  pricing_id   String   @id @default(uuid()) @db.Uuid
-  profile_id   String   @db.Uuid
+  pricing_id String @id @default(uuid()) @db.Uuid
+  profile_id String @db.Uuid
 
-  status_fr    String   @db.VarChar(200)   // "Étudiant(e)"
-  status_ar    String?  @db.VarChar(200)   // "طالب"
-  status_en    String?  @db.VarChar(200)   // "Student"
+  status_fr String  @db.VarChar(200) // "Étudiant(e)"
+  status_ar String? @db.VarChar(200) // "طالب"
+  status_en String? @db.VarChar(200) // "Student"
 
-  price        Decimal  @db.Decimal(10, 2) @default(0)
-  currency     String   @db.VarChar(10)    @default("DA")
-  discount     String?  @db.VarChar(100)   // "Aucune", "50%"
+  price    Decimal @default(0) @db.Decimal(10, 2)
+  currency String  @default("DA") @db.VarChar(10)
+  discount String? @db.VarChar(100) // "Aucune", "50%"
 
-  sort_order   Int      @default(0)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  sort_order Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  profile      CourseProfile @relation(fields: [profile_id], references: [profile_id], onDelete: Cascade)
+  profile CourseProfile @relation(fields: [profile_id], references: [profile_id], onDelete: Cascade)
 
+  enrollments Enrollment[] // ✅ جديد (back-relation)   
 
-  enrollments  Enrollment[]  // ✅ جديد (back-relation)   
   @@map("CoursePricing")
 }
 
@@ -153,9 +152,9 @@ model Department {
   name          String   @unique @db.VarChar(100)
   description   String?
   created_at    DateTime @default(now())
-  
+
   // Relations
-  groups        Group[]
+  groups Group[]
 
   @@map("Department")
 }
@@ -165,20 +164,20 @@ model Department {
 // Students accessed via enrollments
 // ================================================================
 model Group {
-  group_id      String       @id @default(uuid()) @db.Uuid
+  group_id      String      @id @default(uuid()) @db.Uuid
   name          String
-  department_id String?      @db.Uuid
-  course_id     String       @db.Uuid
-  max_students  Int          @default(25)
-  status        GroupStatus  @default(OPEN)
-  teacher_id    String?      @db.Uuid
+  department_id String?     @db.Uuid
+  course_id     String      @db.Uuid
+  max_students  Int         @default(25)
+  status        GroupStatus @default(OPEN)
+  teacher_id    String?     @db.Uuid
   level         Level
 
   enrollments   Enrollment[]
   sessions      Session[]
-  course        Course       @relation(fields: [course_id], references: [course_id])
-  department    Department?  @relation(fields: [department_id], references: [department_id])
-  teacher       Teacher?     @relation(fields: [teacher_id], references: [teacher_id])
+  course        Course         @relation(fields: [course_id], references: [course_id])
+  department    Department?    @relation(fields: [department_id], references: [department_id])
+  teacher       Teacher?       @relation(fields: [teacher_id], references: [teacher_id])
   notifications Notification[]
 
   @@map("Group")
@@ -189,25 +188,25 @@ model Group {
 // Each enrollment can have its own group_id
 // ================================================================
 model Enrollment {
-  enrollment_id       String                @id @default(uuid()) @db.Uuid
-  student_id          String                @db.Uuid
-  course_id           String                @db.Uuid
-  group_id            String?               @db.Uuid  // ✅ Group stored here
-  enrollment_date     DateTime              @default(now())
+  enrollment_id       String             @id @default(uuid()) @db.Uuid
+  student_id          String             @db.Uuid
+  course_id           String             @db.Uuid
+  group_id            String?            @db.Uuid // ✅ Group stored here
+  enrollment_date     DateTime           @default(now())
   level               Level?
   start_date          DateTime?
   end_date            DateTime?
-  registration_status RegistrationStatus    @default(PENDING)
+  registration_status RegistrationStatus @default(PENDING)
 
-  pricing_id          String?               @db.Uuid  // ✅ جديد
-pricing             CoursePricing?        @relation(fields: [pricing_id], references: [pricing_id], onDelete: SetNull) // ✅ جديد
-  
+  pricing_id String?        @db.Uuid // ✅ جديد
+  pricing    CoursePricing? @relation(fields: [pricing_id], references: [pricing_id], onDelete: SetNull) // ✅ جديد
+
   // Relations
-  course              Course                @relation(fields: [course_id], references: [course_id])
-  group               Group?                @relation(fields: [group_id], references: [group_id]) // ✅ Direct relation
-  student             Student               @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
-  fees                Fee[]
-  history             RegistrationHistory[]
+  course  Course                @relation(fields: [course_id], references: [course_id])
+  group   Group?                @relation(fields: [group_id], references: [group_id]) // ✅ Direct relation
+  student Student               @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  fees    Fee[]
+  history RegistrationHistory[]
 
   // ✅ Ensures one enrollment per student per course
   @@unique([student_id, course_id])
@@ -218,16 +217,32 @@ pricing             CoursePricing?        @relation(fields: [pricing_id], refere
 // SESSION
 // ================================================================
 model Session {
-  session_id   String       @id @default(uuid()) @db.Uuid
-  group_id     String       @db.Uuid
+  session_id   String   @id @default(uuid()) @db.Uuid
+  group_id     String   @db.Uuid
   session_date DateTime
+  end_time     DateTime?
   topic        String?
-  
+  room_id      String?  @db.Uuid
+
   // Relations
-  attendance   Attendance[]
-  group        Group        @relation(fields: [group_id], references: [group_id])
+  attendance Attendance[]
+  group      Group        @relation(fields: [group_id], references: [group_id])
+  room       Room?        @relation(fields: [room_id], references: [room_id])
 
   @@map("Session")
+}
+
+model Room {
+  room_id    String   @id @default(uuid()) @db.Uuid
+  name       String   @unique
+  capacity   Int      @default(30)
+  location   String?
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  sessions Session[]
+
+  @@map("Room")
 }
 
 // ================================================================
@@ -238,10 +253,10 @@ model Attendance {
   session_id    String           @db.Uuid
   student_id    String           @db.Uuid
   status        AttendanceStatus
-  
+
   // Relations
-  session       Session          @relation(fields: [session_id], references: [session_id], onDelete: Restrict)
-  student       Student          @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  session Session @relation(fields: [session_id], references: [session_id], onDelete: Restrict)
+  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
 
   @@unique([session_id, student_id])
   @@map("Attendance")
@@ -256,10 +271,10 @@ model Exam {
   exam_name String?
   exam_date DateTime
   max_marks Int
-  
+
   // Relations
-  course    Course   @relation(fields: [course_id], references: [course_id])
-  results   Result[]
+  course  Course   @relation(fields: [course_id], references: [course_id])
+  results Result[]
 
   @@map("Exam")
 }
@@ -273,10 +288,10 @@ model Result {
   student_id     String  @db.Uuid
   marks_obtained Int
   grade          String?
-  
+
   // Relations
-  exam           Exam    @relation(fields: [exam_id], references: [exam_id], onDelete: Cascade)
-  student        Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  exam    Exam    @relation(fields: [exam_id], references: [exam_id], onDelete: Cascade)
+  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
 
   @@unique([exam_id, student_id])
   @@map("Result")
@@ -286,19 +301,19 @@ model Result {
 // FEE
 // ================================================================
 model Fee {
-  fee_id         String      @id @default(uuid()) @db.Uuid
-  student_id     String      @db.Uuid
-  enrollment_id  String?     @db.Uuid
-  amount         Decimal     @db.Decimal(10, 2)
+  fee_id         String    @id @default(uuid()) @db.Uuid
+  student_id     String    @db.Uuid
+  enrollment_id  String?   @db.Uuid
+  amount         Decimal   @db.Decimal(10, 2)
   due_date       DateTime
-  status         FeeStatus   @default(UNPAID)
-  payment_method String?     @db.VarChar(30)
-  reference_code String?     @db.VarChar(100)
+  status         FeeStatus @default(UNPAID)
+  payment_method String?   @db.VarChar(30)
+  reference_code String?   @db.VarChar(100)
   paid_at        DateTime?
-  
+
   // Relations
-  enrollment     Enrollment? @relation(fields: [enrollment_id], references: [enrollment_id])
-  student        Student     @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  enrollment Enrollment? @relation(fields: [enrollment_id], references: [enrollment_id])
+  student    Student     @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
 
   @@map("Fee")
 }
@@ -316,9 +331,9 @@ model Document {
   reviewed_at DateTime?
   reviewed_by String?        @db.Uuid
   uploaded_at DateTime       @default(now())
-  
+
   // Relations
-  student     Student        @relation("StudentDocuments", fields: [student_id], references: [student_id])
+  student Student @relation("StudentDocuments", fields: [student_id], references: [student_id])
 
   @@map("Document")
 }
@@ -327,12 +342,12 @@ model Document {
 // PERMISSION
 // ================================================================
 model Permission {
-  permission_id String              @id @default(uuid()) @db.Uuid
-  name          String              @unique
+  permission_id String  @id @default(uuid()) @db.Uuid
+  name          String  @unique
   description   String?
-  
+
   // Relations
-  students      StudentPermission[]
+  students StudentPermission[]
 
   @@map("Permission")
 }
@@ -341,12 +356,12 @@ model Permission {
 // STUDENT PERMISSION (Junction Table)
 // ================================================================
 model StudentPermission {
-  student_id    String     @db.Uuid
-  permission_id String     @db.Uuid
-  
+  student_id    String @db.Uuid
+  permission_id String @db.Uuid
+
   // Relations
-  permission    Permission @relation(fields: [permission_id], references: [permission_id], onDelete: Cascade)
-  student       Student    @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  permission Permission @relation(fields: [permission_id], references: [permission_id], onDelete: Cascade)
+  student    Student    @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
 
   @@id([student_id, permission_id])
   @@map("StudentPermission")
@@ -362,9 +377,9 @@ model RegistrationHistory {
   new_status    RegistrationStatus
   changed_at    DateTime           @default(now())
   changed_by    String?            @db.Uuid
-  
+
   // Relations
-  enrollment    Enrollment         @relation(fields: [enrollment_id], references: [enrollment_id], onDelete: Cascade)
+  enrollment Enrollment @relation(fields: [enrollment_id], references: [enrollment_id], onDelete: Cascade)
 
   @@map("RegistrationHistory")
 }
@@ -373,21 +388,21 @@ model RegistrationHistory {
 // USER
 // ================================================================
 model User {
-  user_id        String         @id @default(uuid()) @db.Uuid
-  email          String         @unique @db.VarChar(100)
-  password       String?
-  role           UserRole       @default(STUDENT)
-  is_active      Boolean        @default(true)
-  google_id      String?        @unique
-  google_email   String?
-  google_avatar  String?
-  student_id     String?        @unique @db.Uuid
-  teacher_id     String?        @unique @db.Uuid
-  created_at     DateTime       @default(now())
+  user_id       String   @id @default(uuid()) @db.Uuid
+  email         String   @unique @db.VarChar(100)
+  password      String?
+  role          UserRole @default(STUDENT)
+  is_active     Boolean  @default(true)
+  google_id     String?  @unique
+  google_email  String?
+  google_avatar String?
+  student_id    String?  @unique @db.Uuid
+  teacher_id    String?  @unique @db.Uuid
+  created_at    DateTime @default(now())
 
   refresh_tokens RefreshToken[]
-  student        Student?       @relation(fields: [student_id], references: [student_id])
-  teacher        Teacher?       @relation(fields: [teacher_id], references: [teacher_id])
+  student        Student?                @relation(fields: [student_id], references: [student_id])
+  teacher        Teacher?                @relation(fields: [teacher_id], references: [teacher_id])
   notifications  NotificationRecipient[]
 
   @@map("User")
@@ -402,63 +417,63 @@ model RefreshToken {
   token      String   @unique
   expires_at DateTime
   created_at DateTime @default(now())
-  
+
   // Relations
-  user       User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
   @@index([user_id])
   @@map("RefreshToken")
 }
 
 model Announcement {
-  announcement_id   String    @id @default(uuid())
+  announcement_id String @id @default(uuid())
 
-  title             String
-  title_ar          String?
-  content           String    @db.Text
-  content_ar        String?   @db.Text
-  excerpt           String?
-  excerpt_ar        String?
+  title      String
+  title_ar   String?
+  content    String  @db.Text
+  content_ar String? @db.Text
+  excerpt    String?
+  excerpt_ar String?
 
-  category          String?
+  category String?
 
-  image_url         String?
-  image_public_id   String?
+  image_url       String?
+  image_public_id String?
 
-  is_published      Boolean   @default(false)
-  published_at      DateTime?
+  is_published Boolean   @default(false)
+  published_at DateTime?
 
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@map("announcements")
 }
 
 model Notification {
-  notification_id   String               @id @default(uuid()) @db.Uuid
-  
+  notification_id String @id @default(uuid()) @db.Uuid
+
   // Content
-  title             String               @db.VarChar(200)
-  title_ar          String?              @db.VarChar(200)
-  message           String               @db.Text
-  message_ar        String?              @db.Text
-  
+  title      String  @db.VarChar(200)
+  title_ar   String? @db.VarChar(200)
+  message    String  @db.Text
+  message_ar String? @db.Text
+
   // Targeting
-  target_type       NotificationTarget   // ALL_STUDENTS, ALL_TEACHERS, SPECIFIC_STUDENTS, SPECIFIC_TEACHERS, GROUP, COURSE
-  
+  target_type NotificationTarget // ALL_STUDENTS, ALL_TEACHERS, SPECIFIC_STUDENTS, SPECIFIC_TEACHERS, GROUP, COURSE
+
   // Optional filters (used based on target_type)
-  course_id         String?              @db.Uuid
-  group_id          String?              @db.Uuid
-  
+  course_id String? @db.Uuid
+  group_id  String? @db.Uuid
+
   // Meta
-  priority          NotificationPriority @default(NORMAL)
-  created_by        String?              @db.Uuid
-  created_at        DateTime             @default(now())
-  
+  priority   NotificationPriority @default(NORMAL)
+  created_by String?              @db.Uuid
+  created_at DateTime             @default(now())
+
   // Relations
-  course            Course?              @relation(fields: [course_id], references: [course_id], onDelete: SetNull)
-  group             Group?               @relation(fields: [group_id], references: [group_id], onDelete: SetNull)
-  recipients        NotificationRecipient[]
+  course     Course?                 @relation(fields: [course_id], references: [course_id], onDelete: SetNull)
+  group      Group?                  @relation(fields: [group_id], references: [group_id], onDelete: SetNull)
+  recipients NotificationRecipient[]
 
   @@map("Notification")
 }
@@ -467,15 +482,15 @@ model Notification {
 // NOTIFICATION RECIPIENT - Track who received & read
 // ================================================================
 model NotificationRecipient {
-  recipient_id      String             @id @default(uuid()) @db.Uuid
-  notification_id   String             @db.Uuid
-  user_id           String             @db.Uuid
-  is_read           Boolean            @default(false)
-  read_at           DateTime?
-  
+  recipient_id    String    @id @default(uuid()) @db.Uuid
+  notification_id String    @db.Uuid
+  user_id         String    @db.Uuid
+  is_read         Boolean   @default(false)
+  read_at         DateTime?
+
   // Relations
-  notification      Notification       @relation(fields: [notification_id], references: [notification_id], onDelete: Cascade)
-  user              User               @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  notification Notification @relation(fields: [notification_id], references: [notification_id], onDelete: Cascade)
+  user         User         @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
   @@unique([notification_id, user_id])
   @@index([user_id, is_read])
@@ -490,8 +505,8 @@ enum NotificationTarget {
   ALL_TEACHERS
   SPECIFIC_STUDENTS
   SPECIFIC_TEACHERS
-  GROUP           // All students in a specific group
-  COURSE          // All students enrolled in a course
+  GROUP // All students in a specific group
+  COURSE // All students enrolled in a course
 }
 
 enum NotificationPriority {

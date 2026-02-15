@@ -143,6 +143,52 @@ export type NotificationTargetType =
   | "GROUP"
   | "COURSE";
 
+export interface Room {
+  room_id: string;
+  name: string;
+  capacity: number;
+  location: string | null;
+  is_active: boolean;
+  created_at: string;
+  _count: { sessions: number };
+}
+
+export interface RoomScheduleOverview {
+  date: string;
+  total_rooms: number;
+  occupied_now: number;
+  rooms: Array<{
+    room_id: string;
+    name: string;
+    capacity: number;
+    location: string | null;
+    sessions_today: number;
+    is_occupied: boolean;
+    sessions: Array<{
+      session_id: string;
+      session_date: string;
+      end_time: string | null;
+      topic: string | null;
+      group_name: string;
+      course_name: string;
+      teacher_name: string | null;
+    }>;
+  }>;
+}
+
+export interface CreateRoomPayload {
+  name: string;
+  capacity?: number;
+  location?: string;
+}
+
+export interface UpdateRoomPayload {
+  name?: string;
+  capacity?: number;
+  location?: string;
+  is_active?: boolean;
+}
+
 export type NotificationPriorityType = "LOW" | "NORMAL" | "HIGH" | "URGENT";
 
 export interface NotificationPayload {
@@ -650,21 +696,26 @@ export const adminSessionsApi = {
     return res.data;
   },
 
-  // ✅ FIXED: Only send group_id (course & teacher come from group)
+  // ✅ Updated: أضف room_id
   async create(payload: {
     group_id: string;
     session_date: string;
+    end_time?: string;
     topic?: string;
+    room_id?: string; // ← جديد
   }): Promise<Session> {
     const res = await axiosInstance.post("/admin/sessions", payload);
     return res.data;
   },
 
+  // ✅ Updated: أضف room_id
   async update(
     sessionId: string,
     payload: {
       session_date?: string;
+      end_time?: string | null;
       topic?: string;
+      room_id?: string | null; // ← جديد (null = إزالة القاعة)
     },
   ): Promise<Session> {
     const res = await axiosInstance.put(
@@ -682,6 +733,18 @@ export const adminSessionsApi = {
   async getAttendance(sessionId: string) {
     const res = await axiosInstance.get(
       `/admin/sessions/${sessionId}/attendance`,
+    );
+    return res.data;
+  },
+
+  // لم يتغير
+  async markAttendance(
+    sessionId: string,
+    payload: { studentId: string; status: string },
+  ) {
+    const res = await axiosInstance.post(
+      `/admin/sessions/${sessionId}/attendance`,
+      payload,
     );
     return res.data;
   },
@@ -1320,6 +1383,67 @@ export const userNotificationApi = {
   searchStudents: async (query: string) => {
     const { data } = await axiosInstance.get(
       `/admin/notifications/search-students?q=${encodeURIComponent(query)}`,
+    );
+    return data;
+  },
+};
+
+export const adminRoomsApi = {
+  async getAll(params?: {
+    include_sessions?: boolean;
+    active_only?: boolean;
+  }): Promise<Room[]> {
+    const { data } = await axiosInstance.get("/admin/rooms", { params });
+    return data;
+  },
+
+  async getById(roomId: string): Promise<Room> {
+    const { data } = await axiosInstance.get(`/admin/rooms/${roomId}`);
+    return data;
+  },
+
+  async create(
+    payload: CreateRoomPayload,
+  ): Promise<{ message: string; room: Room }> {
+    const { data } = await axiosInstance.post("/admin/rooms", payload);
+    return data;
+  },
+
+  async update(
+    roomId: string,
+    payload: UpdateRoomPayload,
+  ): Promise<{ message: string; room: Room }> {
+    const { data } = await axiosInstance.put(`/admin/rooms/${roomId}`, payload);
+    return data;
+  },
+
+  async delete(
+    roomId: string,
+  ): Promise<{ message: string; deactivated?: boolean }> {
+    const { data } = await axiosInstance.delete(`/admin/rooms/${roomId}`);
+    return data;
+  },
+
+  async getScheduleOverview(date: string): Promise<RoomScheduleOverview> {
+    const { data } = await axiosInstance.get("/admin/rooms/schedule/overview", {
+      params: { date },
+    });
+    return data;
+  },
+
+  async checkAvailability(
+    roomId: string,
+    date: string,
+    duration?: number,
+  ): Promise<{
+    available: boolean;
+    conflicts: any[];
+  }> {
+    const { data } = await axiosInstance.get(
+      `/admin/rooms/${roomId}/availability`,
+      {
+        params: { date, duration },
+      },
     );
     return data;
   },

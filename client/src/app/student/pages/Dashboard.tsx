@@ -466,6 +466,7 @@ export default function Dashboard() {
 /* ═══════ CIRCULAR PROGRESS ═══════ */
 
 function CircularProgress({ percentage, color }: CircularProgressProps) {
+  const { t } = useTranslation();
   const radius = 70;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
@@ -528,6 +529,7 @@ function CircularProgress({ percentage, color }: CircularProgressProps) {
 /* ═══════ DONUT CHART ═══════ */
 
 function DonutChart({ approved, pending, rejected, total }: DonutChartProps) {
+  const { t } = useTranslation();
   if (total === 0) {
     return (
       <div className="w-48 h-48 flex items-center justify-center">

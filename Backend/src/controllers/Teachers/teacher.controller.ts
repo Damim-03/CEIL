@@ -235,6 +235,7 @@ export const teacherDashboardController = async (
       group: {
         include: { course: true },
       },
+      room: true, // ← جديد
       _count: { select: { attendance: true } },
     },
     orderBy: { session_date: "asc" },
@@ -253,6 +254,7 @@ export const teacherDashboardController = async (
       group: {
         include: { course: true },
       },
+      room: true, // ← جديد
       _count: { select: { attendance: true } },
     },
     orderBy: { session_date: "desc" },
@@ -295,6 +297,17 @@ export const teacherDashboardController = async (
     take: 5,
   });
 
+  // ── Live session detection ──
+  // Check if any session is currently active (now between start and end)
+  const allTodaySessions = [...upcomingSessions, ...recentSessions];
+  const liveSession = allTodaySessions.find((s) => {
+    const start = new Date(s.session_date);
+    const end = s.end_time
+      ? new Date(s.end_time)
+      : new Date(start.getTime() + 90 * 60000);
+    return now >= start && now <= end;
+  });
+
   return res.json({
     teacher: {
       teacher_id: teacher.teacher_id,
@@ -320,6 +333,7 @@ export const teacherDashboardController = async (
     upcoming_sessions: upcomingSessions,
     recent_sessions: recentSessions,
     upcoming_exams: upcomingExams,
+    live_session: liveSession || null, // ← جديد
   });
 };
 
@@ -506,6 +520,7 @@ export const getTeacherSessionsController = async (
           },
         },
       },
+      room: true, // ← جديد
       _count: { select: { attendance: true } },
     },
     orderBy: { session_date: "desc" },
@@ -540,7 +555,7 @@ export const createTeacherSessionController = async (
   res: Response,
 ) => {
   const user = (req as any).user as JwtUser;
-  const { group_id, session_date, topic } = req.body;
+  const { group_id, session_date, end_time, topic } = req.body; // ← end_time جديد
   const teacher = await getTeacherFromUser(user);
 
   if (!teacher) {
@@ -562,10 +577,24 @@ export const createTeacherSessionController = async (
     });
   }
 
+  // ── Validate end_time ──
+  const startDate = new Date(session_date);
+  let endDate: Date | null = null;
+
+  if (end_time) {
+    endDate = new Date(end_time);
+    if (endDate <= startDate) {
+      return res.status(400).json({
+        message: "وقت الانتهاء يجب أن يكون بعد وقت البداية",
+      });
+    }
+  }
+
   const session = await prisma.session.create({
     data: {
       group_id,
-      session_date: new Date(session_date),
+      session_date: startDate,
+      end_time: endDate, // ← جديد
       topic: topic || null,
     },
     include: {
@@ -574,6 +603,7 @@ export const createTeacherSessionController = async (
           course: true,
         },
       },
+      room: true,
     },
   });
 
@@ -601,13 +631,33 @@ export const updateTeacherSessionController = async (
     });
   }
 
-  const { session_date, topic } = req.body;
+  const { session_date, end_time, topic } = req.body; // ← end_time جديد
+
+  // ── Validate end_time ──
+  const effectiveStart = session_date
+    ? new Date(session_date)
+    : session.session_date;
+  let effectiveEnd: Date | null | undefined = undefined;
+
+  if (end_time !== undefined) {
+    effectiveEnd = end_time ? new Date(end_time) : null;
+    if (effectiveEnd && effectiveEnd <= effectiveStart) {
+      return res.status(400).json({
+        message: "وقت الانتهاء يجب أن يكون بعد وقت البداية",
+      });
+    }
+  }
 
   const updated = await prisma.session.update({
     where: { session_id: sessionId },
     data: {
       session_date: session_date ? new Date(session_date) : undefined,
+      end_time: effectiveEnd, // ← جديد
       topic: topic !== undefined ? topic : undefined,
+    },
+    include: {
+      group: { include: { course: true } },
+      room: true,
     },
   });
 
@@ -718,6 +768,7 @@ export const getSessionAttendanceController = async (
   return res.json({
     session_id: sessionId,
     session_date: session.session_date,
+    end_time: session.end_time, // ← جديد
     topic: session.topic,
     group_name: session.group?.name,
     total_students: enrollments.length,
@@ -798,7 +849,6 @@ export const markBulkAttendanceController = async (
   const user = (req as any).user as JwtUser;
   const { sessionId } = req.params;
   const { records } = req.body;
-  // records = [{ student_id: "...", status: "PRESENT" | "ABSENT" }, ...]
   const teacher = await getTeacherFromUser(user);
 
   if (!teacher) {
@@ -873,7 +923,6 @@ export const getTeacherExamsController = async (
     return res.status(404).json({ message: "Teacher profile not found" });
   }
 
-  // ── Get course IDs from assigned groups ──
   const groups = await prisma.group.findMany({
     where: { teacher_id: teacher.teacher_id },
     select: { course_id: true },
@@ -921,7 +970,6 @@ export const createTeacherExamController = async (
     });
   }
 
-  // ── Verify teacher is assigned to a group in this course ──
   const group = await prisma.group.findFirst({
     where: {
       teacher_id: teacher.teacher_id,
@@ -969,7 +1017,6 @@ export const updateTeacherExamController = async (
     return res.status(404).json({ message: "Exam not found" });
   }
 
-  // ── Verify teacher teaches this course ──
   const group = await prisma.group.findFirst({
     where: {
       teacher_id: teacher.teacher_id,
@@ -1024,7 +1071,6 @@ export const deleteTeacherExamController = async (
     return res.status(404).json({ message: "Exam not found" });
   }
 
-  // ── Verify teacher teaches this course ──
   const group = await prisma.group.findFirst({
     where: {
       teacher_id: teacher.teacher_id,
@@ -1071,7 +1117,6 @@ export const getExamResultsController = async (req: Request, res: Response) => {
     return res.status(404).json({ message: "Exam not found" });
   }
 
-  // ── Verify teacher teaches this course ──
   const group = await prisma.group.findFirst({
     where: {
       teacher_id: teacher.teacher_id,
@@ -1143,7 +1188,6 @@ export const addExamResultController = async (req: Request, res: Response) => {
     return res.status(404).json({ message: "Exam not found" });
   }
 
-  // ── Verify teacher teaches this course ──
   const group = await prisma.group.findFirst({
     where: {
       teacher_id: teacher.teacher_id,
@@ -1163,7 +1207,6 @@ export const addExamResultController = async (req: Request, res: Response) => {
     });
   }
 
-  // ── Verify student is enrolled ──
   const enrollment = await prisma.enrollment.findFirst({
     where: {
       student_id,
@@ -1204,7 +1247,6 @@ export const addBulkExamResultsController = async (
   const user = (req as any).user as JwtUser;
   const { examId } = req.params;
   const { results: records } = req.body;
-  // records = [{ student_id, marks_obtained, grade? }, ...]
   const teacher = await getTeacherFromUser(user);
 
   if (!teacher) {
@@ -1225,7 +1267,6 @@ export const addBulkExamResultsController = async (
     return res.status(404).json({ message: "Exam not found" });
   }
 
-  // ── Verify teacher teaches this course ──
   const group = await prisma.group.findFirst({
     where: {
       teacher_id: teacher.teacher_id,
@@ -1239,7 +1280,6 @@ export const addBulkExamResultsController = async (
     });
   }
 
-  // ── Validate marks ──
   const invalid = records.filter(
     (r: any) => r.marks_obtained < 0 || r.marks_obtained > exam.max_marks,
   );
@@ -1251,7 +1291,6 @@ export const addBulkExamResultsController = async (
     });
   }
 
-  // ── Bulk upsert ──
   const results = await prisma.$transaction(
     records.map(
       (r: { student_id: string; marks_obtained: number; grade?: string }) =>
@@ -1338,6 +1377,7 @@ export const getGroupDetailsController = async (
         orderBy: { session_date: "desc" },
         take: 10,
         include: {
+          room: true, // ← جديد
           _count: {
             select: { attendance: true },
           },
@@ -1375,8 +1415,7 @@ export const getGroupDetailsController = async (
     0,
   );
   const presentCount = allSessions.reduce(
-    (sum, s) =>
-      sum + s.attendance.filter((a) => a.status === "PRESENT").length,
+    (sum, s) => sum + s.attendance.filter((a) => a.status === "PRESENT").length,
     0,
   );
   const attendanceRate =
@@ -1412,14 +1451,13 @@ export const getStudentAttendanceController = async (
 ) => {
   const user = (req as any).user as JwtUser;
   const { studentId } = req.params;
-  const { groupId } = req.query; // optional filter by group
+  const { groupId } = req.query;
   const teacher = await getTeacherFromUser(user);
 
   if (!teacher) {
     return res.status(404).json({ message: "Teacher profile not found" });
   }
 
-  // Get teacher's group IDs
   const teacherGroups = await prisma.group.findMany({
     where: { teacher_id: teacher.teacher_id },
     select: { group_id: true },
@@ -1433,7 +1471,6 @@ export const getStudentAttendanceController = async (
     });
   }
 
-  // Verify student is in one of the teacher's groups
   const studentEnrollment = await prisma.enrollment.findFirst({
     where: {
       student_id: studentId,
@@ -1459,12 +1496,10 @@ export const getStudentAttendanceController = async (
     });
   }
 
-  // Build session filter
   const sessionFilter: any = {
     group_id: { in: teacherGroupIds },
   };
 
-  // If groupId provided, narrow to that specific group
   if (groupId && typeof groupId === "string") {
     if (!teacherGroupIds.includes(groupId)) {
       return res.status(403).json({
@@ -1474,7 +1509,6 @@ export const getStudentAttendanceController = async (
     sessionFilter.group_id = groupId;
   }
 
-  // Get all sessions in the teacher's groups
   const sessions = await prisma.session.findMany({
     where: sessionFilter,
     orderBy: { session_date: "desc" },
@@ -1494,7 +1528,6 @@ export const getStudentAttendanceController = async (
     },
   });
 
-  // Get attendance records for this student
   const attendance = await prisma.attendance.findMany({
     where: {
       student_id: studentId,
@@ -1506,16 +1539,15 @@ export const getStudentAttendanceController = async (
     attendance.map((a) => [a.session_id, a.status]),
   );
 
-  // Build full attendance history
   const history = sessions.map((session) => ({
     session_id: session.session_id,
     session_date: session.session_date,
+    end_time: session.end_time, // ← جديد
     topic: session.topic,
     group: session.group,
     status: attendanceMap.get(session.session_id) || "NOT_RECORDED",
   }));
 
-  // Calculate summary
   const recorded = history.filter((h) => h.status !== "NOT_RECORDED");
   const present = recorded.filter((h) => h.status === "PRESENT").length;
   const absent = recorded.filter((h) => h.status === "ABSENT").length;
@@ -1529,9 +1561,7 @@ export const getStudentAttendanceController = async (
       absent,
       not_recorded: history.length - recorded.length,
       attendance_rate:
-        recorded.length > 0
-          ? Math.round((present / recorded.length) * 100)
-          : 0,
+        recorded.length > 0 ? Math.round((present / recorded.length) * 100) : 0,
     },
     history,
   });
@@ -1553,15 +1583,12 @@ export const getStudentResultsController = async (
     return res.status(404).json({ message: "Teacher profile not found" });
   }
 
-  // Get courses the teacher teaches (via groups)
   const teacherGroups = await prisma.group.findMany({
     where: { teacher_id: teacher.teacher_id },
     select: { course_id: true, group_id: true },
   });
 
-  const teacherCourseIds = [
-    ...new Set(teacherGroups.map((g) => g.course_id)),
-  ];
+  const teacherCourseIds = [...new Set(teacherGroups.map((g) => g.course_id))];
   const teacherGroupIds = teacherGroups.map((g) => g.group_id);
 
   if (teacherCourseIds.length === 0) {
@@ -1570,7 +1597,6 @@ export const getStudentResultsController = async (
     });
   }
 
-  // Verify student is in one of the teacher's groups
   const studentEnrollment = await prisma.enrollment.findFirst({
     where: {
       student_id: studentId,
@@ -1596,7 +1622,6 @@ export const getStudentResultsController = async (
     });
   }
 
-  // Get results for this student in the teacher's courses only
   const results = await prisma.result.findMany({
     where: {
       student_id: studentId,
@@ -1624,7 +1649,6 @@ export const getStudentResultsController = async (
     },
   });
 
-  // Calculate summary
   const totalExams = results.length;
   const totalMarks = results.reduce((sum, r) => sum + r.marks_obtained, 0);
   const totalMaxMarks = results.reduce((sum, r) => sum + r.exam.max_marks, 0);
@@ -1659,10 +1683,7 @@ export const getStudentResultsController = async (
 //  4. GROUP STATS  —  GET /me/groups/:groupId/stats
 // ═══════════════════════════════════════════════════════════
 
-export const getGroupStatsController = async (
-  req: Request,
-  res: Response,
-) => {
+export const getGroupStatsController = async (req: Request, res: Response) => {
   const user = (req as any).user as JwtUser;
   const { groupId } = req.params;
   const teacher = await getTeacherFromUser(user);
@@ -1671,7 +1692,6 @@ export const getGroupStatsController = async (
     return res.status(404).json({ message: "Teacher profile not found" });
   }
 
-  // Verify ownership
   const group = await prisma.group.findFirst({
     where: {
       group_id: groupId,
@@ -1693,7 +1713,6 @@ export const getGroupStatsController = async (
     });
   }
 
-  // ── Student count ──
   const studentCount = await prisma.enrollment.count({
     where: {
       group_id: groupId,
@@ -1701,7 +1720,6 @@ export const getGroupStatsController = async (
     },
   });
 
-  // ── Sessions ──
   const sessions = await prisma.session.findMany({
     where: { group_id: groupId },
     include: {
@@ -1716,14 +1734,12 @@ export const getGroupStatsController = async (
   ).length;
   const upcomingSessions = totalSessions - pastSessions;
 
-  // ── Attendance ──
   const totalAttendanceRecords = sessions.reduce(
     (sum, s) => sum + s.attendance.length,
     0,
   );
   const presentCount = sessions.reduce(
-    (sum, s) =>
-      sum + s.attendance.filter((a) => a.status === "PRESENT").length,
+    (sum, s) => sum + s.attendance.filter((a) => a.status === "PRESENT").length,
     0,
   );
   const absentCount = totalAttendanceRecords - presentCount;
@@ -1732,12 +1748,12 @@ export const getGroupStatsController = async (
       ? Math.round((presentCount / totalAttendanceRecords) * 100)
       : 0;
 
-  // ── Attendance per session (for chart) ──
   const attendanceBySession = sessions
     .filter((s) => s.attendance.length > 0)
     .map((s) => ({
       session_id: s.session_id,
       date: s.session_date,
+      end_time: s.end_time, // ← جديد
       topic: s.topic,
       total: s.attendance.length,
       present: s.attendance.filter((a) => a.status === "PRESENT").length,
@@ -1749,7 +1765,6 @@ export const getGroupStatsController = async (
       ),
     }));
 
-  // ── Exams & Results ──
   const exams = await prisma.exam.findMany({
     where: { course_id: group.course_id },
     include: {
@@ -1779,9 +1794,7 @@ export const getGroupStatsController = async (
         : 0;
     const highest = marks.length > 0 ? Math.max(...marks) : 0;
     const lowest = marks.length > 0 ? Math.min(...marks) : 0;
-    const passCount = marks.filter(
-      (m) => m >= exam.max_marks * 0.5,
-    ).length;
+    const passCount = marks.filter((m) => m >= exam.max_marks * 0.5).length;
 
     return {
       exam_id: exam.exam_id,
@@ -1799,7 +1812,6 @@ export const getGroupStatsController = async (
     };
   });
 
-  // ── Students with most absences ──
   const studentAbsences = await prisma.attendance.groupBy({
     by: ["student_id"],
     where: {
@@ -1965,7 +1977,7 @@ export const getTeacherScheduleController = async (
     return res.status(404).json({ message: "Teacher profile not found" });
   }
 
-  const days = Number(req.query.days) || 30; // default next 30 days
+  const days = Number(req.query.days) || 30;
   const now = new Date();
   const futureDate = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
 
@@ -1991,6 +2003,7 @@ export const getTeacherScheduleController = async (
           },
         },
       },
+      room: true, // ← جديد
     },
     orderBy: { session_date: "asc" },
   });
@@ -2010,3 +2023,98 @@ export const getTeacherScheduleController = async (
   });
 };
 
+export const getTeacherRoomsOverviewController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const user = req.user as JwtUser;
+    const teacher = await getTeacherFromUser(user);
+    if (!teacher) {
+      return res.status(403).json({ message: "غير مصرح لك" });
+    }
+
+    const { date } = req.query;
+
+    // Default to today
+    const targetDate = date ? new Date(date as string) : new Date();
+    const dayStart = new Date(targetDate);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(targetDate);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    // Get all active rooms with their sessions for this day
+    const rooms = await prisma.room.findMany({
+      where: { is_active: true },
+      include: {
+        sessions: {
+          where: {
+            session_date: { gte: dayStart, lte: dayEnd },
+          },
+          orderBy: { session_date: "asc" },
+          include: {
+            group: {
+              include: {
+                course: {
+                  select: {
+                    course_id: true,
+                    course_name: true,
+                    course_code: true,
+                  },
+                },
+                teacher: {
+                  select: {
+                    teacher_id: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { name: "asc" },
+    });
+
+    const overview = rooms.map((room) => ({
+      room_id: room.room_id,
+      name: room.name,
+      capacity: room.capacity,
+      location: room.location,
+      sessions_count: room.sessions.length,
+      sessions: room.sessions.map((s) => ({
+        session_id: s.session_id,
+        session_date: s.session_date,
+        end_time: s.end_time,
+        topic: s.topic,
+        group_name: s.group.name,
+        course_name: s.group.course.course_name,
+        course_code: s.group.course.course_code,
+        teacher_name: s.group.teacher
+          ? `${s.group.teacher.first_name} ${s.group.teacher.last_name}`
+          : null,
+        is_mine: s.group.teacher?.teacher_id === teacher.teacher_id,
+      })),
+      is_occupied: room.sessions.some((s) => {
+        const now = new Date();
+        const sessionStart = new Date(s.session_date);
+        const sessionEnd = s.end_time
+          ? new Date(s.end_time)
+          : new Date(sessionStart.getTime() + 90 * 60000);
+        return now >= sessionStart && now <= sessionEnd;
+      }),
+    }));
+
+    return res.json({
+      date: targetDate.toISOString().split("T")[0],
+      total_rooms: rooms.length,
+      occupied_now: overview.filter((r) => r.is_occupied).length,
+      free_now: overview.filter((r) => !r.is_occupied).length,
+      rooms: overview,
+    });
+  } catch (error) {
+    console.error("getTeacherRoomsOverview error:", error);
+    return res.status(500).json({ message: "حدث خطأ أثناء جلب ملخص القاعات" });
+  }
+};

@@ -5,6 +5,8 @@
  * Permissions = WHAT the user can do
  */
 
+import { permission } from "node:process";
+
 /* ================= ROLES ================= */
 
 export const Roles = {
@@ -59,6 +61,10 @@ export const Permissions = {
 
   MANAGE_DOCUMENTS: "MANAGE_DOCUMENTS",
 
+  MANAGE_ROOMS: "MANAGE_ROOMS",
+
+  VIEW_ROOMS: "VIEW_ROOMS",
+
   MANAGE_ANNOUNCEMENTS: "MANAGE_ANNOUNCEMENTS",
 
   VIEW_REPORTS: "VIEW_REPORTS",
@@ -86,6 +92,8 @@ export const RolePermissions: Record<RoleType, PermissionType[]> = {
     Permissions.MANAGE_EXAMS,
     Permissions.MANAGE_RESULTS,
 
+    Permissions.MANAGE_ROOMS,
+
     Permissions.MANAGE_FEES,
     Permissions.MANAGE_PERMISSIONS,
 
@@ -103,6 +111,8 @@ export const RolePermissions: Record<RoleType, PermissionType[]> = {
     Permissions.CREATE_EXAMS,
     Permissions.UPDATE_EXAMS,
     Permissions.ENTER_RESULTS,
+
+    Permissions.MANAGE_ROOMS,
 
     Permissions.VIEW_STUDENTS,
   ],

@@ -68,6 +68,8 @@ import TeacherGroupStats from "./app/teacher/pages/groups/TeacherGroupStats";
 import TeacherSchedule from "./app/teacher/pages/schedule/TeacherSchedule";
 import TeacherStudentDetails from "./app/teacher/pages/student/TeacherStudentDetails";
 import OurPlatform from "./app/Home/OurPlatform";
+import RoomsPage from "./app/admin/pages/RoomsPage";
+import RoomsTimetablePage from "./app/admin/pages/RoomsTimetablePage";
 
 const App = () => {
   return (
@@ -256,6 +258,11 @@ const App = () => {
           path="formations/:courseId/edit"
           element={<CourseProfileManager />}
         />
+
+        <Route path="rooms" element={<RoomsPage />} />
+        <Route path="rooms/timetable" element={<RoomsTimetablePage />} /> 
+
+        
       </Route>
     </Routes>
   );

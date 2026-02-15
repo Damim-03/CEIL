@@ -50,6 +50,17 @@ export interface User {
   teacher?: Teacher | null;
 }
 
+export interface CircularProgressProps {
+  value: number;
+  size?: number;
+  label?: string;
+}
+
+export interface DonutChartProps {
+  data: Array<{ label: string; value: number; color: string }>;
+  size?: number;
+}
+
 /* ===============================================================
    STUDENT (Prisma Model)
 =============================================================== */

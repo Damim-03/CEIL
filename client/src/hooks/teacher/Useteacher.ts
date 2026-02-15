@@ -7,18 +7,59 @@ import { teacherApi } from "../../lib/api/teacher/teacher.api";
 
 export const teacherKeys = {
   all: ["teacher"] as const,
+
+  // Profile
   profile: () => [...teacherKeys.all, "profile"] as const,
+
+  // Dashboard
   dashboard: () => [...teacherKeys.all, "dashboard"] as const,
+
+  // Schedule
+  schedule: (days?: number) =>
+    [...teacherKeys.all, "schedule", days ?? 30] as const,
+
+  // Groups
   groups: () => [...teacherKeys.all, "groups"] as const,
+  groupDetails: (groupId: string) =>
+    [...teacherKeys.all, "groups", groupId] as const,
   groupStudents: (groupId: string) =>
     [...teacherKeys.all, "groups", groupId, "students"] as const,
+  groupStats: (groupId: string) =>
+    [...teacherKeys.all, "groups", groupId, "stats"] as const,
+
+  // Students
+  studentAttendance: (studentId: string, groupId?: string) =>
+    [
+      ...teacherKeys.all,
+      "students",
+      studentId,
+      "attendance",
+      groupId ?? "all",
+    ] as const,
+  studentResults: (studentId: string) =>
+    [...teacherKeys.all, "students", studentId, "results"] as const,
+
+  // Sessions
   sessions: (groupId?: string) =>
     [...teacherKeys.all, "sessions", groupId ?? "all"] as const,
   sessionAttendance: (sessionId: string) =>
     [...teacherKeys.all, "sessions", sessionId, "attendance"] as const,
+
+  // Exams & Results
   exams: () => [...teacherKeys.all, "exams"] as const,
   examResults: (examId: string) =>
     [...teacherKeys.all, "exams", examId, "results"] as const,
+
+  // Announcements
+  announcements: (params?: { page?: number; category?: string }) =>
+    [...teacherKeys.all, "announcements", params ?? {}] as const,
+  announcementById: (id: string) =>
+    [...teacherKeys.all, "announcements", id] as const,
+
+  // Notifications
+  notifications: () => [...teacherKeys.all, "notifications"] as const,
+  unreadCount: () =>
+    [...teacherKeys.all, "notifications", "unread-count"] as const,
 };
 
 /* ═══════════════════════════════════════════════════════
@@ -40,6 +81,19 @@ export const useUpdateTeacherProfile = () => {
       qc.invalidateQueries({ queryKey: teacherKeys.profile() });
       qc.invalidateQueries({ queryKey: teacherKeys.dashboard() });
     },
+  });
+};
+
+export const useTeacherRoomsOverview = (date?: string) => {
+  return useQuery({
+    queryKey: ["teacher", "rooms-overview", date],
+    queryFn: () => teacherApi.getRoomsOverview(date),
+    // ✅ تحديث تلقائي كل 30 ثانية عند عرض صفحة القاعات
+    refetchInterval: 30_000,
+    // ✅ يعيد التحميل فوراً عند عودة المستخدم للتبويب
+    refetchOnWindowFocus: true,
+    // ✅ يحتفظ بالبيانات القديمة أثناء إعادة التحميل (لا flicker)
+    placeholderData: (prev: any) => prev,
   });
 };
 
@@ -65,6 +119,16 @@ export const useTeacherDashboard = () =>
   });
 
 /* ═══════════════════════════════════════════════════════
+   SCHEDULE
+═══════════════════════════════════════════════════════ */
+
+export const useTeacherSchedule = (days?: number) =>
+  useQuery({
+    queryKey: teacherKeys.schedule(days),
+    queryFn: () => teacherApi.getSchedule(days),
+  });
+
+/* ═══════════════════════════════════════════════════════
    GROUPS
 ═══════════════════════════════════════════════════════ */
 
@@ -74,11 +138,43 @@ export const useTeacherGroups = () =>
     queryFn: teacherApi.getMyGroups,
   });
 
+export const useGroupDetails = (groupId: string) =>
+  useQuery({
+    queryKey: teacherKeys.groupDetails(groupId),
+    queryFn: () => teacherApi.getGroupDetails(groupId),
+    enabled: !!groupId,
+  });
+
 export const useGroupStudents = (groupId: string) =>
   useQuery({
     queryKey: teacherKeys.groupStudents(groupId),
     queryFn: () => teacherApi.getGroupStudents(groupId),
     enabled: !!groupId,
+  });
+
+export const useGroupStats = (groupId: string) =>
+  useQuery({
+    queryKey: teacherKeys.groupStats(groupId),
+    queryFn: () => teacherApi.getGroupStats(groupId),
+    enabled: !!groupId,
+  });
+
+/* ═══════════════════════════════════════════════════════
+   STUDENTS (per-student data)
+═══════════════════════════════════════════════════════ */
+
+export const useStudentAttendance = (studentId: string, groupId?: string) =>
+  useQuery({
+    queryKey: teacherKeys.studentAttendance(studentId, groupId),
+    queryFn: () => teacherApi.getStudentAttendance(studentId, groupId),
+    enabled: !!studentId,
+  });
+
+export const useStudentResults = (studentId: string) =>
+  useQuery({
+    queryKey: teacherKeys.studentResults(studentId),
+    queryFn: () => teacherApi.getStudentResults(studentId),
+    enabled: !!studentId,
   });
 
 /* ═══════════════════════════════════════════════════════
@@ -97,11 +193,13 @@ export const useCreateSession = () => {
     mutationFn: (payload: {
       group_id: string;
       session_date: string;
+      end_time?: string; // ← جديد
       topic?: string;
     }) => teacherApi.createSession(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [...teacherKeys.all, "sessions"] });
       qc.invalidateQueries({ queryKey: teacherKeys.dashboard() });
+      qc.invalidateQueries({ queryKey: [...teacherKeys.all, "schedule"] });
     },
   });
 };
@@ -115,10 +213,12 @@ export const useUpdateSession = () => {
     }: {
       sessionId: string;
       session_date?: string;
+      end_time?: string | null; // ← جديد
       topic?: string;
     }) => teacherApi.updateSession(sessionId, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [...teacherKeys.all, "sessions"] });
+      qc.invalidateQueries({ queryKey: [...teacherKeys.all, "schedule"] });
     },
   });
 };
@@ -130,6 +230,7 @@ export const useDeleteSession = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [...teacherKeys.all, "sessions"] });
       qc.invalidateQueries({ queryKey: teacherKeys.dashboard() });
+      qc.invalidateQueries({ queryKey: [...teacherKeys.all, "schedule"] });
     },
   });
 };
@@ -181,6 +282,7 @@ export const useMarkBulkAttendance = () => {
       });
       qc.invalidateQueries({ queryKey: [...teacherKeys.all, "sessions"] });
       qc.invalidateQueries({ queryKey: teacherKeys.dashboard() });
+      qc.invalidateQueries({ queryKey: [...teacherKeys.all, "groups"] });
     },
   });
 };
@@ -290,6 +392,67 @@ export const useAddBulkResults = () => {
         queryKey: teacherKeys.examResults(variables.examId),
       });
       qc.invalidateQueries({ queryKey: teacherKeys.exams() });
+    },
+  });
+};
+
+/* ═══════════════════════════════════════════════════════
+   ANNOUNCEMENTS
+═══════════════════════════════════════════════════════ */
+
+export const useTeacherAnnouncements = (params?: {
+  page?: number;
+  limit?: number;
+  category?: string;
+}) =>
+  useQuery({
+    queryKey: teacherKeys.announcements(params),
+    queryFn: () => teacherApi.getAnnouncements(params),
+  });
+
+export const useTeacherAnnouncementById = (announcementId: string) =>
+  useQuery({
+    queryKey: teacherKeys.announcementById(announcementId),
+    queryFn: () => teacherApi.getAnnouncementById(announcementId),
+    enabled: !!announcementId,
+  });
+
+/* ═══════════════════════════════════════════════════════
+   NOTIFICATIONS
+═══════════════════════════════════════════════════════ */
+
+export const useTeacherNotifications = () =>
+  useQuery({
+    queryKey: teacherKeys.notifications(),
+    queryFn: teacherApi.getNotifications,
+  });
+
+export const useUnreadNotificationCount = () =>
+  useQuery({
+    queryKey: teacherKeys.unreadCount(),
+    queryFn: teacherApi.getUnreadCount,
+    refetchInterval: 30_000,
+  });
+
+export const useMarkNotificationRead = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (recipientId: string) =>
+      teacherApi.markNotificationRead(recipientId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: teacherKeys.notifications() });
+      qc.invalidateQueries({ queryKey: teacherKeys.unreadCount() });
+    },
+  });
+};
+
+export const useMarkAllNotificationsRead = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => teacherApi.markAllNotificationsRead(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: teacherKeys.notifications() });
+      qc.invalidateQueries({ queryKey: teacherKeys.unreadCount() });
     },
   });
 };

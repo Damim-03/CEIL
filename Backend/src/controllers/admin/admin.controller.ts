@@ -2088,52 +2088,96 @@ export const finishEnrollmentController = async (
 /* ================= SESSIONS ================= */
 
 export const createSessionController = async (req: Request, res: Response) => {
-  const { group_id, session_date, topic } = req.body;
+  try {
+    const { group_id, session_date, end_time, topic, room_id } = req.body;
 
-  if (!group_id || !session_date) {
-    return res.status(400).json({
-      message: "group_id and session_date are required",
-    });
-  }
+    if (!group_id || !session_date) {
+      return res.status(400).json({
+        message: "group_id and session_date are required",
+      });
+    }
 
-  // ✅ findUnique بدل findMany
-  const group = await prisma.group.findUnique({
-    where: { group_id },
-  });
+    const group = await prisma.group.findUnique({ where: { group_id } });
+    if (!group) {
+      return res.status(400).json({ message: "Invalid group_id" });
+    }
 
-  // ✅ الآن group معرّف
-  if (!group) {
-    return res.status(400).json({
-      message: "Invalid group_id",
-    });
-  }
+    // ✅ Validate end_time
+    const startDate = new Date(session_date);
+    let endDate: Date | null = null;
 
-  const session = await prisma.session.create({
-    data: {
-      group_id,
-      session_date: new Date(session_date),
-      topic: topic || null,
-    },
-    include: {
-      group: {
-        include: {
-          course: true,
-          teacher: true,
-          enrollments: {
-            where: {
-              registration_status: { in: ["VALIDATED", "PAID", "FINISHED"] },
-            },
-            include: {
-              student: true,
+    if (end_time) {
+      endDate = new Date(end_time);
+      if (endDate <= startDate) {
+        return res.status(400).json({
+          message: "وقت الانتهاء يجب أن يكون بعد وقت البداية",
+        });
+      }
+    }
+
+    // ✅ Room validation + conflict check
+    if (room_id) {
+      const room = await prisma.room.findUnique({ where: { room_id } });
+      if (!room) {
+        return res.status(400).json({ message: "القاعة غير موجودة" });
+      }
+      if (!room.is_active) {
+        return res.status(400).json({ message: "القاعة معطّلة" });
+      }
+
+      // Check for time conflicts in the same room
+      if (endDate) {
+        const conflicts = await prisma.session.findMany({
+          where: {
+            room_id,
+            session_date: { lt: endDate },
+            end_time: { gt: startDate },
+          },
+        });
+        if (conflicts.length > 0) {
+          return res.status(409).json({
+            message: "القاعة محجوزة في هذا الوقت",
+            conflicts: conflicts.map((c) => ({
+              session_id: c.session_id,
+              session_date: c.session_date,
+              end_time: c.end_time,
+            })),
+          });
+        }
+      }
+    }
+
+    const session = await prisma.session.create({
+      data: {
+        group_id,
+        session_date: startDate,
+        end_time: endDate,
+        topic: topic || null,
+        room_id: room_id || null,
+      },
+      include: {
+        group: {
+          include: {
+            course: true,
+            teacher: true,
+            enrollments: {
+              where: {
+                registration_status: { in: ["VALIDATED", "PAID", "FINISHED"] },
+              },
+              include: { student: true },
             },
           },
         },
+        room: true,
+        _count: { select: { attendance: true } },
       },
-      _count: { select: { attendance: true } },
-    },
-  });
+    });
 
-  res.status(201).json(session);
+    res.status(201).json(session);
+  } catch (error) {
+    console.error("createSession error:", error);
+    return res.status(500).json({ message: "حدث خطأ أثناء إنشاء الحصة" });
+  }
 };
 
 export const getAllSessionsController = async (
@@ -2287,24 +2331,100 @@ export const getSessionAttendanceController = async (
 };
 
 export const updateSessionController = async (req: Request, res: Response) => {
-  const { sessionId } = req.params;
+  try {
+    const { sessionId } = req.params;
+    const { session_date, end_time, topic, room_id } = req.body;
 
-  if (Object.keys(req.body).length === 0) {
-    return res.status(400).json({ message: "Request body is empty" });
+    const existing = await prisma.session.findUnique({
+      where: { session_id: sessionId },
+    });
+    if (!existing) {
+      return res.status(404).json({ message: "الحصة غير موجودة" });
+    }
+
+    // Build update data
+    const updateData: any = {};
+
+    if (topic !== undefined) updateData.topic = topic || null;
+    if (room_id !== undefined) updateData.room_id = room_id || null;
+
+    // Determine effective start/end for validation
+    const effectiveStart = session_date
+      ? new Date(session_date)
+      : existing.session_date;
+    let effectiveEnd: Date | null = existing.end_time;
+
+    if (session_date) updateData.session_date = effectiveStart;
+
+    if (end_time !== undefined) {
+      effectiveEnd = end_time ? new Date(end_time) : null;
+      updateData.end_time = effectiveEnd;
+    }
+
+    // Validate end > start
+    if (effectiveEnd && effectiveEnd <= effectiveStart) {
+      return res.status(400).json({
+        message: "وقت الانتهاء يجب أن يكون بعد وقت البداية",
+      });
+    }
+
+    // Room conflict check
+    const targetRoomId = room_id !== undefined ? room_id : existing.room_id;
+    if (targetRoomId && effectiveEnd) {
+      const conflicts = await prisma.session.findMany({
+        where: {
+          room_id: targetRoomId,
+          session_id: { not: sessionId },
+          session_date: { lt: effectiveEnd },
+          end_time: { gt: effectiveStart },
+        },
+      });
+      if (conflicts.length > 0) {
+        return res.status(409).json({
+          message: "القاعة محجوزة في هذا الوقت",
+          conflicts: conflicts.map((c) => ({
+            session_id: c.session_id,
+            session_date: c.session_date,
+            end_time: c.end_time,
+          })),
+        });
+      }
+    }
+
+    // Room validation
+    if (room_id) {
+      const room = await prisma.room.findUnique({ where: { room_id } });
+      if (!room) return res.status(400).json({ message: "القاعة غير موجودة" });
+      if (!room.is_active)
+        return res.status(400).json({ message: "القاعة معطّلة" });
+    }
+
+    const session = await prisma.session.update({
+      where: { session_id: sessionId },
+      data: updateData,
+      include: {
+        group: {
+          include: {
+            course: true,
+            teacher: true,
+            enrollments: {
+              where: {
+                registration_status: { in: ["VALIDATED", "PAID", "FINISHED"] },
+              },
+              include: { student: true },
+            },
+          },
+        },
+        room: true,
+        _count: { select: { attendance: true } },
+      },
+    });
+
+    return res.json(session);
+  } catch (error) {
+    console.error("updateSession error:", error);
+    return res.status(500).json({ message: "حدث خطأ أثناء تحديث الحصة" });
   }
-
-  const allowedFields = ["session_date", "topic"];
-
-  const data = Object.fromEntries(
-    Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
-  );
-
-  const session = await prisma.session.update({
-    where: { session_id: sessionId },
-    data,
-  });
-
-  res.json(session);
 };
 
 export const deleteSessionController = async (req: Request, res: Response) => {

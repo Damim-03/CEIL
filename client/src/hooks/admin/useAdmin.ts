@@ -1,10 +1,7 @@
 /* ===============================================================
    ADMIN HOOKS - CONSOLIDATED FILE
    
-   All admin-related React Query hooks in one place.
-   Organized by domain for easy navigation.
-   
-   ✅ Updated AdminDashboardStats type for new dashboard
+   ✅ Aggressive refresh: FAST=15s / ACTIVE=20s / NORMAL=30s
    ✅ Cross-invalidation: Fees ↔ Enrollments ↔ Dashboard
    
    Last updated: February 2026
@@ -13,7 +10,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-// API imports
 import {
   adminAttendanceApi,
   adminCoursesApi,
@@ -50,9 +46,12 @@ import {
   type NotificationDetail,
   type NotificationPayload,
   type NotificationTargets,
+  adminRoomsApi,
+  type UpdateRoomPayload,
+  type CreateRoomPayload,
+  type Room,
 } from "../../lib/api/admin/admin.api";
 
-// Context
 import { useAuth } from "../../context/AuthContext";
 import type { Session } from "react-router";
 import type {
@@ -81,80 +80,57 @@ import type {
 } from "../../types/Types";
 
 /* ===============================================================
-   QUERY KEYS (Centralized)
+   QUERY KEYS
 =============================================================== */
 
-// Dashboard
 const DASHBOARD_KEY = ["admin-dashboard"];
-
 const QUERY_KEY = "admin-announcements";
-
 const COURSE_PROFILE_KEY = "admin-course-profile";
 const COURSE_PRICING_KEY = "admin-course-pricing";
-
-// Users
+const ROOMS_KEY = ["admin-rooms"];
+const roomKey = (id: string) => ["admin-room", id];
+const ROOMS_OVERVIEW_KEY = ["admin-rooms-overview"];
 const USERS_KEY = ["admin-users"];
 const userKey = (id: string) => ["admin-user", id];
-
-// Students
 const STUDENTS_KEY = ["admin-students"];
 const studentKey = (id: string) => ["admin-student", id];
-
-// Teachers
 const TEACHERS_KEY = ["admin-teachers"];
 const teacherKey = (id: string) => ["admin-teacher", id];
-
-// Courses
 const COURSES_KEY = ["admin-courses"];
 const courseKey = (id: string) => ["admin-course", id];
-
-// Departments
 const DEPARTMENTS_KEY = ["admin-departments"];
 const departmentKey = (id: string) => ["admin-department", id];
-
-// Groups
 const GROUPS_KEY = ["admin-groups"];
 const groupKey = (id: string) => ["admin-group", id];
-
-// Enrollments
 const ENROLLMENTS_KEY = ["admin-enrollments"];
 const enrollmentKey = (id: string) => ["admin-enrollment", id];
-
-// Documents
 const DOCUMENTS_KEY = ["admin-documents"];
 const documentKey = (id: string) => ["admin-document", id];
-
 const NOTIFICATIONS_KEY = ["admin-notifications"];
 const NOTIFICATION_TARGETS_KEY = ["notification-targets"];
-
-// Sessions
 const SESSIONS_KEY = ["admin-sessions"];
 const sessionKey = (id: string) => ["admin-session", id];
 const sessionAttendanceKey = (id: string) => ["admin-session-attendance", id];
-
-// Attendance
 const ATTENDANCE_KEY = ["admin-attendance"];
-
-// Fees
 const FEES_KEY = ["admin-fees"];
 const feeKey = (id: string) => ["admin-fee", id];
-
-// Exams
 const EXAMS_KEY = ["admin-exams"];
 const examKey = (id: string) => ["admin-exam", id];
 const examResultsKey = (id: string) => ["admin-exam-results", id];
-
-// Results
 const RESULTS_KEY = ["admin-results"];
-
-// Permissions
 const PERMISSIONS_KEY = ["admin-permissions"];
-
-// Profile
 const ME_KEY = ["me"];
 
 /* ===============================================================
-   DASHBOARD - ✅ UPDATED TYPE
+   🔄 REFRESH CONSTANTS
+=============================================================== */
+
+const FAST = 15_000; // 🔴 15s — حي (قاعات، حضور، إشعارات)
+const ACTIVE = 20_000; // 🟡 20s — نشط (dashboard, enrollments, fees, sessions)
+const NORMAL = 30_000; // 🟢 30s — عادي (طلاب، أساتذة، كورسات)
+
+/* ===============================================================
+   DASHBOARD — 🟡 ACTIVE (20s)
 =============================================================== */
 
 export interface AdminDashboardStats {
@@ -163,12 +139,7 @@ export interface AdminDashboardStats {
   courses: number;
   groups: number;
   unpaidFees: number;
-  gender: {
-    Male?: number;
-    Female?: number;
-    Other?: number;
-  };
-  // ✅ New fields
+  gender: { Male?: number; Female?: number; Other?: number };
   enrollments: {
     pending: number;
     validated: number;
@@ -222,11 +193,13 @@ export const useAdminDashboard = () =>
   useQuery<AdminDashboardStats>({
     queryKey: DASHBOARD_KEY,
     queryFn: adminDashboardApi.getStats,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: ACTIVE,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 /* ===============================================================
-   USERS
+   USERS — 🟢 NORMAL (30s)
 =============================================================== */
 
 export interface AdminUser {
@@ -242,6 +215,9 @@ export const useAdminUsers = () =>
   useQuery<AdminUser[]>({
     queryKey: USERS_KEY,
     queryFn: adminUsersApi.getAll,
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useAdminUser = (userId?: string) =>
@@ -253,7 +229,6 @@ export const useAdminUser = (userId?: string) =>
 
 export const useToggleUserStatus = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       userId,
@@ -263,7 +238,6 @@ export const useToggleUserStatus = () => {
       isActive: boolean;
     }) =>
       isActive ? adminUsersApi.disable(userId) : adminUsersApi.enable(userId),
-
     onMutate: async ({ userId, isActive }) => {
       await qc.cancelQueries({ queryKey: userKey(userId) });
       const previousUser = qc.getQueryData<AdminUser>(userKey(userId));
@@ -272,13 +246,11 @@ export const useToggleUserStatus = () => {
       );
       return { previousUser };
     },
-
     onError: (_err, { userId }, context) => {
       if (context?.previousUser) {
         qc.setQueryData(userKey(userId), context.previousUser);
       }
     },
-
     onSettled: (_data, _error, { userId }) => {
       qc.invalidateQueries({ queryKey: userKey(userId) });
       qc.invalidateQueries({ queryKey: USERS_KEY });
@@ -288,7 +260,6 @@ export const useToggleUserStatus = () => {
 
 export const useUpdateUser = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: ({ userId, email }: { userId: string; email: string }) =>
       adminUsersApi.update(userId, { email }),
@@ -300,7 +271,6 @@ export const useUpdateUser = () => {
 
 export const useDeleteUser = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: adminUsersApi.delete,
     onSuccess: () => {
@@ -311,11 +281,9 @@ export const useDeleteUser = () => {
 
 export const useChangeUserRole = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: ({ userId, role }: { userId: string; role: UserRole }) =>
       adminUsersApi.changeRole(userId, role),
-
     onMutate: async ({ userId, role }) => {
       await qc.cancelQueries({ queryKey: USERS_KEY });
       const previousUsers = qc.getQueryData<AdminUser[]>(USERS_KEY);
@@ -324,13 +292,11 @@ export const useChangeUserRole = () => {
       );
       return { previousUsers };
     },
-
     onError: (_error, _vars, context) => {
       if (context?.previousUsers) {
         qc.setQueryData(USERS_KEY, context.previousUsers);
       }
     },
-
     onSuccess: (data) => {
       if (!data?.user) return;
       qc.setQueryData<AdminUser[]>(USERS_KEY, (old) =>
@@ -341,7 +307,6 @@ export const useChangeUserRole = () => {
           : old,
       );
     },
-
     onSettled: () => {
       qc.invalidateQueries({ queryKey: USERS_KEY });
     },
@@ -349,7 +314,7 @@ export const useChangeUserRole = () => {
 };
 
 /* ===============================================================
-   STUDENTS
+   STUDENTS — 🟢 NORMAL (30s)
 =============================================================== */
 
 export const useAdminStudents = () =>
@@ -359,7 +324,9 @@ export const useAdminStudents = () =>
       const res = await adminStudentsApi.getAll();
       return res.data ?? res.students ?? [];
     },
-    staleTime: 1000 * 60 * 5,
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useAdminStudent = (studentId?: string) =>
@@ -370,25 +337,22 @@ export const useAdminStudent = (studentId?: string) =>
       return data.data ?? data.student ?? data;
     },
     enabled: !!studentId,
-    staleTime: 1000 * 60 * 5,
   });
 
 export const useCreateStudent = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: (payload: CreateStudentPayload) =>
       adminStudentsApi.create(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: STUDENTS_KEY });
-      qc.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
+      qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
     },
   });
 };
 
 export const useUpdateStudent = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       studentId,
@@ -406,7 +370,6 @@ export const useUpdateStudent = () => {
 
 export const useUpdateStudentAvatar = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       studentId,
@@ -424,12 +387,11 @@ export const useUpdateStudentAvatar = () => {
 
 export const useDeleteStudent = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: (studentId: string) => adminStudentsApi.delete(studentId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: STUDENTS_KEY });
-      qc.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
+      qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
     },
     onMutate: async (studentId) => {
       await qc.cancelQueries({ queryKey: STUDENTS_KEY });
@@ -448,7 +410,7 @@ export const useDeleteStudent = () => {
 };
 
 /* ===============================================================
-   TEACHERS
+   TEACHERS — 🟢 NORMAL (30s)
 =============================================================== */
 
 export type UpdateTeacherPayload = {
@@ -469,6 +431,9 @@ export const useAdminTeachers = () =>
   useQuery<Teacher[]>({
     queryKey: TEACHERS_KEY,
     queryFn: adminTeachersApi.getAll,
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useAdminTeacher = (teacherId?: string) =>
@@ -480,14 +445,13 @@ export const useAdminTeacher = (teacherId?: string) =>
 
 export const useCreateTeacher = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (payload: CreateTeacherPayload) =>
       adminTeachersApi.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TEACHERS_KEY });
       queryClient.invalidateQueries({ queryKey: USERS_KEY });
-      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
       toast.success("Teacher created successfully");
     },
     onError: (error: any) => {
@@ -498,20 +462,18 @@ export const useCreateTeacher = () => {
 
 export const useDeleteTeacher = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (teacherId: string) => adminTeachersApi.delete(teacherId),
     onSuccess: (_, teacherId) => {
       queryClient.removeQueries({ queryKey: teacherKey(teacherId) });
       queryClient.invalidateQueries({ queryKey: TEACHERS_KEY });
-      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
     },
   });
 };
 
 export const useUpdateTeacher = () => {
   const queryClient = useQueryClient();
-
   return useMutation<
     Teacher,
     Error,
@@ -528,15 +490,17 @@ export const useUpdateTeacher = () => {
     },
   });
 };
-
 /* ===============================================================
-   COURSES
+   COURSES — 🟢 NORMAL (30s)
 =============================================================== */
 
 export const useAdminCourses = () =>
   useQuery<Course[]>({
     queryKey: COURSES_KEY,
     queryFn: adminCoursesApi.getAll,
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useAdminCourse = (courseId?: string) =>
@@ -564,19 +528,17 @@ export const useAdminCourse = (courseId?: string) =>
 
 export const useCreateCourse = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: adminCoursesApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: COURSES_KEY });
-      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
     },
   });
 };
 
 export const useUpdateCourse = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       courseId,
@@ -594,24 +556,26 @@ export const useUpdateCourse = () => {
 
 export const useDeleteCourse = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: adminCoursesApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: COURSES_KEY });
-      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
     },
   });
 };
 
 /* ===============================================================
-   DEPARTMENTS
+   DEPARTMENTS — 🟢 NORMAL (30s)
 =============================================================== */
 
 export const useAdminDepartments = () =>
   useQuery<Department[]>({
     queryKey: DEPARTMENTS_KEY,
     queryFn: adminDepartmentsApi.getAll,
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useAdminDepartment = (departmentId?: string) =>
@@ -623,7 +587,6 @@ export const useAdminDepartment = (departmentId?: string) =>
 
 export const useCreateDepartment = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (payload: CreateDepartmentPayload) =>
       adminDepartmentsApi.create(payload),
@@ -635,7 +598,6 @@ export const useCreateDepartment = () => {
 
 export const useUpdateDepartment = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       departmentId,
@@ -655,7 +617,6 @@ export const useUpdateDepartment = () => {
 
 export const useDeleteDepartment = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (departmentId: string) =>
       adminDepartmentsApi.delete(departmentId),
@@ -666,13 +627,16 @@ export const useDeleteDepartment = () => {
 };
 
 /* ===============================================================
-   GROUPS
+   GROUPS — 🟢 NORMAL (30s)
 =============================================================== */
 
 export const useAdminGroups = () =>
   useQuery<Group[]>({
     queryKey: GROUPS_KEY,
     queryFn: adminGroupsApi.getAll,
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useAdminGroup = (groupId?: string) =>
@@ -684,12 +648,11 @@ export const useAdminGroup = (groupId?: string) =>
 
 export const useCreateGroup = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: (payload: CreateGroupPayload) => adminGroupsApi.create(payload),
     onSuccess: (newGroup) => {
       qc.invalidateQueries({ queryKey: GROUPS_KEY });
-      qc.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
+      qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
       qc.setQueryData(groupKey(newGroup.group_id), newGroup);
     },
   });
@@ -697,7 +660,6 @@ export const useCreateGroup = () => {
 
 export const useUpdateGroup = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       groupId,
@@ -715,20 +677,18 @@ export const useUpdateGroup = () => {
 
 export const useDeleteGroup = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: (groupId: string) => adminGroupsApi.delete(groupId),
     onSuccess: (_, groupId) => {
       qc.removeQueries({ queryKey: groupKey(groupId) });
       qc.invalidateQueries({ queryKey: GROUPS_KEY });
-      qc.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
+      qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
     },
   });
 };
 
 export const useAssignInstructor = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       groupId,
@@ -746,7 +706,6 @@ export const useAssignInstructor = () => {
 
 export const useAddStudentToGroup = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       groupId,
@@ -758,14 +717,13 @@ export const useAddStudentToGroup = () => {
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: groupKey(vars.groupId) });
       qc.invalidateQueries({ queryKey: GROUPS_KEY });
-      qc.invalidateQueries({ queryKey: ENROLLMENTS_KEY }); // ✅
+      qc.invalidateQueries({ queryKey: ENROLLMENTS_KEY });
     },
   });
 };
 
 export const useRemoveStudentFromGroup = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       groupId,
@@ -777,20 +735,22 @@ export const useRemoveStudentFromGroup = () => {
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: groupKey(vars.groupId) });
       qc.invalidateQueries({ queryKey: GROUPS_KEY });
-      qc.invalidateQueries({ queryKey: ENROLLMENTS_KEY }); // ✅
+      qc.invalidateQueries({ queryKey: ENROLLMENTS_KEY });
     },
   });
 };
 
 /* ===============================================================
-   ENROLLMENTS - ✅ Cross-invalidation with Dashboard & Fees
+   ENROLLMENTS — 🟡 ACTIVE (20s)
 =============================================================== */
 
 export const useAdminEnrollments = () =>
   useQuery<Enrollment[]>({
     queryKey: ENROLLMENTS_KEY,
     queryFn: adminEnrollmentsApi.getAll,
-    staleTime: 1000 * 30,
+    refetchInterval: ACTIVE,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useAdminEnrollment = (enrollmentId?: string) =>
@@ -800,7 +760,6 @@ export const useAdminEnrollment = (enrollmentId?: string) =>
     enabled: Boolean(enrollmentId),
   });
 
-// ✅ Updated: invalidates dashboard + fees too
 const invalidateEnrollments = (
   qc: ReturnType<typeof useQueryClient>,
   id?: string,
@@ -808,14 +767,11 @@ const invalidateEnrollments = (
   qc.invalidateQueries({ queryKey: ENROLLMENTS_KEY });
   qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
   qc.invalidateQueries({ queryKey: FEES_KEY });
-  if (id) {
-    qc.invalidateQueries({ queryKey: enrollmentKey(id) });
-  }
+  if (id) qc.invalidateQueries({ queryKey: enrollmentKey(id) });
 };
 
 export const useValidateEnrollment = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       enrollmentId,
@@ -830,7 +786,6 @@ export const useValidateEnrollment = () => {
 
 export const useRejectEnrollment = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       enrollmentId,
@@ -845,7 +800,6 @@ export const useRejectEnrollment = () => {
 
 export const useMarkEnrollmentPaid = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: (enrollmentId: string) =>
       adminEnrollmentsApi.markPaid(enrollmentId),
@@ -855,7 +809,6 @@ export const useMarkEnrollmentPaid = () => {
 
 export const useFinishEnrollment = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: (enrollmentId: string) =>
       adminEnrollmentsApi.finish(enrollmentId),
@@ -864,7 +817,7 @@ export const useFinishEnrollment = () => {
 };
 
 /* ===============================================================
-   DOCUMENTS
+   DOCUMENTS — 🟡 ACTIVE (20s)
 =============================================================== */
 
 const getFileType = (path: string): "pdf" | "image" | "doc" => {
@@ -919,7 +872,9 @@ export const useAdminDocuments = () =>
       }
     },
     retry: 2,
-    staleTime: 30000,
+    refetchInterval: ACTIVE,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useAdminDocument = (documentId?: string) =>
@@ -937,7 +892,6 @@ export const useAdminDocument = (documentId?: string) =>
 
 export const useDeleteDocument = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: (documentId: string) => adminDocumentsApi.delete(documentId),
     onSuccess: () => {
@@ -954,7 +908,6 @@ export const useDeleteDocument = () => {
 
 export const useApproveDocument = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: (documentId: string) => adminDocumentsApi.approve(documentId),
     onSuccess: () => {
@@ -973,7 +926,6 @@ export const useApproveDocument = () => {
 
 export const useRejectDocument = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       documentId,
@@ -997,13 +949,16 @@ export const useRejectDocument = () => {
 };
 
 /* ===============================================================
-   SESSIONS
+   SESSIONS — 🟡 ACTIVE (20s)
 =============================================================== */
 
 export const useAdminSessions = () =>
-  useQuery<Session[]>({
-    queryKey: SESSIONS_KEY,
-    queryFn: adminSessionsApi.getAll,
+  useQuery({
+    queryKey: ["admin", "sessions"],
+    queryFn: () => adminSessionsApi.getAll(),
+    refetchInterval: ACTIVE,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useAdminSession = (sessionId?: string) =>
@@ -1024,11 +979,12 @@ export const useAdminSessionAttendance = (sessionId?: string) =>
 
 export const useCreateSession = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: adminSessionsApi.create,
     onSuccess: (newSession) => {
       queryClient.invalidateQueries({ queryKey: SESSIONS_KEY });
+      queryClient.invalidateQueries({ queryKey: ROOMS_KEY });
+      queryClient.invalidateQueries({ queryKey: ROOMS_OVERVIEW_KEY });
       queryClient.setQueryData(sessionKey(newSession.session_id), newSession);
     },
   });
@@ -1036,14 +992,17 @@ export const useCreateSession = () => {
 
 export const useUpdateSession = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       sessionId,
       payload,
     }: {
       sessionId: string;
-      payload: { session_date?: string; topic?: string };
+      payload: {
+        session_date?: string;
+        topic?: string;
+        room_id?: string | null;
+      };
     }) => adminSessionsApi.update(sessionId, payload),
     onSuccess: (updatedSession) => {
       queryClient.setQueryData(
@@ -1051,25 +1010,27 @@ export const useUpdateSession = () => {
         updatedSession,
       );
       queryClient.invalidateQueries({ queryKey: SESSIONS_KEY });
+      queryClient.invalidateQueries({ queryKey: ROOMS_KEY });
+      queryClient.invalidateQueries({ queryKey: ROOMS_OVERVIEW_KEY });
     },
   });
 };
 
 export const useDeleteSession = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (sessionId: string) => adminSessionsApi.delete(sessionId),
     onSuccess: (_, sessionId) => {
       queryClient.removeQueries({ queryKey: sessionKey(sessionId) });
       queryClient.invalidateQueries({ queryKey: SESSIONS_KEY });
+      queryClient.invalidateQueries({ queryKey: ROOMS_KEY });
+      queryClient.invalidateQueries({ queryKey: ROOMS_OVERVIEW_KEY });
     },
   });
 };
 
 export const useMarkSessionAttendance = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       sessionId,
@@ -1087,7 +1048,7 @@ export const useMarkSessionAttendance = () => {
 };
 
 /* ===============================================================
-   ATTENDANCE
+   ATTENDANCE — 🔴 FAST (15s)
 =============================================================== */
 
 export const useAdminAttendanceBySession = (sessionId?: string) =>
@@ -1095,6 +1056,9 @@ export const useAdminAttendanceBySession = (sessionId?: string) =>
     queryKey: [ATTENDANCE_KEY, "session", sessionId],
     queryFn: () => adminAttendanceApi.getBySession(sessionId!),
     enabled: !!sessionId,
+    refetchInterval: FAST,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useAdminAttendanceByStudent = (studentId?: string) =>
@@ -1102,11 +1066,13 @@ export const useAdminAttendanceByStudent = (studentId?: string) =>
     queryKey: [ATTENDANCE_KEY, "student", studentId],
     queryFn: () => adminAttendanceApi.getByStudent(studentId!),
     enabled: !!studentId,
+    refetchInterval: FAST,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useAdminMarkAttendance = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (payload: {
       session_id: string;
@@ -1126,7 +1092,6 @@ export const useAdminMarkAttendance = () => {
 
 export const useAdminUpdateAttendance = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (payload: { attendanceId: string; status: AttendanceStatus }) =>
       adminAttendanceApi.updateStatus(payload.attendanceId, payload.status),
@@ -1138,7 +1103,6 @@ export const useAdminUpdateAttendance = () => {
 
 export const useAdminDeleteAttendance = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (attendanceId: string) =>
       adminAttendanceApi.delete(attendanceId),
@@ -1149,13 +1113,16 @@ export const useAdminDeleteAttendance = () => {
 };
 
 /* ===============================================================
-   FEES - ✅ Cross-invalidation with Enrollments & Dashboard
+   FEES — 🟡 ACTIVE (20s)
 =============================================================== */
 
 export const useAdminFees = () =>
   useQuery<Fee[]>({
     queryKey: FEES_KEY,
     queryFn: adminFeesApi.getAll,
+    refetchInterval: ACTIVE,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useAdminFee = (feeId?: string) =>
@@ -1167,19 +1134,17 @@ export const useAdminFee = (feeId?: string) =>
 
 export const useCreateFee = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: adminFeesApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: FEES_KEY });
-      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
     },
   });
 };
 
 export const useUpdateFee = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       feeId,
@@ -1191,15 +1156,13 @@ export const useUpdateFee = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: FEES_KEY });
       queryClient.invalidateQueries({ queryKey: feeKey(variables.feeId) });
-      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
     },
   });
 };
 
-// ✅ CRITICAL: Mark fee paid → invalidate enrollments + dashboard
 export const useMarkFeePaid = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       feeId,
@@ -1211,32 +1174,33 @@ export const useMarkFeePaid = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: FEES_KEY });
       queryClient.invalidateQueries({ queryKey: feeKey(variables.feeId) });
-      queryClient.invalidateQueries({ queryKey: ENROLLMENTS_KEY }); // ✅ enrollment auto-advances
-      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅ dashboard stats update
+      queryClient.invalidateQueries({ queryKey: ENROLLMENTS_KEY });
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
     },
   });
 };
 
 export const useDeleteFee = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (feeId: string) => adminFeesApi.delete(feeId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: FEES_KEY });
-      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }); // ✅
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
     },
   });
 };
-
 /* ===============================================================
-   EXAMS
+   EXAMS — 🟢 NORMAL (30s)
 =============================================================== */
 
 export const useAdminExams = () =>
   useQuery<Exam[]>({
     queryKey: EXAMS_KEY,
     queryFn: adminExamsApi.getAll,
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useAdminExam = (examId?: string) =>
@@ -1255,7 +1219,6 @@ export const useAdminExamResults = (examId?: string) =>
 
 export const useCreateExam = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: adminExamsApi.create,
     onSuccess: () => {
@@ -1266,7 +1229,6 @@ export const useCreateExam = () => {
 
 export const useUpdateExam = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       examId,
@@ -1284,7 +1246,6 @@ export const useUpdateExam = () => {
 
 export const useDeleteExam = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (examId: string) => adminExamsApi.delete(examId),
     onSuccess: () => {
@@ -1295,14 +1256,17 @@ export const useDeleteExam = () => {
 
 export const useAddExamResult = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       examId,
       payload,
     }: {
       examId: string;
-      payload: { student_id: string; marks_obtained: number; grade?: string };
+      payload: {
+        student_id: string;
+        marks_obtained: number;
+        grade?: string;
+      };
     }) => adminExamsApi.addResult(examId, payload),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -1332,14 +1296,17 @@ export const useAdminResultsByStudent = (studentId?: string) =>
 
 export const useAddResult = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       examId,
       payload,
     }: {
       examId: string;
-      payload: { student_id: string; marks_obtained: number; grade?: string };
+      payload: {
+        student_id: string;
+        marks_obtained: number;
+        grade?: string;
+      };
     }) => adminResultsApi.add(examId, payload),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -1352,7 +1319,6 @@ export const useAddResult = () => {
 
 export const useUpdateResult = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       resultId,
@@ -1368,18 +1334,20 @@ export const useUpdateResult = () => {
 };
 
 /* ===============================================================
-   PERMISSIONS
+   PERMISSIONS — 🟢 NORMAL (30s)
 =============================================================== */
 
 export const useAdminPermissions = () =>
   useQuery<Permission[]>({
     queryKey: PERMISSIONS_KEY,
     queryFn: adminPermissionsApi.getAll,
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useCreatePermission = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (payload: CreatePermissionPayload) =>
       adminPermissionsApi.create(payload),
@@ -1391,7 +1359,6 @@ export const useCreatePermission = () => {
 
 export const useAssignPermissionToStudent = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       studentId,
@@ -1411,7 +1378,6 @@ export const useAssignPermissionToStudent = () => {
 
 export const useRemovePermissionFromStudent = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       studentId,
@@ -1436,13 +1402,10 @@ export const useRemovePermissionFromStudent = () => {
 export const useUpdateAdminAvatar = () => {
   const { setUser } = useAuth();
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: updateAdminAvatarApi,
     onSuccess: (data) => {
-      if (data?.user) {
-        setUser(data.user);
-      }
+      if (data?.user) setUser(data.user);
       queryClient.invalidateQueries({ queryKey: ME_KEY });
       toast.success("Avatar updated successfully");
     },
@@ -1456,12 +1419,17 @@ export const useUpdateAdminAvatar = () => {
   });
 };
 
-// ─── ANNOUNCEMENTS ───
+/* ===============================================================
+   ANNOUNCEMENTS — 🟢 NORMAL (30s)
+=============================================================== */
 
 export const useAdminAnnouncements = (params?: AnnouncementListParams) =>
   useQuery({
     queryKey: [QUERY_KEY, params],
     queryFn: () => announcementApi.getAll(params),
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
 export const useAdminAnnouncement = (id: string) =>
@@ -1473,7 +1441,6 @@ export const useAdminAnnouncement = (id: string) =>
 
 export const useCreateAnnouncement = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (data: CreateAnnouncementData) => announcementApi.create(data),
     onSuccess: (res) => {
@@ -1490,7 +1457,6 @@ export const useCreateAnnouncement = () => {
 
 export const useUpdateAnnouncement = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateAnnouncementData }) =>
       announcementApi.update(id, data),
@@ -1509,7 +1475,6 @@ export const useUpdateAnnouncement = () => {
 
 export const useDeleteAnnouncement = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (id: string) => announcementApi.delete(id),
     onSuccess: (res) => {
@@ -1526,7 +1491,6 @@ export const useDeleteAnnouncement = () => {
 
 export const usePublishAnnouncement = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (id: string) => announcementApi.publish(id),
     onSuccess: (res, id) => {
@@ -1544,7 +1508,6 @@ export const usePublishAnnouncement = () => {
 
 export const useUnpublishAnnouncement = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (id: string) => announcementApi.unpublish(id),
     onSuccess: (res, id) => {
@@ -1573,7 +1536,6 @@ export const useAdminCourseProfile = (courseId?: string) =>
 
 export const useCreateOrUpdateCourseProfile = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       courseId,
@@ -1595,7 +1557,6 @@ export const useCreateOrUpdateCourseProfile = () => {
 
 export const usePublishCourseProfile = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: (courseId: string) => adminCourseProfileApi.publish(courseId),
     onSuccess: (_, courseId) => {
@@ -1608,7 +1569,6 @@ export const usePublishCourseProfile = () => {
 
 export const useUnpublishCourseProfile = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: (courseId: string) => adminCourseProfileApi.unpublish(courseId),
     onSuccess: (_, courseId) => {
@@ -1628,7 +1588,6 @@ export const useAdminCoursePricing = (courseId?: string) =>
 
 export const useAddCoursePricing = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       courseId,
@@ -1650,7 +1609,6 @@ export const useAddCoursePricing = () => {
 
 export const useUpdateCoursePricing = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       courseId,
@@ -1671,7 +1629,6 @@ export const useUpdateCoursePricing = () => {
 
 export const useDeleteCoursePricing = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       courseId,
@@ -1689,21 +1646,18 @@ export const useDeleteCoursePricing = () => {
 };
 
 /* ===============================================================
-   NOTIFICATIONS - Admin Side
+   NOTIFICATIONS — 🟡 ACTIVE (20s)
 =============================================================== */
 
-/** Get targeting options (courses, groups, teachers) for the send form */
 export const useNotificationTargets = () =>
   useQuery<NotificationTargets>({
     queryKey: NOTIFICATION_TARGETS_KEY,
     queryFn: adminNotificationApi.getTargets,
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    staleTime: 2 * 60 * 1000,
   });
 
-/** Send a notification to selected targets */
 export const useSendNotification = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: (payload: NotificationPayload) =>
       adminNotificationApi.send(payload),
@@ -1721,14 +1675,15 @@ export const useSendNotification = () => {
   });
 };
 
-/** Get all notifications (admin list with pagination) */
 export const useAdminNotifications = (page = 1) =>
   useQuery({
     queryKey: [...NOTIFICATIONS_KEY, page],
     queryFn: () => adminNotificationApi.getAll(page),
+    refetchInterval: ACTIVE,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
   });
 
-/** Get notification detail with recipient list */
 export const useAdminNotificationDetail = (id?: string) =>
   useQuery<NotificationDetail>({
     queryKey: ["admin-notification", id],
@@ -1736,10 +1691,8 @@ export const useAdminNotificationDetail = (id?: string) =>
     enabled: !!id,
   });
 
-/** Delete a notification */
 export const useDeleteNotification = () => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: (id: string) => adminNotificationApi.delete(id),
     onSuccess: () => {
@@ -1751,13 +1704,12 @@ export const useDeleteNotification = () => {
 };
 
 /* ===============================================================
-   NOTIFICATIONS - Student / Teacher Side (my notifications)
+   NOTIFICATIONS - Student / Teacher Side
 =============================================================== */
 
 const MY_NOTIFICATIONS_KEY = (base: string) => [`${base}-notifications`];
 const UNREAD_COUNT_KEY = (base: string) => [`${base}-unread-count`];
 
-/** Get my notifications (student or teacher) */
 export const useMyNotifications = (
   base: "student" | "teacher",
   page = 1,
@@ -1768,18 +1720,15 @@ export const useMyNotifications = (
     queryFn: () => userNotificationApi.getMine(base, page, unreadOnly),
   });
 
-/** Get unread count — polls every 30s for live badge updates */
 export const useUnreadNotificationCount = (base: "student" | "teacher") =>
   useQuery({
     queryKey: UNREAD_COUNT_KEY(base),
     queryFn: () => userNotificationApi.getUnreadCount(base),
-    refetchInterval: 30_000, // Poll every 30 seconds
+    refetchInterval: FAST, // 🔴 15s
   });
 
-/** Mark one notification as read */
 export const useMarkNotificationRead = (base: "student" | "teacher") => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: (recipientId: string) =>
       userNotificationApi.markRead(base, recipientId),
@@ -1790,10 +1739,8 @@ export const useMarkNotificationRead = (base: "student" | "teacher") => {
   });
 };
 
-/** Mark all notifications as read */
 export const useMarkAllNotificationsRead = (base: "student" | "teacher") => {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: () => userNotificationApi.markAllRead(base),
     onSuccess: () => {
@@ -1804,9 +1751,6 @@ export const useMarkAllNotificationsRead = (base: "student" | "teacher") => {
   });
 };
 
-// أضف بعد useDeleteNotification
-
-/** Search students for specific targeting */
 export const useSearchStudents = (query: string) =>
   useQuery({
     queryKey: ["search-students", query],
@@ -1814,6 +1758,96 @@ export const useSearchStudents = (query: string) =>
     enabled: query.length >= 2,
     staleTime: 30_000,
   });
+
+/* ===============================================================
+   ROOMS — 🟢 NORMAL (30s) CRUD / 🔴 FAST (15s) Timetable
+=============================================================== */
+
+export const useAdminRooms = (params?: {
+  include_sessions?: boolean;
+  active_only?: boolean;
+}) =>
+  useQuery<Room[]>({
+    queryKey: [...ROOMS_KEY, params],
+    queryFn: () => adminRoomsApi.getAll(params),
+    refetchInterval: NORMAL,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
+  });
+
+export const useAdminRoom = (roomId?: string) =>
+  useQuery<Room>({
+    queryKey: roomId ? roomKey(roomId) : ["admin-room", "disabled"],
+    queryFn: () => adminRoomsApi.getById(roomId!),
+    enabled: !!roomId,
+  });
+
+export const useRoomsScheduleOverview = (date: string) =>
+  useQuery({
+    queryKey: ["admin", "rooms-schedule-overview", date],
+    queryFn: () => adminRoomsApi.getScheduleOverview(date),
+    refetchInterval: FAST, // 🔴 15s
+    refetchOnWindowFocus: true,
+    placeholderData: (prev: any) => prev,
+  });
+
+export const useCreateRoom = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateRoomPayload) => adminRoomsApi.create(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ROOMS_KEY });
+      toast.success("تم إنشاء القاعة بنجاح");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message || "حدث خطأ أثناء إنشاء القاعة",
+      );
+    },
+  });
+};
+
+export const useUpdateRoom = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      roomId,
+      payload,
+    }: {
+      roomId: string;
+      payload: UpdateRoomPayload;
+    }) => adminRoomsApi.update(roomId, payload),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ROOMS_KEY });
+      qc.invalidateQueries({ queryKey: roomKey(vars.roomId) });
+      qc.invalidateQueries({ queryKey: ROOMS_OVERVIEW_KEY });
+      toast.success("تم تحديث القاعة بنجاح");
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "حدث خطأ أثناء التحديث");
+    },
+  });
+};
+
+export const useDeleteRoom = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (roomId: string) => adminRoomsApi.delete(roomId),
+    onSuccess: (data, roomId) => {
+      qc.removeQueries({ queryKey: roomKey(roomId) });
+      qc.invalidateQueries({ queryKey: ROOMS_KEY });
+      qc.invalidateQueries({ queryKey: ROOMS_OVERVIEW_KEY });
+      if (data.deactivated) {
+        toast.info("القاعة مرتبطة بحصص - تم تعطيلها بدلاً من حذفها");
+      } else {
+        toast.success("تم حذف القاعة بنجاح");
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "حدث خطأ أثناء الحذف");
+    },
+  });
+};
 
 /* ===============================================================
    EXPORTS
