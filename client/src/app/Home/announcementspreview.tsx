@@ -20,41 +20,41 @@ const CATEGORY_CONFIG: Record<
   { bg: string; text: string; border: string; glow: string }
 > = {
   NEWS: {
-    bg: "bg-blue-500/[0.08]",
-    text: "text-blue-600",
-    border: "border-blue-200/40",
+    bg: "bg-blue-500/[0.08] dark:bg-blue-500/[0.12]",
+    text: "text-blue-600 dark:text-blue-400",
+    border: "border-blue-200/40 dark:border-blue-800/30",
     glow: "shadow-blue-500/10",
   },
   FORMATIONS: {
-    bg: "bg-emerald-500/[0.08]",
-    text: "text-emerald-600",
-    border: "border-emerald-200/40",
+    bg: "bg-emerald-500/[0.08] dark:bg-emerald-500/[0.12]",
+    text: "text-emerald-600 dark:text-emerald-400",
+    border: "border-emerald-200/40 dark:border-emerald-800/30",
     glow: "shadow-emerald-500/10",
   },
   EXAMS: {
-    bg: "bg-amber-500/[0.08]",
-    text: "text-amber-600",
-    border: "border-amber-200/40",
+    bg: "bg-amber-500/[0.08] dark:bg-amber-500/[0.12]",
+    text: "text-amber-600 dark:text-amber-400",
+    border: "border-amber-200/40 dark:border-amber-800/30",
     glow: "shadow-amber-500/10",
   },
   REGISTRATION: {
-    bg: "bg-purple-500/[0.08]",
-    text: "text-purple-600",
-    border: "border-purple-200/40",
+    bg: "bg-purple-500/[0.08] dark:bg-purple-500/[0.12]",
+    text: "text-purple-600 dark:text-purple-400",
+    border: "border-purple-200/40 dark:border-purple-800/30",
     glow: "shadow-purple-500/10",
   },
   EVENTS: {
-    bg: "bg-rose-500/[0.08]",
-    text: "text-rose-600",
-    border: "border-rose-200/40",
+    bg: "bg-rose-500/[0.08] dark:bg-rose-500/[0.12]",
+    text: "text-rose-600 dark:text-rose-400",
+    border: "border-rose-200/40 dark:border-rose-800/30",
     glow: "shadow-rose-500/10",
   },
 };
 
 const DEFAULT_CAT = {
-  bg: "bg-brand-teal-dark/[0.08]",
-  text: "text-brand-teal-dark",
-  border: "border-brand-teal-dark/20",
+  bg: "bg-brand-teal-dark/[0.08] dark:bg-[#4ADE80]/[0.1]",
+  text: "text-brand-teal-dark dark:text-[#4ADE80]",
+  border: "border-brand-teal-dark/20 dark:border-[#4ADE80]/15",
   glow: "shadow-brand-teal-dark/10",
 };
 
@@ -108,21 +108,21 @@ export function AnnouncementsPreview() {
   return (
     <section
       ref={sectionRef}
-      className="py-20 lg:py-28 bg-brand-gray/40 relative overflow-hidden"
+      className="py-20 lg:py-28 bg-brand-gray/40 dark:bg-[#0F0F0F] relative overflow-hidden"
       dir={dir}
     >
       {/* ═══ Background ═══ */}
       <div className="absolute inset-0 pointer-events-none">
         <div
-          className="absolute inset-0 opacity-[0.012]"
+          className="absolute inset-0 opacity-[0.012] dark:opacity-[0.02]"
           style={{
             backgroundImage:
               "radial-gradient(circle at 1px 1px, #264230 1px, transparent 0)",
             backgroundSize: "48px 48px",
           }}
         />
-        <div className="absolute top-[15%] right-[5%] w-72 h-72 rounded-full bg-brand-mustard/[0.03]" />
-        <div className="absolute bottom-[10%] left-[3%] w-80 h-80 rounded-full bg-brand-teal-dark/[0.02]" />
+        <div className="absolute top-[15%] right-[5%] w-72 h-72 rounded-full bg-brand-mustard/[0.03] dark:bg-brand-mustard/[0.015]" />
+        <div className="absolute bottom-[10%] left-[3%] w-80 h-80 rounded-full bg-brand-teal-dark/[0.02] dark:bg-[#4ADE80]/[0.01]" />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -133,7 +133,7 @@ export function AnnouncementsPreview() {
           }`}
         >
           <h2
-            className="text-3xl font-bold text-brand-black sm:text-4xl"
+            className="text-3xl font-bold text-brand-black dark:text-[#E5E5E5] sm:text-4xl"
             style={{ fontFamily: "var(--font-sans)" }}
           >
             {t("announcements.sectionTitle")}
@@ -146,7 +146,7 @@ export function AnnouncementsPreview() {
               style={{ transitionDelay: "300ms" }}
             />
           </div>
-          <p className="mt-4 text-brand-brown/70 max-w-lg mx-auto text-[15px]">
+          <p className="mt-4 text-brand-brown/70 dark:text-[#888888] max-w-lg mx-auto text-[15px]">
             {t("announcements.subtitle")}
           </p>
         </div>
@@ -154,15 +154,17 @@ export function AnnouncementsPreview() {
         {/* ═══ Content ═══ */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
-            <Loader2 className="w-8 h-8 text-brand-teal-dark/40 animate-spin" />
-            <p className="text-brand-brown/40 text-sm">{t("common.loading")}</p>
+            <Loader2 className="w-8 h-8 text-brand-teal-dark/40 dark:text-[#4ADE80]/40 animate-spin" />
+            <p className="text-brand-brown/40 dark:text-[#666666] text-sm">
+              {t("common.loading")}
+            </p>
           </div>
         ) : announcements.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-2xl bg-brand-beige/50 flex items-center justify-center mx-auto mb-4">
-              <Newspaper className="w-8 h-8 text-brand-brown/30" />
+            <div className="w-16 h-16 rounded-2xl bg-brand-beige/50 dark:bg-[#2A2A2A] flex items-center justify-center mx-auto mb-4">
+              <Newspaper className="w-8 h-8 text-brand-brown/30 dark:text-[#666666]" />
             </div>
-            <p className="text-brand-black/35 text-lg">
+            <p className="text-brand-black/35 dark:text-[#666666] text-lg">
               {t("announcements.noAnnouncements")}
             </p>
           </div>
@@ -183,7 +185,7 @@ export function AnnouncementsPreview() {
                   <LocaleLink
                     key={item.id}
                     to={`/announcements/${item.id}`}
-                    className={`group relative flex gap-4 rounded-2xl border border-brand-beige/80 bg-white p-4 transition-all duration-300 hover:shadow-lg hover:shadow-brand-teal-dark/[0.04] hover:border-brand-teal-dark/15 hover:-translate-y-0.5 ${
+                    className={`group relative flex gap-4 rounded-2xl border border-brand-beige/80 dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] p-4 transition-all duration-300 hover:shadow-lg hover:shadow-brand-teal-dark/[0.04] dark:hover:shadow-black/30 hover:border-brand-teal-dark/15 dark:hover:border-[#4ADE80]/15 hover:-translate-y-0.5 ${
                       isVisible
                         ? "opacity-100 translate-y-0"
                         : "opacity-0 translate-y-6"
@@ -195,7 +197,7 @@ export function AnnouncementsPreview() {
                   >
                     {/* Thumbnail */}
                     {item.image_url ? (
-                      <div className="w-[105px] h-[88px] rounded-xl overflow-hidden shrink-0 bg-brand-beige/50">
+                      <div className="w-[105px] h-[88px] rounded-xl overflow-hidden shrink-0 bg-brand-beige/50 dark:bg-[#222222]">
                         <img
                           src={item.image_url}
                           alt=""
@@ -203,8 +205,8 @@ export function AnnouncementsPreview() {
                         />
                       </div>
                     ) : (
-                      <div className="w-[105px] h-[88px] rounded-xl shrink-0 bg-gradient-to-br from-brand-teal-dark/[0.06] to-brand-teal-dark/[0.02] flex items-center justify-center">
-                        <Newspaper className="w-6 h-6 text-brand-teal-dark/20" />
+                      <div className="w-[105px] h-[88px] rounded-xl shrink-0 bg-gradient-to-br from-brand-teal-dark/[0.06] dark:from-[#4ADE80]/[0.06] to-brand-teal-dark/[0.02] dark:to-[#4ADE80]/[0.02] flex items-center justify-center">
+                        <Newspaper className="w-6 h-6 text-brand-teal-dark/20 dark:text-[#4ADE80]/20" />
                       </div>
                     )}
 
@@ -219,7 +221,7 @@ export function AnnouncementsPreview() {
                             {getCatLabel(item.category)}
                           </span>
                         )}
-                        <span className="flex items-center gap-1 text-[11px] text-brand-brown/45">
+                        <span className="flex items-center gap-1 text-[11px] text-brand-brown/45 dark:text-[#666666]">
                           <Calendar className="w-3 h-3" />
                           {formatDate(item.date)}
                         </span>
@@ -227,14 +229,14 @@ export function AnnouncementsPreview() {
 
                       {/* Title */}
                       <h3
-                        className="text-[14px] font-bold text-brand-black leading-snug line-clamp-2 group-hover:text-brand-teal-dark transition-colors duration-200"
+                        className="text-[14px] font-bold text-brand-black dark:text-[#E5E5E5] leading-snug line-clamp-2 group-hover:text-brand-teal-dark dark:group-hover:text-[#4ADE80] transition-colors duration-200"
                         style={{ fontFamily: "var(--font-sans)" }}
                       >
                         {getTitle(item)}
                       </h3>
 
                       {/* Excerpt */}
-                      <p className="mt-auto pt-1.5 text-[12px] text-brand-black/35 line-clamp-1">
+                      <p className="mt-auto pt-1.5 text-[12px] text-brand-black/35 dark:text-[#666666] line-clamp-1">
                         {getExcerpt(item)}
                       </p>
                     </div>
@@ -247,7 +249,7 @@ export function AnnouncementsPreview() {
                           : "translate-x-1 group-hover:translate-x-0"
                       }`}
                     >
-                      <Chevron className="w-4 h-4 text-brand-teal-dark/40" />
+                      <Chevron className="w-4 h-4 text-brand-teal-dark/40 dark:text-[#4ADE80]/40" />
                     </div>
                   </LocaleLink>
                 );
@@ -257,7 +259,7 @@ export function AnnouncementsPreview() {
               <Button
                 variant="outline"
                 asChild
-                className="w-full border-brand-beige/80 text-brand-teal-dark hover:bg-brand-teal-dark hover:text-white hover:border-brand-teal-dark rounded-xl h-11 gap-2 font-semibold text-[13px] group/btn transition-all duration-300"
+                className="w-full border-brand-beige/80 dark:border-[#2A2A2A] text-brand-teal-dark dark:text-[#4ADE80] hover:bg-brand-teal-dark dark:hover:bg-[#4ADE80] hover:text-white dark:hover:text-[#0F0F0F] hover:border-brand-teal-dark dark:hover:border-[#4ADE80] rounded-xl h-11 gap-2 font-semibold text-[13px] group/btn transition-all duration-300"
               >
                 <LocaleLink to="/announcements">
                   {t("announcements.viewAll")}
@@ -278,9 +280,9 @@ export function AnnouncementsPreview() {
               >
                 <LocaleLink
                   to={`/announcements/${featured.id}`}
-                  className="group block rounded-2xl overflow-hidden border border-brand-beige/60 bg-white transition-all duration-500 hover:shadow-2xl hover:shadow-brand-teal-dark/[0.06] hover:border-brand-teal-dark/10"
+                  className="group block rounded-2xl overflow-hidden border border-brand-beige/60 dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] transition-all duration-500 hover:shadow-2xl hover:shadow-brand-teal-dark/[0.06] dark:hover:shadow-black/30 hover:border-brand-teal-dark/10 dark:hover:border-[#4ADE80]/10"
                 >
-                  <div className="relative min-h-[440px] lg:min-h-[470px] overflow-hidden bg-brand-beige/30">
+                  <div className="relative min-h-[440px] lg:min-h-[470px] overflow-hidden bg-brand-beige/30 dark:bg-[#222222]">
                     {/* Image */}
                     {featured.image_url ? (
                       <img
@@ -290,7 +292,6 @@ export function AnnouncementsPreview() {
                       />
                     ) : (
                       <div className="absolute inset-0 bg-gradient-to-br from-brand-teal-dark via-brand-teal-dark/90 to-brand-teal">
-                        {/* Pattern for no-image */}
                         <div
                           className="absolute inset-0 opacity-[0.05]"
                           style={{
@@ -310,7 +311,7 @@ export function AnnouncementsPreview() {
                       <div
                         className={`absolute top-5 ${isRTL ? "right-5" : "left-5"}`}
                       >
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/90 backdrop-blur-md text-brand-teal-dark text-[11px] font-bold shadow-lg shadow-black/[0.08] border border-white/50">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/90 dark:bg-[#1A1A1A]/90 backdrop-blur-md text-brand-teal-dark dark:text-[#4ADE80] text-[11px] font-bold shadow-lg shadow-black/[0.08] border border-white/50 dark:border-[#2A2A2A]">
                           <Tag className="w-3 h-3" />
                           {getCatLabel(featured.category)}
                         </span>

@@ -1,5 +1,5 @@
 /* ===============================================================
-   ADMIN ENROLLMENTS MANAGEMENT PAGE - Brand Colors Applied
+   ADMIN ENROLLMENTS MANAGEMENT PAGE - Dark Mode Applied
 =============================================================== */
 
 import { useState } from "react";
@@ -209,17 +209,17 @@ export default function AdminEnrollmentsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-6 overflow-hidden">
+      <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10">
             <GraduationCap className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[#1B1B1B]">
+            <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
               {t("admin.enrollments.title")}
             </h1>
-            <p className="text-sm text-[#BEB29E] mt-0.5">
+            <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
               {t("admin.enrollments.subtitle")}
             </p>
           </div>
@@ -269,14 +269,14 @@ export default function AdminEnrollmentsPage() {
       </div>
 
       {/* Workflow Info Card */}
-      <div className="bg-[#2B6F5E]/5 border border-[#2B6F5E]/15 rounded-2xl p-4">
+      <div className="bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 border border-[#2B6F5E]/15 dark:border-[#4ADE80]/15 rounded-2xl p-4">
         <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-[#2B6F5E] mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80] mt-0.5" />
           <div className="flex-1">
-            <h3 className="font-semibold text-[#2B6F5E] mb-1">
+            <h3 className="font-semibold text-[#2B6F5E] dark:text-[#4ADE80] mb-1">
               {t("admin.enrollments.workflow.title")}
             </h3>
-            <p className="text-sm text-[#2B6F5E]/80 leading-relaxed">
+            <p className="text-sm text-[#2B6F5E]/80 dark:text-[#4ADE80]/70 leading-relaxed">
               <span className="font-medium">
                 {t("admin.enrollments.workflow.pending")}
               </span>{" "}
@@ -288,7 +288,7 @@ export default function AdminEnrollmentsPage() {
               → {t("admin.enrollments.workflow.payStep")}{" "}
               <Link
                 to="/admin/fees"
-                className="underline font-semibold hover:text-[#2B6F5E]"
+                className="underline font-semibold hover:text-[#2B6F5E] dark:hover:text-[#4ADE80]"
               >
                 {t("admin.enrollments.workflow.feesPage")}
               </Link>{" "}
@@ -308,23 +308,23 @@ export default function AdminEnrollmentsPage() {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-5">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
             <Input
               placeholder={t("admin.enrollments.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 border-[#D8CDC0]/60 focus:border-[#2B6F5E] focus:ring-[#2B6F5E]/20"
+              className="pl-10 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
             />
           </div>
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-[#BEB29E]" />
+            <Filter className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-[#D8CDC0]/60 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2B6F5E]/20 focus:border-[#2B6F5E]"
+              className="px-3 py-2 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] bg-white dark:bg-[#222222] text-[#1B1B1B] dark:text-[#E5E5E5] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20 focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]"
             >
               <option value="all">
                 {t("admin.enrollments.filter.allStatus")}
@@ -345,13 +345,13 @@ export default function AdminEnrollmentsPage() {
             </select>
           </div>
         </div>
-        <div className="mt-3 text-sm text-[#6B5D4F]">
+        <div className="mt-3 text-sm text-[#6B5D4F] dark:text-[#888888]">
           {t("admin.enrollments.showing")}{" "}
-          <span className="font-semibold text-[#1B1B1B]">
+          <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
             {filteredEnrollments.length}
           </span>{" "}
           {t("admin.enrollments.of")}{" "}
-          <span className="font-semibold text-[#1B1B1B]">
+          <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
             {enrollments.length}
           </span>{" "}
           {t("admin.enrollments.enrollmentsLabel")}
@@ -382,10 +382,10 @@ export default function AdminEnrollmentsPage() {
         </TabsList>
 
         <TabsContent value="pending">
-          <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-4 mb-4">
-            <div className="flex items-center gap-2 text-sm text-[#6B5D4F]">
-              <Clock className="w-4 h-4 text-[#C4A035]" />
-              <span className="font-medium text-[#1B1B1B]">
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-4 mb-4">
+            <div className="flex items-center gap-2 text-sm text-[#6B5D4F] dark:text-[#888888]">
+              <Clock className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843]" />
+              <span className="font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {t("admin.enrollments.actionRequired")}:
               </span>
               <span>{t("admin.enrollments.pendingAction")}</span>
@@ -416,11 +416,11 @@ export default function AdminEnrollmentsPage() {
         </TabsContent>
 
         <TabsContent value="validated">
-          <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-4 mb-4">
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-4 mb-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-[#6B5D4F]">
-                <DollarSign className="w-4 h-4 text-[#C4A035]" />
-                <span className="font-medium text-[#1B1B1B]">
+              <div className="flex items-center gap-2 text-sm text-[#6B5D4F] dark:text-[#888888]">
+                <DollarSign className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843]" />
+                <span className="font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                   {t("admin.enrollments.awaitingPayment")}:
                 </span>
                 <span>{t("admin.enrollments.validatedAction")}</span>
@@ -429,7 +429,7 @@ export default function AdminEnrollmentsPage() {
                 asChild
                 size="sm"
                 variant="outline"
-                className="border-[#D8CDC0]/60 hover:bg-[#C4A035]/8 hover:border-[#C4A035]/40"
+                className="border-[#D8CDC0]/60 dark:border-[#2A2A2A] hover:bg-[#C4A035]/8 dark:hover:bg-[#C4A035]/10 hover:border-[#C4A035]/40 dark:hover:border-[#C4A035]/30 dark:text-[#E5E5E5]"
               >
                 <Link to="/admin/fees" className="gap-2">
                   <ExternalLink className="w-3.5 h-3.5" />{" "}
@@ -457,10 +457,10 @@ export default function AdminEnrollmentsPage() {
         </TabsContent>
 
         <TabsContent value="paid">
-          <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-4 mb-4">
-            <div className="flex items-center gap-2 text-sm text-[#6B5D4F]">
-              <Users className="w-4 h-4 text-[#2B6F5E]" />
-              <span className="font-medium text-[#1B1B1B]">
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-4 mb-4">
+            <div className="flex items-center gap-2 text-sm text-[#6B5D4F] dark:text-[#888888]">
+              <Users className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
+              <span className="font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {t("admin.enrollments.actionRequired")}:
               </span>
               <span>{t("admin.enrollments.paidAction")}</span>
@@ -564,7 +564,7 @@ export default function AdminEnrollmentsPage() {
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder={t("admin.enrollments.rejectDialog.placeholder")}
-              className="w-full p-3 border border-[#D8CDC0]/60 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+              className="w-full p-3 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] bg-white dark:bg-[#222222] text-[#1B1B1B] dark:text-[#E5E5E5] placeholder:text-[#BEB29E] dark:placeholder:text-[#555555] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 dark:focus:ring-red-400/20 focus:border-red-400 dark:focus:border-red-400"
               rows={4}
             />
           </div>
@@ -576,7 +576,7 @@ export default function AdminEnrollmentsPage() {
                 setRejectReason("");
                 setSelectedEnrollment(null);
               }}
-              className="border-[#D8CDC0]/60"
+              className="border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:text-[#E5E5E5] dark:hover:bg-[#222222]"
             >
               {t("admin.enrollments.cancel")}
             </Button>
@@ -607,7 +607,7 @@ export default function AdminEnrollmentsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <label className="block text-sm font-medium text-[#1B1B1B] mb-2">
+            <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
               {t("admin.enrollments.assignDialog.availableGroups")}
             </label>
             <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
@@ -641,7 +641,7 @@ export default function AdminEnrollmentsPage() {
                 setSelectedGroupId("");
                 setSelectedEnrollment(null);
               }}
-              className="border-[#D8CDC0]/60"
+              className="border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:text-[#E5E5E5] dark:hover:bg-[#222222]"
             >
               {t("admin.enrollments.cancel")}
             </Button>
@@ -688,37 +688,37 @@ function EnrollmentCard({
     PENDING: {
       icon: Clock,
       label: t("admin.enrollments.status.pendingReview"),
-      bgColor: "bg-[#C4A035]/8",
-      textColor: "text-[#C4A035]",
-      borderColor: "border-[#C4A035]/20",
+      bgColor: "bg-[#C4A035]/8 dark:bg-[#C4A035]/10",
+      textColor: "text-[#C4A035] dark:text-[#D4A843]",
+      borderColor: "border-[#C4A035]/20 dark:border-[#C4A035]/15",
     },
     VALIDATED: {
       icon: CheckCircle,
       label: t("admin.enrollments.status.validatedAwaiting"),
-      bgColor: "bg-[#8DB896]/10",
-      textColor: "text-[#2B6F5E]",
-      borderColor: "border-[#8DB896]/30",
+      bgColor: "bg-[#8DB896]/10 dark:bg-[#4ADE80]/10",
+      textColor: "text-[#2B6F5E] dark:text-[#4ADE80]",
+      borderColor: "border-[#8DB896]/30 dark:border-[#4ADE80]/20",
     },
     PAID: {
       icon: DollarSign,
       label: t("admin.enrollments.status.paidReady"),
-      bgColor: "bg-[#2B6F5E]/5",
-      textColor: "text-[#2B6F5E]",
-      borderColor: "border-[#2B6F5E]/15",
+      bgColor: "bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5",
+      textColor: "text-[#2B6F5E] dark:text-[#4ADE80]",
+      borderColor: "border-[#2B6F5E]/15 dark:border-[#4ADE80]/15",
     },
     REJECTED: {
       icon: XCircle,
       label: t("admin.enrollments.status.rejected"),
-      bgColor: "bg-red-50",
-      textColor: "text-red-700",
-      borderColor: "border-red-200",
+      bgColor: "bg-red-50 dark:bg-red-950/30",
+      textColor: "text-red-700 dark:text-red-400",
+      borderColor: "border-red-200 dark:border-red-800/40",
     },
     FINISHED: {
       icon: GraduationCap,
       label: t("admin.enrollments.status.finished"),
-      bgColor: "bg-[#D8CDC0]/15",
-      textColor: "text-[#6B5D4F]",
-      borderColor: "border-[#D8CDC0]/40",
+      bgColor: "bg-[#D8CDC0]/15 dark:bg-[#555555]/15",
+      textColor: "text-[#6B5D4F] dark:text-[#AAAAAA]",
+      borderColor: "border-[#D8CDC0]/40 dark:border-[#555555]/30",
     },
   };
 
@@ -764,7 +764,7 @@ function EnrollmentCard({
     .map((d) => d.type);
 
   return (
-    <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+    <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] shadow-sm hover:shadow-md dark:hover:shadow-black/20 transition-shadow overflow-hidden">
       <div
         className={`${config.bgColor} ${config.borderColor} border-b px-5 py-3`}
       >
@@ -775,7 +775,7 @@ function EnrollmentCard({
               {config.label}
             </span>
           </div>
-          <span className="text-xs text-[#BEB29E]">
+          <span className="text-xs text-[#BEB29E] dark:text-[#666666]">
             #{enrollment.enrollment_id.slice(0, 8)}
           </span>
         </div>
@@ -783,59 +783,63 @@ function EnrollmentCard({
 
       <div className="p-5 space-y-4">
         <div>
-          <p className="text-xs font-medium text-[#6B5D4F] mb-1">
+          <p className="text-xs font-medium text-[#6B5D4F] dark:text-[#888888] mb-1">
             {t("admin.enrollments.card.student")}
           </p>
-          <p className="text-base font-semibold text-[#1B1B1B]">
+          <p className="text-base font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
             {studentName}
           </p>
           {enrollment.student?.email && (
-            <p className="text-sm text-[#6B5D4F]">{enrollment.student.email}</p>
+            <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
+              {enrollment.student.email}
+            </p>
           )}
         </div>
 
-        <div className="p-3 bg-[#D8CDC0]/10 rounded-xl">
-          <p className="text-xs font-medium text-[#6B5D4F] mb-1">
+        <div className="p-3 bg-[#D8CDC0]/10 dark:bg-[#222222] rounded-xl">
+          <p className="text-xs font-medium text-[#6B5D4F] dark:text-[#888888] mb-1">
             {t("admin.enrollments.card.course")}
           </p>
-          <p className="text-sm font-semibold text-[#1B1B1B]">{courseName}</p>
+          <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
+            {courseName}
+          </p>
           {courseCode && (
-            <p className="text-xs text-[#6B5D4F]">
+            <p className="text-xs text-[#6B5D4F] dark:text-[#888888]">
               {t("admin.enrollments.card.code")}: {courseCode}
             </p>
           )}
           {enrollment.level && (
-            <p className="text-xs text-[#6B5D4F]">
+            <p className="text-xs text-[#6B5D4F] dark:text-[#888888]">
               {t("admin.enrollments.card.level")}: {enrollment.level}
             </p>
           )}
         </div>
 
         {pricing && (
-          <div className="p-3 bg-[#C4A035]/5 rounded-xl border border-[#C4A035]/15">
+          <div className="p-3 bg-[#C4A035]/5 dark:bg-[#C4A035]/8 rounded-xl border border-[#C4A035]/15 dark:border-[#C4A035]/15">
             <div className="flex items-center gap-2 mb-1">
-              <Tag className="w-4 h-4 text-[#C4A035]" />
-              <p className="text-xs font-medium text-[#C4A035]">
+              <Tag className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843]" />
+              <p className="text-xs font-medium text-[#C4A035] dark:text-[#D4A843]">
                 {t("admin.enrollments.card.pricingChoice")}
               </p>
             </div>
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[#1B1B1B]">
+              <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {pricing.status_fr}
                 {pricing.status_ar && (
-                  <span className="text-xs text-[#C4A035] mr-1">
+                  <span className="text-xs text-[#C4A035] dark:text-[#D4A843] mr-1">
                     {" "}
                     ({pricing.status_ar})
                   </span>
                 )}
               </p>
-              <span className="text-sm font-bold text-[#C4A035]">
+              <span className="text-sm font-bold text-[#C4A035] dark:text-[#D4A843]">
                 {Number(pricing.price).toLocaleString()}{" "}
                 {pricing.currency || "DZD"}
               </span>
             </div>
             {pricing.discount && (
-              <p className="text-xs text-[#C4A035]/80 mt-1">
+              <p className="text-xs text-[#C4A035]/80 dark:text-[#D4A843]/70 mt-1">
                 {pricing.discount}
               </p>
             )}
@@ -843,10 +847,10 @@ function EnrollmentCard({
         )}
 
         {!pricing && enrollment.registration_status === "PENDING" && (
-          <div className="p-3 bg-[#D8CDC0]/10 rounded-xl border border-[#D8CDC0]/30">
+          <div className="p-3 bg-[#D8CDC0]/10 dark:bg-[#222222] rounded-xl border border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
             <div className="flex items-center gap-2">
-              <Tag className="w-4 h-4 text-[#BEB29E]" />
-              <p className="text-xs text-[#BEB29E]">
+              <Tag className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
+              <p className="text-xs text-[#BEB29E] dark:text-[#666666]">
                 {t("admin.enrollments.card.noPricing")}
               </p>
             </div>
@@ -854,22 +858,22 @@ function EnrollmentCard({
         )}
 
         {showGoToFees && unpaidFee && (
-          <div className="p-3 bg-[#C4A035]/5 rounded-xl border border-[#C4A035]/15">
+          <div className="p-3 bg-[#C4A035]/5 dark:bg-[#C4A035]/8 rounded-xl border border-[#C4A035]/15 dark:border-[#C4A035]/15">
             <div className="flex items-center gap-2 mb-1">
-              <DollarSign className="w-4 h-4 text-[#C4A035]" />
-              <p className="text-xs font-medium text-[#C4A035]">
+              <DollarSign className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843]" />
+              <p className="text-xs font-medium text-[#C4A035] dark:text-[#D4A843]">
                 {t("admin.enrollments.card.unpaidFee")}
               </p>
             </div>
             <div className="flex items-center justify-between">
-              <p className="text-sm text-[#1B1B1B]">
+              <p className="text-sm text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {t("admin.enrollments.card.amount")}:{" "}
                 <span className="font-bold">
                   {Number(unpaidFee.amount).toLocaleString()} DZD
                 </span>
               </p>
               {unpaidFee.due_date && (
-                <p className="text-xs text-[#C4A035]">
+                <p className="text-xs text-[#C4A035] dark:text-[#D4A843]">
                   {t("admin.enrollments.card.due")}:{" "}
                   {new Date(unpaidFee.due_date).toLocaleDateString("en-US", {
                     month: "short",
@@ -882,34 +886,36 @@ function EnrollmentCard({
         )}
 
         {groupName && (
-          <div className="p-3 bg-[#2B6F5E]/5 rounded-xl border border-[#2B6F5E]/15">
+          <div className="p-3 bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 rounded-xl border border-[#2B6F5E]/15 dark:border-[#4ADE80]/15">
             <div className="flex items-center gap-2 mb-1">
-              <Users className="w-4 h-4 text-[#2B6F5E]" />
-              <p className="text-xs font-medium text-[#2B6F5E]">
+              <Users className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
+              <p className="text-xs font-medium text-[#2B6F5E] dark:text-[#4ADE80]">
                 {t("admin.enrollments.card.groupAssigned")}
               </p>
             </div>
-            <p className="text-sm font-semibold text-[#1B1B1B]">{groupName}</p>
+            <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
+              {groupName}
+            </p>
           </div>
         )}
 
         {enrollment.registration_status === "PENDING" &&
           !allRequiredDocsApproved && (
-            <div className="p-3 bg-[#C4A035]/5 rounded-xl border border-[#C4A035]/15">
+            <div className="p-3 bg-[#C4A035]/5 dark:bg-[#C4A035]/8 rounded-xl border border-[#C4A035]/15 dark:border-[#C4A035]/15">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-[#C4A035] mt-0.5 shrink-0" />
+                <AlertCircle className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843] mt-0.5 shrink-0" />
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-[#C4A035] mb-1">
+                  <p className="text-xs font-semibold text-[#C4A035] dark:text-[#D4A843] mb-1">
                     {t("admin.enrollments.card.docIssues")}
                   </p>
                   {missingDocs.length > 0 && (
-                    <p className="text-xs text-[#C4A035]/80">
+                    <p className="text-xs text-[#C4A035]/80 dark:text-[#D4A843]/70">
                       {t("admin.enrollments.card.missing")}:{" "}
                       {missingDocs.join(", ")}
                     </p>
                   )}
                   {pendingDocs.length > 0 && (
-                    <p className="text-xs text-[#C4A035]/80">
+                    <p className="text-xs text-[#C4A035]/80 dark:text-[#D4A843]/70">
                       {t("admin.enrollments.card.pendingApproval")}:{" "}
                       {pendingDocs.join(", ")}
                     </p>
@@ -921,19 +927,19 @@ function EnrollmentCard({
 
         {enrollment.registration_status === "PENDING" &&
           allRequiredDocsApproved && (
-            <div className="p-3 bg-[#8DB896]/10 rounded-xl border border-[#8DB896]/20">
+            <div className="p-3 bg-[#8DB896]/10 dark:bg-[#4ADE80]/8 rounded-xl border border-[#8DB896]/20 dark:border-[#4ADE80]/15">
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-[#2B6F5E]" />
-                <p className="text-xs font-medium text-[#2B6F5E]">
+                <CheckCircle className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
+                <p className="text-xs font-medium text-[#2B6F5E] dark:text-[#4ADE80]">
                   {t("admin.enrollments.card.allDocsApproved")}
                 </p>
               </div>
             </div>
           )}
 
-        <div className="grid grid-cols-1 gap-3 pt-2 border-t border-[#D8CDC0]/30">
-          <div className="flex items-center gap-2 text-sm text-[#6B5D4F]">
-            <Calendar className="w-4 h-4 text-[#BEB29E]" />
+        <div className="grid grid-cols-1 gap-3 pt-2 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+          <div className="flex items-center gap-2 text-sm text-[#6B5D4F] dark:text-[#888888]">
+            <Calendar className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
             <span>
               {t("admin.enrollments.card.enrolled")}: {enrollmentDate}
             </span>
@@ -956,7 +962,7 @@ function EnrollmentCard({
             <Button
               onClick={onReject}
               variant="outline"
-              className="w-full border-red-200 text-red-600 hover:bg-red-50"
+              className="w-full border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
               size="sm"
             >
               <XCircle className="w-4 h-4 mr-2" />{" "}
@@ -990,7 +996,7 @@ function EnrollmentCard({
             <Button
               onClick={onFinish}
               variant="outline"
-              className="w-full border-[#D8CDC0]/60 text-[#6B5D4F] hover:bg-[#D8CDC0]/15"
+              className="w-full border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/15 dark:hover:bg-[#222222]"
               size="sm"
             >
               <GraduationCap className="w-4 h-4 mr-2" />{" "}
@@ -1001,7 +1007,7 @@ function EnrollmentCard({
             asChild
             variant="outline"
             size="sm"
-            className="w-full border-[#D8CDC0]/60 text-[#6B5D4F] hover:bg-[#D8CDC0]/10"
+            className="w-full border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222]"
           >
             <Link to={`/admin/students/${enrollment.student_id}`}>
               <Eye className="w-4 h-4 mr-2" />{" "}
@@ -1028,43 +1034,45 @@ function StatCard({ icon: Icon, label, value, color, badge }: StatCardProps) {
   const colors: Record<string, { bar: string; bg: string; icon: string }> = {
     teal: {
       bar: "from-[#2B6F5E] to-[#2B6F5E]/70",
-      bg: "bg-[#2B6F5E]/8",
-      icon: "text-[#2B6F5E]",
+      bg: "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10",
+      icon: "text-[#2B6F5E] dark:text-[#4ADE80]",
     },
     mustard: {
       bar: "from-[#C4A035] to-[#C4A035]/70",
-      bg: "bg-[#C4A035]/8",
-      icon: "text-[#C4A035]",
+      bg: "bg-[#C4A035]/8 dark:bg-[#D4A843]/10",
+      icon: "text-[#C4A035] dark:text-[#D4A843]",
     },
     green: {
       bar: "from-[#8DB896] to-[#8DB896]/70",
-      bg: "bg-[#8DB896]/12",
-      icon: "text-[#3D7A4A]",
+      bg: "bg-[#8DB896]/12 dark:bg-[#8DB896]/10",
+      icon: "text-[#3D7A4A] dark:text-[#8DB896]",
     },
     red: {
       bar: "from-red-500 to-red-500/70",
-      bg: "bg-red-50",
-      icon: "text-red-600",
+      bg: "bg-red-50 dark:bg-red-950/30",
+      icon: "text-red-600 dark:text-red-400",
     },
     beige: {
       bar: "from-[#BEB29E] to-[#BEB29E]/70",
-      bg: "bg-[#D8CDC0]/20",
-      icon: "text-[#6B5D4F]",
+      bg: "bg-[#D8CDC0]/20 dark:bg-[#555555]/20",
+      icon: "text-[#6B5D4F] dark:text-[#AAAAAA]",
     },
   };
   const c = colors[color] || colors.teal;
 
   return (
-    <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-4 overflow-hidden group hover:shadow-md transition-all">
+    <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-4 overflow-hidden group hover:shadow-md dark:hover:shadow-black/20 transition-all">
       <div
         className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${c.bar} opacity-60 group-hover:opacity-100 transition-opacity`}
       ></div>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium text-[#6B5D4F] uppercase tracking-wide">
+          <p className="text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wide">
             {label}
           </p>
-          <p className="text-2xl font-bold text-[#1B1B1B] mt-1">{value}</p>
+          <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mt-1">
+            {value}
+          </p>
         </div>
         <div
           className={`w-10 h-10 rounded-xl ${c.bg} flex items-center justify-center`}
@@ -1092,12 +1100,14 @@ function EmptyState({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-[#D8CDC0]/60">
-      <div className="w-16 h-16 rounded-full bg-[#D8CDC0]/20 flex items-center justify-center mb-4">
-        <Icon className="w-8 h-8 text-[#BEB29E]" />
+    <div className="flex flex-col items-center justify-center py-16 text-center bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A]">
+      <div className="w-16 h-16 rounded-full bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] flex items-center justify-center mb-4">
+        <Icon className="w-8 h-8 text-[#BEB29E] dark:text-[#666666]" />
       </div>
-      <h3 className="text-lg font-semibold text-[#1B1B1B] mb-1">{message}</h3>
-      <p className="text-[#6B5D4F] text-sm">
+      <h3 className="text-lg font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-1">
+        {message}
+      </h3>
+      <p className="text-[#6B5D4F] dark:text-[#888888] text-sm">
         {t("admin.enrollments.emptyHint")}
       </p>
     </div>

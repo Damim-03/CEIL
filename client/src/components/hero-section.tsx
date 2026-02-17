@@ -46,7 +46,7 @@ export function HeroSection() {
       dir={dir}
     >
       {/* ═══ Background ═══ */}
-      <div className="absolute inset-0 bg-gradient-to-bl from-brand-teal-dark via-brand-teal-dark to-[#1a3528]" />
+      <div className="absolute inset-0 bg-gradient-to-bl from-brand-teal-dark via-brand-teal-dark to-[#1a3528] dark:from-[#0A0A0A] dark:via-[#0F0F0F] dark:to-[#0A1A10]" />
       <div className="absolute inset-0 pointer-events-none">
         {/* Geometric circles */}
         <div
@@ -205,7 +205,7 @@ export function HeroSection() {
         <svg viewBox="0 0 1440 60" fill="none" className="w-full h-auto block">
           <path
             d="M0 60L48 54C96 48 192 36 288 30C384 24 480 24 576 28C672 32 768 40 864 42C960 44 1056 40 1152 36C1248 32 1344 28 1392 26L1440 24V60H0Z"
-            fill="white"
+            className="fill-white dark:fill-[#121212]"
           />
         </svg>
       </div>

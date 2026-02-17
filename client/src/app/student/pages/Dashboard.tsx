@@ -37,7 +37,9 @@ export default function Dashboard() {
   if (!data) {
     return (
       <div className="flex items-center justify-center min-h-100">
-        <p className="text-[#6B5D4F]">{t("student.error.loading")}</p>
+        <p className="text-[#6B5D4F] dark:text-[#888888]">
+          {t("student.error.loading")}
+        </p>
       </div>
     );
   }
@@ -65,7 +67,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Welcome Banner */}
       <div className="relative rounded-2xl overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#2B6F5E] via-[#2B6F5E]/90 to-[#1a4a3d]"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-[#2B6F5E] via-[#2B6F5E]/90 to-[#1a4a3d] dark:from-[#0A1A10] dark:via-[#0F1F15] dark:to-[#0A1A10]"></div>
         <div
           className="absolute inset-0 opacity-[0.04]"
           style={{
@@ -73,8 +75,8 @@ export default function Dashboard() {
             backgroundSize: "24px 24px",
           }}
         ></div>
-        <div className="absolute -top-16 -right-16 w-56 h-56 bg-[#C4A035]/15 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-[#8DB896]/15 rounded-full blur-3xl"></div>
+        <div className="absolute -top-16 -right-16 w-56 h-56 bg-[#C4A035]/15 dark:bg-[#C4A035]/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-[#8DB896]/15 dark:bg-[#4ADE80]/10 rounded-full blur-3xl"></div>
 
         <div className="relative p-8">
           <h1 className="text-3xl font-bold text-white mb-2">
@@ -90,16 +92,16 @@ export default function Dashboard() {
 
       {/* Enrollment Ready Banner */}
       {isEnrollmentReady && (
-        <div className="bg-[#8DB896]/8 border border-[#8DB896]/25 rounded-2xl p-6">
+        <div className="bg-[#8DB896]/8 dark:bg-[#4ADE80]/5 border border-[#8DB896]/25 dark:border-[#4ADE80]/15 rounded-2xl p-6">
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shrink-0 shadow-lg shadow-[#2B6F5E]/20">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shrink-0 shadow-lg shadow-[#2B6F5E]/20 dark:shadow-black/30">
               <CheckCircle className="w-7 h-7 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-[#1B1B1B] mb-2">
+              <h3 className="text-xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
                 {t("student.dashboard.enrollmentActive")}
               </h3>
-              <p className="text-[#6B5D4F] mb-4">
+              <p className="text-[#6B5D4F] dark:text-[#888888] mb-4">
                 {t("student.dashboard.enrollmentActiveDesc")}
               </p>
               <Link to="/dashboard/courses">
@@ -116,19 +118,19 @@ export default function Dashboard() {
 
       {/* Requirements Alert */}
       {!isEnrollmentReady && (
-        <div className="bg-[#C4A035]/5 border border-[#C4A035]/20 rounded-2xl p-6">
+        <div className="bg-[#C4A035]/5 dark:bg-[#C4A035]/[0.03] border border-[#C4A035]/20 dark:border-[#C4A035]/15 rounded-2xl p-6">
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shrink-0 shadow-lg shadow-[#C4A035]/20">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shrink-0 shadow-lg shadow-[#C4A035]/20 dark:shadow-black/30">
               <AlertTriangle className="w-7 h-7 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-[#1B1B1B] mb-2">
+              <h3 className="text-xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
                 {t("student.dashboard.actionRequired")}
               </h3>
-              <p className="text-[#6B5D4F] mb-3">
+              <p className="text-[#6B5D4F] dark:text-[#888888] mb-3">
                 {t("student.dashboard.actionRequiredDesc")}
               </p>
-              <ul className="space-y-2 text-[#6B5D4F]">
+              <ul className="space-y-2 text-[#6B5D4F] dark:text-[#888888]">
                 {!isProfileComplete && (
                   <li className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-[#C4A035]" />
@@ -167,9 +169,9 @@ export default function Dashboard() {
       {isEnrollmentReady ? (
         <>
           {/* Student ID Card */}
-          <div className="bg-white rounded-2xl border border-[#D8CDC0]/50 p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-[#1B1B1B] mb-4 flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-[#2B6F5E]" />
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] p-6 shadow-sm dark:shadow-black/20">
+            <h2 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-4 flex items-center gap-2">
+              <GraduationCap className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
               {t("student.dashboard.studentId")}
             </h2>
             <StudentIDCardFlip profile={fullProfile || me || { email: "" }} />
@@ -202,14 +204,14 @@ export default function Dashboard() {
             ].map((stat, i) => (
               <div
                 key={i}
-                className="relative bg-white rounded-2xl border border-[#D8CDC0]/50 p-6 overflow-hidden group hover:shadow-md transition-all"
+                className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] p-6 overflow-hidden group hover:shadow-md dark:hover:shadow-black/20 transition-all"
               >
                 <div
                   className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${stat.gradient} opacity-60 group-hover:opacity-100 transition-opacity`}
                 ></div>
                 <div className="flex items-center gap-3">
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md"
+                    className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md dark:shadow-black/30"
                     style={{
                       background: `linear-gradient(135deg, ${stat.color}, ${stat.color}cc)`,
                     }}
@@ -217,8 +219,10 @@ export default function Dashboard() {
                     <stat.icon className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-[#6B5D4F]">{stat.label}</p>
-                    <p className="text-2xl font-bold text-[#1B1B1B]">
+                    <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
+                      {stat.label}
+                    </p>
+                    <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                       {stat.value}
                     </p>
                   </div>
@@ -227,19 +231,19 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* {t("student.dashboard.currentCourses")} */}
-          <div className="bg-white rounded-2xl border border-[#D8CDC0]/50 p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-[#1B1B1B] mb-4 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-[#C4A035]" />
+          {/* Current Courses */}
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] p-6 shadow-sm dark:shadow-black/20">
+            <h2 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-4 flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-[#C4A035] dark:text-[#D4A843]" />
               {t("student.dashboard.currentCourses")}
             </h2>
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-4 border border-[#D8CDC0]/40 rounded-xl hover:bg-[#D8CDC0]/5 transition-colors">
+              <div className="flex items-center justify-between p-4 border border-[#D8CDC0]/40 dark:border-[#2A2A2A] rounded-xl hover:bg-[#D8CDC0]/5 dark:hover:bg-[#222222] transition-colors">
                 <div>
-                  <h3 className="font-semibold text-[#1B1B1B]">
+                  <h3 className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                     Advanced Mathematics
                   </h3>
-                  <p className="text-sm text-[#6B5D4F]">
+                  <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                     {t("student.dashboard.progress", { value: 75 })}
                   </p>
                 </div>
@@ -247,7 +251,7 @@ export default function Dashboard() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-[#D8CDC0]/60 text-[#6B5D4F] hover:bg-[#2B6F5E]/5 hover:border-[#2B6F5E]/30 rounded-xl"
+                    className="border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#888888] hover:bg-[#2B6F5E]/5 dark:hover:bg-[#4ADE80]/5 hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 rounded-xl"
                   >
                     View
                   </Button>
@@ -257,7 +261,7 @@ export default function Dashboard() {
             <Link to="/dashboard/courses" className="block mt-4">
               <Button
                 variant="outline"
-                className="w-full border-[#D8CDC0]/60 text-[#6B5D4F] hover:bg-[#2B6F5E]/5 hover:border-[#2B6F5E]/30 rounded-xl"
+                className="w-full border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#888888] hover:bg-[#2B6F5E]/5 dark:hover:bg-[#4ADE80]/5 hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 rounded-xl"
               >
                 {t("student.dashboard.viewAllCourses")}
               </Button>
@@ -268,18 +272,18 @@ export default function Dashboard() {
         /* ═══════ INCOMPLETE DASHBOARD ═══════ */
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* {t("student.dashboard.profileCompletion")} */}
+            {/* Profile Completion */}
             {!isProfileComplete && (
-              <div className="bg-white rounded-2xl border border-[#D8CDC0]/50 p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] p-6 shadow-sm dark:shadow-black/20 hover:shadow-md dark:hover:shadow-black/30 transition-shadow">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-md shadow-[#2B6F5E]/20">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-md shadow-[#2B6F5E]/20 dark:shadow-black/30">
                     <User className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-[#1B1B1B]">
+                    <h2 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                       {t("student.dashboard.profileCompletion")}
                     </h2>
-                    <p className="text-sm text-[#6B5D4F]">
+                    <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                       {t("student.dashboard.fieldsCompleted", {
                         completed: completedFields,
                         total: totalFields,
@@ -295,10 +299,10 @@ export default function Dashboard() {
                   />
                 </div>
 
-                <div className="bg-[#C4A035]/5 border border-[#C4A035]/15 rounded-xl p-4 mb-4">
+                <div className="bg-[#C4A035]/5 dark:bg-[#C4A035]/[0.03] border border-[#C4A035]/15 dark:border-[#C4A035]/10 rounded-xl p-4 mb-4">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-[#C4A035] shrink-0" />
-                    <p className="text-sm font-medium text-[#1B1B1B]">
+                    <AlertTriangle className="w-5 h-5 text-[#C4A035] dark:text-[#D4A843] shrink-0" />
+                    <p className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                       {totalFields - completedFields} field
                     </p>
                   </div>
@@ -313,21 +317,21 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* {t("student.dashboard.documentsStatus")} */}
+            {/* Documents Status */}
             {(docStats.total === 0 ||
               docStats.pending > 0 ||
               docStats.rejected > 0 ||
               !isProfileComplete) && (
-              <div className="bg-white rounded-2xl border border-[#D8CDC0]/50 p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] p-6 shadow-sm dark:shadow-black/20 hover:shadow-md dark:hover:shadow-black/30 transition-shadow">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-md shadow-[#C4A035]/20">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-md shadow-[#C4A035]/20 dark:shadow-black/30">
                     <FileText className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-[#1B1B1B]">
+                    <h2 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                       {t("student.dashboard.documentsStatus")}
                     </h2>
-                    <p className="text-sm text-[#6B5D4F]">
+                    <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                       {docStats.total} document
                       {docStats.total !== 1 ? "s" : ""}{" "}
                     </p>
@@ -344,36 +348,36 @@ export default function Dashboard() {
                 </div>
 
                 <div className="space-y-2 mb-4">
-                  <div className="flex items-center justify-between p-2.5 bg-[#8DB896]/8 rounded-xl">
+                  <div className="flex items-center justify-between p-2.5 bg-[#8DB896]/8 dark:bg-[#4ADE80]/5 rounded-xl">
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-[#2B6F5E]" />
-                      <span className="text-sm font-medium text-[#1B1B1B]">
+                      <div className="w-3 h-3 rounded-full bg-[#2B6F5E] dark:bg-[#4ADE80]" />
+                      <span className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                         {t("student.dashboard.approved")}
                       </span>
                     </div>
-                    <span className="text-sm font-bold text-[#1B1B1B]">
+                    <span className="text-sm font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                       {docStats.approved}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 bg-[#C4A035]/5 rounded-xl">
+                  <div className="flex items-center justify-between p-2.5 bg-[#C4A035]/5 dark:bg-[#C4A035]/[0.03] rounded-xl">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-[#C4A035]" />
-                      <span className="text-sm font-medium text-[#1B1B1B]">
+                      <span className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                         {t("student.dashboard.pending")}
                       </span>
                     </div>
-                    <span className="text-sm font-bold text-[#1B1B1B]">
+                    <span className="text-sm font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                       {docStats.pending}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 bg-red-50 rounded-xl">
+                  <div className="flex items-center justify-between p-2.5 bg-red-50 dark:bg-red-950/20 rounded-xl">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-red-500" />
-                      <span className="text-sm font-medium text-[#1B1B1B]">
+                      <span className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                         {t("student.dashboard.rejected")}
                       </span>
                     </div>
-                    <span className="text-sm font-bold text-[#1B1B1B]">
+                    <span className="text-sm font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                       {docStats.rejected}
                     </span>
                   </div>
@@ -383,7 +387,7 @@ export default function Dashboard() {
                   <Link to="/dashboard/documents" className="flex-1">
                     <Button
                       variant="outline"
-                      className="w-full gap-2 border-[#D8CDC0]/60 text-[#6B5D4F] hover:bg-[#D8CDC0]/10 rounded-xl"
+                      className="w-full gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#888888] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222] rounded-xl"
                     >
                       <Eye className="w-4 h-4" /> View
                     </Button>
@@ -398,10 +402,10 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* {t("student.dashboard.quickActions")} */}
-          <div className="bg-white rounded-2xl border border-[#D8CDC0]/50 p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-[#1B1B1B] mb-4 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-[#2B6F5E]" />
+          {/* Quick Actions */}
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] p-6 shadow-sm dark:shadow-black/20">
+            <h2 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-4 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
               {t("student.dashboard.quickActions")}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -409,10 +413,10 @@ export default function Dashboard() {
                 <Link to="/dashboard/profile">
                   <Button
                     variant="outline"
-                    className="w-full h-auto py-4 flex-col gap-2 border-[#D8CDC0]/60 hover:border-[#2B6F5E]/30 hover:bg-[#2B6F5E]/5 rounded-xl transition-all"
+                    className="w-full h-auto py-4 flex-col gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 hover:bg-[#2B6F5E]/5 dark:hover:bg-[#4ADE80]/5 rounded-xl transition-all"
                   >
-                    <Edit className="w-6 h-6 text-[#2B6F5E]" />
-                    <span className="font-medium text-[#1B1B1B]">
+                    <Edit className="w-6 h-6 text-[#2B6F5E] dark:text-[#4ADE80]" />
+                    <span className="font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                       {t("student.dashboard.completeProfileBtn")}
                     </span>
                   </Button>
@@ -422,10 +426,10 @@ export default function Dashboard() {
                 <Link to="/dashboard/documents">
                   <Button
                     variant="outline"
-                    className="w-full h-auto py-4 flex-col gap-2 border-[#D8CDC0]/60 hover:border-[#C4A035]/30 hover:bg-[#C4A035]/5 rounded-xl transition-all"
+                    className="w-full h-auto py-4 flex-col gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] hover:border-[#C4A035]/30 dark:hover:border-[#D4A843]/20 hover:bg-[#C4A035]/5 dark:hover:bg-[#D4A843]/5 rounded-xl transition-all"
                   >
-                    <Upload className="w-6 h-6 text-[#C4A035]" />
-                    <span className="font-medium text-[#1B1B1B]">
+                    <Upload className="w-6 h-6 text-[#C4A035] dark:text-[#D4A843]" />
+                    <span className="font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                       {t("student.dashboard.uploadDocuments")}
                     </span>
                   </Button>
@@ -434,10 +438,10 @@ export default function Dashboard() {
               <Link to="/dashboard/documents">
                 <Button
                   variant="outline"
-                  className="w-full h-auto py-4 flex-col gap-2 border-[#D8CDC0]/60 hover:border-[#2B6F5E]/30 hover:bg-[#2B6F5E]/5 rounded-xl transition-all"
+                  className="w-full h-auto py-4 flex-col gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 hover:bg-[#2B6F5E]/5 dark:hover:bg-[#4ADE80]/5 rounded-xl transition-all"
                 >
-                  <Eye className="w-6 h-6 text-[#2B6F5E]" />
-                  <span className="font-medium text-[#1B1B1B]">
+                  <Eye className="w-6 h-6 text-[#2B6F5E] dark:text-[#4ADE80]" />
+                  <span className="font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                     {t("student.dashboard.viewDocuments")}
                   </span>
                 </Button>
@@ -448,11 +452,11 @@ export default function Dashboard() {
       )}
 
       {/* Security Notice */}
-      <div className="bg-[#D8CDC0]/8 border border-[#D8CDC0]/30 rounded-2xl p-4">
+      <div className="bg-[#D8CDC0]/8 dark:bg-[#2A2A2A]/50 border border-[#D8CDC0]/30 dark:border-[#2A2A2A] rounded-2xl p-4">
         <div className="flex items-start gap-3">
-          <Shield className="w-5 h-5 text-[#BEB29E] shrink-0 mt-0.5" />
-          <p className="text-sm text-[#6B5D4F]">
-            <span className="font-semibold text-[#1B1B1B]">
+          <Shield className="w-5 h-5 text-[#BEB29E] dark:text-[#555555] shrink-0 mt-0.5" />
+          <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
+            <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
               {t("student.dashboard.securityNotice")}
             </span>{" "}
             {t("student.dashboard.securityNoticeDesc")}
@@ -472,9 +476,18 @@ function CircularProgress({ percentage, color }: CircularProgressProps) {
   const offset = circumference - (percentage / 100) * circumference;
 
   const colors: Record<string, { gradient: string[]; text: string }> = {
-    teal: { gradient: ["#2B6F5E", "#1a4a3d"], text: "text-[#2B6F5E]" },
-    blue: { gradient: ["#2B6F5E", "#8DB896"], text: "text-[#2B6F5E]" },
-    green: { gradient: ["#8DB896", "#2B6F5E"], text: "text-[#2B6F5E]" },
+    teal: {
+      gradient: ["#2B6F5E", "#1a4a3d"],
+      text: "text-[#2B6F5E] dark:text-[#4ADE80]",
+    },
+    blue: {
+      gradient: ["#2B6F5E", "#8DB896"],
+      text: "text-[#2B6F5E] dark:text-[#4ADE80]",
+    },
+    green: {
+      gradient: ["#8DB896", "#2B6F5E"],
+      text: "text-[#2B6F5E] dark:text-[#4ADE80]",
+    },
   };
 
   const c = colors[color] || colors.teal;
@@ -502,6 +515,7 @@ function CircularProgress({ percentage, color }: CircularProgressProps) {
           strokeOpacity="0.3"
           strokeWidth="12"
           fill="none"
+          className="dark:[stroke:#2A2A2A]"
         />
         <circle
           cx="96"
@@ -518,7 +532,7 @@ function CircularProgress({ percentage, color }: CircularProgressProps) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className={`text-4xl font-bold ${c.text}`}>{percentage}%</span>
-        <span className="text-sm text-[#BEB29E] mt-1">
+        <span className="text-sm text-[#BEB29E] dark:text-[#666666] mt-1">
           {t("student.dashboard.complete")}
         </span>
       </div>
@@ -534,8 +548,8 @@ function DonutChart({ approved, pending, rejected, total }: DonutChartProps) {
     return (
       <div className="w-48 h-48 flex items-center justify-center">
         <div className="text-center">
-          <FileText className="w-12 h-12 text-[#D8CDC0] mx-auto mb-2" />
-          <p className="text-sm text-[#BEB29E]">
+          <FileText className="w-12 h-12 text-[#D8CDC0] dark:text-[#333333] mx-auto mb-2" />
+          <p className="text-sm text-[#BEB29E] dark:text-[#666666]">
             {t("student.dashboard.noDocuments")}
           </p>
         </div>
@@ -565,6 +579,7 @@ function DonutChart({ approved, pending, rejected, total }: DonutChartProps) {
           strokeOpacity="0.3"
           strokeWidth="20"
           fill="none"
+          className="dark:[stroke:#2A2A2A]"
         />
         {approved > 0 && (
           <circle
@@ -624,8 +639,10 @@ function DonutChart({ approved, pending, rejected, total }: DonutChartProps) {
         )}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold text-[#1B1B1B]">{total}</span>
-        <span className="text-sm text-[#BEB29E]">
+        <span className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+          {total}
+        </span>
+        <span className="text-sm text-[#BEB29E] dark:text-[#666666]">
           {t("student.dashboard.total")}
         </span>
       </div>

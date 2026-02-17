@@ -1,14 +1,10 @@
 /* ===============================================================
-   ThemeToggle.tsx — Telegram-Style Circular Reveal Animation
+   ThemeToggleHeader.tsx — Nav Bar Variant
    
-   📁 src/components/ThemeToggle.tsx
+   📁 src/components/ThemeToggleHeader.tsx
    
-   ✨ Features:
-   - Circular clip-path reveal from button position
-   - Smooth 600ms transition
-   - Screenshot-based overlay (like Telegram)
-   - Sun/Moon icon morph animation
-   - Dropdown with 3 options (light/dark/system)
+   Same circular reveal animation as ThemeToggle but styled for
+   the dark nav bar background (bg-brand-teal-dark / dark:bg-[#0F0F0F])
 =============================================================== */
 
 import { Moon, Sun, Monitor } from "lucide-react";
@@ -18,14 +14,13 @@ import { cn } from "../lib/utils/utils";
 
 const ANIMATION_DURATION = 600;
 
-const ThemeToggle = () => {
+const ThemeToggleHeader = () => {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Close dropdown on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -36,26 +31,20 @@ const ThemeToggle = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // ═══════════════════════════════════════════════════════
-  // 🎬 Telegram-style circular reveal transition
-  // ═══════════════════════════════════════════════════════
   const animateThemeChange = useCallback(
     (newTheme: "light" | "dark" | "system") => {
       if (isAnimating) return;
 
       const root = document.documentElement;
 
-      // If View Transitions API is available (Chrome 111+)
       if ("startViewTransition" in document) {
         setIsAnimating(true);
 
-        // Get button center coordinates
         const btn = buttonRef.current;
         const rect = btn?.getBoundingClientRect();
         const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
         const y = rect ? rect.top + rect.height / 2 : 0;
 
-        // Calculate max radius needed to cover entire screen
         const maxRadius = Math.hypot(
           Math.max(x, window.innerWidth - x),
           Math.max(y, window.innerHeight - y)
@@ -66,7 +55,6 @@ const ThemeToggle = () => {
         });
 
         transition.ready.then(() => {
-          // Animate the new view with circular clip-path
           root.animate(
             {
               clipPath: [
@@ -86,16 +74,12 @@ const ThemeToggle = () => {
           setIsAnimating(false);
         });
       } else {
-        // Fallback: manual overlay animation for unsupported browsers
         performFallbackAnimation(newTheme);
       }
     },
     [isAnimating, setTheme]
   );
 
-  // ═══════════════════════════════════════════════════════
-  // 🔄 Fallback animation (Firefox, Safari < 18)
-  // ═══════════════════════════════════════════════════════
   const performFallbackAnimation = useCallback(
     (newTheme: "light" | "dark" | "system") => {
       setIsAnimating(true);
@@ -110,7 +94,6 @@ const ThemeToggle = () => {
         Math.max(y, window.innerHeight - y)
       );
 
-      // Create overlay
       const overlay = document.createElement("div");
       overlay.style.cssText = `
         position: fixed;
@@ -121,7 +104,6 @@ const ThemeToggle = () => {
         transition: clip-path ${ANIMATION_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1);
       `;
 
-      // Set overlay color based on target theme
       const willBeDark =
         newTheme === "dark" ||
         (newTheme === "system" &&
@@ -130,17 +112,14 @@ const ThemeToggle = () => {
       overlay.style.backgroundColor = willBeDark ? "#0F0F0F" : "#FAFAF8";
       document.body.appendChild(overlay);
 
-      // Trigger expand animation
       requestAnimationFrame(() => {
         overlay.style.clipPath = `circle(${maxRadius}px at ${x}px ${y}px)`;
       });
 
-      // Apply theme at halfway point
       setTimeout(() => {
         setTheme(newTheme);
       }, ANIMATION_DURATION * 0.3);
 
-      // Remove overlay
       setTimeout(() => {
         overlay.remove();
         setIsAnimating(false);
@@ -151,7 +130,6 @@ const ThemeToggle = () => {
 
   const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
     setOpen(false);
-    // Don't animate if same theme
     const newResolved =
       newTheme === "system"
         ? window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -182,7 +160,7 @@ const ThemeToggle = () => {
 
   return (
     <div ref={ref} className="relative">
-      {/* ═══════ Toggle Button with icon animation ═══════ */}
+      {/* Toggle Button — styled for dark nav bar bg */}
       <button
         ref={buttonRef}
         onClick={handleQuickToggle}
@@ -192,29 +170,27 @@ const ThemeToggle = () => {
         }}
         disabled={isAnimating}
         className={cn(
-          "relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200",
-          "bg-[#D8CDC0]/15 dark:bg-[#2A2A2A] hover:bg-[#D8CDC0]/25 dark:hover:bg-[#333333]",
-          "text-[#6B5D4F] dark:text-[#AAAAAA] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]",
-          "border border-transparent hover:border-[#D8CDC0]/30 dark:hover:border-[#444444]",
-          "active:scale-90 transition-transform",
+          "relative w-[30px] h-[30px] rounded-md flex items-center justify-center transition-all duration-200",
+          "bg-white/[0.04] hover:bg-white/[0.09]",
+          "text-white/50 hover:text-white/90",
+          "border border-white/[0.1] hover:border-white/[0.16]",
+          "active:scale-90",
           isAnimating && "pointer-events-none"
         )}
         title={`${resolvedTheme === "dark" ? "الوضع الداكن" : "الوضع الفاتح"} · كليك يمين للخيارات`}
       >
-        <div className="relative w-[18px] h-[18px]">
-          {/* Sun */}
+        <div className="relative w-[14px] h-[14px]">
           <Sun
             className={cn(
-              "w-[18px] h-[18px] absolute inset-0 transition-all duration-500",
+              "w-[14px] h-[14px] absolute inset-0 transition-all duration-500",
               resolvedTheme === "dark"
                 ? "opacity-0 rotate-90 scale-0"
                 : "opacity-100 rotate-0 scale-100"
             )}
           />
-          {/* Moon */}
           <Moon
             className={cn(
-              "w-[18px] h-[18px] absolute inset-0 transition-all duration-500",
+              "w-[14px] h-[14px] absolute inset-0 transition-all duration-500",
               resolvedTheme === "dark"
                 ? "opacity-100 rotate-0 scale-100"
                 : "opacity-0 -rotate-90 scale-0"
@@ -223,7 +199,7 @@ const ThemeToggle = () => {
         </div>
       </button>
 
-      {/* ═══════ Dropdown Menu ═══════ */}
+      {/* Dropdown Menu */}
       {open && (
         <div
           className={cn(
@@ -263,4 +239,4 @@ const ThemeToggle = () => {
   );
 };
 
-export default ThemeToggle;
+export default ThemeToggleHeader;

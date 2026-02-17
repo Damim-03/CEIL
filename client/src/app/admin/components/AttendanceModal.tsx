@@ -64,10 +64,10 @@ export default function AttendanceModal({
       return;
     }
     const validEnrollments = session.group.enrollments.filter(
-      (enrollment: any) =>
-        enrollment.registration_status === "VALIDATED" ||
-        enrollment.registration_status === "PAID" ||
-        enrollment.registration_status === "FINISHED",
+      (e: any) =>
+        e.registration_status === "VALIDATED" ||
+        e.registration_status === "PAID" ||
+        e.registration_status === "FINISHED",
     );
     const records: AttendanceRecord[] = validEnrollments
       .map((enrollment: any) => {
@@ -83,7 +83,7 @@ export default function AttendanceModal({
           status: existingRecord?.status || "ABSENT",
         };
       })
-      .filter((record): record is AttendanceRecord => record !== null);
+      .filter((r): r is AttendanceRecord => r !== null);
     setAttendanceRecords(records);
   }, [session, existingAttendance]);
 
@@ -135,16 +135,15 @@ export default function AttendanceModal({
     present: attendanceRecords.filter((r) => r.status === "PRESENT").length,
     absent: attendanceRecords.filter((r) => r.status === "ABSENT").length,
   };
-
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString(locale, {
+  const formatDate = (ds: string) =>
+    new Date(ds).toLocaleDateString(locale, {
       weekday: "short",
       month: "short",
       day: "numeric",
       year: "numeric",
     });
-  const formatTime = (dateString: string) =>
-    new Date(dateString).toLocaleTimeString(locale, {
+  const formatTime = (ds: string) =>
+    new Date(ds).toLocaleTimeString(locale, {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -153,26 +152,26 @@ export default function AttendanceModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-[#1A1A1A] border-[#D8CDC0]/60 dark:border-[#2A2A2A]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-            <UserCheck className="w-6 h-6 text-indigo-600" />
+          <DialogTitle className="text-2xl font-bold flex items-center gap-2 text-[#1B1B1B] dark:text-[#E5E5E5]">
+            <UserCheck className="w-6 h-6 text-[#2B6F5E] dark:text-[#4ADE80]" />
             {t("admin.attendanceModal.markAttendance")}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-[#6B5D4F] dark:text-[#888888]">
             {t("admin.attendanceModal.markAttendanceDesc")}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="bg-linear-to-br from-indigo-50 to-violet-50 rounded-lg p-4 border border-indigo-200">
+        <div className="bg-gradient-to-br from-[#2B6F5E]/5 to-[#8DB896]/5 dark:from-[#4ADE80]/5 dark:to-[#8DB896]/5 rounded-lg p-4 border border-[#2B6F5E]/15 dark:border-[#4ADE80]/15">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm">
-              <FileText className="w-4 h-4 text-indigo-600" />
-              <span className="font-semibold text-indigo-900">
+              <FileText className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
+              <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {session.group?.course?.course_name} - {session.group?.name}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-sm text-indigo-700">
+            <div className="flex items-center gap-4 text-sm text-[#2B6F5E] dark:text-[#4ADE80]">
               <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
                 <span>{formatDate(session.session_date)}</span>
@@ -183,7 +182,7 @@ export default function AttendanceModal({
               </div>
             </div>
             {session.topic && (
-              <div className="text-sm text-indigo-700">
+              <div className="text-sm text-[#2B6F5E]/80 dark:text-[#4ADE80]/70">
                 <span className="font-medium">
                   {t("admin.attendanceModal.topic")}
                 </span>{" "}
@@ -194,23 +193,29 @@ export default function AttendanceModal({
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-            <p className="text-xs text-blue-600 font-medium mb-1">
+          <div className="bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 rounded-lg p-3 border border-[#2B6F5E]/15 dark:border-[#4ADE80]/15">
+            <p className="text-xs text-[#2B6F5E] dark:text-[#4ADE80] font-medium mb-1">
               {t("admin.attendanceModal.totalStudents")}
             </p>
-            <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
+            <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+              {stats.total}
+            </p>
           </div>
-          <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-            <p className="text-xs text-green-600 font-medium mb-1">
+          <div className="bg-[#8DB896]/8 dark:bg-[#8DB896]/10 rounded-lg p-3 border border-[#8DB896]/20 dark:border-[#8DB896]/15">
+            <p className="text-xs text-[#3D7A4A] dark:text-[#8DB896] font-medium mb-1">
               {t("admin.attendanceModal.present")}
             </p>
-            <p className="text-2xl font-bold text-green-900">{stats.present}</p>
+            <p className="text-2xl font-bold text-[#3D7A4A] dark:text-[#8DB896]">
+              {stats.present}
+            </p>
           </div>
-          <div className="bg-red-50 rounded-lg p-3 border border-red-200">
-            <p className="text-xs text-red-600 font-medium mb-1">
+          <div className="bg-red-50 dark:bg-red-950/30 rounded-lg p-3 border border-red-200 dark:border-red-800/40">
+            <p className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">
               {t("admin.attendanceModal.absent")}
             </p>
-            <p className="text-2xl font-bold text-red-900">{stats.absent}</p>
+            <p className="text-2xl font-bold text-red-700 dark:text-red-400">
+              {stats.absent}
+            </p>
           </div>
         </div>
 
@@ -219,7 +224,7 @@ export default function AttendanceModal({
             variant="outline"
             size="sm"
             onClick={markAllPresent}
-            className="flex-1 gap-2 border-green-200 text-green-700 hover:bg-green-50"
+            className="flex-1 gap-2 border-[#8DB896]/30 dark:border-[#8DB896]/20 text-[#3D7A4A] dark:text-[#8DB896] hover:bg-[#8DB896]/8 dark:hover:bg-[#8DB896]/10"
           >
             <UserCheck className="w-4 h-4" />
             {t("admin.attendanceModal.markAllPresent")}
@@ -228,7 +233,7 @@ export default function AttendanceModal({
             variant="outline"
             size="sm"
             onClick={markAllAbsent}
-            className="flex-1 gap-2 border-red-200 text-red-700 hover:bg-red-50"
+            className="flex-1 gap-2 border-red-200 dark:border-red-800/40 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
           >
             <UserX className="w-4 h-4" />
             {t("admin.attendanceModal.markAllAbsent")}
@@ -237,8 +242,8 @@ export default function AttendanceModal({
 
         {isLoading && (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
-            <span className="ml-2 text-gray-600">
+            <Loader2 className="w-6 h-6 animate-spin text-[#2B6F5E] dark:text-[#4ADE80]" />
+            <span className="ml-2 text-[#6B5D4F] dark:text-[#888888]">
               {t("admin.attendanceModal.loadingStudents")}
             </span>
           </div>
@@ -246,37 +251,37 @@ export default function AttendanceModal({
 
         {!isLoading && attendanceRecords.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <AlertCircle className="w-12 h-12 text-gray-400 mb-3" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+            <AlertCircle className="w-12 h-12 text-[#D8CDC0] dark:text-[#555555] mb-3" />
+            <h3 className="text-lg font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-1">
               {t("admin.attendanceModal.noStudents")}
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
               {t("admin.attendanceModal.noStudentsDesc")}
             </p>
           </div>
         )}
 
         {!isLoading && attendanceRecords.length > 0 && (
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
-              <p className="text-sm font-medium text-gray-700">
+          <div className="border border-[#D8CDC0]/40 dark:border-[#2A2A2A] rounded-lg overflow-hidden">
+            <div className="bg-[#D8CDC0]/8 dark:bg-[#0F0F0F] px-4 py-2 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+              <p className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {t("admin.attendanceModal.studentsCount", {
                   count: attendanceRecords.length,
                 })}
               </p>
             </div>
-            <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+            <div className="divide-y divide-[#D8CDC0]/20 dark:divide-[#2A2A2A] max-h-96 overflow-y-auto">
               {attendanceRecords.map((record) => (
                 <div
                   key={record.student_id}
-                  className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-between p-4 hover:bg-[#D8CDC0]/5 dark:hover:bg-[#222222] transition-colors"
                 >
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                       {record.student_name}
                     </p>
                     {record.student_email && (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-[#BEB29E] dark:text-[#666666]">
                         {record.student_email}
                       </p>
                     )}
@@ -290,8 +295,8 @@ export default function AttendanceModal({
                       onClick={() => toggleAttendance(record.student_id)}
                       className={
                         record.status === "PRESENT"
-                          ? "bg-green-600 hover:bg-green-700 text-white gap-2"
-                          : "border-green-300 text-green-700 hover:bg-green-50 gap-2"
+                          ? "bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white gap-2"
+                          : "border-[#8DB896]/30 dark:border-[#8DB896]/20 text-[#3D7A4A] dark:text-[#8DB896] hover:bg-[#8DB896]/8 dark:hover:bg-[#8DB896]/10 gap-2"
                       }
                     >
                       <UserCheck className="w-4 h-4" />
@@ -306,7 +311,7 @@ export default function AttendanceModal({
                       className={
                         record.status === "ABSENT"
                           ? "bg-red-600 hover:bg-red-700 text-white gap-2"
-                          : "border-red-300 text-red-700 hover:bg-red-50 gap-2"
+                          : "border-red-200 dark:border-red-800/40 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 gap-2"
                       }
                     >
                       <UserX className="w-4 h-4" />
@@ -320,13 +325,18 @@ export default function AttendanceModal({
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isSaving}>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={isSaving}
+            className="border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] dark:hover:bg-[#222222]"
+          >
             {t("admin.attendanceModal.cancel")}
           </Button>
           <Button
             onClick={handleSave}
             disabled={isSaving || attendanceRecords.length === 0}
-            className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+            className="gap-2 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white"
           >
             {isSaving ? (
               <>

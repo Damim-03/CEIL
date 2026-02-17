@@ -84,7 +84,7 @@ export function LanguagesSection() {
           observer.disconnect();
         }
       },
-      { threshold: 0.08 }
+      { threshold: 0.08 },
     );
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
@@ -99,23 +99,23 @@ export function LanguagesSection() {
     <section
       ref={sectionRef}
       id="languages"
-      className="py-20 lg:py-28 bg-white relative overflow-hidden"
+      className="py-20 lg:py-28 bg-white dark:bg-[#121212] relative overflow-hidden"
       dir={dir}
     >
       {/* ═══ Background ═══ */}
       <div className="absolute inset-0 pointer-events-none">
         <div
-          className="absolute inset-0 opacity-[0.015]"
+          className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03]"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23264230' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }}
         />
         <div
-          className="absolute top-[10%] left-[3%] w-80 h-80 rounded-full bg-brand-teal-dark/[0.02]"
+          className="absolute top-[10%] left-[3%] w-80 h-80 rounded-full bg-brand-teal-dark/[0.02] dark:bg-[#4ADE80]/[0.02]"
           style={{ animation: "langFloat 22s ease-in-out infinite" }}
         />
         <div
-          className="absolute bottom-[5%] right-[5%] w-96 h-96 rounded-full bg-brand-mustard/[0.025]"
+          className="absolute bottom-[5%] right-[5%] w-96 h-96 rounded-full bg-brand-mustard/[0.025] dark:bg-brand-mustard/[0.015]"
           style={{
             animation: "langFloat 28s ease-in-out infinite reverse",
           }}
@@ -129,12 +129,12 @@ export function LanguagesSection() {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <div className="inline-flex items-center gap-2 rounded-full bg-brand-teal-dark/5 border border-brand-teal-dark/10 px-4 py-1.5 text-xs font-semibold text-brand-teal-dark mb-4">
-            <Globe className="w-3.5 h-3.5 text-brand-mustard" />
+          <div className="inline-flex items-center gap-2 rounded-full bg-brand-teal-dark/5 dark:bg-[#4ADE80]/10 border border-brand-teal-dark/10 dark:border-[#4ADE80]/15 px-4 py-1.5 text-xs font-semibold text-brand-teal-dark dark:text-[#4ADE80] mb-4">
+            <Globe className="w-3.5 h-3.5 text-brand-mustard dark:text-[#D4A843]" />
             {t("courses.sectionTitle")}
           </div>
           <h2
-            className="text-3xl font-bold text-brand-black sm:text-4xl"
+            className="text-3xl font-bold text-brand-black dark:text-[#E5E5E5] sm:text-4xl"
             style={{ fontFamily: "var(--font-sans)" }}
           >
             {t("courses.sectionTitle")}
@@ -147,7 +147,7 @@ export function LanguagesSection() {
               style={{ transitionDelay: "300ms" }}
             />
           </div>
-          <p className="mt-4 text-brand-brown/70 max-w-lg mx-auto text-[15px]">
+          <p className="mt-4 text-brand-brown/70 dark:text-[#888888] max-w-lg mx-auto text-[15px]">
             {t("courses.subtitle")}
           </p>
         </div>
@@ -155,17 +155,17 @@ export function LanguagesSection() {
         {/* ═══ Content ═══ */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
-            <Loader2 className="w-8 h-8 text-brand-teal-dark/40 animate-spin" />
-            <p className="text-brand-brown/40 text-sm">
+            <Loader2 className="w-8 h-8 text-brand-teal-dark/40 dark:text-[#4ADE80]/40 animate-spin" />
+            <p className="text-brand-brown/40 dark:text-[#666666] text-sm">
               {t("common.loading")}
             </p>
           </div>
         ) : languages.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-2xl bg-brand-beige/50 flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="w-8 h-8 text-brand-brown/30" />
+            <div className="w-16 h-16 rounded-2xl bg-brand-beige/50 dark:bg-[#2A2A2A] flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="w-8 h-8 text-brand-brown/30 dark:text-[#666666]" />
             </div>
-            <p className="text-brand-black/35 text-lg">
+            <p className="text-brand-black/35 dark:text-[#666666] text-lg">
               {t("courses.noCourses")}
             </p>
           </div>
@@ -176,7 +176,7 @@ export function LanguagesSection() {
                 <LocaleLink
                   key={lang.slug}
                   to={`/courses?language=${lang.slug}`}
-                  className={`group flex flex-col rounded-2xl border border-brand-beige/70 bg-white overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-brand-teal-dark/[0.06] hover:border-brand-teal-dark/15 hover:-translate-y-1.5 ${
+                  className={`group flex flex-col rounded-2xl border border-brand-beige/70 dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-brand-teal-dark/[0.06] dark:hover:shadow-black/30 hover:border-brand-teal-dark/15 dark:hover:border-[#4ADE80]/15 hover:-translate-y-1.5 ${
                     isVisible
                       ? "opacity-100 translate-y-0"
                       : "opacity-0 translate-y-10"
@@ -187,7 +187,7 @@ export function LanguagesSection() {
                   }}
                 >
                   {/* ── Image Header ── */}
-                  <div className="relative h-48 overflow-hidden bg-brand-beige/30">
+                  <div className="relative h-48 overflow-hidden bg-brand-beige/30 dark:bg-[#222222]">
                     {lang.image_url ? (
                       <img
                         src={lang.image_url}
@@ -198,7 +198,6 @@ export function LanguagesSection() {
                       <div
                         className={`absolute inset-0 bg-gradient-to-br ${getGradient(lang.slug)}`}
                       >
-                        {/* Pattern */}
                         <div
                           className="absolute inset-0 opacity-[0.08]"
                           style={{
@@ -207,7 +206,6 @@ export function LanguagesSection() {
                             backgroundSize: "24px 24px",
                           }}
                         />
-                        {/* Center icon */}
                         <div className="absolute inset-0 flex items-center justify-center">
                           <GraduationCap className="w-16 h-16 text-white/20" />
                         </div>
@@ -221,7 +219,7 @@ export function LanguagesSection() {
                     <div
                       className={`absolute top-3.5 ${isRTL ? "right-3.5" : "left-3.5"}`}
                     >
-                      <div className="w-12 h-12 rounded-xl bg-white/90 backdrop-blur-md shadow-lg shadow-black/[0.08] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300 border border-white/50">
+                      <div className="w-12 h-12 rounded-xl bg-white/90 dark:bg-[#1A1A1A]/90 backdrop-blur-md shadow-lg shadow-black/[0.08] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300 border border-white/50 dark:border-[#2A2A2A]">
                         {lang.flag_emoji}
                       </div>
                     </div>
@@ -256,16 +254,14 @@ export function LanguagesSection() {
                   <div className="flex flex-col flex-1 p-5">
                     {/* Title */}
                     <h3
-                      className="text-lg font-bold text-brand-black group-hover:text-brand-teal-dark transition-colors duration-200 leading-snug"
+                      className="text-lg font-bold text-brand-black dark:text-[#E5E5E5] group-hover:text-brand-teal-dark dark:group-hover:text-[#4ADE80] transition-colors duration-200 leading-snug"
                       style={{ fontFamily: "var(--font-sans)" }}
                     >
-                      {currentLang === "ar"
-                        ? lang.title_ar
-                        : lang.course_name}
+                      {currentLang === "ar" ? lang.title_ar : lang.course_name}
                     </h3>
                     {lang.course_name !== lang.title_ar && (
                       <p
-                        className="text-sm text-brand-brown/50 mt-1"
+                        className="text-sm text-brand-brown/50 dark:text-[#666666] mt-1"
                         dir={currentLang === "ar" ? "ltr" : "rtl"}
                       >
                         {currentLang === "ar"
@@ -277,12 +273,12 @@ export function LanguagesSection() {
                     {/* Description */}
                     <div className="flex-1 mt-3">
                       {currentLang === "ar" && lang.description_ar && (
-                        <p className="text-[13px] text-brand-black/45 leading-relaxed line-clamp-3">
+                        <p className="text-[13px] text-brand-black/45 dark:text-[#888888] leading-relaxed line-clamp-3">
                           {lang.description_ar}
                         </p>
                       )}
                       {currentLang !== "ar" && lang.description && (
-                        <p className="text-[13px] text-brand-black/45 leading-relaxed line-clamp-3">
+                        <p className="text-[13px] text-brand-black/45 dark:text-[#888888] leading-relaxed line-clamp-3">
                           {lang.description}
                         </p>
                       )}
@@ -290,7 +286,7 @@ export function LanguagesSection() {
                         !lang.description_ar &&
                         lang.description && (
                           <p
-                            className="text-[13px] text-brand-black/45 leading-relaxed line-clamp-3"
+                            className="text-[13px] text-brand-black/45 dark:text-[#888888] leading-relaxed line-clamp-3"
                             dir="ltr"
                           >
                             {lang.description}
@@ -299,18 +295,18 @@ export function LanguagesSection() {
                     </div>
 
                     {/* Meta */}
-                    <div className="mt-4 pt-3.5 border-t border-brand-beige/50 flex items-center justify-between text-[11px] text-brand-brown/50">
+                    <div className="mt-4 pt-3.5 border-t border-brand-beige/50 dark:border-[#2A2A2A] flex items-center justify-between text-[11px] text-brand-brown/50 dark:text-[#666666]">
                       <div className="flex items-center gap-3">
                         <span className="flex items-center gap-1">
                           <BookOpen className="w-3 h-3" />
                           {t("courses.formationType")}
                         </span>
-                        <span className="w-1 h-1 rounded-full bg-brand-beige" />
+                        <span className="w-1 h-1 rounded-full bg-brand-beige dark:bg-[#555555]" />
                         <span>{lang.language}</span>
                       </div>
                       {/* Arrow */}
                       <div
-                        className={`flex items-center gap-1 text-brand-teal-dark/40 group-hover:text-brand-teal-dark transition-colors duration-200 ${
+                        className={`flex items-center gap-1 text-brand-teal-dark/40 dark:text-[#4ADE80]/40 group-hover:text-brand-teal-dark dark:group-hover:text-[#4ADE80] transition-colors duration-200 ${
                           isRTL
                             ? "group-hover:-translate-x-0.5"
                             : "group-hover:translate-x-0.5"
@@ -343,7 +339,7 @@ export function LanguagesSection() {
               <Button
                 variant="outline"
                 asChild
-                className="border-brand-beige text-brand-teal-dark hover:bg-brand-teal-dark hover:text-white hover:border-brand-teal-dark px-8 rounded-xl h-11 gap-2 font-semibold text-[13px] group/btn transition-all duration-300 hover:shadow-lg hover:shadow-brand-teal-dark/[0.1] hover:-translate-y-0.5"
+                className="border-brand-beige dark:border-[#2A2A2A] text-brand-teal-dark dark:text-[#4ADE80] hover:bg-brand-teal-dark dark:hover:bg-[#4ADE80] hover:text-white dark:hover:text-[#0F0F0F] hover:border-brand-teal-dark dark:hover:border-[#4ADE80] px-8 rounded-xl h-11 gap-2 font-semibold text-[13px] group/btn transition-all duration-300 hover:shadow-lg hover:shadow-brand-teal-dark/[0.1] dark:hover:shadow-[#4ADE80]/10 hover:-translate-y-0.5"
               >
                 <LocaleLink to="/courses">
                   {t("courses.viewAllCourses")}

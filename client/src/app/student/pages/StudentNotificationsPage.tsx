@@ -4,6 +4,7 @@
    Student Notifications - Inbox style
    ✅ View + Filter + Mark as read + Pagination
    ✅ Imports from UseStudent
+   ✅ Dark mode support
 =============================================================== */
 
 import { useState } from "react";
@@ -34,28 +35,28 @@ const PRIORITY_STYLES: Record<
   { bg: string; border: string; icon: typeof Info; dot: string }
 > = {
   LOW: {
-    bg: "bg-gray-50",
-    border: "border-gray-200",
+    bg: "bg-gray-50 dark:bg-[#151515]",
+    border: "border-gray-200 dark:border-[#2A2A2A]",
     icon: Info,
-    dot: "bg-gray-400",
+    dot: "bg-gray-400 dark:bg-[#555555]",
   },
   NORMAL: {
-    bg: "bg-white",
-    border: "border-gray-200",
+    bg: "bg-white dark:bg-[#1A1A1A]",
+    border: "border-gray-200 dark:border-[#2A2A2A]",
     icon: Bell,
-    dot: "bg-blue-500",
+    dot: "bg-blue-500 dark:bg-[#4ADE80]",
   },
   HIGH: {
-    bg: "bg-amber-50/50",
-    border: "border-amber-200",
+    bg: "bg-amber-50/50 dark:bg-[#D4A843]/[0.03]",
+    border: "border-amber-200 dark:border-[#D4A843]/15",
     icon: AlertTriangle,
-    dot: "bg-amber-500",
+    dot: "bg-amber-500 dark:bg-[#D4A843]",
   },
   URGENT: {
-    bg: "bg-red-50/50",
-    border: "border-red-200",
+    bg: "bg-red-50/50 dark:bg-red-950/20",
+    border: "border-red-200 dark:border-red-800/30",
     icon: AlertCircle,
-    dot: "bg-red-500",
+    dot: "bg-red-500 dark:bg-red-400",
   },
 };
 
@@ -67,10 +68,10 @@ const PRIORITY_LABELS: Record<string, string> = {
 };
 
 const PRIORITY_BADGES: Record<string, string> = {
-  LOW: "bg-gray-100 text-gray-600",
-  NORMAL: "bg-blue-100 text-blue-700",
-  HIGH: "bg-amber-100 text-amber-700",
-  URGENT: "bg-red-100 text-red-700",
+  LOW: "bg-gray-100 dark:bg-[#2A2A2A] text-gray-600 dark:text-[#888888]",
+  NORMAL: "bg-blue-100 dark:bg-[#4ADE80]/10 text-blue-700 dark:text-[#4ADE80]",
+  HIGH: "bg-amber-100 dark:bg-[#D4A843]/10 text-amber-700 dark:text-[#D4A843]",
+  URGENT: "bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400",
 };
 
 function formatTimeAgo(dateStr: string): string {
@@ -112,9 +113,9 @@ export default function StudentNotificationsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
-              <Bell className="w-5 h-5 text-teal-700" />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-[#E5E5E5] flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-[#4ADE80]/[0.08] flex items-center justify-center">
+              <Bell className="w-5 h-5 text-teal-700 dark:text-[#4ADE80]" />
             </div>
             Notifications
             {unreadCount > 0 && (
@@ -123,7 +124,7 @@ export default function StudentNotificationsPage() {
               </span>
             )}
           </h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-gray-500 dark:text-[#888888] text-sm mt-1">
             Stay up to date with the latest announcements
           </p>
         </div>
@@ -132,7 +133,7 @@ export default function StudentNotificationsPage() {
           <button
             onClick={() => markAllRead.mutate()}
             disabled={markAllRead.isPending}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-[#2A2A2A] text-sm text-gray-600 dark:text-[#888888] hover:bg-gray-50 dark:hover:bg-[#222222] transition-colors"
           >
             <CheckCheck className="w-4 h-4" />
             {markAllRead.isPending ? "Marking..." : "Mark all as read"}
@@ -141,7 +142,7 @@ export default function StudentNotificationsPage() {
       </div>
 
       {/* Filter */}
-      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit">
+      <div className="flex gap-1 p-1 bg-gray-100 dark:bg-[#151515] rounded-xl w-fit">
         <button
           onClick={() => {
             setUnreadOnly(false);
@@ -149,8 +150,8 @@ export default function StudentNotificationsPage() {
           }}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
             !unreadOnly
-              ? "bg-white text-teal-700 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
+              ? "bg-white dark:bg-[#1A1A1A] text-teal-700 dark:text-[#4ADE80] shadow-sm dark:shadow-black/20"
+              : "text-gray-500 dark:text-[#666666] hover:text-gray-700 dark:hover:text-[#888888]"
           }`}
         >
           <Inbox className="w-4 h-4" />
@@ -163,14 +164,14 @@ export default function StudentNotificationsPage() {
           }}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
             unreadOnly
-              ? "bg-white text-teal-700 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
+              ? "bg-white dark:bg-[#1A1A1A] text-teal-700 dark:text-[#4ADE80] shadow-sm dark:shadow-black/20"
+              : "text-gray-500 dark:text-[#666666] hover:text-gray-700 dark:hover:text-[#888888]"
           }`}
         >
           <Bell className="w-4 h-4" />
           Unread
           {unreadCount > 0 && (
-            <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">
+            <span className="bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs font-bold px-2 py-0.5 rounded-full">
               {unreadCount}
             </span>
           )}
@@ -180,17 +181,17 @@ export default function StudentNotificationsPage() {
       {/* List */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-3 border-teal-200 border-t-teal-600 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-teal-200 dark:border-[#2A2A2A] border-t-teal-600 dark:border-t-[#4ADE80] rounded-full animate-spin" />
         </div>
       ) : notifications.length === 0 ? (
         <div className="text-center py-20">
-          <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-            <BellOff className="w-8 h-8 text-gray-300" />
+          <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-[#2A2A2A] flex items-center justify-center mx-auto mb-4">
+            <BellOff className="w-8 h-8 text-gray-300 dark:text-[#555555]" />
           </div>
-          <p className="text-gray-500 font-medium">
+          <p className="text-gray-500 dark:text-[#888888] font-medium">
             {unreadOnly ? "No unread notifications" : "No notifications yet"}
           </p>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-gray-400 dark:text-[#666666] text-sm mt-1">
             Notifications will appear here when sent by administration
           </p>
         </div>
@@ -208,7 +209,7 @@ export default function StudentNotificationsPage() {
                   style.border
                 } ${style.bg} ${
                   !n.is_read
-                    ? "ring-2 ring-teal-500/20 shadow-sm"
+                    ? "ring-2 ring-teal-500/20 dark:ring-[#4ADE80]/20 shadow-sm dark:shadow-black/20"
                     : "opacity-90 hover:opacity-100"
                 }`}
               >
@@ -219,7 +220,7 @@ export default function StudentNotificationsPage() {
                       className={`w-2.5 h-2.5 rounded-full ${
                         !n.is_read
                           ? `${style.dot} animate-pulse`
-                          : "bg-gray-200"
+                          : "bg-gray-200 dark:bg-[#2A2A2A]"
                       }`}
                     />
                   </div>
@@ -232,8 +233,8 @@ export default function StudentNotificationsPage() {
                           <h3
                             className={`text-sm line-clamp-1 ${
                               !n.is_read
-                                ? "font-bold text-gray-900"
-                                : "font-medium text-gray-700"
+                                ? "font-bold text-gray-900 dark:text-[#E5E5E5]"
+                                : "font-medium text-gray-700 dark:text-[#BBBBBB]"
                             }`}
                           >
                             {n.title_ar || n.title}
@@ -250,7 +251,7 @@ export default function StudentNotificationsPage() {
                         </div>
 
                         <p
-                          className={`text-sm text-gray-500 leading-relaxed ${isExpanded ? "" : "line-clamp-2"}`}
+                          className={`text-sm text-gray-500 dark:text-[#888888] leading-relaxed ${isExpanded ? "" : "line-clamp-2"}`}
                         >
                           {n.message_ar || n.message}
                         </p>
@@ -260,14 +261,14 @@ export default function StudentNotificationsPage() {
                           <div className="mt-4 space-y-3">
                             {((n.title_ar && n.title) ||
                               (n.message_ar && n.message)) && (
-                              <div className="bg-white/60 rounded-xl p-4 border border-gray-100">
+                              <div className="bg-white/60 dark:bg-[#222222]/60 rounded-xl p-4 border border-gray-100 dark:border-[#2A2A2A]">
                                 {n.title_ar && n.title && (
-                                  <p className="font-medium text-gray-700 text-sm mb-1">
+                                  <p className="font-medium text-gray-700 dark:text-[#BBBBBB] text-sm mb-1">
                                     {n.title}
                                   </p>
                                 )}
                                 {n.message_ar && n.message && (
-                                  <p className="text-gray-500 text-sm leading-relaxed">
+                                  <p className="text-gray-500 dark:text-[#888888] text-sm leading-relaxed">
                                     {n.message}
                                   </p>
                                 )}
@@ -276,19 +277,19 @@ export default function StudentNotificationsPage() {
 
                             <div className="flex flex-wrap items-center gap-2">
                               {n.course && (
-                                <span className="flex items-center gap-1 text-xs bg-white border border-gray-200 px-2.5 py-1 rounded-lg text-gray-600">
+                                <span className="flex items-center gap-1 text-xs bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#2A2A2A] px-2.5 py-1 rounded-lg text-gray-600 dark:text-[#888888]">
                                   <BookOpen className="w-3 h-3" />
                                   {n.course.course_name}
                                 </span>
                               )}
                               {n.group && (
-                                <span className="flex items-center gap-1 text-xs bg-white border border-gray-200 px-2.5 py-1 rounded-lg text-gray-600">
+                                <span className="flex items-center gap-1 text-xs bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#2A2A2A] px-2.5 py-1 rounded-lg text-gray-600 dark:text-[#888888]">
                                   <Layers className="w-3 h-3" />
                                   {n.group.name}
                                 </span>
                               )}
                               {n.is_read && n.read_at && (
-                                <span className="text-xs text-gray-400">
+                                <span className="text-xs text-gray-400 dark:text-[#666666]">
                                   Read on{" "}
                                   {new Date(n.read_at).toLocaleDateString(
                                     "en-US",
@@ -306,7 +307,7 @@ export default function StudentNotificationsPage() {
                         )}
                       </div>
 
-                      <span className="flex items-center gap-1 text-xs text-gray-400 whitespace-nowrap shrink-0">
+                      <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-[#666666] whitespace-nowrap shrink-0">
                         <Clock className="w-3 h-3" />
                         {formatTimeAgo(n.created_at)}
                       </span>
@@ -321,15 +322,15 @@ export default function StudentNotificationsPage() {
 
       {/* Pagination */}
       {meta && meta.pages > 1 && (
-        <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-5 py-3">
-          <p className="text-xs text-gray-500">
+        <div className="flex items-center justify-between bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#2A2A2A] px-5 py-3">
+          <p className="text-xs text-gray-500 dark:text-[#888888]">
             Page {meta.page} of {meta.pages}
           </p>
           <div className="flex items-center gap-1">
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
-              className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#222222] disabled:opacity-30 disabled:cursor-not-allowed text-gray-600 dark:text-[#888888]"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -342,8 +343,8 @@ export default function StudentNotificationsPage() {
                 onClick={() => setPage(p)}
                 className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
                   page === p
-                    ? "bg-teal-600 text-white"
-                    : "text-gray-500 hover:bg-gray-100"
+                    ? "bg-teal-600 dark:bg-[#4ADE80] text-white dark:text-[#0F0F0F]"
+                    : "text-gray-500 dark:text-[#888888] hover:bg-gray-100 dark:hover:bg-[#222222]"
                 }`}
               >
                 {p}
@@ -352,7 +353,7 @@ export default function StudentNotificationsPage() {
             <button
               disabled={page >= meta.pages}
               onClick={() => setPage((p) => p + 1)}
-              className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#222222] disabled:opacity-30 disabled:cursor-not-allowed text-gray-600 dark:text-[#888888]"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

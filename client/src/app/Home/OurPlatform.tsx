@@ -142,7 +142,7 @@ const DesktopMockup = ({
       {/* Monitor Frame */}
       <div className="relative mx-auto max-w-[680px]">
         {/* Screen bezel */}
-        <div className="rounded-2xl border-[6px] border-[#1B1B1B] bg-[#1B1B1B] shadow-2xl shadow-black/30 overflow-hidden">
+        <div className="rounded-2xl border-[6px] border-[#1B1B1B] bg-[#1B1B1B] shadow-2xl shadow-black/30 dark:shadow-black/50 overflow-hidden">
           {/* Browser chrome */}
           <div className="flex items-center gap-2 px-4 py-2.5 bg-[#2a2a2a]">
             <div className="flex gap-1.5">
@@ -265,7 +265,7 @@ const MobileMockup = ({
     >
       {/* Phone Frame */}
       <div className="relative w-[260px]">
-        <div className="rounded-[2.5rem] border-[5px] border-[#1B1B1B] bg-[#1B1B1B] shadow-2xl shadow-black/40 overflow-hidden">
+        <div className="rounded-[2.5rem] border-[5px] border-[#1B1B1B] bg-[#1B1B1B] shadow-2xl shadow-black/40 dark:shadow-black/60 overflow-hidden">
           {/* Notch */}
           <div className="relative bg-[#1B1B1B] flex justify-center py-2">
             <div className="w-24 h-5 bg-[#1B1B1B] rounded-b-2xl absolute -top-1 z-10" />
@@ -374,15 +374,17 @@ const FeatureCard = ({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: index * 0.1, duration: 0.5 }}
-      className="group relative bg-white rounded-2xl p-6 border border-[#D8CDC0]/30 hover:border-[#2B6F5E]/30 transition-all duration-300 hover:shadow-lg hover:shadow-[#2B6F5E]/5"
+      className="group relative bg-white dark:bg-[#1A1A1A] rounded-2xl p-6 border border-[#D8CDC0]/30 dark:border-[#2A2A2A] hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 transition-all duration-300 hover:shadow-lg dark:hover:shadow-black/20 hover:shadow-[#2B6F5E]/5"
     >
-      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#2B6F5E]/10 to-[#8DB896]/10 flex items-center justify-center mb-4 group-hover:from-[#2B6F5E]/20 group-hover:to-[#8DB896]/20 transition-colors">
-        <Icon className="w-6 h-6 text-[#2B6F5E]" />
+      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#2B6F5E]/10 to-[#8DB896]/10 dark:from-[#4ADE80]/10 dark:to-[#4ADE80]/5 flex items-center justify-center mb-4 group-hover:from-[#2B6F5E]/20 group-hover:to-[#8DB896]/20 dark:group-hover:from-[#4ADE80]/20 dark:group-hover:to-[#4ADE80]/10 transition-colors">
+        <Icon className="w-6 h-6 text-[#2B6F5E] dark:text-[#4ADE80]" />
       </div>
-      <h3 className="text-base font-bold text-[#1B1B1B] mb-2">
+      <h3 className="text-base font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
         {t(titleKey)}
       </h3>
-      <p className="text-sm text-[#6B5D4F] leading-relaxed">{t(descKey)}</p>
+      <p className="text-sm text-[#6B5D4F] dark:text-[#888888] leading-relaxed">
+        {t(descKey)}
+      </p>
     </motion.div>
   );
 };
@@ -401,8 +403,7 @@ const OurPlatform = () => {
 
   const prevScreen = () => {
     setActiveScreen(
-      (prev) =>
-        (prev - 1 + platformScreens.length) % platformScreens.length,
+      (prev) => (prev - 1 + platformScreens.length) % platformScreens.length,
     );
   };
 
@@ -442,11 +443,14 @@ const OurPlatform = () => {
   const currentScreen = platformScreens[activeScreen];
 
   return (
-    <div dir={isRTL ? "rtl" : "ltr"} className="min-h-screen bg-[#FAF8F5]">
+    <div
+      dir={isRTL ? "rtl" : "ltr"}
+      className="min-h-screen bg-[#FAF8F5] dark:bg-[#0F0F0F]"
+    >
       {/* ═══════════ HERO SECTION ═══════════ */}
       <section className="relative overflow-hidden pt-20 pb-12">
         {/* Background pattern */}
-        <div className="absolute inset-0 opacity-[0.03]">
+        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.04]">
           <div
             className="absolute inset-0"
             style={{
@@ -457,8 +461,8 @@ const OurPlatform = () => {
         </div>
 
         {/* Floating decorative elements */}
-        <div className="absolute top-20 left-10 w-64 h-64 bg-[#2B6F5E]/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-10 w-80 h-80 bg-[#C8A96E]/5 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-10 w-64 h-64 bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/[0.03] rounded-full blur-3xl" />
+        <div className="absolute bottom-10 right-10 w-80 h-80 bg-[#C8A96E]/5 dark:bg-[#D4A843]/[0.03] rounded-full blur-3xl" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Badge */}
@@ -467,9 +471,9 @@ const OurPlatform = () => {
             animate={{ opacity: 1, y: 0 }}
             className="flex justify-center mb-6"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2B6F5E]/8 border border-[#2B6F5E]/15">
-              <Sparkles className="w-4 h-4 text-[#C8A96E]" />
-              <span className="text-sm font-semibold text-[#2B6F5E]">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 border border-[#2B6F5E]/15 dark:border-[#4ADE80]/15">
+              <Sparkles className="w-4 h-4 text-[#C8A96E] dark:text-[#D4A843]" />
+              <span className="text-sm font-semibold text-[#2B6F5E] dark:text-[#4ADE80]">
                 {t("platform.badge")}
               </span>
             </div>
@@ -482,13 +486,13 @@ const OurPlatform = () => {
             transition={{ delay: 0.1 }}
             className="text-center max-w-3xl mx-auto mb-4"
           >
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#1B1B1B] leading-tight mb-4">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#1B1B1B] dark:text-[#E5E5E5] leading-tight mb-4">
               {t("platform.title.line1")}
-              <span className="block text-[#2B6F5E]">
+              <span className="block text-[#2B6F5E] dark:text-[#4ADE80]">
                 {t("platform.title.line2")}
               </span>
             </h1>
-            <p className="text-lg text-[#6B5D4F] max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg text-[#6B5D4F] dark:text-[#888888] max-w-2xl mx-auto leading-relaxed">
               {t("platform.subtitle")}
             </p>
           </motion.div>
@@ -515,10 +519,10 @@ const OurPlatform = () => {
               },
             ].map((stat, i) => (
               <div key={i} className="text-center">
-                <div className="text-3xl font-extrabold text-[#2B6F5E]">
+                <div className="text-3xl font-extrabold text-[#2B6F5E] dark:text-[#4ADE80]">
                   {stat.value}
                 </div>
-                <div className="text-sm text-[#6B5D4F] mt-1">
+                <div className="text-sm text-[#6B5D4F] dark:text-[#888888] mt-1">
                   {t(stat.labelKey)}
                 </div>
               </div>
@@ -528,17 +532,17 @@ const OurPlatform = () => {
       </section>
 
       {/* ═══════════ DEVICE SHOWCASE ═══════════ */}
-      <section className="relative py-16 bg-gradient-to-b from-[#FAF8F5] to-[#f0ece6]">
+      <section className="relative py-16 bg-gradient-to-b from-[#FAF8F5] to-[#f0ece6] dark:from-[#0F0F0F] dark:to-[#121212]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* View mode toggle */}
           <div className="flex justify-center mb-10">
-            <div className="inline-flex items-center bg-white rounded-2xl p-1.5 shadow-sm border border-[#D8CDC0]/30">
+            <div className="inline-flex items-center bg-white dark:bg-[#1A1A1A] rounded-2xl p-1.5 shadow-sm border border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
               <button
                 onClick={() => setViewMode("desktop")}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
                   viewMode === "desktop"
-                    ? "bg-[#2B6F5E] text-white shadow-md shadow-[#2B6F5E]/20"
-                    : "text-[#6B5D4F] hover:text-[#1B1B1B]"
+                    ? "bg-[#2B6F5E] dark:bg-[#4ADE80] text-white dark:text-[#0F0F0F] shadow-md shadow-[#2B6F5E]/20 dark:shadow-[#4ADE80]/10"
+                    : "text-[#6B5D4F] dark:text-[#888888] hover:text-[#1B1B1B] dark:hover:text-[#CCCCCC]"
                 }`}
               >
                 <Monitor className="w-4 h-4" />
@@ -548,8 +552,8 @@ const OurPlatform = () => {
                 onClick={() => setViewMode("mobile")}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
                   viewMode === "mobile"
-                    ? "bg-[#2B6F5E] text-white shadow-md shadow-[#2B6F5E]/20"
-                    : "text-[#6B5D4F] hover:text-[#1B1B1B]"
+                    ? "bg-[#2B6F5E] dark:bg-[#4ADE80] text-white dark:text-[#0F0F0F] shadow-md shadow-[#2B6F5E]/20 dark:shadow-[#4ADE80]/10"
+                    : "text-[#6B5D4F] dark:text-[#888888] hover:text-[#1B1B1B] dark:hover:text-[#CCCCCC]"
                 }`}
               >
                 <Smartphone className="w-4 h-4" />
@@ -575,7 +579,7 @@ const OurPlatform = () => {
                   style={{ color: currentScreen.color }}
                 />
               </div>
-              <h3 className="text-2xl font-bold text-[#1B1B1B]">
+              <h3 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {t(currentScreen.titleKey)}
               </h3>
             </motion.div>
@@ -583,7 +587,7 @@ const OurPlatform = () => {
               key={`desc-${activeScreen}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-[#6B5D4F] max-w-lg mx-auto"
+              className="text-[#6B5D4F] dark:text-[#888888] max-w-lg mx-auto"
             >
               {t(currentScreen.descriptionKey)}
             </motion.p>
@@ -594,13 +598,13 @@ const OurPlatform = () => {
             {/* Navigation arrows */}
             <button
               onClick={isRTL ? nextScreen : prevScreen}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white shadow-lg border border-[#D8CDC0]/30 flex items-center justify-center text-[#6B5D4F] hover:text-[#2B6F5E] hover:border-[#2B6F5E]/30 transition-colors"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white dark:bg-[#1A1A1A] shadow-lg dark:shadow-black/30 border border-[#D8CDC0]/30 dark:border-[#2A2A2A] flex items-center justify-center text-[#6B5D4F] dark:text-[#888888] hover:text-[#2B6F5E] dark:hover:text-[#4ADE80] hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={isRTL ? prevScreen : nextScreen}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white shadow-lg border border-[#D8CDC0]/30 flex items-center justify-center text-[#6B5D4F] hover:text-[#2B6F5E] hover:border-[#2B6F5E]/30 transition-colors"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white dark:bg-[#1A1A1A] shadow-lg dark:shadow-black/30 border border-[#D8CDC0]/30 dark:border-[#2A2A2A] flex items-center justify-center text-[#6B5D4F] dark:text-[#888888] hover:text-[#2B6F5E] dark:hover:text-[#4ADE80] hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 transition-colors"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -639,13 +643,13 @@ const OurPlatform = () => {
               {currentScreen.features.map((featureKey, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-[#D8CDC0]/30 shadow-sm"
+                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1A1A1A] rounded-xl border border-[#D8CDC0]/30 dark:border-[#2A2A2A] shadow-sm dark:shadow-black/10"
                 >
                   <CheckCircle2
                     className="w-4 h-4 shrink-0"
                     style={{ color: currentScreen.color }}
                   />
-                  <span className="text-sm font-medium text-[#1B1B1B]">
+                  <span className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                     {t(featureKey)}
                   </span>
                 </div>
@@ -660,8 +664,8 @@ const OurPlatform = () => {
                   onClick={() => setActiveScreen(index)}
                   className={`transition-all duration-300 rounded-full ${
                     index === activeScreen
-                      ? "w-8 h-2.5 bg-[#2B6F5E]"
-                      : "w-2.5 h-2.5 bg-[#D8CDC0] hover:bg-[#BEB29E]"
+                      ? "w-8 h-2.5 bg-[#2B6F5E] dark:bg-[#4ADE80]"
+                      : "w-2.5 h-2.5 bg-[#D8CDC0] dark:bg-[#333333] hover:bg-[#BEB29E] dark:hover:bg-[#555555]"
                   }`}
                 />
               ))}
@@ -679,10 +683,10 @@ const OurPlatform = () => {
             viewport={{ once: true }}
             className="text-center mb-14"
           >
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1B1B1B] mb-4">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1B1B1B] dark:text-[#E5E5E5] mb-4">
               {t("platform.features.title")}
             </h2>
-            <p className="text-lg text-[#6B5D4F] max-w-2xl mx-auto">
+            <p className="text-lg text-[#6B5D4F] dark:text-[#888888] max-w-2xl mx-auto">
               {t("platform.features.subtitle")}
             </p>
           </motion.div>
@@ -702,7 +706,7 @@ const OurPlatform = () => {
       </section>
 
       {/* ═══════════ ROLES SECTION ═══════════ */}
-      <section className="py-20 bg-gradient-to-b from-[#f0ece6] to-[#FAF8F5]">
+      <section className="py-20 bg-gradient-to-b from-[#f0ece6] to-[#FAF8F5] dark:from-[#121212] dark:to-[#0F0F0F]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -710,10 +714,10 @@ const OurPlatform = () => {
             viewport={{ once: true }}
             className="text-center mb-14"
           >
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1B1B1B] mb-4">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1B1B1B] dark:text-[#E5E5E5] mb-4">
               {t("platform.roles.title")}
             </h2>
-            <p className="text-lg text-[#6B5D4F]">
+            <p className="text-lg text-[#6B5D4F] dark:text-[#888888]">
               {t("platform.roles.subtitle")}
             </p>
           </motion.div>
@@ -766,7 +770,7 @@ const OurPlatform = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.15 }}
-                className="bg-white rounded-2xl overflow-hidden border border-[#D8CDC0]/30 hover:shadow-xl transition-shadow duration-300"
+                className="bg-white dark:bg-[#1A1A1A] rounded-2xl overflow-hidden border border-[#D8CDC0]/30 dark:border-[#2A2A2A] hover:shadow-xl dark:hover:shadow-black/30 transition-shadow duration-300"
               >
                 {/* Card header */}
                 <div
@@ -790,7 +794,7 @@ const OurPlatform = () => {
                           className="w-5 h-5 shrink-0 mt-0.5"
                           style={{ color: roleData.color }}
                         />
-                        <span className="text-sm text-[#6B5D4F]">
+                        <span className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                           {t(itemKey)}
                         </span>
                       </li>
@@ -810,10 +814,10 @@ const OurPlatform = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="relative bg-gradient-to-br from-[#2B6F5E] to-[#1a4a3a] rounded-3xl p-10 text-center text-white overflow-hidden"
+            className="relative bg-gradient-to-br from-[#2B6F5E] to-[#1a4a3a] dark:from-[#0A1A10] dark:to-[#0F1F15] rounded-3xl p-10 text-center text-white overflow-hidden"
           >
             {/* Pattern overlay */}
-            <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0 opacity-5 dark:opacity-[0.04]">
               <div
                 className="absolute inset-0"
                 style={{

@@ -50,8 +50,8 @@ export default function CourseInfoMorePage() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <Loader2 className="w-12 h-12 animate-spin text-brand-teal-dark" />
-        <p className="text-brand-brown text-sm animate-pulse">
+        <Loader2 className="w-12 h-12 animate-spin text-brand-teal-dark dark:text-[#4ADE80]" />
+        <p className="text-brand-brown dark:text-[#888888] text-sm animate-pulse">
           {t("common.loading")}
         </p>
       </div>
@@ -64,11 +64,13 @@ export default function CourseInfoMorePage() {
         className="flex flex-col items-center justify-center min-h-[60vh] gap-5"
         dir={dir}
       >
-        <XCircle className="w-16 h-16 text-red-300" />
-        <h2 className="text-2xl font-bold text-brand-black">
+        <XCircle className="w-16 h-16 text-red-300 dark:text-red-400/60" />
+        <h2 className="text-2xl font-bold text-brand-black dark:text-[#E5E5E5]">
           {t("courses.notFound")}
         </h2>
-        <p className="text-brand-brown">{t("courses.notFoundDesc")}</p>
+        <p className="text-brand-brown dark:text-[#888888]">
+          {t("courses.notFoundDesc")}
+        </p>
         <Button
           asChild
           className="bg-brand-teal-dark hover:bg-brand-teal-dark/90 text-white rounded-xl px-6"
@@ -92,7 +94,6 @@ export default function CourseInfoMorePage() {
       : course.course_name;
   const altTitle = currentLang === "ar" ? course.course_name : course.title_ar;
 
-  // Dashboard link for admin/teacher
   const getDashboardLink = () => {
     if (role === "ADMIN") return "/admin";
     if (role === "TEACHER") return "/teacher";
@@ -100,7 +101,7 @@ export default function CourseInfoMorePage() {
   };
 
   return (
-    <div className="min-h-screen bg-brand-gray" dir={dir}>
+    <div className="min-h-screen bg-brand-gray dark:bg-[#0F0F0F]" dir={dir}>
       {/* HERO */}
       <div className="relative overflow-hidden">
         {course.image_url ? (
@@ -110,14 +111,14 @@ export default function CourseInfoMorePage() {
               alt={course.course_name}
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-brand-teal-dark/85 via-brand-teal-dark/75 to-brand-teal/70" />
+            <div className="absolute inset-0 bg-gradient-to-br from-brand-teal-dark/85 via-brand-teal-dark/75 to-brand-teal/70 dark:from-[#0A0A0A]/90 dark:via-[#0F0F0F]/85 dark:to-[#0A1A10]/80" />
           </>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-brand-teal-dark via-brand-teal-dark to-brand-teal" />
+          <div className="absolute inset-0 bg-gradient-to-br from-brand-teal-dark via-brand-teal-dark to-brand-teal dark:from-[#0A1A10] dark:via-[#0F1F15] dark:to-[#0A1A10]" />
         )}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-10 left-[10%] w-64 h-64 rounded-full border border-white/10" />
-          <div className="absolute -bottom-20 right-[5%] w-80 h-80 rounded-full border border-white/5" />
+          <div className="absolute top-10 left-[10%] w-64 h-64 rounded-full border border-white/10 dark:border-white/5" />
+          <div className="absolute -bottom-20 right-[5%] w-80 h-80 rounded-full border border-white/5 dark:border-white/[0.03]" />
         </div>
 
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
@@ -202,7 +203,7 @@ export default function CourseInfoMorePage() {
           >
             <path
               d="M0 50L60 44C120 38 240 26 360 22C480 18 600 22 720 26C840 30 960 34 1080 32C1200 30 1320 22 1380 18L1440 14V50H0Z"
-              className="fill-brand-gray"
+              className="fill-brand-gray dark:fill-[#0F0F0F]"
             />
           </svg>
         </div>
@@ -214,13 +215,13 @@ export default function CourseInfoMorePage() {
           {/* Main Column */}
           <div className="flex-1 space-y-6">
             {(course.description_ar || course.description) && (
-              <div className="bg-white rounded-2xl border border-brand-beige p-6 shadow-sm">
+              <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] p-6 shadow-sm dark:shadow-black/20">
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-brand-teal-dark/8 flex items-center justify-center">
-                    <BookOpen className="w-4 h-4 text-brand-teal-dark" />
+                  <div className="w-8 h-8 rounded-lg bg-brand-teal-dark/8 dark:bg-[#4ADE80]/[0.08] flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 text-brand-teal-dark dark:text-[#4ADE80]" />
                   </div>
                   <h2
-                    className="text-lg font-bold text-brand-black"
+                    className="text-lg font-bold text-brand-black dark:text-[#E5E5E5]"
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
                     {t("courses.aboutCourse")}
@@ -228,12 +229,12 @@ export default function CourseInfoMorePage() {
                 </div>
                 <div className="space-y-3">
                   {currentLang === "ar" && course.description_ar && (
-                    <p className="text-brand-black/60 leading-relaxed">
+                    <p className="text-brand-black/60 dark:text-[#AAAAAA] leading-relaxed">
                       {course.description_ar}
                     </p>
                   )}
                   {currentLang !== "ar" && course.description && (
-                    <p className="text-brand-black/60 leading-relaxed">
+                    <p className="text-brand-black/60 dark:text-[#AAAAAA] leading-relaxed">
                       {course.description}
                     </p>
                   )}
@@ -241,7 +242,7 @@ export default function CourseInfoMorePage() {
                     !course.description_ar &&
                     course.description && (
                       <p
-                        className="text-brand-black/60 leading-relaxed"
+                        className="text-brand-black/60 dark:text-[#AAAAAA] leading-relaxed"
                         dir="ltr"
                       >
                         {course.description}
@@ -251,7 +252,7 @@ export default function CourseInfoMorePage() {
                     !course.description &&
                     course.description_ar && (
                       <p
-                        className="text-brand-black/60 leading-relaxed"
+                        className="text-brand-black/60 dark:text-[#AAAAAA] leading-relaxed"
                         dir="rtl"
                       >
                         {course.description_ar}
@@ -289,16 +290,16 @@ export default function CourseInfoMorePage() {
             </div>
 
             {course.level && (
-              <div className="bg-white rounded-2xl border border-brand-beige p-6 shadow-sm">
+              <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] p-6 shadow-sm dark:shadow-black/20">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-mustard/20 to-brand-mustard/5 flex items-center justify-center">
-                    <GraduationCap className="w-6 h-6 text-brand-mustard-dark" />
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-mustard/20 to-brand-mustard/5 dark:from-brand-mustard/15 dark:to-brand-mustard/[0.03] flex items-center justify-center">
+                    <GraduationCap className="w-6 h-6 text-brand-mustard-dark dark:text-[#D4A843]" />
                   </div>
                   <div>
-                    <p className="text-xs text-brand-brown font-medium">
+                    <p className="text-xs text-brand-brown dark:text-[#888888] font-medium">
                       {t("courses.level")}
                     </p>
-                    <p className="text-xl font-bold text-brand-black">
+                    <p className="text-xl font-bold text-brand-black dark:text-[#E5E5E5]">
                       {course.level}
                     </p>
                   </div>
@@ -307,15 +308,15 @@ export default function CourseInfoMorePage() {
             )}
 
             {course.pricing && course.pricing.length > 0 && (
-              <div className="bg-white rounded-2xl border border-brand-beige overflow-hidden shadow-sm">
+              <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] overflow-hidden shadow-sm dark:shadow-black/20">
                 <div
-                  className={`bg-gradient-to-${isRTL ? "l" : "r"} from-brand-teal-dark to-brand-teal px-6 py-4 flex items-center gap-3`}
+                  className={`bg-gradient-to-${isRTL ? "l" : "r"} from-brand-teal-dark to-brand-teal dark:from-[#1A1A1A] dark:to-[#1A1A1A] dark:border-b dark:border-[#2A2A2A] px-6 py-4 flex items-center gap-3`}
                 >
-                  <div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
-                    <Tag className="w-4 h-4 text-white" />
+                  <div className="w-9 h-9 rounded-lg bg-white/15 dark:bg-[#4ADE80]/[0.1] flex items-center justify-center">
+                    <Tag className="w-4 h-4 text-white dark:text-[#4ADE80]" />
                   </div>
                   <h2
-                    className="text-lg font-bold text-white"
+                    className="text-lg font-bold text-white dark:text-[#4ADE80]"
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
                     {t("courses.pricingByStatus")}
@@ -324,23 +325,23 @@ export default function CourseInfoMorePage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-brand-gray/50">
+                      <tr className="bg-brand-gray/50 dark:bg-[#151515]">
                         <th
-                          className={`${isRTL ? "text-right" : "text-left"} px-6 py-3 font-semibold text-brand-brown text-xs`}
+                          className={`${isRTL ? "text-right" : "text-left"} px-6 py-3 font-semibold text-brand-brown dark:text-[#888888] text-xs`}
                         >
                           {t("courses.status")}
                         </th>
                         <th
-                          className={`${isRTL ? "text-right" : "text-left"} px-5 py-3 font-semibold text-brand-brown text-xs`}
+                          className={`${isRTL ? "text-right" : "text-left"} px-5 py-3 font-semibold text-brand-brown dark:text-[#888888] text-xs`}
                         >
                           {t("courses.details")}
                         </th>
                         <th
-                          className={`${isRTL ? "text-left" : "text-right"} px-6 py-3 font-semibold text-brand-brown text-xs`}
+                          className={`${isRTL ? "text-left" : "text-right"} px-6 py-3 font-semibold text-brand-brown dark:text-[#888888] text-xs`}
                         >
                           {t("courses.price")}
                         </th>
-                        <th className="text-center px-5 py-3 font-semibold text-brand-brown text-xs">
+                        <th className="text-center px-5 py-3 font-semibold text-brand-brown dark:text-[#888888] text-xs">
                           {t("courses.discount")}
                         </th>
                       </tr>
@@ -349,27 +350,27 @@ export default function CourseInfoMorePage() {
                       {course.pricing.map((p: any, i: number) => (
                         <tr
                           key={p.id || i}
-                          className={`border-t border-brand-beige/60 hover:bg-brand-teal-dark/[0.02] ${i % 2 !== 0 ? "bg-brand-gray/30" : ""}`}
+                          className={`border-t border-brand-beige/60 dark:border-[#2A2A2A] hover:bg-brand-teal-dark/[0.02] dark:hover:bg-[#4ADE80]/[0.02] ${i % 2 !== 0 ? "bg-brand-gray/30 dark:bg-[#151515]" : ""}`}
                         >
-                          <td className="px-6 py-4 font-semibold text-brand-black">
+                          <td className="px-6 py-4 font-semibold text-brand-black dark:text-[#E5E5E5]">
                             {currentLang === "ar"
                               ? p.status_ar || p.status_fr
                               : p.status_fr}
                           </td>
-                          <td className="px-5 py-4 text-brand-brown text-xs">
+                          <td className="px-5 py-4 text-brand-brown dark:text-[#888888] text-xs">
                             {currentLang === "ar"
                               ? p.status_fr
                               : p.status_ar || ""}
                           </td>
                           <td
-                            className={`px-6 py-4 ${isRTL ? "text-left" : "text-right"} font-bold text-brand-black`}
+                            className={`px-6 py-4 ${isRTL ? "text-left" : "text-right"} font-bold text-brand-black dark:text-[#E5E5E5]`}
                             dir="ltr"
                           >
                             {formatPrice(p.price, p.currency)}
                           </td>
                           <td className="px-5 py-4 text-center">
                             <span
-                              className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${!p.discount || p.discount === "Aucune" || p.discount === "None" ? "bg-brand-beige/80 text-brand-brown" : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"}`}
+                              className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${!p.discount || p.discount === "Aucune" || p.discount === "None" ? "bg-brand-beige/80 dark:bg-[#222222] text-brand-brown dark:text-[#666666]" : "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-800/30"}`}
                             >
                               {p.discount || t("courses.noDiscount")}
                             </span>
@@ -385,17 +386,17 @@ export default function CourseInfoMorePage() {
             {course.groups && course.groups.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-3 px-1">
-                  <div className="w-9 h-9 rounded-lg bg-brand-teal-dark/8 flex items-center justify-center">
-                    <Users className="w-4 h-4 text-brand-teal-dark" />
+                  <div className="w-9 h-9 rounded-lg bg-brand-teal-dark/8 dark:bg-[#4ADE80]/[0.08] flex items-center justify-center">
+                    <Users className="w-4 h-4 text-brand-teal-dark dark:text-[#4ADE80]" />
                   </div>
                   <div>
                     <h2
-                      className="text-lg font-bold text-brand-black"
+                      className="text-lg font-bold text-brand-black dark:text-[#E5E5E5]"
                       style={{ fontFamily: "var(--font-sans)" }}
                     >
                       {t("courses.availableGroups")}
                     </h2>
-                    <p className="text-brand-brown text-xs">
+                    <p className="text-brand-brown dark:text-[#888888] text-xs">
                       {t("courses.groupsAvailable", {
                         count: course.groups.length,
                       })}
@@ -411,35 +412,35 @@ export default function CourseInfoMorePage() {
                     return (
                       <div
                         key={g.id}
-                        className="bg-white rounded-xl border border-brand-beige p-5 hover:shadow-md hover:border-brand-teal/20 transition-all duration-300"
+                        className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-brand-beige dark:border-[#2A2A2A] p-5 hover:shadow-md dark:hover:shadow-black/20 hover:border-brand-teal/20 dark:hover:border-[#4ADE80]/15 transition-all duration-300"
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div>
-                            <h3 className="font-bold text-brand-black text-base">
+                            <h3 className="font-bold text-brand-black dark:text-[#E5E5E5] text-base">
                               {g.name}
                             </h3>
                             {g.teacher && (
-                              <p className="text-brand-brown text-xs mt-0.5">
+                              <p className="text-brand-brown dark:text-[#888888] text-xs mt-0.5">
                                 {g.teacher}
                               </p>
                             )}
                           </div>
-                          <span className="inline-flex px-2.5 py-1 rounded-lg bg-brand-teal-dark/8 text-brand-teal-dark text-xs font-bold">
+                          <span className="inline-flex px-2.5 py-1 rounded-lg bg-brand-teal-dark/8 dark:bg-[#4ADE80]/[0.1] text-brand-teal-dark dark:text-[#4ADE80] text-xs font-bold">
                             {g.level}
                           </span>
                         </div>
                         <div className="mt-4">
                           <div className="flex items-center justify-between text-xs mb-1.5">
-                            <span className="text-brand-brown">
+                            <span className="text-brand-brown dark:text-[#888888]">
                               {t("courses.enrolled")}
                             </span>
-                            <span className="font-semibold text-brand-black">
+                            <span className="font-semibold text-brand-black dark:text-[#E5E5E5]">
                               {g.enrolled} / {g.max_students}
                             </span>
                           </div>
-                          <div className="h-2 bg-brand-beige/80 rounded-full overflow-hidden">
+                          <div className="h-2 bg-brand-beige/80 dark:bg-[#2A2A2A] rounded-full overflow-hidden">
                             <div
-                              className={`h-full rounded-full transition-all duration-500 ${gFill >= 90 ? "bg-red-400" : gFill >= 60 ? "bg-brand-mustard" : "bg-brand-teal-dark"}`}
+                              className={`h-full rounded-full transition-all duration-500 ${gFill >= 90 ? "bg-red-400" : gFill >= 60 ? "bg-brand-mustard" : "bg-brand-teal-dark dark:bg-[#4ADE80]"}`}
                               style={{ width: `${gFill}%` }}
                             />
                           </div>
@@ -452,30 +453,30 @@ export default function CourseInfoMorePage() {
             )}
 
             {course.session_name && (
-              <div className="bg-white rounded-2xl border border-brand-beige overflow-hidden shadow-sm">
+              <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] overflow-hidden shadow-sm dark:shadow-black/20">
                 <div
-                  className={`bg-gradient-to-${isRTL ? "l" : "r"} from-brand-teal-dark to-brand-teal px-6 py-4 flex items-center gap-3`}
+                  className={`bg-gradient-to-${isRTL ? "l" : "r"} from-brand-teal-dark to-brand-teal dark:from-[#1A1A1A] dark:to-[#1A1A1A] dark:border-b dark:border-[#2A2A2A] px-6 py-4 flex items-center gap-3`}
                 >
-                  <div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
-                    <Clock className="w-4 h-4 text-white" />
+                  <div className="w-9 h-9 rounded-lg bg-white/15 dark:bg-[#4ADE80]/[0.1] flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-white dark:text-[#4ADE80]" />
                   </div>
                   <h2
-                    className="text-lg font-bold text-white"
+                    className="text-lg font-bold text-white dark:text-[#4ADE80]"
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
                     {t("courses.currentSession")}
                   </h2>
                 </div>
                 <div className="p-5">
-                  <div className="flex items-center gap-4 p-4 rounded-xl bg-brand-gray/50 border border-brand-beige/60">
-                    <div className="w-12 h-12 rounded-xl bg-brand-teal-dark/8 flex items-center justify-center shrink-0">
-                      <Calendar className="w-5 h-5 text-brand-teal-dark" />
+                  <div className="flex items-center gap-4 p-4 rounded-xl bg-brand-gray/50 dark:bg-[#151515] border border-brand-beige/60 dark:border-[#2A2A2A]">
+                    <div className="w-12 h-12 rounded-xl bg-brand-teal-dark/8 dark:bg-[#4ADE80]/[0.08] flex items-center justify-center shrink-0">
+                      <Calendar className="w-5 h-5 text-brand-teal-dark dark:text-[#4ADE80]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-brand-black">
+                      <p className="font-bold text-brand-black dark:text-[#E5E5E5]">
                         {course.session_name}
                       </p>
-                      <p className="text-brand-brown text-sm mt-0.5">
+                      <p className="text-brand-brown dark:text-[#888888] text-sm mt-0.5">
                         {formatDate(course.start_date)} —{" "}
                         {formatDate(course.end_date)}
                       </p>
@@ -483,13 +484,13 @@ export default function CourseInfoMorePage() {
                     <div
                       className={`${isRTL ? "text-left" : "text-right"} shrink-0`}
                     >
-                      <p className="font-bold text-brand-black text-lg">
+                      <p className="font-bold text-brand-black dark:text-[#E5E5E5] text-lg">
                         {course.enrolled}
-                        <span className="text-brand-brown font-normal text-sm">
+                        <span className="text-brand-brown dark:text-[#888888] font-normal text-sm">
                           /{course.capacity || "∞"}
                         </span>
                       </p>
-                      <p className="text-brand-brown text-xs">
+                      <p className="text-brand-brown dark:text-[#888888] text-xs">
                         {t("courses.enrolled")}
                       </p>
                     </div>
@@ -501,9 +502,9 @@ export default function CourseInfoMorePage() {
 
           {/* Sidebar */}
           <div className="lg:w-[300px] shrink-0 space-y-5">
-            <div className="bg-white rounded-2xl border border-brand-beige overflow-hidden shadow-sm sticky top-24">
+            <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] overflow-hidden shadow-sm dark:shadow-black/20 sticky top-24">
               <div
-                className={`px-5 py-4 flex items-center gap-2.5 ${isOpen ? "bg-gradient-to-l from-emerald-500 to-emerald-600" : "bg-gradient-to-l from-red-400 to-red-500"}`}
+                className={`px-5 py-4 flex items-center gap-2.5 ${isOpen ? "bg-gradient-to-l from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700" : "bg-gradient-to-l from-red-400 to-red-500 dark:from-red-500 dark:to-red-600"}`}
               >
                 {isOpen ? (
                   <CheckCircle2 className="w-5 h-5 text-white" />
@@ -539,13 +540,13 @@ export default function CourseInfoMorePage() {
                     />
                     {course.capacity > 0 && (
                       <div>
-                        <div className="h-2 bg-brand-beige rounded-full overflow-hidden">
+                        <div className="h-2 bg-brand-beige dark:bg-[#2A2A2A] rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all ${fillPercent >= 90 ? "bg-red-400" : fillPercent >= 60 ? "bg-brand-mustard" : "bg-brand-teal-dark"}`}
+                            className={`h-full rounded-full transition-all ${fillPercent >= 90 ? "bg-red-400" : fillPercent >= 60 ? "bg-brand-mustard" : "bg-brand-teal-dark dark:bg-[#4ADE80]"}`}
                             style={{ width: `${fillPercent}%` }}
                           />
                         </div>
-                        <p className="text-[11px] text-brand-brown mt-1">
+                        <p className="text-[11px] text-brand-brown dark:text-[#888888] mt-1">
                           {Math.round(fillPercent)}% {t("courses.filled")}
                         </p>
                       </div>
@@ -553,20 +554,20 @@ export default function CourseInfoMorePage() {
                   </div>
                 ) : (
                   <div className="text-center py-4">
-                    <Clock className="w-8 h-8 text-brand-beige mx-auto mb-2" />
-                    <p className="text-brand-brown text-sm">
+                    <Clock className="w-8 h-8 text-brand-beige dark:text-[#333333] mx-auto mb-2" />
+                    <p className="text-brand-brown dark:text-[#888888] text-sm">
                       {t("courses.noSession")}
                     </p>
                   </div>
                 )}
 
                 {course.price !== null && Number(course.price) > 0 && (
-                  <div className="pt-3.5 border-t border-brand-beige/60">
-                    <p className="text-[11px] text-brand-brown font-medium">
+                  <div className="pt-3.5 border-t border-brand-beige/60 dark:border-[#2A2A2A]">
+                    <p className="text-[11px] text-brand-brown dark:text-[#888888] font-medium">
                       {t("courses.startingFrom")}
                     </p>
                     <p
-                      className="text-2xl font-bold text-brand-teal-dark mt-0.5"
+                      className="text-2xl font-bold text-brand-teal-dark dark:text-[#4ADE80] mt-0.5"
                       dir="ltr"
                     >
                       {formatPrice(course.price, course.currency)}
@@ -604,9 +605,9 @@ export default function CourseInfoMorePage() {
                       {isLoggedIn &&
                         (role === "ADMIN" || role === "TEACHER") && (
                           <>
-                            <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200">
-                              <Info className="w-4 h-4 text-amber-600 shrink-0" />
-                              <p className="text-xs text-amber-700 font-medium">
+                            <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/30">
+                              <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                              <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
                                 {role === "ADMIN"
                                   ? t("courses.adminsCannotRegister")
                                   : t("courses.teachersCannotRegister")}
@@ -615,7 +616,7 @@ export default function CourseInfoMorePage() {
                             <Button
                               asChild
                               variant="outline"
-                              className="w-full border-brand-beige text-brand-teal-dark hover:bg-brand-teal-dark hover:text-white gap-2 rounded-xl h-11"
+                              className="w-full border-brand-beige dark:border-[#2A2A2A] text-brand-teal-dark dark:text-[#4ADE80] hover:bg-brand-teal-dark dark:hover:bg-[#4ADE80] hover:text-white dark:hover:text-[#0F0F0F] gap-2 rounded-xl h-11"
                             >
                               <Link to={getDashboardLink()}>
                                 <LayoutDashboard className="w-4 h-4" />
@@ -629,7 +630,7 @@ export default function CourseInfoMorePage() {
                   <Button
                     variant="outline"
                     asChild
-                    className="w-full border-brand-beige text-brand-brown hover:bg-brand-gray gap-2 rounded-xl"
+                    className="w-full border-brand-beige dark:border-[#2A2A2A] text-brand-brown dark:text-[#888888] hover:bg-brand-gray dark:hover:bg-[#222222] gap-2 rounded-xl"
                   >
                     <LocaleLink to="/courses">
                       {t("courses.allCourses")}
@@ -639,12 +640,12 @@ export default function CourseInfoMorePage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-brand-beige p-5 shadow-sm">
+            <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] p-5 shadow-sm dark:shadow-black/20">
               <h4
-                className="font-bold text-brand-black text-sm mb-4 flex items-center gap-2"
+                className="font-bold text-brand-black dark:text-[#E5E5E5] text-sm mb-4 flex items-center gap-2"
                 style={{ fontFamily: "var(--font-sans)" }}
               >
-                <Info className="w-4 h-4 text-brand-teal-dark" />
+                <Info className="w-4 h-4 text-brand-teal-dark dark:text-[#4ADE80]" />
                 {t("courses.quickFacts")}
               </h4>
               <div className="space-y-3">
@@ -699,20 +700,24 @@ function InfoChip({
   color: "teal" | "mustard" | "brown";
 }) {
   const styles = {
-    teal: "bg-brand-teal-dark/5 border-brand-teal/15",
-    mustard: "bg-brand-mustard/5 border-brand-mustard/15",
-    brown: "bg-brand-brown/5 border-brand-brown/15",
+    teal: "bg-brand-teal-dark/5 dark:bg-[#4ADE80]/[0.05] border-brand-teal/15 dark:border-[#4ADE80]/10",
+    mustard:
+      "bg-brand-mustard/5 dark:bg-brand-mustard/[0.05] border-brand-mustard/15 dark:border-brand-mustard/10",
+    brown:
+      "bg-brand-brown/5 dark:bg-[#888888]/[0.05] border-brand-brown/15 dark:border-[#888888]/10",
   };
   const iconStyles = {
-    teal: "text-brand-teal-dark",
-    mustard: "text-brand-mustard-dark",
-    brown: "text-brand-brown",
+    teal: "text-brand-teal-dark dark:text-[#4ADE80]",
+    mustard: "text-brand-mustard-dark dark:text-[#D4A843]",
+    brown: "text-brand-brown dark:text-[#888888]",
   };
   return (
     <div className={`rounded-xl border p-4 text-center ${styles[color]}`}>
       <div className={`mx-auto mb-2 ${iconStyles[color]}`}>{icon}</div>
-      <p className="text-[10px] text-brand-brown font-medium">{label}</p>
-      <p className="text-sm font-bold text-brand-black mt-0.5 truncate">
+      <p className="text-[10px] text-brand-brown dark:text-[#888888] font-medium">
+        {label}
+      </p>
+      <p className="text-sm font-bold text-brand-black dark:text-[#E5E5E5] mt-0.5 truncate">
         {value}
       </p>
     </div>
@@ -730,10 +735,14 @@ function SidebarRow({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="text-brand-brown/60 shrink-0">{icon}</span>
+      <span className="text-brand-brown/60 dark:text-[#666666] shrink-0">
+        {icon}
+      </span>
       <div className="min-w-0">
-        <p className="text-[11px] text-brand-brown">{label}</p>
-        <p className="text-sm font-semibold text-brand-black truncate">
+        <p className="text-[11px] text-brand-brown dark:text-[#888888]">
+          {label}
+        </p>
+        <p className="text-sm font-semibold text-brand-black dark:text-[#E5E5E5] truncate">
           {value}
         </p>
       </div>
@@ -754,10 +763,12 @@ function QuickRow({
 }) {
   return (
     <div className="flex items-center gap-2.5 text-sm">
-      <span className="text-brand-brown/50 shrink-0">{icon}</span>
-      <span className="text-brand-brown">{label}</span>
+      <span className="text-brand-brown/50 dark:text-[#555555] shrink-0">
+        {icon}
+      </span>
+      <span className="text-brand-brown dark:text-[#888888]">{label}</span>
       <span
-        className={`${isRTL ? "mr-auto" : "ml-auto"} font-semibold text-brand-black truncate`}
+        className={`${isRTL ? "mr-auto" : "ml-auto"} font-semibold text-brand-black dark:text-[#E5E5E5] truncate`}
       >
         {value}
       </span>

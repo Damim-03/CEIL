@@ -352,3 +352,25 @@
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* ═══════ View Transition: Disable default crossfade ═══════ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* ═══════ Keep old view visible during transition ═══════ */
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+/* ═══════ New view reveals on top with clip-path ═══════ */
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+/* ═══════ Prevent content shift during transition ═══════ */
+::view-transition-group(root) {
+  animation-duration: 0s;
+}

@@ -17,11 +17,15 @@ import { useLanguage } from "../../hooks/useLanguage";
 import { LocaleLink } from "../../i18n/locales/components/LocaleLink";
 
 const CATEGORY_COLORS: Record<string, string> = {
-  NEWS: "bg-blue-500/10 text-blue-700 border-blue-200",
-  FORMATIONS: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
-  EXAMS: "bg-amber-500/10 text-amber-700 border-amber-200",
-  REGISTRATION: "bg-purple-500/10 text-purple-700 border-purple-200",
-  EVENTS: "bg-rose-500/10 text-rose-700 border-rose-200",
+  NEWS: "bg-blue-500/10 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/40",
+  FORMATIONS:
+    "bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40",
+  EXAMS:
+    "bg-amber-500/10 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/40",
+  REGISTRATION:
+    "bg-purple-500/10 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/40",
+  EVENTS:
+    "bg-rose-500/10 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/40",
 };
 
 export default function AnnouncementDetailPage() {
@@ -54,7 +58,7 @@ export default function AnnouncementDetailPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-10 h-10 text-brand-teal-dark animate-spin" />
+        <Loader2 className="w-10 h-10 text-brand-teal-dark dark:text-[#4ADE80] animate-spin" />
       </div>
     );
   }
@@ -65,16 +69,18 @@ export default function AnnouncementDetailPage() {
         className="flex flex-col items-center justify-center min-h-[60vh] gap-4"
         dir={dir}
       >
-        <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center">
+        <div className="w-20 h-20 rounded-full bg-red-50 dark:bg-red-950/30 flex items-center justify-center">
           <span className="text-3xl">😕</span>
         </div>
         <h2
-          className="text-2xl font-bold text-brand-black"
+          className="text-2xl font-bold text-brand-black dark:text-[#E5E5E5]"
           style={{ fontFamily: "var(--font-sans)" }}
         >
           {t("announcements.notFound")}
         </h2>
-        <p className="text-brand-brown">{t("announcements.notFoundDesc")}</p>
+        <p className="text-brand-brown dark:text-[#888888]">
+          {t("announcements.notFoundDesc")}
+        </p>
         <Button
           asChild
           className="bg-brand-teal-dark hover:bg-brand-teal-dark/90 text-white mt-2 rounded-xl"
@@ -104,11 +110,11 @@ export default function AnnouncementDetailPage() {
       : announcement.content;
   const categoryStyle =
     CATEGORY_COLORS[announcement.category?.toUpperCase() || ""] ||
-    "bg-brand-teal-dark/10 text-brand-teal-dark border-brand-teal/20";
+    "bg-brand-teal-dark/10 dark:bg-[#4ADE80]/10 text-brand-teal-dark dark:text-[#4ADE80] border-brand-teal/20 dark:border-[#4ADE80]/15";
   const categoryLabel = getCatLabel(announcement.category || "");
 
   return (
-    <main className="min-h-screen bg-white" dir={dir}>
+    <main className="min-h-screen bg-white dark:bg-[#121212]" dir={dir}>
       {/* Hero Image */}
       {announcement.image_url && (
         <div className="relative w-full h-[320px] sm:h-[420px] lg:h-[480px] overflow-hidden">
@@ -149,26 +155,26 @@ export default function AnnouncementDetailPage() {
 
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-brand-brown py-6 border-b border-brand-beige">
+        <nav className="flex items-center gap-2 text-sm text-brand-brown dark:text-[#888888] py-6 border-b border-brand-beige dark:border-[#2A2A2A]">
           <LocaleLink
             to="/"
-            className="hover:text-brand-teal-dark transition-colors"
+            className="hover:text-brand-teal-dark dark:hover:text-[#4ADE80] transition-colors"
           >
             {t("common.home")}
           </LocaleLink>
           <ChevronRight
-            className={`w-3.5 h-3.5 text-brand-brown/40 ${isRTL ? "rotate-180" : ""}`}
+            className={`w-3.5 h-3.5 text-brand-brown/40 dark:text-[#555555] ${isRTL ? "rotate-180" : ""}`}
           />
           <LocaleLink
             to="/announcements"
-            className="hover:text-brand-teal-dark transition-colors"
+            className="hover:text-brand-teal-dark dark:hover:text-[#4ADE80] transition-colors"
           >
             {t("common.announcements")}
           </LocaleLink>
           <ChevronRight
-            className={`w-3.5 h-3.5 text-brand-brown/40 ${isRTL ? "rotate-180" : ""}`}
+            className={`w-3.5 h-3.5 text-brand-brown/40 dark:text-[#555555] ${isRTL ? "rotate-180" : ""}`}
           />
-          <span className="text-brand-black/60 line-clamp-1 max-w-[200px]">
+          <span className="text-brand-black/60 dark:text-[#AAAAAA] line-clamp-1 max-w-[200px]">
             {title}
           </span>
         </nav>
@@ -185,12 +191,12 @@ export default function AnnouncementDetailPage() {
               </span>
             )}
             <h1
-              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-black leading-snug"
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-black dark:text-[#E5E5E5] leading-snug"
               style={{ fontFamily: "var(--font-sans)" }}
             >
               {title}
             </h1>
-            <div className="flex items-center gap-4 mt-4 text-sm text-brand-brown">
+            <div className="flex items-center gap-4 mt-4 text-sm text-brand-brown dark:text-[#888888]">
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4" />
                 {formatDate(announcement.date)}
@@ -200,11 +206,11 @@ export default function AnnouncementDetailPage() {
         )}
 
         {/* Actions */}
-        <div className="flex items-center gap-3 py-4 border-b border-brand-beige">
+        <div className="flex items-center gap-3 py-4 border-b border-brand-beige dark:border-[#2A2A2A]">
           <Button
             variant="outline"
             size="sm"
-            className="border-brand-beige text-brand-brown hover:text-brand-teal-dark hover:border-brand-teal/30 gap-2"
+            className="border-brand-beige dark:border-[#2A2A2A] text-brand-brown dark:text-[#AAAAAA] hover:text-brand-teal-dark dark:hover:text-[#4ADE80] hover:border-brand-teal/30 dark:hover:border-[#4ADE80]/30 gap-2"
             onClick={() => window.print()}
           >
             <Printer className="w-3.5 h-3.5" />
@@ -213,7 +219,7 @@ export default function AnnouncementDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            className="border-brand-beige text-brand-brown hover:text-brand-teal-dark hover:border-brand-teal/30 gap-2"
+            className="border-brand-beige dark:border-[#2A2A2A] text-brand-brown dark:text-[#AAAAAA] hover:text-brand-teal-dark dark:hover:text-[#4ADE80] hover:border-brand-teal/30 dark:hover:border-[#4ADE80]/30 gap-2"
             onClick={() => navigator.clipboard.writeText(window.location.href)}
           >
             <Share2 className="w-3.5 h-3.5" />
@@ -225,7 +231,7 @@ export default function AnnouncementDetailPage() {
         <article className="py-10">
           {excerpt && (
             <p
-              className={`text-lg text-brand-black/70 leading-relaxed mb-8 ${isRTL ? "pr-4 border-r-4" : "pl-4 border-l-4"} border-brand-mustard`}
+              className={`text-lg text-brand-black/70 dark:text-[#CCCCCC] leading-relaxed mb-8 ${isRTL ? "pr-4 border-r-4" : "pl-4 border-l-4"} border-brand-mustard`}
               style={{ fontFamily: "var(--font-sans)" }}
             >
               {excerpt}
@@ -233,12 +239,12 @@ export default function AnnouncementDetailPage() {
           )}
           {content && content.includes("<") ? (
             <div
-              className="prose prose-lg max-w-none prose-headings:text-brand-black prose-headings:font-bold prose-p:text-brand-black/70 prose-p:leading-relaxed prose-a:text-brand-teal-dark prose-a:no-underline hover:prose-a:underline prose-strong:text-brand-black prose-img:rounded-2xl prose-img:shadow-md"
+              className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-brand-black dark:prose-headings:text-[#E5E5E5] prose-headings:font-bold prose-p:text-brand-black/70 dark:prose-p:text-[#CCCCCC] prose-p:leading-relaxed prose-a:text-brand-teal-dark dark:prose-a:text-[#4ADE80] prose-a:no-underline hover:prose-a:underline prose-strong:text-brand-black dark:prose-strong:text-[#E5E5E5] prose-img:rounded-2xl prose-img:shadow-md"
               style={{ fontFamily: "var(--font-sans)" }}
               dangerouslySetInnerHTML={{ __html: content }}
             />
           ) : (
-            <div className="text-brand-black/70 leading-relaxed whitespace-pre-wrap text-lg">
+            <div className="text-brand-black/70 dark:text-[#CCCCCC] leading-relaxed whitespace-pre-wrap text-lg">
               {content || t("announcements.noContent")}
             </div>
           )}
@@ -246,9 +252,9 @@ export default function AnnouncementDetailPage() {
 
         {/* Related */}
         {relatedAnnouncements.length > 0 && (
-          <section className="py-10 border-t border-brand-beige">
+          <section className="py-10 border-t border-brand-beige dark:border-[#2A2A2A]">
             <h2
-              className="text-xl font-bold text-brand-black mb-6"
+              className="text-xl font-bold text-brand-black dark:text-[#E5E5E5] mb-6"
               style={{ fontFamily: "var(--font-sans)" }}
             >
               {t("announcements.relatedNews")}
@@ -258,7 +264,7 @@ export default function AnnouncementDetailPage() {
                 <LocaleLink
                   key={item.id}
                   to={`/announcements/${item.id}`}
-                  className="group rounded-2xl border border-brand-beige bg-brand-gray p-4 transition-all hover:shadow-md hover:border-brand-mustard/30"
+                  className="group rounded-2xl border border-brand-beige dark:border-[#2A2A2A] bg-brand-gray dark:bg-[#1A1A1A] p-4 transition-all hover:shadow-md dark:hover:shadow-black/30 hover:border-brand-mustard/30 dark:hover:border-[#D4A843]/30"
                 >
                   {item.image_url && (
                     <div className="w-full h-[140px] rounded-xl overflow-hidden mb-3">
@@ -270,14 +276,14 @@ export default function AnnouncementDetailPage() {
                     </div>
                   )}
                   <h3
-                    className="text-sm font-bold text-brand-black leading-snug line-clamp-2 group-hover:text-brand-teal-dark transition-colors"
+                    className="text-sm font-bold text-brand-black dark:text-[#E5E5E5] leading-snug line-clamp-2 group-hover:text-brand-teal-dark dark:group-hover:text-[#4ADE80] transition-colors"
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
                     {currentLang === "ar"
                       ? item.title_ar || item.title
                       : item.title}
                   </h3>
-                  <div className="flex items-center gap-2 mt-2 text-xs text-brand-brown">
+                  <div className="flex items-center gap-2 mt-2 text-xs text-brand-brown dark:text-[#666666]">
                     <Calendar className="w-3 h-3" />
                     {formatDateShort(item.date)}
                   </div>
@@ -288,7 +294,7 @@ export default function AnnouncementDetailPage() {
               <Button
                 variant="outline"
                 asChild
-                className="border-brand-beige text-brand-teal-dark hover:bg-brand-teal-dark hover:text-white hover:border-brand-teal-dark rounded-xl"
+                className="border-brand-beige dark:border-[#2A2A2A] text-brand-teal-dark dark:text-[#4ADE80] hover:bg-brand-teal-dark dark:hover:bg-[#4ADE80] hover:text-white dark:hover:text-[#0F0F0F] hover:border-brand-teal-dark dark:hover:border-[#4ADE80] rounded-xl"
               >
                 <LocaleLink to="/announcements">
                   {t("announcements.viewAll")}

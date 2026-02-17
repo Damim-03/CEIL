@@ -42,15 +42,15 @@ const TeacherDetailsPage = () => {
   if (!teacher) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center space-y-6 p-8 bg-white rounded-2xl shadow-xl border border-[#D8CDC0]/60 max-w-md">
-          <div className="w-24 h-24 mx-auto rounded-full bg-[#D8CDC0]/20 flex items-center justify-center">
-            <Briefcase className="w-12 h-12 text-[#BEB29E]" />
+        <div className="text-center space-y-6 p-8 bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-xl dark:shadow-black/30 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] max-w-md">
+          <div className="w-24 h-24 mx-auto rounded-full bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] flex items-center justify-center">
+            <Briefcase className="w-12 h-12 text-[#BEB29E] dark:text-[#666666]" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-[#1B1B1B] mb-2">
+            <h2 className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
               {t("admin.teacherDetails.teacherNotFound")}
             </h2>
-            <p className="text-[#6B5D4F] text-lg">
+            <p className="text-[#6B5D4F] dark:text-[#AAAAAA] text-lg">
               {t("admin.teacherDetails.teacherNotFoundDesc")}
             </p>
           </div>
@@ -58,7 +58,7 @@ const TeacherDetailsPage = () => {
             <Button
               variant="outline"
               size="lg"
-              className="gap-2 mt-4 border-[#D8CDC0]/60 hover:bg-[#D8CDC0]/10"
+              className="gap-2 mt-4 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:text-[#E5E5E5] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222]"
             >
               <ArrowLeft className="w-4 h-4" />
               {t("admin.teacherDetails.backToTeachers")}
@@ -83,7 +83,7 @@ const TeacherDetailsPage = () => {
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2 text-[#6B5D4F] hover:bg-[#D8CDC0]/15 hover:text-[#1B1B1B]"
+            className="gap-2 text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/15 dark:hover:bg-[#222222] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]"
           >
             <ArrowLeft className="w-4 h-4" />
             {t("admin.teacherDetails.backToTeachers")}
@@ -91,7 +91,7 @@ const TeacherDetailsPage = () => {
         </Link>
 
         {/* Hero Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-[#D8CDC0]/60 overflow-hidden">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-xl dark:shadow-black/30 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden">
           <div className="h-36 bg-gradient-to-r from-[#C4A035] via-[#C4A035]/90 to-[#C4A035]/80 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/10"></div>
             <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#2B6F5E]/15 rounded-full blur-2xl"></div>
@@ -102,11 +102,11 @@ const TeacherDetailsPage = () => {
           <div className="px-6 sm:px-8 pb-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6 -mt-16 relative">
               <div className="relative group">
-                <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center text-white text-4xl font-bold shadow-xl border-4 border-white group-hover:shadow-2xl transition-all duration-300">
+                <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center text-white text-4xl font-bold shadow-xl border-4 border-white dark:border-[#1A1A1A] group-hover:shadow-2xl transition-all duration-300">
                   {teacher.first_name?.charAt(0) || "?"}
                   {teacher.last_name?.charAt(0) || ""}
                 </div>
-                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-white dark:bg-[#1A1A1A] rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-[#1A1A1A]">
                   <div className="w-4 h-4 bg-[#C4A035] rounded-full animate-pulse"></div>
                 </div>
               </div>
@@ -115,41 +115,41 @@ const TeacherDetailsPage = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <h1 className="text-3xl sm:text-4xl font-bold text-[#1B1B1B]">
+                      <h1 className="text-3xl sm:text-4xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                         {teacher.first_name || ""}{" "}
                         {teacher.last_name || "Unknown"}
                       </h1>
                       <Briefcase className="w-7 h-7 text-[#C4A035]" />
                     </div>
-                    <p className="text-[#6B5D4F] text-sm mb-3">
+                    <p className="text-[#6B5D4F] dark:text-[#888888] text-sm mb-3">
                       {t("admin.teacherDetails.teacherId", {
                         id: teacher.teacher_id,
                       })}
                     </p>
                     <div className="flex flex-wrap items-center gap-2 mb-4">
                       {teacher.specialization && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold bg-[#C4A035]/10 text-[#C4A035] border border-[#C4A035]/25">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold bg-[#C4A035]/10 dark:bg-[#D4A843]/10 text-[#C4A035] dark:text-[#D4A843] border border-[#C4A035]/25 dark:border-[#D4A843]/20">
                           <Award className="w-3.5 h-3.5" />
                           {teacher.specialization}
                         </span>
                       )}
                       {teacher.department && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold bg-[#2B6F5E]/8 text-[#2B6F5E] border border-[#2B6F5E]/20">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80] border border-[#2B6F5E]/20 dark:border-[#4ADE80]/15">
                           <BookOpen className="w-3.5 h-3.5" />
                           {teacher.department}
                         </span>
                       )}
                     </div>
                     {teacher.created_at && (
-                      <div className="inline-flex items-center gap-3 bg-[#C4A035]/5 rounded-xl px-4 py-2.5 border border-[#C4A035]/15">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shrink-0 shadow-md shadow-[#C4A035]/20">
+                      <div className="inline-flex items-center gap-3 bg-[#C4A035]/5 dark:bg-[#C4A035]/10 rounded-xl px-4 py-2.5 border border-[#C4A035]/15 dark:border-[#C4A035]/20">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shrink-0 shadow-md shadow-[#C4A035]/20 dark:shadow-[#C4A035]/10">
                           <Calendar className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold text-[#C4A035] uppercase tracking-wider">
+                          <p className="text-[10px] font-bold text-[#C4A035] dark:text-[#D4A843] uppercase tracking-wider">
                             {t("admin.teacherDetails.joinedSince")}
                           </p>
-                          <p className="text-sm font-bold text-[#1B1B1B]">
+                          <p className="text-sm font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                             {new Date(teacher.created_at).toLocaleDateString(
                               locale,
                               {
@@ -159,9 +159,9 @@ const TeacherDetailsPage = () => {
                               },
                             )}
                           </p>
-                          <p className="text-[10px] text-[#C4A035]">
+                          <p className="text-[10px] text-[#C4A035] dark:text-[#D4A843]/70">
                             {t("admin.teacherDetails.daysAgo", {
-                              count: enrolledDays,
+                              count: enrolledDays ?? 0,
                             })}
                           </p>
                         </div>
@@ -173,7 +173,7 @@ const TeacherDetailsPage = () => {
                       variant="outline"
                       size="lg"
                       onClick={() => setIsEditOpen(true)}
-                      className="gap-2 border-[#D8CDC0]/60 text-[#1B1B1B] hover:bg-[#C4A035]/8 hover:border-[#C4A035]/40 hover:text-[#C4A035] transition-all"
+                      className="gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#1B1B1B] dark:text-[#E5E5E5] hover:bg-[#C4A035]/8 dark:hover:bg-[#C4A035]/10 hover:border-[#C4A035]/40 dark:hover:border-[#C4A035]/30 hover:text-[#C4A035] dark:hover:text-[#D4A843] transition-all"
                     >
                       <Edit className="w-4 h-4" />
                       {t("admin.teacherDetails.edit")}
@@ -181,7 +181,7 @@ const TeacherDetailsPage = () => {
                     <Button
                       variant="outline"
                       size="lg"
-                      className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                      className="gap-2 border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 dark:hover:border-red-700/50"
                     >
                       <Trash2 className="w-4 h-4" />
                       {t("admin.teachers.delete")}
@@ -195,13 +195,14 @@ const TeacherDetailsPage = () => {
 
         {/* Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 relative bg-white rounded-2xl shadow-lg border border-[#D8CDC0]/60 p-6 sm:p-8 overflow-hidden">
+          {/* Info Section */}
+          <div className="lg:col-span-2 relative bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-lg dark:shadow-black/20 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 sm:p-8 overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#C4A035] to-[#2B6F5E]"></div>
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-md shadow-[#C4A035]/20">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-md shadow-[#C4A035]/20 dark:shadow-[#C4A035]/10">
                 <User className="w-5 h-5 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-[#1B1B1B]">
+              <h2 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {t("admin.teacherDetails.teacherInfo")}
               </h2>
             </div>
@@ -260,15 +261,15 @@ const TeacherDetailsPage = () => {
               )}
             </div>
 
-            <div className="mt-10 pt-8 border-t-2 border-[#D8CDC0]/30">
+            <div className="mt-10 pt-8 border-t-2 border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 mb-4 shadow-xl shadow-[#C4A035]/20">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 mb-4 shadow-xl shadow-[#C4A035]/20 dark:shadow-[#C4A035]/10">
                   <Shield className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-[#1B1B1B] mb-2">
+                <h3 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
                   {t("admin.teacherDetails.teacherIdCard")}
                 </h3>
-                <p className="text-sm text-[#6B5D4F] max-w-md mx-auto">
+                <p className="text-sm text-[#6B5D4F] dark:text-[#AAAAAA] max-w-md mx-auto">
                   {t("admin.teacherDetails.teacherIdCardDesc")}
                 </p>
                 <div className="flex items-center justify-center gap-2 mt-3">
@@ -291,7 +292,9 @@ const TeacherDetailsPage = () => {
             </div>
           </div>
 
+          {/* Sidebar */}
           <div className="space-y-6">
+            {/* Status Card — dark gradient works in both */}
             <div className="relative overflow-hidden rounded-2xl shadow-xl p-6 text-white bg-gradient-to-br from-[#1B1B1B] via-[#1B1B1B] to-[#2B6F5E]/40">
               <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C4A035]"></div>
               <div className="absolute inset-0 opacity-[0.04]">
@@ -326,45 +329,46 @@ const TeacherDetailsPage = () => {
               </div>
             </div>
 
+            {/* Teaching Stats */}
             {(teacher.courses_count !== undefined ||
               teacher.students_count !== undefined) && (
-              <div className="relative bg-white rounded-2xl shadow-lg border border-[#D8CDC0]/60 p-6 overflow-hidden">
+              <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-lg dark:shadow-black/20 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#2B6F5E]/60"></div>
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-md shadow-[#2B6F5E]/20">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-md shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10">
                     <BookOpen className="w-5 h-5 text-white" />
                   </div>
-                  <h3 className="text-lg font-bold text-[#1B1B1B]">
+                  <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                     {t("admin.teacherDetails.teachingStats")}
                   </h3>
                 </div>
                 <div className="space-y-3">
                   {teacher.courses_count !== undefined && (
-                    <div className="flex items-center justify-between py-2.5 border-b border-[#D8CDC0]/30">
-                      <span className="text-sm text-[#6B5D4F]">
+                    <div className="flex items-center justify-between py-2.5 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+                      <span className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                         {t("admin.teacherDetails.courses")}
                       </span>
-                      <span className="text-sm font-bold text-[#2B6F5E] bg-[#2B6F5E]/8 px-3 py-1 rounded-lg">
+                      <span className="text-sm font-bold text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 px-3 py-1 rounded-lg">
                         {teacher.courses_count}
                       </span>
                     </div>
                   )}
                   {teacher.students_count !== undefined && (
-                    <div className="flex items-center justify-between py-2.5 border-b border-[#D8CDC0]/30">
-                      <span className="text-sm text-[#6B5D4F]">
+                    <div className="flex items-center justify-between py-2.5 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+                      <span className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                         {t("admin.teacherDetails.students_label")}
                       </span>
-                      <span className="text-sm font-bold text-[#C4A035] bg-[#C4A035]/8 px-3 py-1 rounded-lg">
+                      <span className="text-sm font-bold text-[#C4A035] dark:text-[#D4A843] bg-[#C4A035]/8 dark:bg-[#C4A035]/10 px-3 py-1 rounded-lg">
                         {teacher.students_count}
                       </span>
                     </div>
                   )}
                   {enrolledDays !== null && (
                     <div className="flex items-center justify-between py-2.5">
-                      <span className="text-sm text-[#6B5D4F]">
+                      <span className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                         {t("admin.teacherDetails.daysActive")}
                       </span>
-                      <span className="text-sm font-bold text-[#2B6F5E] bg-[#2B6F5E]/8 px-3 py-1 rounded-lg">
+                      <span className="text-sm font-bold text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 px-3 py-1 rounded-lg">
                         {enrolledDays}
                       </span>
                     </div>
@@ -373,51 +377,56 @@ const TeacherDetailsPage = () => {
               </div>
             )}
 
-            <div className="relative bg-white rounded-2xl shadow-lg border border-[#D8CDC0]/60 p-6 overflow-hidden">
+            {/* Quick Info */}
+            <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-lg dark:shadow-black/20 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#C4A035] to-[#C4A035]/60"></div>
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-md shadow-[#C4A035]/20">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-md shadow-[#C4A035]/20 dark:shadow-[#C4A035]/10">
                   <Briefcase className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-lg font-bold text-[#1B1B1B]">
+                <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                   {t("admin.teacherDetails.quickInfo")}
                 </h3>
               </div>
               <div className="space-y-3">
-                <div className="flex items-center justify-between py-2.5 border-b border-[#D8CDC0]/30">
-                  <span className="text-sm text-[#6B5D4F]">
+                <div className="flex items-center justify-between py-2.5 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+                  <span className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                     {t("admin.teacherDetails.role")}
                   </span>
-                  <span className="text-sm font-bold text-[#2B6F5E] bg-[#2B6F5E]/8 px-3 py-1 rounded-lg">
+                  <span className="text-sm font-bold text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 px-3 py-1 rounded-lg">
                     {t("admin.teacherDetails.teacher")}
                   </span>
                 </div>
                 {teacher.department && (
-                  <div className="flex items-center justify-between py-2.5 border-b border-[#D8CDC0]/30">
-                    <span className="text-sm text-[#6B5D4F]">
+                  <div className="flex items-center justify-between py-2.5 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+                    <span className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                       {t("admin.teacherDetails.department")}
                     </span>
-                    <span className="text-sm font-bold text-[#C4A035] bg-[#C4A035]/8 px-3 py-1 rounded-lg">
+                    <span className="text-sm font-bold text-[#C4A035] dark:text-[#D4A843] bg-[#C4A035]/8 dark:bg-[#C4A035]/10 px-3 py-1 rounded-lg">
                       {teacher.department}
                     </span>
                   </div>
                 )}
                 {teacher.specialization && (
-                  <div className="flex items-center justify-between py-2.5 border-b border-[#D8CDC0]/30">
-                    <span className="text-sm text-[#6B5D4F]">
+                  <div className="flex items-center justify-between py-2.5 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+                    <span className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                       {t("admin.teacherDetails.specialization")}
                     </span>
-                    <span className="text-sm font-bold text-[#2B6F5E] bg-[#2B6F5E]/8 px-3 py-1 rounded-lg truncate ml-2">
+                    <span className="text-sm font-bold text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 px-3 py-1 rounded-lg truncate ml-2">
                       {teacher.specialization}
                     </span>
                   </div>
                 )}
                 <div className="flex items-center justify-between py-2.5">
-                  <span className="text-sm text-[#6B5D4F]">
+                  <span className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                     {t("admin.teacherDetails.status")}
                   </span>
                   <span
-                    className={`text-sm font-bold px-3 py-1 rounded-lg ${teacher.status === "inactive" ? "text-[#6B5D4F] bg-[#D8CDC0]/30" : "text-[#2B6F5E] bg-[#8DB896]/15"}`}
+                    className={`text-sm font-bold px-3 py-1 rounded-lg ${
+                      teacher.status === "inactive"
+                        ? "text-[#6B5D4F] dark:text-[#AAAAAA] bg-[#D8CDC0]/30 dark:bg-[#555555]/20"
+                        : "text-[#2B6F5E] dark:text-[#4ADE80] bg-[#8DB896]/15 dark:bg-[#4ADE80]/10"
+                    }`}
                   >
                     {teacher.status === "inactive"
                       ? t("admin.teachers.inactive")
@@ -455,16 +464,16 @@ function InfoRow({
 }) {
   const styles = {
     teal: {
-      iconBg: "bg-[#2B6F5E]/10",
-      icon: "text-[#2B6F5E]",
-      label: "text-[#2B6F5E]",
-      hover: "hover:bg-[#2B6F5E]/8",
+      iconBg: "bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10",
+      icon: "text-[#2B6F5E] dark:text-[#4ADE80]",
+      label: "text-[#2B6F5E] dark:text-[#4ADE80]",
+      hover: "hover:bg-[#2B6F5E]/8 dark:hover:bg-[#2B6F5E]/10",
     },
     mustard: {
-      iconBg: "bg-[#C4A035]/10",
-      icon: "text-[#C4A035]",
-      label: "text-[#C4A035]",
-      hover: "hover:bg-[#C4A035]/8",
+      iconBg: "bg-[#C4A035]/10 dark:bg-[#D4A843]/10",
+      icon: "text-[#C4A035] dark:text-[#D4A843]",
+      label: "text-[#C4A035] dark:text-[#D4A843]",
+      hover: "hover:bg-[#C4A035]/8 dark:hover:bg-[#C4A035]/10",
     },
   };
   const s = styles[color];
@@ -484,7 +493,7 @@ function InfoRow({
           >
             {label}
           </p>
-          <p className="text-lg font-semibold text-[#1B1B1B] break-all">
+          <p className="text-lg font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] break-all">
             {value}
           </p>
         </div>

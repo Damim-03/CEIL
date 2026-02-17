@@ -39,21 +39,25 @@ const UserDetailsPage = () => {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <div className="text-center space-y-6 p-8 bg-white rounded-3xl shadow-2xl max-w-md">
-          <div className="w-24 h-24 mx-auto rounded-full bg-linear-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-            <User className="w-12 h-12 text-gray-500" />
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-6 p-8 bg-white dark:bg-[#1A1A1A] rounded-3xl shadow-2xl dark:shadow-black/30 max-w-md border border-[#D8CDC0]/40 dark:border-[#2A2A2A]">
+          <div className="w-24 h-24 mx-auto rounded-full bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] flex items-center justify-center">
+            <User className="w-12 h-12 text-[#BEB29E] dark:text-[#666666]" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            <h2 className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
               {t("admin.userDetails.userNotFound")}
             </h2>
-            <p className="text-gray-600 text-lg">
+            <p className="text-[#6B5D4F] dark:text-[#888888] text-lg">
               {t("admin.userDetails.userNotFoundDesc")}
             </p>
           </div>
           <Link to="/admin/users">
-            <Button variant="outline" size="lg" className="gap-2 mt-4">
+            <Button
+              variant="outline"
+              size="lg"
+              className="gap-2 mt-4 border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] dark:hover:bg-[#222222]"
+            >
               <ArrowLeft className="w-4 h-4" />
               {t("admin.userDetails.backToUsers")}
             </Button>
@@ -66,13 +70,46 @@ const UserDetailsPage = () => {
   const getRoleGradient = () => {
     switch (user.role) {
       case "ADMIN":
-        return "from-red-600 via-rose-600 to-pink-600";
+        return "from-[#2B6F5E] via-[#2B6F5E]/90 to-[#1a4a3d]";
       case "TEACHER":
-        return "from-blue-600 via-indigo-600 to-purple-600";
+        return "from-[#C4A035] via-[#C4A035]/90 to-[#8B6914]";
       case "STUDENT":
-        return "from-green-600 via-emerald-600 to-teal-600";
+        return "from-[#8DB896] via-[#3D7A4A] to-[#2B6F5E]";
       default:
-        return "from-gray-600 via-slate-600 to-zinc-600";
+        return "from-[#6B5D4F] via-[#6B5D4F]/90 to-[#4A3F36]";
+    }
+  };
+
+  const getRoleAccentColor = () => {
+    switch (user.role) {
+      case "ADMIN":
+        return {
+          light: "#2B6F5E",
+          dark: "#4ADE80",
+          bgLight: "from-[#2B6F5E]/10 to-[#2B6F5E]/5",
+          bgDark: "dark:from-[#4ADE80]/10 dark:to-[#4ADE80]/5",
+        };
+      case "TEACHER":
+        return {
+          light: "#C4A035",
+          dark: "#D4A843",
+          bgLight: "from-[#C4A035]/10 to-[#C4A035]/5",
+          bgDark: "dark:from-[#D4A843]/10 dark:to-[#D4A843]/5",
+        };
+      case "STUDENT":
+        return {
+          light: "#3D7A4A",
+          dark: "#8DB896",
+          bgLight: "from-[#8DB896]/10 to-[#8DB896]/5",
+          bgDark: "dark:from-[#8DB896]/10 dark:to-[#8DB896]/5",
+        };
+      default:
+        return {
+          light: "#6B5D4F",
+          dark: "#AAAAAA",
+          bgLight: "from-[#D8CDC0]/10 to-[#D8CDC0]/5",
+          bgDark: "dark:from-[#555555]/10 dark:to-[#555555]/5",
+        };
     }
   };
 
@@ -93,9 +130,10 @@ const UserDetailsPage = () => {
           (1000 * 60 * 60 * 24),
       )
     : 0;
+  const accent = getRoleAccentColor();
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 pb-12">
+    <div className="min-h-screen pb-12">
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -103,7 +141,7 @@ const UserDetailsPage = () => {
             <Button
               variant="ghost"
               size="sm"
-              className="gap-2 hover:bg-zinc-950/80 transition-all shadow-sm"
+              className="gap-2 text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/15 dark:hover:bg-[#222222] transition-all"
             >
               <ArrowLeft className="w-4 h-4" />
               {t("admin.userDetails.backToUsers")}
@@ -112,12 +150,12 @@ const UserDetailsPage = () => {
         </div>
 
         {/* Hero Section */}
-        <div className="bg-white rounded-3xl shadow-2xl border border-gray-200/50 overflow-hidden backdrop-blur-sm hover:shadow-3xl transition-all duration-300">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl shadow-2xl dark:shadow-black/30 border border-[#D8CDC0]/40 dark:border-[#2A2A2A] overflow-hidden hover:shadow-3xl dark:hover:shadow-black/40 transition-all duration-300">
           <div
-            className={`h-40 bg-linear-to-r ${getRoleGradient()} relative overflow-hidden`}
+            className={`h-40 bg-gradient-to-r ${getRoleGradient()} relative overflow-hidden`}
           >
             <div className="absolute inset-0 bg-black/5"></div>
-            <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-white/30"></div>
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20 dark:to-[#1A1A1A]/30"></div>
             <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
             <div className="absolute -left-10 top-20 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
           </div>
@@ -129,20 +167,20 @@ const UserDetailsPage = () => {
                   <img
                     src={user.google_avatar}
                     alt={user.email}
-                    className="w-36 h-36 rounded-3xl object-cover border-4 border-white shadow-2xl group-hover:scale-105 transition-transform duration-300"
+                    className="w-36 h-36 rounded-3xl object-cover border-4 border-white dark:border-[#1A1A1A] shadow-2xl group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (
                   <div
-                    className={`w-36 h-36 rounded-3xl bg-linear-to-br ${getRoleGradient()} flex items-center justify-center text-white text-5xl font-bold shadow-2xl border-4 border-white group-hover:scale-105 transition-transform duration-300`}
+                    className={`w-36 h-36 rounded-3xl bg-gradient-to-br ${getRoleGradient()} flex items-center justify-center text-white text-5xl font-bold shadow-2xl border-4 border-white dark:border-[#1A1A1A] group-hover:scale-105 transition-transform duration-300`}
                   >
                     {user.email.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <div className="absolute -bottom-3 -right-3 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-xl border-4 border-white">
+                <div className="absolute -bottom-3 -right-3 w-12 h-12 bg-white dark:bg-[#1A1A1A] rounded-full flex items-center justify-center shadow-xl border-4 border-white dark:border-[#1A1A1A]">
                   {user.is_active ? (
-                    <div className="w-5 h-5 bg-green-500 rounded-full animate-pulse"></div>
+                    <div className="w-5 h-5 bg-[#8DB896] dark:bg-[#4ADE80] rounded-full animate-pulse"></div>
                   ) : (
-                    <div className="w-5 h-5 bg-gray-400 rounded-full"></div>
+                    <div className="w-5 h-5 bg-[#BEB29E] dark:bg-[#555555] rounded-full"></div>
                   )}
                 </div>
               </div>
@@ -151,29 +189,31 @@ const UserDetailsPage = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <h1 className="text-4xl sm:text-5xl font-bold text-gray-900">
+                      <h1 className="text-4xl sm:text-5xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                         {user.email.split("@")[0]}
                       </h1>
                       {user.role === "ADMIN" && (
-                        <Award className="w-8 h-8 text-amber-500" />
+                        <Award className="w-8 h-8 text-[#C4A035] dark:text-[#D4A843]" />
                       )}
                     </div>
-                    <p className="text-gray-600 text-lg mb-4">{user.email}</p>
+                    <p className="text-[#6B5D4F] dark:text-[#888888] text-lg mb-4">
+                      {user.email}
+                    </p>
                     <div className="flex flex-wrap items-center gap-3 mb-4">
                       <RoleBadge role={user.role} />
                       <StatusBadge isActive={user.is_active} />
                     </div>
 
                     {user.created_at && (
-                      <div className="inline-flex items-center gap-3 bg-linear-to-r from-emerald-50 to-teal-50 backdrop-blur-sm rounded-2xl px-5 py-3 border border-emerald-200/50 shadow-sm hover:shadow-md transition-all">
-                        <div className="w-11 h-11 rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0 shadow-md">
+                      <div className="inline-flex items-center gap-3 bg-gradient-to-r from-[#2B6F5E]/5 to-[#8DB896]/5 dark:from-[#4ADE80]/5 dark:to-[#8DB896]/5 backdrop-blur-sm rounded-2xl px-5 py-3 border border-[#2B6F5E]/15 dark:border-[#4ADE80]/15 shadow-sm hover:shadow-md transition-all">
+                        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#2B6F5E] to-[#8DB896] flex items-center justify-center shrink-0 shadow-md">
                           <Calendar className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
+                          <p className="text-xs font-bold text-[#2B6F5E] dark:text-[#4ADE80] uppercase tracking-wide">
                             {t("admin.userDetails.memberSince")}
                           </p>
-                          <p className="text-base font-bold text-gray-900">
+                          <p className="text-base font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                             {new Date(user.created_at).toLocaleDateString(
                               locale,
                               {
@@ -183,7 +223,7 @@ const UserDetailsPage = () => {
                               },
                             )}
                           </p>
-                          <p className="text-xs text-emerald-600 font-medium">
+                          <p className="text-xs text-[#2B6F5E]/80 dark:text-[#4ADE80]/70 font-medium">
                             {t("admin.userDetails.daysAgo", {
                               count: daysSinceCreated,
                             })}
@@ -221,64 +261,64 @@ const UserDetailsPage = () => {
         {/* Details Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Account Information */}
-          <div className="lg:col-span-2 bg-white rounded-3xl shadow-xl border border-gray-200/50 p-6 sm:p-10 hover:shadow-2xl transition-all duration-300">
+          <div className="lg:col-span-2 bg-white dark:bg-[#1A1A1A] rounded-3xl shadow-xl dark:shadow-black/20 border border-[#D8CDC0]/40 dark:border-[#2A2A2A] p-6 sm:p-10 hover:shadow-2xl dark:hover:shadow-black/30 transition-all duration-300">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg">
                 <User className="w-6 h-6 text-white" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900">
+              <h2 className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {t("admin.userDetails.accountInfo")}
               </h2>
             </div>
 
             <div className="space-y-6">
-              <div className="group hover:bg-linear-to-r hover:from-blue-50 hover:to-indigo-50 -mx-6 px-6 py-5 rounded-2xl transition-all duration-300">
+              <div className="group hover:bg-gradient-to-r hover:from-[#2B6F5E]/5 hover:to-[#8DB896]/5 dark:hover:from-[#4ADE80]/5 dark:hover:to-[#8DB896]/5 -mx-6 px-6 py-5 rounded-2xl transition-all duration-300">
                 <div className="flex items-start gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-blue-100 to-blue-200 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                    <Mail className="w-7 h-7 text-blue-600" />
+                  <div className="w-14 h-14 rounded-2xl bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
+                    <Mail className="w-7 h-7 text-[#2B6F5E] dark:text-[#4ADE80]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
+                    <p className="text-xs font-bold text-[#2B6F5E] dark:text-[#4ADE80] uppercase tracking-wider mb-2">
                       {t("admin.userDetails.emailAddress")}
                     </p>
-                    <p className="text-xl font-semibold text-gray-900 break-all">
+                    <p className="text-xl font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] break-all">
                       {user.email}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="group hover:bg-linear-to-r hover:from-purple-50 hover:to-pink-50 -mx-6 px-6 py-5 rounded-2xl transition-all duration-300">
+              <div className="group hover:bg-gradient-to-r hover:from-[#C4A035]/5 hover:to-[#C4A035]/3 dark:hover:from-[#D4A843]/5 dark:hover:to-[#D4A843]/3 -mx-6 px-6 py-5 rounded-2xl transition-all duration-300">
                 <div className="flex items-start gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-purple-100 to-purple-200 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                    <Shield className="w-7 h-7 text-purple-600" />
+                  <div className="w-14 h-14 rounded-2xl bg-[#C4A035]/10 dark:bg-[#D4A843]/10 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
+                    <Shield className="w-7 h-7 text-[#C4A035] dark:text-[#D4A843]" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-2">
+                    <p className="text-xs font-bold text-[#C4A035] dark:text-[#D4A843] uppercase tracking-wider mb-2">
                       {t("admin.userDetails.userId")}
                     </p>
-                    <p className="text-xl font-mono font-semibold text-gray-900">
+                    <p className="text-xl font-mono font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                       {user.user_id}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-10 pt-8 border-t-2 border-gradient-to-r from-gray-100 via-gray-200 to-gray-100">
+              <div className="mt-10 pt-8 border-t-2 border-[#D8CDC0]/20 dark:border-[#2A2A2A]">
                 <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-linear-to-br from-amber-400 via-orange-500 to-pink-600 mb-5 shadow-2xl hover:scale-110 transition-transform duration-300">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-[#C4A035] via-[#C4A035]/80 to-[#8B6914] mb-5 shadow-2xl hover:scale-110 transition-transform duration-300">
                     <Shield className="w-10 h-10 text-white" />
                   </div>
-                  <h3 className="text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-3">
+                  <h3 className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-3">
                     {t("admin.userDetails.digitalIdCard")}
                   </h3>
-                  <p className="text-base text-gray-600 max-w-md mx-auto leading-relaxed">
+                  <p className="text-base text-[#6B5D4F] dark:text-[#888888] max-w-md mx-auto leading-relaxed">
                     {t("admin.userDetails.digitalIdCardDesc")}
                   </p>
                   <div className="flex items-center justify-center gap-2 mt-4">
-                    <div className="h-1.5 w-12 bg-linear-to-r from-amber-500 to-orange-500 rounded-full"></div>
-                    <div className="h-1.5 w-1.5 bg-orange-400 rounded-full"></div>
-                    <div className="h-1.5 w-1.5 bg-orange-400 rounded-full"></div>
+                    <div className="h-1.5 w-12 bg-gradient-to-r from-[#C4A035] to-[#C4A035]/70 rounded-full"></div>
+                    <div className="h-1.5 w-1.5 bg-[#C4A035]/60 rounded-full"></div>
+                    <div className="h-1.5 w-1.5 bg-[#C4A035]/60 rounded-full"></div>
                   </div>
                 </div>
                 <div className="max-w-md mx-auto">
@@ -291,7 +331,7 @@ const UserDetailsPage = () => {
           {/* Status & Role Cards */}
           <div className="space-y-6">
             <div
-              className={`bg-linear-to-br ${getRoleGradient()} rounded-3xl shadow-2xl p-6 text-white hover:shadow-3xl hover:scale-105 transition-all duration-300`}
+              className={`bg-gradient-to-br ${getRoleGradient()} rounded-3xl shadow-2xl p-6 text-white hover:shadow-3xl hover:scale-[1.02] transition-all duration-300`}
             >
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
@@ -315,7 +355,7 @@ const UserDetailsPage = () => {
             </div>
 
             <div
-              className={`rounded-3xl shadow-2xl p-6 text-white hover:shadow-3xl hover:scale-105 transition-all duration-300 ${user.is_active ? "bg-linear-to-br from-green-500 via-emerald-600 to-teal-600" : "bg-linear-to-br from-gray-500 via-slate-600 to-zinc-600"}`}
+              className={`rounded-3xl shadow-2xl p-6 text-white hover:shadow-3xl hover:scale-[1.02] transition-all duration-300 ${user.is_active ? "bg-gradient-to-br from-[#2B6F5E] via-[#3D7A4A] to-[#8DB896]" : "bg-gradient-to-br from-[#6B5D4F] via-[#6B5D4F]/90 to-[#4A3F36]"}`}
             >
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
@@ -344,30 +384,30 @@ const UserDetailsPage = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
+            <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl shadow-xl dark:shadow-black/20 border border-[#D8CDC0]/40 dark:border-[#2A2A2A] p-6 hover:shadow-2xl dark:hover:shadow-black/30 transition-all duration-300">
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-orange-500 to-pink-600 flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-lg">
                   <Clock className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">
+                <h3 className="text-xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                   {t("admin.userDetails.quickInfo")}
                 </h3>
               </div>
               <div className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b-2 border-gray-100">
-                  <span className="text-sm text-gray-600 font-medium">
+                <div className="flex items-center justify-between py-3 border-b-2 border-[#D8CDC0]/20 dark:border-[#2A2A2A]">
+                  <span className="text-sm text-[#6B5D4F] dark:text-[#888888] font-medium">
                     {t("admin.userDetails.accountType")}
                   </span>
-                  <span className="text-sm font-bold text-gray-900 bg-gray-100 px-3 py-1 rounded-lg">
+                  <span className="text-sm font-bold text-[#1B1B1B] dark:text-[#E5E5E5] bg-[#D8CDC0]/15 dark:bg-[#2A2A2A] px-3 py-1 rounded-lg">
                     {user.role}
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-3 border-b-2 border-gray-100">
-                  <span className="text-sm text-gray-600 font-medium">
+                <div className="flex items-center justify-between py-3 border-b-2 border-[#D8CDC0]/20 dark:border-[#2A2A2A]">
+                  <span className="text-sm text-[#6B5D4F] dark:text-[#888888] font-medium">
                     {t("admin.userDetails.status")}
                   </span>
                   <span
-                    className={`text-sm font-bold px-3 py-1 rounded-lg ${user.is_active ? "text-green-700 bg-green-100" : "text-gray-700 bg-gray-100"}`}
+                    className={`text-sm font-bold px-3 py-1 rounded-lg ${user.is_active ? "text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10" : "text-[#6B5D4F] dark:text-[#AAAAAA] bg-[#D8CDC0]/15 dark:bg-[#2A2A2A]"}`}
                   >
                     {user.is_active
                       ? t("admin.userDetails.statusActive")
@@ -376,10 +416,10 @@ const UserDetailsPage = () => {
                 </div>
                 {user.created_at && (
                   <div className="flex items-center justify-between py-3">
-                    <span className="text-sm text-gray-600 font-medium">
+                    <span className="text-sm text-[#6B5D4F] dark:text-[#888888] font-medium">
                       {t("admin.userDetails.accountAge")}
                     </span>
-                    <span className="text-sm font-bold text-gray-900 bg-blue-100 px-3 py-1 rounded-lg">
+                    <span className="text-sm font-bold text-[#1B1B1B] dark:text-[#E5E5E5] bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 px-3 py-1 rounded-lg">
                       {t("admin.userDetails.days", { count: daysSinceCreated })}
                     </span>
                   </div>
@@ -390,7 +430,7 @@ const UserDetailsPage = () => {
         </div>
 
         {/* Action Banner */}
-        <div className="bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-3xl shadow-2xl p-8 text-white hover:shadow-3xl transition-all duration-300">
+        <div className="bg-gradient-to-r from-[#2B6F5E] via-[#2B6F5E]/90 to-[#C4A035] rounded-3xl shadow-2xl dark:shadow-black/30 p-8 text-white hover:shadow-3xl transition-all duration-300">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-3">
@@ -399,7 +439,7 @@ const UserDetailsPage = () => {
                   {t("admin.userDetails.accountManagement")}
                 </h3>
               </div>
-              <p className="text-blue-100 leading-relaxed text-base">
+              <p className="text-white/80 leading-relaxed text-base">
                 {user.is_active
                   ? t("admin.userDetails.disableDesc")
                   : t("admin.userDetails.enableDesc")}

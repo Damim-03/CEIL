@@ -57,7 +57,6 @@ export default function AuthPage() {
   const switchMode = (to: "login" | "register") => {
     if (to === mode) return;
     setTransitioning(true);
-    // Navigate immediately so React Router updates location
     navigate(`/${currentLang}/${to}`, { replace: true });
     setTimeout(() => {
       setMode(to);
@@ -71,15 +70,15 @@ export default function AuthPage() {
     <div className="flex min-h-screen" dir={dir}>
       {/* ═══ Left/Right Panel — Branding ═══ */}
       <div
-        className={`hidden lg:flex lg:w-[44%] relative bg-gradient-to-br from-brand-teal-dark via-brand-teal-dark to-[#1a3528] overflow-hidden ${isRTL ? "order-2" : "order-1"}`}
+        className={`hidden lg:flex lg:w-[44%] relative bg-gradient-to-br from-brand-teal-dark via-brand-teal-dark to-[#1a3528] dark:from-[#0A0A0A] dark:via-[#0F0F0F] dark:to-[#0A1A10] overflow-hidden ${isRTL ? "order-2" : "order-1"}`}
       >
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-20 right-10 w-72 h-72 rounded-full border border-white/[0.06]" />
           <div className="absolute -bottom-16 -left-16 w-80 h-80 rounded-full border border-white/[0.04]" />
           <div className="absolute top-1/2 left-1/4 w-40 h-40 rounded-full bg-white/[0.02]" />
-          <div className="absolute top-10 left-10 w-20 h-20 rounded-full bg-brand-mustard/[0.15]" />
+          <div className="absolute top-10 left-10 w-20 h-20 rounded-full bg-brand-mustard/[0.15] dark:bg-brand-mustard/[0.08]" />
           <div
-            className="absolute inset-0 opacity-[0.03]"
+            className="absolute inset-0 opacity-[0.03] dark:opacity-[0.04]"
             style={{
               backgroundImage:
                 "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
@@ -239,10 +238,10 @@ export default function AuthPage() {
 
       {/* ═══ Form Panel ═══ */}
       <div
-        className={`flex-1 flex items-center justify-center bg-brand-gray px-4 py-10 relative ${isRTL ? "order-1" : "order-2"}`}
+        className={`flex-1 flex items-center justify-center bg-brand-gray dark:bg-[#121212] px-4 py-10 relative ${isRTL ? "order-1" : "order-2"}`}
       >
         <div
-          className="absolute inset-0 opacity-[0.012] pointer-events-none"
+          className="absolute inset-0 opacity-[0.012] dark:opacity-[0.025] pointer-events-none"
           style={{
             backgroundImage:
               "radial-gradient(circle at 1px 1px, rgba(0,0,0,0.15) 1px, transparent 0)",
@@ -259,19 +258,21 @@ export default function AuthPage() {
                 alt="CEIL"
                 className="w-10 h-10 rounded-xl object-contain"
               />
-              <span className="text-xl font-bold text-brand-black">CEIL</span>
+              <span className="text-xl font-bold text-brand-black dark:text-[#E5E5E5]">
+                CEIL
+              </span>
             </LocaleLink>
             <LanguageSwitcher variant="header" />
           </div>
 
           {/* Mode Tabs */}
-          <div className="flex bg-white rounded-2xl border border-brand-beige p-1.5 mb-6 shadow-sm">
+          <div className="flex bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] p-1.5 mb-6 shadow-sm dark:shadow-black/20">
             <button
               onClick={() => switchMode("login")}
               className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-all duration-300 ${
                 mode === "login"
-                  ? "bg-brand-teal-dark text-white shadow-md shadow-brand-teal-dark/20"
-                  : "text-brand-brown hover:text-brand-black"
+                  ? "bg-brand-teal-dark dark:bg-[#4ADE80] text-white dark:text-[#0F0F0F] shadow-md shadow-brand-teal-dark/20 dark:shadow-[#4ADE80]/10"
+                  : "text-brand-brown dark:text-[#888888] hover:text-brand-black dark:hover:text-[#CCCCCC]"
               }`}
             >
               {t("auth.signIn")}
@@ -280,8 +281,8 @@ export default function AuthPage() {
               onClick={() => switchMode("register")}
               className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-all duration-300 ${
                 mode === "register"
-                  ? "bg-brand-teal-dark text-white shadow-md shadow-brand-teal-dark/20"
-                  : "text-brand-brown hover:text-brand-black"
+                  ? "bg-brand-teal-dark dark:bg-[#4ADE80] text-white dark:text-[#0F0F0F] shadow-md shadow-brand-teal-dark/20 dark:shadow-[#4ADE80]/10"
+                  : "text-brand-brown dark:text-[#888888] hover:text-brand-black dark:hover:text-[#CCCCCC]"
               }`}
             >
               {t("auth.createAccount")}
@@ -358,15 +359,15 @@ function LoginForm() {
         errorMessage={dialogError}
         onClose={() => setDialogStatus("idle")}
       />
-      <div className="bg-white rounded-2xl border border-brand-beige p-8 shadow-sm">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] p-8 shadow-sm dark:shadow-black/20">
         <div className="mb-7">
           <h1
-            className="text-2xl font-bold text-brand-black"
+            className="text-2xl font-bold text-brand-black dark:text-[#E5E5E5]"
             style={{ fontFamily: "var(--font-sans)" }}
           >
             {t("auth.signIn")}
           </h1>
-          <p className="mt-2 text-sm text-brand-brown">
+          <p className="mt-2 text-sm text-brand-brown dark:text-[#888888]">
             {t("auth.signInSubtitle")}
           </p>
         </div>
@@ -374,7 +375,7 @@ function LoginForm() {
         <Button
           type="button"
           variant="outline"
-          className="w-full gap-2.5 h-12 rounded-xl border-brand-beige text-brand-black hover:bg-brand-gray font-medium"
+          className="w-full gap-2.5 h-12 rounded-xl border-brand-beige dark:border-[#2A2A2A] text-brand-black dark:text-[#E5E5E5] hover:bg-brand-gray dark:hover:bg-[#222222] font-medium"
           onClick={() => {
             window.location.href =
               import.meta.env.VITE_API_URL + "/auth/google";
@@ -387,8 +388,8 @@ function LoginForm() {
         <Divider text={t("auth.orSignInWith")} />
 
         {registeredSuccess && (
-          <div className="mb-5 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+          <div className="mb-5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/30 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
             {t("auth.accountCreatedSuccess")}
           </div>
         )}
@@ -402,7 +403,7 @@ function LoginForm() {
               onChange={(e) =>
                 setFormData((p) => ({ ...p, email: e.target.value }))
               }
-              className="h-12 rounded-xl border-brand-beige focus:border-brand-teal/40 focus:ring-2 focus:ring-brand-teal/10"
+              className="h-12 rounded-xl border-brand-beige dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-brand-teal/40 dark:focus:border-[#4ADE80]/30 focus:ring-2 focus:ring-brand-teal/10 dark:focus:ring-[#4ADE80]/10"
             />
           </Field>
 
@@ -412,7 +413,7 @@ function LoginForm() {
             trailing={
               <button
                 type="button"
-                className="text-xs text-brand-teal-dark hover:underline font-medium"
+                className="text-xs text-brand-teal-dark dark:text-[#4ADE80] hover:underline font-medium"
               >
                 {t("auth.forgot")}
               </button>
@@ -426,7 +427,7 @@ function LoginForm() {
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, password: e.target.value }))
                 }
-                className="h-12 rounded-xl border-brand-beige pr-12 focus:border-brand-teal/40 focus:ring-2 focus:ring-brand-teal/10"
+                className="h-12 rounded-xl border-brand-beige dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] pr-12 focus:border-brand-teal/40 dark:focus:border-[#4ADE80]/30 focus:ring-2 focus:ring-brand-teal/10 dark:focus:ring-[#4ADE80]/10"
               />
               <PasswordToggle
                 show={showPassword}
@@ -517,15 +518,15 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
         errorMessage={dialogError}
         onClose={() => setDialogStatus("idle")}
       />
-      <div className="bg-white rounded-2xl border border-brand-beige p-8 shadow-sm">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] p-8 shadow-sm dark:shadow-black/20">
         <div className="mb-6">
           <h1
-            className="text-2xl font-bold text-brand-black"
+            className="text-2xl font-bold text-brand-black dark:text-[#E5E5E5]"
             style={{ fontFamily: "var(--font-sans)" }}
           >
             {t("auth.createAccount")}
           </h1>
-          <p className="mt-2 text-sm text-brand-brown">
+          <p className="mt-2 text-sm text-brand-brown dark:text-[#888888]">
             {t("auth.createAccountSubtitle")}
           </p>
         </div>
@@ -533,7 +534,7 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
         <Button
           type="button"
           variant="outline"
-          className="w-full gap-2.5 h-12 rounded-xl border-brand-beige text-brand-black hover:bg-brand-gray font-medium"
+          className="w-full gap-2.5 h-12 rounded-xl border-brand-beige dark:border-[#2A2A2A] text-brand-black dark:text-[#E5E5E5] hover:bg-brand-gray dark:hover:bg-[#222222] font-medium"
           onClick={() => {
             window.location.href =
               import.meta.env.VITE_API_URL + "/auth/google";
@@ -553,7 +554,7 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
                 placeholder={t("auth.firstName")}
                 value={formData.first_name}
                 onChange={(e) => update("first_name", e.target.value)}
-                className="h-11 rounded-xl border-brand-beige focus:border-brand-teal/40 focus:ring-2 focus:ring-brand-teal/10"
+                className="h-11 rounded-xl border-brand-beige dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-brand-teal/40 dark:focus:border-[#4ADE80]/30 focus:ring-2 focus:ring-brand-teal/10 dark:focus:ring-[#4ADE80]/10"
               />
             </Field>
             <Field label={t("auth.lastName")}>
@@ -561,7 +562,7 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
                 placeholder={t("auth.lastName")}
                 value={formData.last_name}
                 onChange={(e) => update("last_name", e.target.value)}
-                className="h-11 rounded-xl border-brand-beige focus:border-brand-teal/40 focus:ring-2 focus:ring-brand-teal/10"
+                className="h-11 rounded-xl border-brand-beige dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-brand-teal/40 dark:focus:border-[#4ADE80]/30 focus:ring-2 focus:ring-brand-teal/10 dark:focus:ring-[#4ADE80]/10"
               />
             </Field>
           </div>
@@ -572,7 +573,7 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
               placeholder="you@example.com"
               value={formData.email}
               onChange={(e) => update("email", e.target.value)}
-              className="h-11 rounded-xl border-brand-beige focus:border-brand-teal/40 focus:ring-2 focus:ring-brand-teal/10"
+              className="h-11 rounded-xl border-brand-beige dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-brand-teal/40 dark:focus:border-[#4ADE80]/30 focus:ring-2 focus:ring-brand-teal/10 dark:focus:ring-[#4ADE80]/10"
             />
           </Field>
 
@@ -584,7 +585,7 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) => update("password", e.target.value)}
-                  className="h-11 rounded-xl border-brand-beige pr-10 focus:border-brand-teal/40 focus:ring-2 focus:ring-brand-teal/10"
+                  className="h-11 rounded-xl border-brand-beige dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] pr-10 focus:border-brand-teal/40 dark:focus:border-[#4ADE80]/30 focus:ring-2 focus:ring-brand-teal/10 dark:focus:ring-[#4ADE80]/10"
                 />
                 <PasswordToggle
                   show={showPassword}
@@ -598,7 +599,7 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
                 placeholder="••••••••"
                 value={formData.confirmPassword}
                 onChange={(e) => update("confirmPassword", e.target.value)}
-                className="h-11 rounded-xl border-brand-beige focus:border-brand-teal/40 focus:ring-2 focus:ring-brand-teal/10"
+                className="h-11 rounded-xl border-brand-beige dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-brand-teal/40 dark:focus:border-[#4ADE80]/30 focus:ring-2 focus:ring-brand-teal/10 dark:focus:ring-[#4ADE80]/10"
               />
             </Field>
           </div>
@@ -609,10 +610,10 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
                 value={formData.gender}
                 onValueChange={(v) => update("gender", v)}
               >
-                <SelectTrigger className="h-11 rounded-xl border-brand-beige">
+                <SelectTrigger className="h-11 rounded-xl border-brand-beige dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5]">
                   <SelectValue placeholder={t("auth.select")} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="dark:bg-[#1A1A1A] dark:border-[#2A2A2A]">
                   <SelectItem value="Male">{t("auth.male")}</SelectItem>
                   <SelectItem value="Female">{t("auth.female")}</SelectItem>
                   <SelectItem value="Other">{t("auth.other")}</SelectItem>
@@ -625,7 +626,7 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
                 placeholder="+213..."
                 value={formData.phone_number}
                 onChange={(e) => update("phone_number", e.target.value)}
-                className="h-11 rounded-xl border-brand-beige focus:border-brand-teal/40 focus:ring-2 focus:ring-brand-teal/10"
+                className="h-11 rounded-xl border-brand-beige dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-brand-teal/40 dark:focus:border-[#4ADE80]/30 focus:ring-2 focus:ring-brand-teal/10 dark:focus:ring-[#4ADE80]/10"
                 dir="ltr"
               />
             </Field>
@@ -665,11 +666,15 @@ function Field({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <Label className="text-sm font-medium text-brand-black">{label}</Label>
+        <Label className="text-sm font-medium text-brand-black dark:text-[#E5E5E5]">
+          {label}
+        </Label>
         {trailing}
       </div>
       {children}
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && (
+        <p className="text-xs text-red-500 dark:text-red-400">{error}</p>
+      )}
     </div>
   );
 }
@@ -678,10 +683,10 @@ function Divider({ text }: { text: string }) {
   return (
     <div className="relative my-6">
       <div className="absolute inset-0 flex items-center">
-        <span className="w-full border-t border-brand-beige" />
+        <span className="w-full border-t border-brand-beige dark:border-[#2A2A2A]" />
       </div>
       <div className="relative flex justify-center text-xs uppercase">
-        <span className="bg-white px-3 text-brand-brown font-medium">
+        <span className="bg-white dark:bg-[#1A1A1A] px-3 text-brand-brown dark:text-[#888888] font-medium">
           {text}
         </span>
       </div>
@@ -691,9 +696,11 @@ function Divider({ text }: { text: string }) {
 
 function ErrorBanner({ message }: { message: string }) {
   return (
-    <div className="mb-5 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 flex items-center gap-2">
-      <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-        <span className="text-red-500 text-xs font-bold">!</span>
+    <div className="mb-5 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/30 px-4 py-3 text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
+      <div className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center shrink-0">
+        <span className="text-red-500 dark:text-red-400 text-xs font-bold">
+          !
+        </span>
       </div>
       {message}
     </div>
@@ -711,7 +718,7 @@ function PasswordToggle({
     <button
       type="button"
       onClick={onToggle}
-      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-brown/50 hover:text-brand-brown transition-colors"
+      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-brown/50 dark:text-[#555555] hover:text-brand-brown dark:hover:text-[#888888] transition-colors"
     >
       {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
     </button>

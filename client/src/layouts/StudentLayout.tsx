@@ -24,12 +24,10 @@ const StudentLayout = () => {
   // Click outside sidebar → collapse it
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (collapsed) return; // already collapsed, nothing to do
+      if (collapsed) return;
 
-      // Don't collapse if clicking inside sidebar
       if (sidebarRef.current?.contains(e.target as Node)) return;
 
-      // Don't collapse if clicking the toggle button
       const target = e.target as HTMLElement;
       if (target.closest("[data-sidebar-toggle]")) return;
 
@@ -43,7 +41,7 @@ const StudentLayout = () => {
   if (isLoading) return <PageLoader />;
 
   return (
-    <div className="flex min-h-screen bg-[#FAFAF8]" dir={dir}>
+    <div className="flex min-h-screen bg-[#FAFAF8] dark:bg-[#0F0F0F]" dir={dir}>
       {/* Sidebar */}
       <div ref={sidebarRef}>
         <StudentSidebar

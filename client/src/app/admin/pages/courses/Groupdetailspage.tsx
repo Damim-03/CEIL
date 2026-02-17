@@ -1,5 +1,5 @@
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import PageLoader from "../../../../components/PageLoader";
 import { Button } from "../../../../components/ui/button";
@@ -53,7 +53,7 @@ const Toast = ({
 }) => (
   <div className="fixed top-4 right-4 z-[100] animate-slide-in">
     <div
-      className={`rounded-xl shadow-lg p-4 ${type === "success" ? "bg-[#2B6F5E]" : "bg-red-500"} text-white flex items-center gap-3`}
+      className={`rounded-xl shadow-lg dark:shadow-black/30 p-4 ${type === "success" ? "bg-[#2B6F5E]" : "bg-red-500"} text-white flex items-center gap-3`}
     >
       {type === "success" ? (
         <CheckCircle2 size={20} />
@@ -111,25 +111,20 @@ const GroupDetailsPage = () => {
     }
   };
 
-  useEffect(() => {
-    if (group && process.env.NODE_ENV === "development") {
-      console.group("📋 Group Details Debug");
-      console.log("Group Data:", group);
-      console.groupEnd();
-    }
-  }, [group]);
-
   if (isLoading) return <PageLoader />;
 
   if (isError) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center max-w-md space-y-4 p-8 bg-white rounded-2xl border border-[#D8CDC0]/60">
-          <AlertCircle className="mx-auto text-red-500" size={48} />
-          <h2 className="text-2xl font-semibold text-[#1B1B1B]">
+        <div className="text-center max-w-md space-y-4 p-8 bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A]">
+          <AlertCircle
+            className="mx-auto text-red-500 dark:text-red-400"
+            size={48}
+          />
+          <h2 className="text-2xl font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
             {t("admin.groupDetails.errorLoading")}
           </h2>
-          <p className="text-[#6B5D4F]">
+          <p className="text-[#6B5D4F] dark:text-[#AAAAAA]">
             {error instanceof Error ? error.message : "Unknown error"}
           </p>
           <div className="flex gap-3 justify-center">
@@ -143,7 +138,7 @@ const GroupDetailsPage = () => {
             <Button
               variant="outline"
               onClick={() => navigate("/admin/groups")}
-              className="border-[#D8CDC0]/60"
+              className="border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:text-[#E5E5E5] dark:hover:bg-[#222222]"
             >
               <ArrowLeft size={16} className="mr-2" />
               {t("admin.groupDetails.backToGroups")}
@@ -157,20 +152,20 @@ const GroupDetailsPage = () => {
   if (!group || !group.group_id) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center space-y-4 p-8 bg-white rounded-2xl border border-[#D8CDC0]/60">
-          <div className="w-16 h-16 mx-auto rounded-full bg-[#D8CDC0]/20 flex items-center justify-center">
-            <Users className="w-8 h-8 text-[#BEB29E]" />
+        <div className="text-center space-y-4 p-8 bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A]">
+          <div className="w-16 h-16 mx-auto rounded-full bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] flex items-center justify-center">
+            <Users className="w-8 h-8 text-[#BEB29E] dark:text-[#666666]" />
           </div>
-          <h2 className="text-2xl font-semibold text-[#1B1B1B]">
+          <h2 className="text-2xl font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
             {t("admin.groupDetails.groupNotFound")}
           </h2>
-          <p className="text-[#6B5D4F]">
+          <p className="text-[#6B5D4F] dark:text-[#AAAAAA]">
             {t("admin.groupDetails.groupNotFoundDesc")}
           </p>
           <Link to="/admin/groups">
             <Button
               variant="outline"
-              className="border-[#D8CDC0]/60 hover:bg-[#D8CDC0]/10"
+              className="border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:text-[#E5E5E5] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222]"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               {t("admin.groupDetails.backToGroups")}
@@ -264,7 +259,7 @@ const GroupDetailsPage = () => {
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2 text-[#6B5D4F] hover:bg-[#D8CDC0]/15 hover:text-[#1B1B1B]"
+            className="gap-2 text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/15 dark:hover:bg-[#222222] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]"
           >
             <ArrowLeft className="w-4 h-4" />
             {t("admin.groupDetails.backToCourse")}
@@ -274,16 +269,16 @@ const GroupDetailsPage = () => {
           onClick={() => refetch()}
           variant="outline"
           size="sm"
-          className="gap-2 border-[#D8CDC0]/60 text-[#6B5D4F] hover:bg-[#D8CDC0]/10"
+          className="gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222]"
         >
           <RefreshCw className="w-4 h-4" />
           {t("admin.groupDetails.refresh")}
         </Button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 overflow-hidden">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden">
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-[#2B6F5E]/5 to-[#C4A035]/5 px-6 py-8 border-b border-[#D8CDC0]/40">
+        <div className="relative bg-gradient-to-r from-[#2B6F5E]/5 dark:from-[#2B6F5E]/10 to-[#C4A035]/5 dark:to-[#C4A035]/10 px-6 py-8 border-b border-[#D8CDC0]/40 dark:border-[#2A2A2A]">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
@@ -293,10 +288,10 @@ const GroupDetailsPage = () => {
                 <Users className="w-8 h-8" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-[#1B1B1B]">
+                <h1 className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                   {group.name || "Unnamed Group"}
                 </h1>
-                <p className="text-sm text-[#6B5D4F] mt-1">
+                <p className="text-sm text-[#6B5D4F] dark:text-[#888888] mt-1">
                   {t("admin.groupDetails.groupId", {
                     id: group.group_id.slice(0, 8),
                   })}
@@ -308,7 +303,13 @@ const GroupDetailsPage = () => {
                     {t("admin.groupDetails.level")} {group.level || "N/A"}
                   </span>
                   <span
-                    className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${group.status === "OPEN" ? "bg-[#8DB896]/15 text-[#2B6F5E] border border-[#8DB896]/30" : group.status === "CLOSED" ? "bg-red-50 text-red-700 border border-red-200" : "bg-[#D8CDC0]/30 text-[#6B5D4F] border border-[#D8CDC0]/50"}`}
+                    className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
+                      group.status === "OPEN"
+                        ? "bg-[#8DB896]/15 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80] border border-[#8DB896]/30 dark:border-[#4ADE80]/20"
+                        : group.status === "CLOSED"
+                          ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40"
+                          : "bg-[#D8CDC0]/30 dark:bg-[#555555]/20 text-[#6B5D4F] dark:text-[#AAAAAA] border border-[#D8CDC0]/50 dark:border-[#555555]/30"
+                    }`}
                   >
                     {group.status === "OPEN"
                       ? t("admin.groupDetails.open")
@@ -320,13 +321,13 @@ const GroupDetailsPage = () => {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-sm text-[#6B5D4F]">
+              <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                 {t("admin.groupDetails.enrollment")}
               </p>
-              <p className="text-3xl font-bold text-[#1B1B1B]">
+              <p className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {currentCapacity}/{maxCapacity}
               </p>
-              <p className="text-xs text-[#BEB29E] mt-1">
+              <p className="text-xs text-[#BEB29E] dark:text-[#666666] mt-1">
                 {t("admin.groupDetails.full", {
                   percent: Math.round(capacityPercent),
                 })}
@@ -334,7 +335,7 @@ const GroupDetailsPage = () => {
             </div>
           </div>
           <div className="mt-6">
-            <div className="w-full bg-[#D8CDC0]/30 rounded-full h-3 overflow-hidden">
+            <div className="w-full bg-[#D8CDC0]/30 dark:bg-[#2A2A2A] rounded-full h-3 overflow-hidden">
               <div
                 className={`h-full transition-all duration-300 rounded-full ${capacityPercent >= 100 ? "bg-gradient-to-r from-red-500 to-red-600" : capacityPercent >= CAPACITY_THRESHOLD_PERCENT ? "bg-gradient-to-r from-[#C4A035] to-[#C4A035]/80" : "bg-gradient-to-r from-[#2B6F5E] to-[#8DB896]"}`}
                 style={{ width: `${Math.min(capacityPercent, 100)}%` }}
@@ -344,14 +345,14 @@ const GroupDetailsPage = () => {
         </div>
 
         {/* Teacher */}
-        <div className="border-b border-[#D8CDC0]/40 px-6 py-5 bg-gradient-to-r from-[#2B6F5E]/3 to-[#8DB896]/5">
+        <div className="border-b border-[#D8CDC0]/40 dark:border-[#2A2A2A] px-6 py-5 bg-gradient-to-r from-[#2B6F5E]/3 dark:from-[#2B6F5E]/5 to-[#8DB896]/5 dark:to-[#8DB896]/5">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-[#1B1B1B] flex items-center gap-2">
-                <GraduationCap className="w-5 h-5 text-[#2B6F5E]" />
+              <h2 className="text-lg font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] flex items-center gap-2">
+                <GraduationCap className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
                 {t("admin.groupDetails.assignedTeacher")}
               </h2>
-              <p className="text-sm text-[#BEB29E] mt-0.5">
+              <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
                 {canAssignInstructor
                   ? t("admin.groupDetails.teacherAvailable")
                   : t("admin.groupDetails.teacherRequires", {
@@ -360,33 +361,33 @@ const GroupDetailsPage = () => {
               </p>
             </div>
             {canAssignInstructor ? (
-              <Unlock className="w-6 h-6 text-[#2B6F5E]" />
+              <Unlock className="w-6 h-6 text-[#2B6F5E] dark:text-[#4ADE80]" />
             ) : (
-              <Lock className="w-6 h-6 text-[#C4A035]" />
+              <Lock className="w-6 h-6 text-[#C4A035] dark:text-[#D4A843]" />
             )}
           </div>
           <div className="mt-4">
             {hasInstructor && group.teacher ? (
-              <div className="bg-white border border-[#8DB896]/30 rounded-xl p-4">
+              <div className="bg-white dark:bg-[#1A1A1A] border border-[#8DB896]/30 dark:border-[#4ADE80]/15 rounded-xl p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-[#2B6F5E]/10 flex items-center justify-center">
-                      <User className="w-6 h-6 text-[#2B6F5E]" />
+                    <div className="w-12 h-12 rounded-full bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 flex items-center justify-center">
+                      <User className="w-6 h-6 text-[#2B6F5E] dark:text-[#4ADE80]" />
                     </div>
                     <div>
-                      <p className="font-semibold text-[#1B1B1B]">
+                      <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                         {getNestedValue(group, "teacher.first_name", "")}{" "}
                         {getNestedValue(group, "teacher.last_name", "")}
                       </p>
                       {group.teacher.email && (
-                        <p className="text-sm text-[#6B5D4F] flex items-center gap-1 mt-0.5">
-                          <Mail className="w-3 h-3 text-[#BEB29E]" />
+                        <p className="text-sm text-[#6B5D4F] dark:text-[#888888] flex items-center gap-1 mt-0.5">
+                          <Mail className="w-3 h-3 text-[#BEB29E] dark:text-[#666666]" />
                           {group.teacher.email}
                         </p>
                       )}
                       {group.teacher.phone_number && (
-                        <p className="text-sm text-[#6B5D4F] flex items-center gap-1 mt-0.5">
-                          <Phone className="w-3 h-3 text-[#BEB29E]" />
+                        <p className="text-sm text-[#6B5D4F] dark:text-[#888888] flex items-center gap-1 mt-0.5">
+                          <Phone className="w-3 h-3 text-[#BEB29E] dark:text-[#666666]" />
                           {group.teacher.phone_number}
                         </p>
                       )}
@@ -397,7 +398,7 @@ const GroupDetailsPage = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => setAssignInstructorOpen(true)}
-                      className="gap-2 border-[#D8CDC0]/60 hover:bg-[#C4A035]/8 hover:border-[#C4A035]/40"
+                      className="gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] hover:bg-[#C4A035]/8 dark:hover:bg-[#C4A035]/10 hover:border-[#C4A035]/40 dark:hover:border-[#C4A035]/30 dark:text-[#E5E5E5]"
                     >
                       <Edit className="w-3 h-3" />
                       {t("admin.groupDetails.change")}
@@ -406,7 +407,7 @@ const GroupDetailsPage = () => {
                       size="sm"
                       variant="outline"
                       onClick={handleRemoveInstructor}
-                      className="gap-2 border-red-200 text-red-600 hover:bg-red-50"
+                      className="gap-2 border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
                     >
                       <XCircle className="w-3 h-3" />
                       {t("admin.groupDetails.remove")}
@@ -416,26 +417,26 @@ const GroupDetailsPage = () => {
               </div>
             ) : (
               <div
-                className={`border-2 border-dashed rounded-xl p-6 text-center ${canAssignInstructor ? "border-[#8DB896]/40 bg-[#8DB896]/5" : "border-[#C4A035]/30 bg-[#C4A035]/5"}`}
+                className={`border-2 border-dashed rounded-xl p-6 text-center ${canAssignInstructor ? "border-[#8DB896]/40 dark:border-[#4ADE80]/20 bg-[#8DB896]/5 dark:bg-[#4ADE80]/5" : "border-[#C4A035]/30 dark:border-[#C4A035]/20 bg-[#C4A035]/5 dark:bg-[#C4A035]/5"}`}
               >
                 <div
-                  className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-3 ${canAssignInstructor ? "bg-[#2B6F5E]/10" : "bg-[#C4A035]/10"}`}
+                  className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-3 ${canAssignInstructor ? "bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10" : "bg-[#C4A035]/10 dark:bg-[#C4A035]/10"}`}
                 >
                   {canAssignInstructor ? (
-                    <UserCheck className="w-8 h-8 text-[#2B6F5E]" />
+                    <UserCheck className="w-8 h-8 text-[#2B6F5E] dark:text-[#4ADE80]" />
                   ) : (
-                    <Lock className="w-8 h-8 text-[#C4A035]" />
+                    <Lock className="w-8 h-8 text-[#C4A035] dark:text-[#D4A843]" />
                   )}
                 </div>
                 <p
-                  className={`font-medium mb-2 ${canAssignInstructor ? "text-[#1B1B1B]" : "text-[#C4A035]"}`}
+                  className={`font-medium mb-2 ${canAssignInstructor ? "text-[#1B1B1B] dark:text-[#E5E5E5]" : "text-[#C4A035] dark:text-[#D4A843]"}`}
                 >
                   {canAssignInstructor
                     ? t("admin.groupDetails.noTeacherYet")
                     : t("admin.groupDetails.teacherLocked")}
                 </p>
                 <p
-                  className={`text-sm mb-4 ${canAssignInstructor ? "text-[#6B5D4F]" : "text-[#C4A035]/80"}`}
+                  className={`text-sm mb-4 ${canAssignInstructor ? "text-[#6B5D4F] dark:text-[#AAAAAA]" : "text-[#C4A035]/80 dark:text-[#D4A843]/70"}`}
                 >
                   {canAssignInstructor
                     ? t("admin.groupDetails.groupReachedCapacity")
@@ -470,14 +471,14 @@ const GroupDetailsPage = () => {
         </div>
 
         {/* Students */}
-        <div className="border-b border-[#D8CDC0]/40 px-6 py-5">
+        <div className="border-b border-[#D8CDC0]/40 dark:border-[#2A2A2A] px-6 py-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-[#1B1B1B] flex items-center gap-2">
-                <Users className="w-5 h-5 text-[#C4A035]" />
+              <h2 className="text-lg font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] flex items-center gap-2">
+                <Users className="w-5 h-5 text-[#C4A035] dark:text-[#D4A843]" />
                 {t("admin.groupDetails.enrolledStudents")}
               </h2>
-              <p className="text-sm text-[#BEB29E] mt-0.5">
+              <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
                 {t("admin.groupDetails.enrolledCount", {
                   current: currentCapacity,
                   max: maxCapacity,
@@ -485,74 +486,74 @@ const GroupDetailsPage = () => {
               </p>
             </div>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
               <input
                 type="text"
                 placeholder={t("admin.groupDetails.searchStudents")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 pr-4 py-2 border border-[#D8CDC0]/60 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2B6F5E]/20 focus:border-[#2B6F5E]"
+                className="pl-9 pr-4 py-2 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] bg-white dark:bg-[#222222] text-[#1B1B1B] dark:text-[#E5E5E5] placeholder:text-[#BEB29E] dark:placeholder:text-[#555555] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20 focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]"
               />
             </div>
           </div>
           {filteredStudents.length > 0 ? (
-            <div className="border border-[#D8CDC0]/40 rounded-xl overflow-hidden">
+            <div className="border border-[#D8CDC0]/40 dark:border-[#2A2A2A] rounded-xl overflow-hidden">
               <table className="w-full">
-                <thead className="bg-[#D8CDC0]/10 border-b border-[#D8CDC0]/30">
+                <thead className="bg-[#D8CDC0]/10 dark:bg-[#0F0F0F] border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wider">
                       #
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wider">
                       {t("admin.groupDetails.studentId")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wider">
                       {t("admin.groupDetails.name")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wider">
                       {t("admin.groupDetails.email")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wider">
                       {t("admin.groupDetails.phone")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wider">
                       {t("admin.groupDetails.enrollmentDate")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wider">
                       {t("admin.groupDetails.actions")}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#D8CDC0]/30 bg-white">
+                <tbody className="divide-y divide-[#D8CDC0]/30 dark:divide-[#2A2A2A] bg-white dark:bg-[#1A1A1A]">
                   {filteredStudents.map((student, index) => (
                     <tr
                       key={student.student_id || index}
-                      className="hover:bg-[#D8CDC0]/8 transition-colors"
+                      className="hover:bg-[#D8CDC0]/8 dark:hover:bg-[#222222] transition-colors"
                     >
-                      <td className="px-4 py-3 text-sm text-[#BEB29E]">
+                      <td className="px-4 py-3 text-sm text-[#BEB29E] dark:text-[#666666]">
                         {index + 1}
                       </td>
-                      <td className="px-4 py-3 text-sm font-medium text-[#1B1B1B]">
+                      <td className="px-4 py-3 text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                         {student.student_id?.slice(0, 8) || "N/A"}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-[#C4A035]/10 flex items-center justify-center">
-                            <User className="w-4 h-4 text-[#C4A035]" />
+                          <div className="w-8 h-8 rounded-full bg-[#C4A035]/10 dark:bg-[#D4A843]/10 flex items-center justify-center">
+                            <User className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843]" />
                           </div>
-                          <span className="text-sm font-medium text-[#1B1B1B]">
+                          <span className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                             {getNestedValue(student, "first_name", "")}{" "}
                             {getNestedValue(student, "last_name", "")}
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-[#6B5D4F]">
+                      <td className="px-4 py-3 text-sm text-[#6B5D4F] dark:text-[#888888]">
                         {student.email || "-"}
                       </td>
-                      <td className="px-4 py-3 text-sm text-[#6B5D4F]">
+                      <td className="px-4 py-3 text-sm text-[#6B5D4F] dark:text-[#888888]">
                         {student.phone_number || "-"}
                       </td>
-                      <td className="px-4 py-3 text-sm text-[#6B5D4F]">
+                      <td className="px-4 py-3 text-sm text-[#6B5D4F] dark:text-[#888888]">
                         {student.created_at
                           ? new Date(student.created_at).toLocaleDateString(
                               locale,
@@ -564,7 +565,7 @@ const GroupDetailsPage = () => {
                           asChild
                           size="sm"
                           variant="ghost"
-                          className="gap-1 text-[#2B6F5E] hover:bg-[#2B6F5E]/8"
+                          className="gap-1 text-[#2B6F5E] dark:text-[#4ADE80] hover:bg-[#2B6F5E]/8 dark:hover:bg-[#4ADE80]/10"
                         >
                           <Link to={`/admin/students/${student.student_id}`}>
                             {t("admin.groupDetails.view")}
@@ -577,14 +578,14 @@ const GroupDetailsPage = () => {
               </table>
             </div>
           ) : (
-            <div className="border-2 border-dashed border-[#D8CDC0]/40 rounded-xl p-12 text-center">
-              <Users className="w-16 h-16 mx-auto text-[#D8CDC0] mb-3" />
-              <p className="text-[#6B5D4F] font-medium">
+            <div className="border-2 border-dashed border-[#D8CDC0]/40 dark:border-[#2A2A2A] rounded-xl p-12 text-center">
+              <Users className="w-16 h-16 mx-auto text-[#D8CDC0] dark:text-[#555555] mb-3" />
+              <p className="text-[#6B5D4F] dark:text-[#AAAAAA] font-medium">
                 {searchTerm
                   ? t("admin.groupDetails.noStudentsSearch")
                   : t("admin.groupDetails.noStudents")}
               </p>
-              <p className="text-sm text-[#BEB29E] mt-1">
+              <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-1">
                 {searchTerm
                   ? t("admin.groupDetails.noStudentsSearchHint")
                   : t("admin.groupDetails.noStudentsHint")}
@@ -595,7 +596,7 @@ const GroupDetailsPage = () => {
 
         {/* Group Info */}
         <div className="p-6">
-          <h2 className="text-lg font-semibold text-[#1B1B1B] mb-4">
+          <h2 className="text-lg font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-4">
             {t("admin.groupDetails.groupInfo")}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -651,15 +652,15 @@ const GroupDetailsPage = () => {
         </div>
 
         {/* Actions */}
-        <div className="bg-[#D8CDC0]/10 px-6 py-4 border-t border-[#D8CDC0]/40">
+        <div className="bg-[#D8CDC0]/10 dark:bg-[#0F0F0F] px-6 py-4 border-t border-[#D8CDC0]/40 dark:border-[#2A2A2A]">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <p className="text-sm text-[#6B5D4F]">
+            <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
               {t("admin.groupDetails.manageDesc")}
             </p>
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="gap-2 border-[#D8CDC0]/60 text-[#1B1B1B] hover:bg-[#C4A035]/8 hover:border-[#C4A035]/40 hover:text-[#C4A035]"
+                className="gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#1B1B1B] dark:text-[#E5E5E5] hover:bg-[#C4A035]/8 dark:hover:bg-[#C4A035]/10 hover:border-[#C4A035]/40 dark:hover:border-[#C4A035]/30 hover:text-[#C4A035] dark:hover:text-[#D4A843]"
                 onClick={() => setEditOpen(true)}
               >
                 <Edit className="w-4 h-4" />
@@ -667,7 +668,7 @@ const GroupDetailsPage = () => {
               </Button>
               <Button
                 variant="outline"
-                className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                className="gap-2 border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 dark:hover:border-red-700/50"
                 onClick={handleDelete}
               >
                 <Trash2 className="w-4 h-4" />
@@ -719,8 +720,14 @@ function InfoItem({
   value: string;
 }) {
   const styles = {
-    teal: { bg: "bg-[#2B6F5E]/8", icon: "text-[#2B6F5E]" },
-    mustard: { bg: "bg-[#C4A035]/8", icon: "text-[#C4A035]" },
+    teal: {
+      bg: "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10",
+      icon: "text-[#2B6F5E] dark:text-[#4ADE80]",
+    },
+    mustard: {
+      bg: "bg-[#C4A035]/8 dark:bg-[#D4A843]/10",
+      icon: "text-[#C4A035] dark:text-[#D4A843]",
+    },
   };
   const s = styles[color];
   return (
@@ -731,8 +738,12 @@ function InfoItem({
         <Icon className={`w-5 h-5 ${s.icon}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-[#6B5D4F]">{label}</p>
-        <p className="text-base text-[#1B1B1B] mt-1">{value}</p>
+        <p className="text-sm font-medium text-[#6B5D4F] dark:text-[#888888]">
+          {label}
+        </p>
+        <p className="text-base text-[#1B1B1B] dark:text-[#E5E5E5] mt-1">
+          {value}
+        </p>
       </div>
     </div>
   );

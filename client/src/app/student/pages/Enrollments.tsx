@@ -53,42 +53,42 @@ interface Enrollment {
 const STATUS_CONFIG = {
   PENDING: {
     icon: Clock,
-    color: "text-[#C4A035]",
-    bgColor: "bg-[#C4A035]/5",
-    borderColor: "border-[#C4A035]/20",
+    color: "text-[#C4A035] dark:text-[#D4A843]",
+    bgColor: "bg-[#C4A035]/5 dark:bg-[#D4A843]/[0.03]",
+    borderColor: "border-[#C4A035]/20 dark:border-[#D4A843]/15",
     label: "Pending Review",
     message: "Your enrollment request is pending admin approval.",
   },
   VALIDATED: {
     icon: CheckCircle,
-    color: "text-[#2B6F5E]",
-    bgColor: "bg-[#8DB896]/8",
-    borderColor: "border-[#8DB896]/25",
+    color: "text-[#2B6F5E] dark:text-[#4ADE80]",
+    bgColor: "bg-[#8DB896]/8 dark:bg-[#4ADE80]/5",
+    borderColor: "border-[#8DB896]/25 dark:border-[#4ADE80]/15",
     label: "Validated",
     message: "Your enrollment has been validated. You can now join a group!",
   },
   PAID: {
     icon: CheckCircle,
-    color: "text-[#2B6F5E]",
-    bgColor: "bg-[#2B6F5E]/5",
-    borderColor: "border-[#2B6F5E]/20",
+    color: "text-[#2B6F5E] dark:text-[#4ADE80]",
+    bgColor: "bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/[0.03]",
+    borderColor: "border-[#2B6F5E]/20 dark:border-[#4ADE80]/15",
     label: "Paid & Active",
     message: "Payment confirmed. Ready to start learning!",
   },
   REJECTED: {
     icon: XCircle,
-    color: "text-red-600",
-    bgColor: "bg-red-50",
-    borderColor: "border-red-200",
+    color: "text-red-600 dark:text-red-400",
+    bgColor: "bg-red-50 dark:bg-red-950/20",
+    borderColor: "border-red-200 dark:border-red-800/30",
     label: "Rejected",
     message:
       "Your enrollment request was not approved. Contact admin for details.",
   },
   FINISHED: {
     icon: GraduationCap,
-    color: "text-[#6B5D4F]",
-    bgColor: "bg-[#D8CDC0]/10",
-    borderColor: "border-[#D8CDC0]/40",
+    color: "text-[#6B5D4F] dark:text-[#888888]",
+    bgColor: "bg-[#D8CDC0]/10 dark:bg-[#2A2A2A]/50",
+    borderColor: "border-[#D8CDC0]/40 dark:border-[#2A2A2A]",
     label: "Completed",
     message: "Congratulations! You've completed this course.",
   },
@@ -124,7 +124,7 @@ export default function Enrollments() {
           >
             <GraduationCap className="w-8 h-8 text-white" />
           </motion.div>
-          <p className="text-[#6B5D4F] font-medium">
+          <p className="text-[#6B5D4F] dark:text-[#888888] font-medium">
             Loading your enrollments...
           </p>
         </div>
@@ -136,13 +136,13 @@ export default function Enrollments() {
     return (
       <div className="min-h-[400px] flex items-center justify-center">
         <div className="text-center space-y-4 max-w-md">
-          <div className="w-16 h-16 mx-auto rounded-full bg-red-50 flex items-center justify-center">
-            <AlertCircle className="w-8 h-8 text-red-600" />
+          <div className="w-16 h-16 mx-auto rounded-full bg-red-50 dark:bg-red-950/20 flex items-center justify-center">
+            <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
           </div>
-          <h3 className="text-lg font-semibold text-[#1B1B1B] mb-2">
+          <h3 className="text-lg font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
             Unable to Load Enrollments
           </h3>
-          <p className="text-[#6B5D4F]">
+          <p className="text-[#6B5D4F] dark:text-[#888888]">
             {error instanceof Error ? error.message : "Something went wrong."}
           </p>
           <Button
@@ -167,11 +167,11 @@ export default function Enrollments() {
         >
           <div className="relative">
             <motion.div
-              className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-[#2B6F5E]/10 to-[#C4A035]/10 flex items-center justify-center"
+              className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-[#2B6F5E]/10 dark:from-[#4ADE80]/10 to-[#C4A035]/10 dark:to-[#D4A843]/10 flex items-center justify-center"
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             >
-              <GraduationCap className="w-16 h-16 text-[#2B6F5E]" />
+              <GraduationCap className="w-16 h-16 text-[#2B6F5E] dark:text-[#4ADE80]" />
             </motion.div>
             {[...Array(3)].map((_, i) => (
               <motion.div
@@ -181,15 +181,15 @@ export default function Enrollments() {
                 animate={{ y: [-10, 10, -10], opacity: [0.4, 1, 0.4] }}
                 transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
               >
-                <Sparkles className="w-4 h-4 text-[#C4A035]" />
+                <Sparkles className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843]" />
               </motion.div>
             ))}
           </div>
           <div className="space-y-3">
-            <h2 className="text-2xl font-bold text-[#1B1B1B]">
+            <h2 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
               No Enrollments Yet
             </h2>
-            <p className="text-[#6B5D4F] text-lg">
+            <p className="text-[#6B5D4F] dark:text-[#888888] text-lg">
               You haven't enrolled in any program yet. Start your learning
               journey today!
             </p>
@@ -201,7 +201,7 @@ export default function Enrollments() {
           >
             Browse Courses <ArrowRight className="w-5 h-5" />
           </Button>
-          <p className="text-sm text-[#BEB29E] mt-4">
+          <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-4">
             Browse our available courses and submit your enrollment request
           </p>
         </motion.div>
@@ -219,17 +219,17 @@ export default function Enrollments() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-6 overflow-hidden">
+        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20 dark:shadow-black/30">
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-[#1B1B1B]">
+              <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 My Enrollments
               </h1>
-              <p className="text-sm text-[#BEB29E] mt-0.5">
+              <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
                 Track your enrollment status and group assignments
               </p>
             </div>
@@ -245,8 +245,8 @@ export default function Enrollments() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-[#2B6F5E] via-[#2B6F5E]/90 to-[#1a4a3d]"></div>
-          <div className="absolute -top-12 -right-12 w-40 h-40 bg-[#C4A035]/15 rounded-full blur-3xl"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-[#2B6F5E] via-[#2B6F5E]/90 to-[#1a4a3d] dark:from-[#0A1A10] dark:via-[#0F1F15] dark:to-[#0A1A10]"></div>
+          <div className="absolute -top-12 -right-12 w-40 h-40 bg-[#C4A035]/15 dark:bg-[#C4A035]/10 rounded-full blur-3xl"></div>
           <div className="relative p-6 text-white">
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div className="flex items-start gap-4">
@@ -257,7 +257,7 @@ export default function Enrollments() {
                   <h3 className="text-xl font-bold mb-2">
                     Ready to Join a Group!
                   </h3>
-                  <p className="text-white/60 mb-1">
+                  <p className="text-white/60">
                     You have {readyForGroup.length} enrollment(s) ready for
                     group selection.
                   </p>
@@ -268,7 +268,7 @@ export default function Enrollments() {
               </div>
               <Button
                 size="lg"
-                className="gap-2 shrink-0 bg-white text-[#2B6F5E] hover:bg-white/90 rounded-xl font-semibold"
+                className="gap-2 shrink-0 bg-white text-[#2B6F5E] hover:bg-white/90 dark:bg-[#4ADE80] dark:text-[#0F0F0F] dark:hover:bg-[#4ADE80]/90 rounded-xl font-semibold"
                 onClick={() => navigate("/dashboard/courses")}
               >
                 Choose Group <ArrowRight className="w-5 h-5" />
@@ -291,32 +291,36 @@ export default function Enrollments() {
             icon: CheckCircle,
             value: getEnrollmentCount(enrollments, ["VALIDATED", "PAID"]),
             color: "#2B6F5E",
-            bg: "bg-[#8DB896]/8",
-            border: "border-[#8DB896]/25",
+            darkColor: "#4ADE80",
+            bg: "bg-[#8DB896]/8 dark:bg-[#4ADE80]/5",
+            border: "border-[#8DB896]/25 dark:border-[#4ADE80]/15",
           },
           {
             label: "Pending",
             icon: Clock,
             value: getEnrollmentCount(enrollments, ["PENDING"]),
             color: "#C4A035",
-            bg: "bg-[#C4A035]/5",
-            border: "border-[#C4A035]/20",
+            darkColor: "#D4A843",
+            bg: "bg-[#C4A035]/5 dark:bg-[#D4A843]/[0.03]",
+            border: "border-[#C4A035]/20 dark:border-[#D4A843]/15",
           },
           {
             label: "Paid",
             icon: FileText,
             value: getEnrollmentCount(enrollments, ["PAID"]),
             color: "#2B6F5E",
-            bg: "bg-[#2B6F5E]/5",
-            border: "border-[#2B6F5E]/20",
+            darkColor: "#4ADE80",
+            bg: "bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/[0.03]",
+            border: "border-[#2B6F5E]/20 dark:border-[#4ADE80]/15",
           },
           {
             label: "Rejected",
             icon: XCircle,
             value: getEnrollmentCount(enrollments, ["REJECTED"]),
             color: "#dc2626",
-            bg: "bg-red-50",
-            border: "border-red-200",
+            darkColor: "#f87171",
+            bg: "bg-red-50 dark:bg-red-950/20",
+            border: "border-red-200 dark:border-red-800/30",
           },
         ].map((stat, i) => (
           <div
@@ -324,15 +328,28 @@ export default function Enrollments() {
             className={`${stat.bg} rounded-2xl p-4 border ${stat.border}`}
           >
             <div className="flex items-center gap-3">
-              <stat.icon className="w-8 h-8" style={{ color: stat.color }} />
+              <stat.icon
+                className="w-8 h-8 hidden dark:block"
+                style={{ color: stat.darkColor }}
+              />
+              <stat.icon
+                className="w-8 h-8 dark:hidden"
+                style={{ color: stat.color }}
+              />
               <div>
                 <p
-                  className="text-sm font-medium"
+                  className="text-sm font-medium hidden dark:block"
+                  style={{ color: stat.darkColor }}
+                >
+                  {stat.label}
+                </p>
+                <p
+                  className="text-sm font-medium dark:hidden"
                   style={{ color: stat.color }}
                 >
                   {stat.label}
                 </p>
-                <p className="text-2xl font-bold text-[#1B1B1B]">
+                <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                   {stat.value}
                 </p>
               </div>
@@ -376,7 +393,7 @@ function EnrollmentsList({ enrollments }: { enrollments: Enrollment[] }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
           >
-            <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 overflow-hidden hover:shadow-lg hover:shadow-black/[0.03] transition-shadow">
+            <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden hover:shadow-lg hover:shadow-black/[0.03] dark:hover:shadow-black/20 transition-shadow">
               {/* Status Header */}
               <div
                 className={`${config.bgColor} ${config.borderColor} border-b px-5 py-3`}
@@ -388,7 +405,7 @@ function EnrollmentsList({ enrollments }: { enrollments: Enrollment[] }) {
                       {config.label}
                     </span>
                   </div>
-                  <span className="text-xs text-[#BEB29E]">
+                  <span className="text-xs text-[#BEB29E] dark:text-[#666666]">
                     #{enrollment.enrollment_id.slice(0, 8)}
                   </span>
                 </div>
@@ -396,11 +413,13 @@ function EnrollmentsList({ enrollments }: { enrollments: Enrollment[] }) {
 
               <div className="p-5 space-y-4">
                 <div>
-                  <h3 className="text-lg font-bold text-[#1B1B1B] mb-1">
+                  <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-1">
                     {courseName}
                   </h3>
                   {courseCode && (
-                    <p className="text-sm text-[#6B5D4F]">Code: {courseCode}</p>
+                    <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
+                      Code: {courseCode}
+                    </p>
                   )}
                 </div>
 
@@ -413,16 +432,16 @@ function EnrollmentsList({ enrollments }: { enrollments: Enrollment[] }) {
                 </div>
 
                 {hasGroup && enrollment.group && (
-                  <div className="bg-[#2B6F5E]/5 border border-[#2B6F5E]/15 rounded-xl p-3">
+                  <div className="bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 border border-[#2B6F5E]/15 dark:border-[#4ADE80]/15 rounded-xl p-3">
                     <div className="flex items-center gap-2 mb-1">
-                      <Users className="w-4 h-4 text-[#2B6F5E]" />
-                      <span className="text-sm font-semibold text-[#1B1B1B]">
+                      <Users className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
+                      <span className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                         {enrollment.registration_status === "PENDING"
                           ? "Group Assigned (Pending Approval)"
                           : "Enrolled in Group"}
                       </span>
                     </div>
-                    <p className="text-sm text-[#6B5D4F]">
+                    <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                       Level {enrollment.level || enrollment.group.level} -{" "}
                       {enrollment.group.name}
                     </p>
@@ -431,24 +450,24 @@ function EnrollmentsList({ enrollments }: { enrollments: Enrollment[] }) {
 
                 <div className="grid grid-cols-2 gap-4 pt-2">
                   <div className="flex items-start gap-2">
-                    <Calendar className="w-4 h-4 text-[#BEB29E] mt-0.5" />
+                    <Calendar className="w-4 h-4 text-[#BEB29E] dark:text-[#666666] mt-0.5" />
                     <div>
-                      <p className="text-xs text-[#BEB29E] font-medium">
+                      <p className="text-xs text-[#BEB29E] dark:text-[#666666] font-medium">
                         Enrollment Date
                       </p>
-                      <p className="text-sm text-[#1B1B1B] font-semibold">
+                      <p className="text-sm text-[#1B1B1B] dark:text-[#E5E5E5] font-semibold">
                         {enrollmentDate}
                       </p>
                     </div>
                   </div>
                   {enrollment.level && (
                     <div className="flex items-start gap-2">
-                      <GraduationCap className="w-4 h-4 text-[#BEB29E] mt-0.5" />
+                      <GraduationCap className="w-4 h-4 text-[#BEB29E] dark:text-[#666666] mt-0.5" />
                       <div>
-                        <p className="text-xs text-[#BEB29E] font-medium">
+                        <p className="text-xs text-[#BEB29E] dark:text-[#666666] font-medium">
                           Level
                         </p>
-                        <p className="text-sm text-[#1B1B1B] font-semibold">
+                        <p className="text-sm text-[#1B1B1B] dark:text-[#E5E5E5] font-semibold">
                           {enrollment.level}
                         </p>
                       </div>
@@ -470,7 +489,7 @@ function EnrollmentsList({ enrollments }: { enrollments: Enrollment[] }) {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="w-full gap-2 border-[#D8CDC0]/60 text-[#6B5D4F] hover:bg-[#2B6F5E]/5 hover:border-[#2B6F5E]/30 rounded-xl"
+                        className="w-full gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#888888] hover:bg-[#2B6F5E]/5 dark:hover:bg-[#4ADE80]/5 hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 rounded-xl"
                         onClick={() =>
                           navigate(`/dashboard/group/${enrollment.group_id}`)
                         }
@@ -478,14 +497,14 @@ function EnrollmentsList({ enrollments }: { enrollments: Enrollment[] }) {
                         View My Group <ArrowRight className="w-4 h-4" />
                       </Button>
                       {enrollment.registration_status === "PENDING" && (
-                        <p className="text-xs text-[#C4A035] mt-2 text-center flex items-center justify-center gap-1">
+                        <p className="text-xs text-[#C4A035] dark:text-[#D4A843] mt-2 text-center flex items-center justify-center gap-1">
                           <Clock className="w-3 h-3" /> Waiting for admin
                           approval
                         </p>
                       )}
                     </>
                   ) : enrollment.registration_status === "REJECTED" ? (
-                    <p className="text-xs text-red-600 font-medium text-center">
+                    <p className="text-xs text-red-600 dark:text-red-400 font-medium text-center">
                       Contact administration for more information
                     </p>
                   ) : null}

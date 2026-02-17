@@ -1,4 +1,4 @@
-import { Quote, Sparkles, GraduationCap } from "lucide-react";
+import { Quote, GraduationCap } from "lucide-react";
 import { useLanguage } from "../../hooks/useLanguage";
 import { useState, useEffect, useRef } from "react";
 
@@ -26,34 +26,34 @@ export function DirectorMessage() {
   return (
     <section
       ref={sectionRef}
-      className="py-20 lg:py-28 bg-white relative overflow-hidden"
+      className="py-20 lg:py-28 bg-white dark:bg-[#121212] relative overflow-hidden"
       dir={dir}
     >
       {/* ═══ Background ═══ */}
       <div className="absolute inset-0 pointer-events-none">
         <div
-          className="absolute top-[8%] left-[5%] w-80 h-80 rounded-full bg-brand-teal-dark/[0.025]"
+          className="absolute top-[8%] left-[5%] w-80 h-80 rounded-full bg-brand-teal-dark/[0.025] dark:bg-[#4ADE80]/[0.02]"
           style={{ animation: "directorFloat 20s ease-in-out infinite" }}
         />
         <div
-          className="absolute bottom-[10%] right-[3%] w-96 h-96 rounded-full bg-brand-mustard/[0.03]"
+          className="absolute bottom-[10%] right-[3%] w-96 h-96 rounded-full bg-brand-mustard/[0.03] dark:bg-brand-mustard/[0.015]"
           style={{
             animation: "directorFloat 25s ease-in-out infinite reverse",
           }}
         />
         <div
-          className="absolute top-[40%] right-[15%] w-48 h-48 rounded-full bg-brand-teal-dark/[0.02]"
+          className="absolute top-[40%] right-[15%] w-48 h-48 rounded-full bg-brand-teal-dark/[0.02] dark:bg-[#4ADE80]/[0.01]"
           style={{ animation: "directorFloat 18s ease-in-out infinite 2s" }}
         />
         <div
-          className="absolute inset-0 opacity-[0.025]"
+          className="absolute inset-0 opacity-[0.025] dark:opacity-[0.04]"
           style={{
             backgroundImage:
               "radial-gradient(circle at 1px 1px, #264230 1px, transparent 0)",
             backgroundSize: "40px 40px",
           }}
         />
-        <div className="absolute top-0 left-1/2 w-px h-full bg-gradient-to-b from-transparent via-brand-beige/40 to-transparent" />
+        <div className="absolute top-0 left-1/2 w-px h-full bg-gradient-to-b from-transparent via-brand-beige/40 dark:via-[#2A2A2A]/40 to-transparent" />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -64,7 +64,7 @@ export function DirectorMessage() {
           }`}
         >
           <h2
-            className="text-3xl font-bold text-brand-black sm:text-4xl"
+            className="text-3xl font-bold text-brand-black dark:text-[#E5E5E5] sm:text-4xl"
             style={{ fontFamily: "var(--font-sans)" }}
           >
             {t("director.sectionTitle")}
@@ -93,18 +93,18 @@ export function DirectorMessage() {
             <div className="relative group">
               {/* Decorative frames */}
               <div
-                className={`absolute -top-4 w-full h-full rounded-2xl border-2 border-brand-mustard/20 -z-10 transition-all duration-500 group-hover:scale-[1.02] group-hover:border-brand-mustard/35 ${
+                className={`absolute -top-4 w-full h-full rounded-2xl border-2 border-brand-mustard/20 dark:border-brand-mustard/15 -z-10 transition-all duration-500 group-hover:scale-[1.02] group-hover:border-brand-mustard/35 dark:group-hover:border-brand-mustard/25 ${
                   isRTL ? "-right-4" : "-left-4"
                 }`}
               />
               <div
-                className={`absolute -bottom-4 w-full h-full rounded-2xl border-2 border-brand-teal-dark/10 -z-10 transition-all duration-500 group-hover:scale-[1.02] group-hover:border-brand-teal-dark/20 ${
+                className={`absolute -bottom-4 w-full h-full rounded-2xl border-2 border-brand-teal-dark/10 dark:border-[#4ADE80]/10 -z-10 transition-all duration-500 group-hover:scale-[1.02] group-hover:border-brand-teal-dark/20 dark:group-hover:border-[#4ADE80]/15 ${
                   isRTL ? "-left-4" : "-right-4"
                 }`}
               />
 
               {/* Photo */}
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-brand-teal-dark/15 group-hover:shadow-brand-teal-dark/25 transition-shadow duration-500">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-brand-teal-dark/15 dark:shadow-black/40 group-hover:shadow-brand-teal-dark/25 dark:group-hover:shadow-black/50 transition-shadow duration-500">
                 <img
                   src={directorPhoto}
                   alt={t("director.name")}
@@ -171,22 +171,22 @@ export function DirectorMessage() {
           >
             {/* Quote icon */}
             <div className="mb-6 relative w-fit">
-              <div className="w-14 h-14 rounded-2xl bg-brand-teal-dark/[0.08] flex items-center justify-center hover:bg-brand-teal-dark/[0.12] transition-colors duration-300">
+              <div className="w-14 h-14 rounded-2xl bg-brand-teal-dark/[0.08] dark:bg-[#4ADE80]/[0.08] flex items-center justify-center hover:bg-brand-teal-dark/[0.12] dark:hover:bg-[#4ADE80]/[0.12] transition-colors duration-300">
                 <Quote
-                  className="w-7 h-7 text-brand-teal-dark"
+                  className="w-7 h-7 text-brand-teal-dark dark:text-[#4ADE80]"
                   strokeWidth={1.5}
                 />
               </div>
               {/* Slow gentle pulse */}
               <div
-                className="absolute inset-0 w-14 h-14 rounded-2xl border border-brand-teal-dark/10"
+                className="absolute inset-0 w-14 h-14 rounded-2xl border border-brand-teal-dark/10 dark:border-[#4ADE80]/10"
                 style={{ animation: "quotePulse 4s ease-in-out infinite" }}
               />
             </div>
 
             {/* Title */}
             <h3
-              className="text-xl lg:text-2xl font-bold text-brand-black mb-6 leading-snug"
+              className="text-xl lg:text-2xl font-bold text-brand-black dark:text-[#E5E5E5] mb-6 leading-snug"
               style={{ fontFamily: "var(--font-sans)" }}
             >
               {t("director.title")}
@@ -197,7 +197,7 @@ export function DirectorMessage() {
               {["message1", "message2", "message3"].map((key, i) => (
                 <p
                   key={key}
-                  className={`text-brand-black/60 leading-[1.9] text-[15px] transition-all duration-700 ${
+                  className={`text-brand-black/60 dark:text-[#AAAAAA] leading-[1.9] text-[15px] transition-all duration-700 ${
                     isVisible
                       ? "opacity-100 translate-y-0"
                       : "opacity-0 translate-y-4"
@@ -211,7 +211,7 @@ export function DirectorMessage() {
 
             {/* Highlight quote */}
             <div
-              className={`mt-6 p-4 rounded-xl bg-brand-gray/60 transition-all duration-700 ${
+              className={`mt-6 p-4 rounded-xl bg-brand-gray/60 dark:bg-[#1A1A1A] transition-all duration-700 ${
                 isVisible
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-4"
@@ -223,14 +223,14 @@ export function DirectorMessage() {
                 borderColor: "var(--color-brand-mustard, #C19A5E)",
               }}
             >
-              <p className="text-brand-teal-dark font-semibold text-sm italic leading-relaxed">
+              <p className="text-brand-teal-dark dark:text-[#4ADE80] font-semibold text-sm italic leading-relaxed">
                 "{t("director.highlightQuote")}"
               </p>
             </div>
 
             {/* Signature */}
             <div
-              className={`mt-8 pt-6 border-t border-brand-beige/80 flex items-center gap-4 group/sig transition-all duration-700 ${
+              className={`mt-8 pt-6 border-t border-brand-beige/80 dark:border-[#2A2A2A] flex items-center gap-4 group/sig transition-all duration-700 ${
                 isVisible
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-4"
@@ -238,21 +238,23 @@ export function DirectorMessage() {
               style={{ transitionDelay: "1200ms" }}
             >
               <div className="relative">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-teal-dark/10 to-brand-teal-dark/[0.04] flex items-center justify-center shrink-0 group-hover/sig:from-brand-teal-dark/[0.15] group-hover/sig:to-brand-teal-dark/[0.08] transition-all duration-300">
-                  <span className="text-xl font-bold text-brand-teal-dark">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-teal-dark/10 dark:from-[#4ADE80]/10 to-brand-teal-dark/[0.04] dark:to-[#4ADE80]/[0.04] flex items-center justify-center shrink-0 group-hover/sig:from-brand-teal-dark/[0.15] dark:group-hover/sig:from-[#4ADE80]/[0.15] group-hover/sig:to-brand-teal-dark/[0.08] dark:group-hover/sig:to-[#4ADE80]/[0.08] transition-all duration-300">
+                  <span className="text-xl font-bold text-brand-teal-dark dark:text-[#4ADE80]">
                     {t("director.initials")}
                   </span>
                 </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-brand-mustard border-2 border-white shadow-sm" />
+                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-brand-mustard border-2 border-white dark:border-[#121212] shadow-sm" />
               </div>
               <div>
                 <p
-                  className="font-bold text-brand-black group-hover/sig:text-brand-teal-dark transition-colors duration-300"
+                  className="font-bold text-brand-black dark:text-[#E5E5E5] group-hover/sig:text-brand-teal-dark dark:group-hover/sig:text-[#4ADE80] transition-colors duration-300"
                   style={{ fontFamily: "var(--font-sans)" }}
                 >
                   {t("director.fullName")}
                 </p>
-                <p className="text-sm text-brand-brown">{t("director.role")}</p>
+                <p className="text-sm text-brand-brown dark:text-[#888888]">
+                  {t("director.role")}
+                </p>
               </div>
             </div>
           </div>

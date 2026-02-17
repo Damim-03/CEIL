@@ -49,9 +49,7 @@ const QuickAttendanceModal = ({
   const createSession = useCreateSession();
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
-
   if (!open) return null;
-
   const filteredGroups = groups.filter((g) => {
     const s = search.toLowerCase();
     return (
@@ -59,7 +57,6 @@ const QuickAttendanceModal = ({
       ((g as any).course?.course_name?.toLowerCase() || "").includes(s)
     );
   });
-
   const getTodaySession = (groupId: string): Session | undefined => {
     const today = new Date();
     return sessions.find((s) => {
@@ -72,7 +69,6 @@ const QuickAttendanceModal = ({
       );
     });
   };
-
   const handleGroupClick = async (group: any) => {
     const existing = getTodaySession(group.group_id);
     if (existing) {
@@ -97,16 +93,15 @@ const QuickAttendanceModal = ({
       setCreating(false);
     }
   };
-
   return (
     <>
       <div
-        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-[#D8CDC0]/60 overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#D8CDC0]/30 bg-gradient-to-r from-[#C4A035] to-[#C4A035]/90">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-2xl dark:shadow-black/50 w-full max-w-lg border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A] bg-gradient-to-r from-[#C4A035] to-[#C4A035]/90">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                 <Zap className="w-5 h-5 text-white" />
@@ -123,12 +118,12 @@ const QuickAttendanceModal = ({
           </div>
           <div className="px-6 pt-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
               <Input
                 placeholder={t("admin.sessions.searchGroupsCourses")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 h-10 border-[#D8CDC0]/60 focus:border-[#2B6F5E] focus:ring-[#2B6F5E]/20"
+                className="pl-10 h-10 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
                 autoFocus
               />
             </div>
@@ -136,7 +131,7 @@ const QuickAttendanceModal = ({
           <div className="px-6 py-4 max-h-80 overflow-y-auto">
             {groupsLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-[#2B6F5E]" />
+                <Loader2 className="w-6 h-6 animate-spin text-[#2B6F5E] dark:text-[#4ADE80]" />
               </div>
             ) : filteredGroups.length > 0 ? (
               <div className="space-y-2">
@@ -153,16 +148,16 @@ const QuickAttendanceModal = ({
                       key={group.group_id}
                       onClick={() => handleGroupClick(group)}
                       disabled={creating}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl border border-[#D8CDC0]/40 hover:border-[#2B6F5E]/30 hover:bg-[#2B6F5E]/3 transition-all text-left disabled:opacity-50"
+                      className="w-full flex items-center gap-3 p-3 rounded-xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 hover:bg-[#2B6F5E]/3 dark:hover:bg-[#222222] transition-all text-left disabled:opacity-50"
                     >
                       <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shrink-0">
                         <Users className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-[#1B1B1B] truncate">
+                        <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
                           {group.name}
                         </p>
-                        <div className="flex items-center gap-2 text-xs text-[#6B5D4F]">
+                        <div className="flex items-center gap-2 text-xs text-[#6B5D4F] dark:text-[#888888]">
                           <span>{courseName}</span>
                           {group.level && (
                             <>
@@ -180,12 +175,12 @@ const QuickAttendanceModal = ({
                       </div>
                       <div className="shrink-0">
                         {todaySession ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#8DB896]/15 border border-[#8DB896]/30 text-xs font-semibold text-[#2B6F5E]">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#8DB896]/15 dark:bg-[#4ADE80]/10 border border-[#8DB896]/30 dark:border-[#4ADE80]/20 text-xs font-semibold text-[#2B6F5E] dark:text-[#4ADE80]">
                             <UserCheck className="w-3 h-3" />{" "}
                             {t("admin.sessions.today")}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#C4A035]/10 border border-[#C4A035]/20 text-xs font-semibold text-[#C4A035]">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#C4A035]/10 border border-[#C4A035]/20 dark:border-[#C4A035]/15 text-xs font-semibold text-[#C4A035] dark:text-[#D4A843]">
                             <Plus className="w-3 h-3" />{" "}
                             {t("admin.sessions.new")}
                           </span>
@@ -197,11 +192,11 @@ const QuickAttendanceModal = ({
               </div>
             ) : (
               <div className="text-center py-12">
-                <Users className="w-12 h-12 mx-auto text-[#D8CDC0] mb-3" />
-                <p className="font-medium text-[#6B5D4F]">
+                <Users className="w-12 h-12 mx-auto text-[#D8CDC0] dark:text-[#555555] mb-3" />
+                <p className="font-medium text-[#6B5D4F] dark:text-[#AAAAAA]">
                   {t("admin.sessions.noGroupsFound")}
                 </p>
-                <p className="text-sm text-[#BEB29E] mt-1">
+                <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-1">
                   {search
                     ? t("admin.sessions.noGroupsSearchDesc")
                     : t("admin.sessions.noGroupsEmptyDesc")}
@@ -209,8 +204,8 @@ const QuickAttendanceModal = ({
               </div>
             )}
           </div>
-          <div className="px-6 py-3 border-t border-[#D8CDC0]/30 bg-[#D8CDC0]/8 flex items-center justify-between">
-            <p className="text-xs text-[#BEB29E]">
+          <div className="px-6 py-3 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A] bg-[#D8CDC0]/8 dark:bg-[#0F0F0F] flex items-center justify-between">
+            <p className="text-xs text-[#BEB29E] dark:text-[#666666]">
               {creating
                 ? t("admin.sessions.creatingSession")
                 : `${filteredGroups.length} ${t("admin.sessions.groups")}`}
@@ -220,7 +215,7 @@ const QuickAttendanceModal = ({
               size="sm"
               onClick={onClose}
               disabled={creating}
-              className="text-[#6B5D4F] hover:bg-[#D8CDC0]/15"
+              className="text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/15 dark:hover:bg-[#222222]"
             >
               {t("admin.sessions.cancel")}
             </Button>
@@ -240,14 +235,12 @@ const SessionsPage = () => {
       : i18n.language === "fr"
         ? "fr-FR"
         : "en-US";
-
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isQuickAttendanceOpen, setIsQuickAttendanceOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
-
   const { data: sessions = [], isLoading, error, refetch } = useAdminSessions();
   const deleteSession = useDeleteSession();
 
@@ -273,8 +266,6 @@ const SessionsPage = () => {
       return "Invalid Time";
     }
   };
-
-  /* ── حساب المدة بالدقائق ── */
   const getDurationLabel = (start: string, end: string | null | undefined) => {
     if (!end) return null;
     const diff = new Date(end).getTime() - new Date(start).getTime();
@@ -299,7 +290,6 @@ const SessionsPage = () => {
     setSelectedSession(session);
     setIsDeleteOpen(true);
   };
-
   const handleDeleteConfirm = async () => {
     if (!selectedSession) return;
     try {
@@ -311,7 +301,6 @@ const SessionsPage = () => {
       toast.error(error?.response?.data?.message || "Failed to delete session");
     }
   };
-
   const handleSuccess = () => refetch();
   const handleQuickSessionReady = (session: Session) => {
     refetch().then(() => {
@@ -321,7 +310,6 @@ const SessionsPage = () => {
   };
   const hasAttendanceRecords = (session: Session) =>
     session._count && session._count.attendance > 0;
-
   const getStudentCount = (session: Session) => {
     if (!session.group?.enrollments) return 0;
     return session.group.enrollments.filter(
@@ -331,7 +319,6 @@ const SessionsPage = () => {
         e.registration_status === "FINISHED",
     ).length;
   };
-
   const getSessionData = (session: Session) => {
     const group = session.group;
     return {
@@ -358,17 +345,17 @@ const SessionsPage = () => {
     return (
       <div className="space-y-6">
         <div className="mb-8">
-          <div className="h-8 w-48 bg-[#D8CDC0]/30 rounded-lg animate-pulse mb-2" />
-          <div className="h-4 w-96 bg-[#D8CDC0]/20 rounded-lg animate-pulse" />
+          <div className="h-8 w-48 bg-[#D8CDC0]/30 dark:bg-[#2A2A2A] rounded-lg animate-pulse mb-2" />
+          <div className="h-4 w-96 bg-[#D8CDC0]/20 dark:bg-[#222222] rounded-lg animate-pulse" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="bg-white rounded-2xl p-5 border border-[#D8CDC0]/60 animate-pulse"
+              className="bg-white dark:bg-[#1A1A1A] rounded-2xl p-5 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] animate-pulse"
             >
-              <div className="h-4 w-24 bg-[#D8CDC0]/30 rounded mb-2" />
-              <div className="h-8 w-16 bg-[#D8CDC0]/20 rounded" />
+              <div className="h-4 w-24 bg-[#D8CDC0]/30 dark:bg-[#2A2A2A] rounded mb-2" />
+              <div className="h-8 w-16 bg-[#D8CDC0]/20 dark:bg-[#222222] rounded" />
             </div>
           ))}
         </div>
@@ -377,12 +364,12 @@ const SessionsPage = () => {
 
   if (error)
     return (
-      <div className="bg-white rounded-2xl p-8 border border-red-200 text-center">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <h3 className="text-lg font-bold text-[#1B1B1B] mb-2">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl p-8 border border-red-200 dark:border-red-800/40 text-center">
+        <AlertCircle className="w-12 h-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
+        <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
           {t("admin.sessions.failedToLoad")}
         </h3>
-        <p className="text-[#6B5D4F] mb-4">
+        <p className="text-[#6B5D4F] dark:text-[#AAAAAA] mb-4">
           {(error as any)?.message || "Something went wrong"}
         </p>
         <Button
@@ -413,18 +400,18 @@ const SessionsPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-6 overflow-hidden">
+      <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10">
               <Calendar className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-[#1B1B1B]">
+              <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {t("admin.sessions.title")}
               </h1>
-              <p className="text-sm text-[#BEB29E] mt-0.5">
+              <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
                 {t("admin.sessions.subtitle")}
               </p>
             </div>
@@ -432,14 +419,14 @@ const SessionsPage = () => {
           <div className="flex items-center gap-3">
             <Button
               onClick={() => setIsQuickAttendanceOpen(true)}
-              className="gap-2 bg-[#C4A035] hover:bg-[#C4A035]/90 text-white shadow-md shadow-[#C4A035]/20"
+              className="gap-2 bg-[#C4A035] hover:bg-[#C4A035]/90 text-white shadow-md shadow-[#C4A035]/20 dark:shadow-[#C4A035]/10"
             >
               <Zap className="w-4 h-4" />
               {t("admin.sessions.quickAttendance")}
             </Button>
             <Button
               onClick={() => setIsCreateOpen(true)}
-              className="gap-2 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white shadow-md shadow-[#2B6F5E]/20"
+              className="gap-2 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white shadow-md shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10"
             >
               <Plus className="w-4 h-4" />
               {t("admin.sessions.createSession")}
@@ -479,40 +466,40 @@ const SessionsPage = () => {
           const colors = {
             teal: {
               bar: "from-[#2B6F5E] to-[#2B6F5E]/70",
-              bg: "bg-[#2B6F5E]/8",
-              icon: "text-[#2B6F5E]",
+              bg: "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10",
+              icon: "text-[#2B6F5E] dark:text-[#4ADE80]",
             },
             mustard: {
               bar: "from-[#C4A035] to-[#C4A035]/70",
-              bg: "bg-[#C4A035]/8",
-              icon: "text-[#C4A035]",
+              bg: "bg-[#C4A035]/8 dark:bg-[#D4A843]/10",
+              icon: "text-[#C4A035] dark:text-[#D4A843]",
             },
             green: {
               bar: "from-[#8DB896] to-[#8DB896]/70",
-              bg: "bg-[#8DB896]/12",
-              icon: "text-[#3D7A4A]",
+              bg: "bg-[#8DB896]/12 dark:bg-[#8DB896]/10",
+              icon: "text-[#3D7A4A] dark:text-[#8DB896]",
             },
             beige: {
               bar: "from-[#BEB29E] to-[#BEB29E]/70",
-              bg: "bg-[#D8CDC0]/20",
-              icon: "text-[#6B5D4F]",
+              bg: "bg-[#D8CDC0]/20 dark:bg-[#555555]/20",
+              icon: "text-[#6B5D4F] dark:text-[#AAAAAA]",
             },
           };
           const c = colors[stat.color];
           return (
             <div
               key={stat.label}
-              className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-5 overflow-hidden group hover:shadow-md transition-all"
+              className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md dark:hover:shadow-black/20 transition-all"
             >
               <div
                 className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${c.bar} opacity-60 group-hover:opacity-100 transition-opacity`}
               ></div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-[#6B5D4F] uppercase tracking-wide">
+                  <p className="text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wide">
                     {stat.label}
                   </p>
-                  <p className="text-2xl font-bold text-[#1B1B1B] mt-1">
+                  <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mt-1">
                     {stat.value}
                   </p>
                 </div>
@@ -529,12 +516,12 @@ const SessionsPage = () => {
 
       {/* Sessions List */}
       {sessions.length === 0 ? (
-        <div className="bg-white rounded-2xl p-12 border border-[#D8CDC0]/60 text-center">
-          <Calendar className="w-16 h-16 text-[#D8CDC0] mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-[#1B1B1B] mb-2">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl p-12 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-center">
+          <Calendar className="w-16 h-16 text-[#D8CDC0] dark:text-[#555555] mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
             {t("admin.sessions.noSessions")}
           </h3>
-          <p className="text-[#6B5D4F] mb-6">
+          <p className="text-[#6B5D4F] dark:text-[#AAAAAA] mb-6">
             {t("admin.sessions.noSessionsDesc")}
           </p>
           <div className="flex items-center justify-center gap-3">
@@ -562,7 +549,7 @@ const SessionsPage = () => {
             return (
               <div
                 key={session.session_id}
-                className={`bg-white rounded-2xl border border-[#D8CDC0]/60 overflow-hidden hover:shadow-lg transition-all group ${isPast ? "opacity-75" : ""}`}
+                className={`bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden hover:shadow-lg dark:hover:shadow-black/20 transition-all group ${isPast ? "opacity-75" : ""}`}
               >
                 <div className="bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/90 p-5 text-white">
                   <div className="flex items-start justify-between mb-3">
@@ -595,8 +582,6 @@ const SessionsPage = () => {
                       )}
                     </div>
                   </div>
-
-                  {/* ═══ TIME DISPLAY: start → end ═══ */}
                   <div className="flex items-center gap-2 text-sm flex-wrap text-white/80">
                     <Calendar className="w-4 h-4" />
                     <span>{formatDate(data.sessionDate)}</span>
@@ -610,15 +595,12 @@ const SessionsPage = () => {
                       </>
                     )}
                   </div>
-
-                  {/* Room badge */}
                   {data.roomName && (
                     <div className="mt-2 inline-flex items-center gap-1.5 text-xs bg-white/15 rounded-lg px-2 py-1">
                       <DoorOpen className="w-3 h-3" />
                       <span>{data.roomName}</span>
                     </div>
                   )}
-
                   {isPast && !data.roomName && (
                     <div className="mt-2 text-xs bg-white/15 rounded px-2 py-1 inline-block">
                       {t("admin.sessions.completed")}
@@ -628,63 +610,63 @@ const SessionsPage = () => {
                 <div className="p-5 space-y-3">
                   {data.hasTeacher ? (
                     <div className="flex items-center gap-2 text-sm">
-                      <User className="w-4 h-4 text-[#2B6F5E] shrink-0" />
+                      <User className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80] shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-[#1B1B1B] truncate">
+                        <p className="font-medium text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
                           {data.teacherName}
                         </p>
                         {data.teacherEmail && (
-                          <p className="text-xs text-[#BEB29E] truncate">
+                          <p className="text-xs text-[#BEB29E] dark:text-[#666666] truncate">
                             {data.teacherEmail}
                           </p>
                         )}
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 text-sm p-2 bg-[#C4A035]/8 rounded-lg border border-[#C4A035]/20">
-                      <UserX className="w-4 h-4 text-[#C4A035] shrink-0" />
-                      <span className="text-[#C4A035] text-xs font-medium">
+                    <div className="flex items-center gap-2 text-sm p-2 bg-[#C4A035]/8 dark:bg-[#C4A035]/10 rounded-lg border border-[#C4A035]/20 dark:border-[#C4A035]/15">
+                      <UserX className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843] shrink-0" />
+                      <span className="text-[#C4A035] dark:text-[#D4A843] text-xs font-medium">
                         {t("admin.sessions.noTeacher")}
                       </span>
                     </div>
                   )}
                   {data.topic && (
                     <div className="flex items-start gap-2 text-sm">
-                      <FileText className="w-4 h-4 text-[#2B6F5E] mt-0.5 shrink-0" />
-                      <p className="text-[#6B5D4F] line-clamp-2 flex-1">
+                      <FileText className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80] mt-0.5 shrink-0" />
+                      <p className="text-[#6B5D4F] dark:text-[#AAAAAA] line-clamp-2 flex-1">
                         {data.topic}
                       </p>
                     </div>
                   )}
                   {data.studentCount > 0 && (
-                    <div className="flex items-center justify-between text-sm p-2 bg-[#D8CDC0]/10 rounded-lg">
+                    <div className="flex items-center justify-between text-sm p-2 bg-[#D8CDC0]/10 dark:bg-[#222222] rounded-lg">
                       <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-[#2B6F5E] shrink-0" />
-                        <span className="text-[#6B5D4F] font-medium">
+                        <Users className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80] shrink-0" />
+                        <span className="text-[#6B5D4F] dark:text-[#AAAAAA] font-medium">
                           {data.studentCount}{" "}
                           {data.studentCount !== 1
                             ? t("admin.sessions.students_plural")
                             : t("admin.sessions.students")}
                         </span>
                       </div>
-                      <span className="text-xs text-[#BEB29E]">
+                      <span className="text-xs text-[#BEB29E] dark:text-[#666666]">
                         / {data.maxStudents} {t("admin.sessions.max")}
                       </span>
                     </div>
                   )}
                   {hasAttendance && (
-                    <div className="pt-3 border-t border-[#D8CDC0]/30">
+                    <div className="pt-3 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-[#6B5D4F]">
+                        <span className="text-xs font-medium text-[#6B5D4F] dark:text-[#888888]">
                           {t("admin.sessions.attendance")}
                         </span>
-                        <span className="text-sm font-bold text-[#2B6F5E]">
+                        <span className="text-sm font-bold text-[#2B6F5E] dark:text-[#4ADE80]">
                           {data.attendanceCount}
                           {data.studentCount > 0 && ` / ${data.studentCount}`}
                         </span>
                       </div>
                       {data.studentCount > 0 && (
-                        <div className="h-2 bg-[#D8CDC0]/20 rounded-full overflow-hidden">
+                        <div className="h-2 bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] rounded-full overflow-hidden">
                           <div
                             className="h-full bg-gradient-to-r from-[#2B6F5E] to-[#8DB896] rounded-full transition-all"
                             style={{
@@ -700,14 +682,14 @@ const SessionsPage = () => {
                   <Button
                     size="sm"
                     onClick={() => handleViewAttendance(session)}
-                    className="flex-1 gap-2 rounded-xl bg-[#2B6F5E]/8 text-[#2B6F5E] hover:bg-[#2B6F5E]/15 border-0"
+                    className="flex-1 gap-2 rounded-xl bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80] hover:bg-[#2B6F5E]/15 dark:hover:bg-[#4ADE80]/15 border-0"
                   >
                     <Eye className="w-4 h-4" /> {t("admin.sessions.attendance")}
                   </Button>
                   <Button
                     size="sm"
                     onClick={() => handleEdit(session)}
-                    className="gap-2 rounded-xl bg-[#D8CDC0]/15 text-[#6B5D4F] hover:bg-[#D8CDC0]/25 border-0"
+                    className="gap-2 rounded-xl bg-[#D8CDC0]/15 dark:bg-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/25 dark:hover:bg-[#333333] border-0"
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
@@ -715,7 +697,7 @@ const SessionsPage = () => {
                     size="sm"
                     onClick={() => handleDeleteClick(session)}
                     disabled={hasAttendance}
-                    className="gap-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="gap-2 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 border-0 disabled:opacity-50 disabled:cursor-not-allowed"
                     title={
                       hasAttendance
                         ? t("admin.sessions.cannotDelete")

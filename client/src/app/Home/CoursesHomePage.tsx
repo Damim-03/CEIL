@@ -33,7 +33,6 @@ function CourseCard({ course }: { course: PublicCourse }) {
     (course.capacity === 0 || course.enrolled < course.capacity);
   const isFull = course.capacity > 0 && course.enrolled >= course.capacity;
 
-  // Only students (or unauthenticated users) can register
   const canRegister =
     !isLoggedIn || (user?.role !== "ADMIN" && user?.role !== "TEACHER");
 
@@ -48,7 +47,7 @@ function CourseCard({ course }: { course: PublicCourse }) {
 
   return (
     <div
-      className="group flex flex-col rounded-2xl border border-brand-beige bg-white overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-brand-teal-dark/8 hover:-translate-y-1 hover:border-brand-teal/20"
+      className="group flex flex-col rounded-2xl border border-brand-beige dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-brand-teal-dark/8 dark:hover:shadow-black/30 hover:-translate-y-1 hover:border-brand-teal/20 dark:hover:border-[#4ADE80]/15"
       dir={dir}
     >
       {/* Header */}
@@ -60,10 +59,10 @@ function CourseCard({ course }: { course: PublicCourse }) {
               alt=""
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-linear-to-br from-brand-teal-dark/85 via-brand-teal-dark/75 to-brand-teal/70" />
+            <div className="absolute inset-0 bg-linear-to-br from-brand-teal-dark/85 via-brand-teal-dark/75 to-brand-teal/70 dark:from-[#0A0A0A]/90 dark:via-[#0F0F0F]/80 dark:to-[#0A1A10]/75" />
           </>
         ) : (
-          <div className="absolute inset-0 bg-linear-to-br from-brand-teal-dark via-brand-teal-dark to-brand-teal" />
+          <div className="absolute inset-0 bg-linear-to-br from-brand-teal-dark via-brand-teal-dark to-brand-teal dark:from-[#0A1A10] dark:via-[#0F1F15] dark:to-[#0A1A10]" />
         )}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute -top-6 -left-6 w-24 h-24 rounded-full border border-white/10" />
@@ -133,33 +132,37 @@ function CourseCard({ course }: { course: PublicCourse }) {
       {/* Body */}
       <div className="flex-1 p-5 space-y-4">
         {(course.description_ar || course.description) && (
-          <p className="text-sm text-brand-black/55 leading-relaxed line-clamp-2">
+          <p className="text-sm text-brand-black/55 dark:text-[#888888] leading-relaxed line-clamp-2">
             {currentLang === "ar"
               ? course.description_ar || course.description
               : course.description}
           </p>
         )}
         {course.session_name && (
-          <div className="text-xs text-brand-brown text-center">
+          <div className="text-xs text-brand-brown dark:text-[#888888] text-center">
             {t("courses.session")}: {course.session_name}
           </div>
         )}
         <div className="space-y-2">
           <div className="flex items-center gap-2.5 text-sm">
-            <Calendar className="w-3.5 h-3.5 text-brand-teal-dark shrink-0" />
-            <span className="text-brand-brown">{t("courses.startDate")}:</span>
+            <Calendar className="w-3.5 h-3.5 text-brand-teal-dark dark:text-[#4ADE80] shrink-0" />
+            <span className="text-brand-brown dark:text-[#888888]">
+              {t("courses.startDate")}:
+            </span>
             <span
-              className={`${currentLang === "ar" ? "mr-auto" : "ml-auto"} font-semibold text-brand-black text-[13px]`}
+              className={`${currentLang === "ar" ? "mr-auto" : "ml-auto"} font-semibold text-brand-black dark:text-[#E5E5E5] text-[13px]`}
               dir="ltr"
             >
               {formatDate(course.start_date)}
             </span>
           </div>
           <div className="flex items-center gap-2.5 text-sm">
-            <Clock className="w-3.5 h-3.5 text-brand-teal-dark shrink-0" />
-            <span className="text-brand-brown">{t("courses.endDate")}:</span>
+            <Clock className="w-3.5 h-3.5 text-brand-teal-dark dark:text-[#4ADE80] shrink-0" />
+            <span className="text-brand-brown dark:text-[#888888]">
+              {t("courses.endDate")}:
+            </span>
             <span
-              className={`${currentLang === "ar" ? "mr-auto" : "ml-auto"} font-semibold text-brand-black text-[13px]`}
+              className={`${currentLang === "ar" ? "mr-auto" : "ml-auto"} font-semibold text-brand-black dark:text-[#E5E5E5] text-[13px]`}
               dir="ltr"
             >
               {formatDate(course.end_date)}
@@ -167,10 +170,12 @@ function CourseCard({ course }: { course: PublicCourse }) {
           </div>
         </div>
         <div className="flex items-center gap-2.5 text-sm">
-          <Users className="w-3.5 h-3.5 text-brand-teal-dark shrink-0" />
-          <span className="text-brand-brown">{t("courses.enrolled")}:</span>
+          <Users className="w-3.5 h-3.5 text-brand-teal-dark dark:text-[#4ADE80] shrink-0" />
+          <span className="text-brand-brown dark:text-[#888888]">
+            {t("courses.enrolled")}:
+          </span>
           <span
-            className={`${currentLang === "ar" ? "mr-auto" : "ml-auto"} font-semibold text-brand-black`}
+            className={`${currentLang === "ar" ? "mr-auto" : "ml-auto"} font-semibold text-brand-black dark:text-[#E5E5E5]`}
           >
             {course.enrolled} / {course.capacity || "∞"} {t("common.student")}
           </span>
@@ -202,7 +207,7 @@ function CourseCard({ course }: { course: PublicCourse }) {
         <Button
           variant="outline"
           asChild
-          className={`${isOpen && canRegister ? "flex-1" : "w-full"} border-brand-teal-dark/20 text-brand-teal-dark hover:bg-brand-teal-dark hover:text-white hover:border-brand-teal-dark gap-2 rounded-xl h-11`}
+          className={`${isOpen && canRegister ? "flex-1" : "w-full"} border-brand-teal-dark/20 dark:border-[#4ADE80]/20 text-brand-teal-dark dark:text-[#4ADE80] hover:bg-brand-teal-dark dark:hover:bg-[#4ADE80] hover:text-white dark:hover:text-[#0F0F0F] hover:border-brand-teal-dark dark:hover:border-[#4ADE80] gap-2 rounded-xl h-11`}
         >
           <LocaleLink to={`/courses/${course.id}`}>
             <Info className="w-4 h-4" />
@@ -252,11 +257,14 @@ export default function CoursesHomePage() {
   });
 
   return (
-    <div className="min-h-screen bg-brand-gray relative" dir={dir}>
+    <div
+      className="min-h-screen bg-brand-gray dark:bg-[#0F0F0F] relative"
+      dir={dir}
+    >
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
         <div className="text-center mb-10">
           <h1
-            className="text-3xl font-bold text-brand-black sm:text-4xl"
+            className="text-3xl font-bold text-brand-black dark:text-[#E5E5E5] sm:text-4xl"
             style={{ fontFamily: "var(--font-sans)" }}
           >
             {t("courses.pageTitle")}
@@ -264,26 +272,26 @@ export default function CoursesHomePage() {
           <div className="flex justify-center mt-3">
             <div className="w-14 h-1 rounded-full bg-brand-mustard" />
           </div>
-          <p className="mt-4 text-brand-brown max-w-lg mx-auto">
+          <p className="mt-4 text-brand-brown dark:text-[#888888] max-w-lg mx-auto">
             {t("courses.subtitle")}
           </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 mb-8">
           <div className="relative flex-1 w-full sm:max-w-sm">
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-brown/40" />
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-brown/40 dark:text-[#555555]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t("courses.searchPlaceholder")}
-              className="w-full pr-11 pl-4 h-11 rounded-xl border border-brand-beige bg-white text-sm text-brand-black placeholder:text-brand-brown/40 focus:outline-none focus:border-brand-teal/40 focus:ring-2 focus:ring-brand-teal/10 transition-all"
+              className="w-full pr-11 pl-4 h-11 rounded-xl border border-brand-beige dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] text-sm text-brand-black dark:text-[#E5E5E5] placeholder:text-brand-brown/40 dark:placeholder:text-[#555555] focus:outline-none focus:border-brand-teal/40 dark:focus:border-[#4ADE80]/30 focus:ring-2 focus:ring-brand-teal/10 dark:focus:ring-[#4ADE80]/10 transition-all"
             />
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => handleLangFilter("all")}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${langFilter === "all" ? "bg-brand-teal-dark text-white shadow-md shadow-brand-teal-dark/20" : "bg-white border border-brand-beige text-brand-brown hover:border-brand-teal/30"}`}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${langFilter === "all" ? "bg-brand-teal-dark dark:bg-[#4ADE80] text-white dark:text-[#0F0F0F] shadow-md shadow-brand-teal-dark/20 dark:shadow-[#4ADE80]/10" : "bg-white dark:bg-[#1A1A1A] border border-brand-beige dark:border-[#2A2A2A] text-brand-brown dark:text-[#888888] hover:border-brand-teal/30 dark:hover:border-[#4ADE80]/20"}`}
             >
               {t("common.all")}
             </button>
@@ -291,7 +299,7 @@ export default function CoursesHomePage() {
               <button
                 key={lang}
                 onClick={() => handleLangFilter(lang!)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all capitalize ${langFilter === lang ? "bg-brand-teal-dark text-white shadow-md shadow-brand-teal-dark/20" : "bg-white border border-brand-beige text-brand-brown hover:border-brand-teal/30"}`}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all capitalize ${langFilter === lang ? "bg-brand-teal-dark dark:bg-[#4ADE80] text-white dark:text-[#0F0F0F] shadow-md shadow-brand-teal-dark/20 dark:shadow-[#4ADE80]/10" : "bg-white dark:bg-[#1A1A1A] border border-brand-beige dark:border-[#2A2A2A] text-brand-brown dark:text-[#888888] hover:border-brand-teal/30 dark:hover:border-[#4ADE80]/20"}`}
               >
                 {lang}
               </button>
@@ -301,21 +309,21 @@ export default function CoursesHomePage() {
 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <Loader2 className="w-10 h-10 animate-spin text-brand-teal-dark" />
-            <p className="text-brand-brown text-sm font-medium animate-pulse">
+            <Loader2 className="w-10 h-10 animate-spin text-brand-teal-dark dark:text-[#4ADE80]" />
+            <p className="text-brand-brown dark:text-[#888888] text-sm font-medium animate-pulse">
               {t("common.loading")}
             </p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-20 h-20 rounded-2xl bg-brand-beige/50 flex items-center justify-center">
-              <BookOpen className="w-10 h-10 text-brand-brown/30" />
+            <div className="w-20 h-20 rounded-2xl bg-brand-beige/50 dark:bg-[#2A2A2A] flex items-center justify-center">
+              <BookOpen className="w-10 h-10 text-brand-brown/30 dark:text-[#555555]" />
             </div>
             <div className="text-center">
-              <p className="text-lg font-medium text-brand-black">
+              <p className="text-lg font-medium text-brand-black dark:text-[#E5E5E5]">
                 {t("courses.noCoursesFound")}
               </p>
-              <p className="text-sm text-brand-brown mt-1">
+              <p className="text-sm text-brand-brown dark:text-[#888888] mt-1">
                 {search ? t("courses.tryDifferent") : t("courses.noCourses")}
               </p>
             </div>
@@ -326,7 +334,7 @@ export default function CoursesHomePage() {
                   setSearch("");
                   handleLangFilter("all");
                 }}
-                className="rounded-xl border-brand-beige text-brand-brown"
+                className="rounded-xl border-brand-beige dark:border-[#2A2A2A] text-brand-brown dark:text-[#888888]"
               >
                 {t("common.clearFilters")}
               </Button>
@@ -334,7 +342,7 @@ export default function CoursesHomePage() {
           </div>
         ) : (
           <>
-            <p className="text-xs text-brand-brown mb-5">
+            <p className="text-xs text-brand-brown dark:text-[#666666] mb-5">
               {t("courses.showing", { count: filtered.length })}
             </p>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

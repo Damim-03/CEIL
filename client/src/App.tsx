@@ -260,9 +260,7 @@ const App = () => {
         />
 
         <Route path="rooms" element={<RoomsPage />} />
-        <Route path="rooms/timetable" element={<RoomsTimetablePage />} /> 
-
-        
+        <Route path="rooms/timetable" element={<RoomsTimetablePage />} />
       </Route>
     </Routes>
   );

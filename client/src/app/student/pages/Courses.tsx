@@ -43,11 +43,11 @@ const LEVEL_COLORS = {
 } as const;
 
 const LEVEL_BG_COLORS = {
-  A1: "bg-[#8DB896]/8 border-[#8DB896]/25",
-  A2: "bg-[#2B6F5E]/5 border-[#2B6F5E]/20",
-  B1: "bg-[#C4A035]/5 border-[#C4A035]/20",
-  B2: "bg-[#D8CDC0]/10 border-[#D8CDC0]/40",
-  C1: "bg-[#2B6F5E]/5 border-[#C4A035]/20",
+  A1: "bg-[#8DB896]/8 border-[#8DB896]/25 dark:bg-[#4ADE80]/5 dark:border-[#4ADE80]/15",
+  A2: "bg-[#2B6F5E]/5 border-[#2B6F5E]/20 dark:bg-[#4ADE80]/[0.03] dark:border-[#4ADE80]/15",
+  B1: "bg-[#C4A035]/5 border-[#C4A035]/20 dark:bg-[#D4A843]/[0.03] dark:border-[#D4A843]/15",
+  B2: "bg-[#D8CDC0]/10 border-[#D8CDC0]/40 dark:bg-[#2A2A2A]/50 dark:border-[#2A2A2A]",
+  C1: "bg-[#2B6F5E]/5 border-[#C4A035]/20 dark:bg-[#4ADE80]/[0.03] dark:border-[#D4A843]/15",
 } as const;
 
 interface Course {
@@ -230,21 +230,21 @@ const Courses = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-6 overflow-hidden">
+      <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20 dark:shadow-black/30">
             <GraduationCap className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[#1B1B1B]">
+            <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
               {step === "courses"
                 ? "Browse Courses"
                 : step === "levels"
                   ? `Select Level — ${selectedCourse?.course_name}`
                   : `Select Group — Level ${selectedLevel}`}
             </h1>
-            <p className="text-sm text-[#BEB29E] mt-0.5">
+            <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
               {step === "courses"
                 ? "Choose a course to start your learning journey"
                 : step === "levels"
@@ -259,7 +259,7 @@ const Courses = () => {
         <Button
           variant="ghost"
           onClick={handleBack}
-          className="gap-2 text-[#6B5D4F] hover:text-[#1B1B1B] hover:bg-[#D8CDC0]/10 rounded-xl"
+          className="gap-2 text-[#6B5D4F] dark:text-[#888888] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222] rounded-xl"
         >
           <ArrowLeft className="w-4 h-4" /> Back
         </Button>
@@ -319,12 +319,12 @@ const CoursesList = ({
 }) => {
   if (!courses || courses.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-12 text-center">
-        <GraduationCap className="w-16 h-16 mx-auto text-[#D8CDC0] mb-4" />
-        <h3 className="text-lg font-semibold text-[#1B1B1B] mb-2">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-12 text-center">
+        <GraduationCap className="w-16 h-16 mx-auto text-[#D8CDC0] dark:text-[#333333] mb-4" />
+        <h3 className="text-lg font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
           No courses available
         </h3>
-        <p className="text-[#6B5D4F]">
+        <p className="text-[#6B5D4F] dark:text-[#888888]">
           Check back later for new course offerings
         </p>
       </div>
@@ -337,28 +337,28 @@ const CoursesList = ({
         <div
           key={course.course_id}
           onClick={() => onSelectCourse(course)}
-          className="group relative border border-[#D8CDC0]/60 rounded-2xl p-6 hover:border-[#2B6F5E]/30 hover:shadow-lg hover:shadow-[#2B6F5E]/5 transition-all cursor-pointer bg-white overflow-hidden"
+          className="group relative border border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-2xl p-6 hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 hover:shadow-lg hover:shadow-[#2B6F5E]/5 dark:hover:shadow-black/20 transition-all cursor-pointer bg-white dark:bg-[#1A1A1A] overflow-hidden"
         >
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035] opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
-              <h3 className="font-bold text-lg text-[#1B1B1B] mb-2 group-hover:text-[#2B6F5E] transition-colors">
+              <h3 className="font-bold text-lg text-[#1B1B1B] dark:text-[#E5E5E5] mb-2 group-hover:text-[#2B6F5E] dark:group-hover:text-[#4ADE80] transition-colors">
                 {course.course_name}
               </h3>
               {course.course_code && (
-                <p className="text-sm text-[#BEB29E] font-mono">
+                <p className="text-sm text-[#BEB29E] dark:text-[#666666] font-mono">
                   {course.course_code}
                 </p>
               )}
             </div>
-            <ChevronRight className="w-5 h-5 text-[#D8CDC0] group-hover:text-[#2B6F5E] group-hover:translate-x-1 transition-all" />
+            <ChevronRight className="w-5 h-5 text-[#D8CDC0] dark:text-[#333333] group-hover:text-[#2B6F5E] dark:group-hover:text-[#4ADE80] group-hover:translate-x-1 transition-all" />
           </div>
           {course.description && (
-            <p className="text-sm text-[#6B5D4F] line-clamp-2 mb-4">
+            <p className="text-sm text-[#6B5D4F] dark:text-[#888888] line-clamp-2 mb-4">
               {course.description}
             </p>
           )}
-          <div className="flex items-center gap-2 text-sm text-[#BEB29E]">
+          <div className="flex items-center gap-2 text-sm text-[#BEB29E] dark:text-[#666666]">
             <BookOpen className="w-4 h-4" /> <span>Click to view levels</span>
           </div>
         </div>
@@ -386,8 +386,8 @@ const LevelSelection = ({
           onClick={() => onSelectLevel(level)}
           className={`group relative overflow-hidden rounded-2xl p-8 transition-all duration-300 border-2 ${
             selectedLevel === level
-              ? "ring-4 ring-offset-2 ring-[#2B6F5E] scale-105 shadow-xl"
-              : "hover:scale-105 hover:shadow-lg"
+              ? "ring-4 ring-offset-2 dark:ring-offset-[#0F0F0F] ring-[#2B6F5E] dark:ring-[#4ADE80] scale-105 shadow-xl dark:shadow-black/30"
+              : "hover:scale-105 hover:shadow-lg dark:hover:shadow-black/20"
           } ${LEVEL_BG_COLORS[level]}`}
         >
           <div
@@ -395,11 +395,13 @@ const LevelSelection = ({
           />
           <div className="relative z-10 text-center">
             <div
-              className={`inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${LEVEL_COLORS[level]} text-white text-3xl font-bold shadow-lg mb-4`}
+              className={`inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${LEVEL_COLORS[level]} text-white text-3xl font-bold shadow-lg dark:shadow-black/30 mb-4`}
             >
               {level}
             </div>
-            <h3 className="font-bold text-lg text-[#1B1B1B]">Level {level}</h3>
+            <h3 className="font-bold text-lg text-[#1B1B1B] dark:text-[#E5E5E5]">
+              Level {level}
+            </h3>
           </div>
         </button>
       ))}
@@ -452,24 +454,24 @@ const GroupsList = ({
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-5">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#BEB29E]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#BEB29E] dark:text-[#555555]" />
             <Input
               type="text"
               placeholder="Search groups..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 border-[#D8CDC0]/60 focus:border-[#2B6F5E] focus:ring-[#2B6F5E]/20 rounded-xl"
+              className="pl-10 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/30 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/10 rounded-xl"
             />
           </div>
           <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#BEB29E] pointer-events-none" />
+            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#BEB29E] dark:text-[#555555] pointer-events-none" />
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value as Status)}
-              className="w-full pl-10 pr-10 py-2.5 border border-[#D8CDC0]/60 rounded-xl focus:ring-2 focus:ring-[#2B6F5E]/20 focus:border-[#2B6F5E] appearance-none bg-white cursor-pointer text-sm"
+              className="w-full pl-10 pr-10 py-2.5 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] rounded-xl focus:ring-2 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/10 focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/30 appearance-none bg-white dark:bg-[#222222] cursor-pointer text-sm"
             >
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
@@ -481,25 +483,27 @@ const GroupsList = ({
         </div>
 
         {(selectedStatus !== "ALL" || searchTerm) && (
-          <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-[#D8CDC0]/30">
-            <span className="text-xs text-[#BEB29E]">Active filters:</span>
+          <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+            <span className="text-xs text-[#BEB29E] dark:text-[#666666]">
+              Active filters:
+            </span>
             {selectedStatus !== "ALL" && (
-              <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-[#2B6F5E]/8 text-[#2B6F5E]">
+              <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80]">
                 Status: {selectedStatus}
                 <button
                   onClick={() => setSelectedStatus("ALL")}
-                  className="ml-1 hover:text-[#1B1B1B]"
+                  className="ml-1 hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]"
                 >
                   ×
                 </button>
               </span>
             )}
             {searchTerm && (
-              <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-[#C4A035]/8 text-[#C4A035]">
+              <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-[#C4A035]/8 dark:bg-[#D4A843]/10 text-[#C4A035] dark:text-[#D4A843]">
                 Search: "{searchTerm}"
                 <button
                   onClick={() => setSearchTerm("")}
-                  className="ml-1 hover:text-[#1B1B1B]"
+                  className="ml-1 hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]"
                 >
                   ×
                 </button>
@@ -510,9 +514,9 @@ const GroupsList = ({
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-sm text-[#6B5D4F]">
+        <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
           Found{" "}
-          <span className="font-semibold text-[#1B1B1B]">
+          <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
             {filteredGroups.length}
           </span>{" "}
           group{filteredGroups.length !== 1 ? "s" : ""}
@@ -520,12 +524,12 @@ const GroupsList = ({
       </div>
 
       {filteredGroups.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-12 text-center">
-          <Users className="w-16 h-16 mx-auto text-[#D8CDC0] mb-4" />
-          <h3 className="text-lg font-semibold text-[#1B1B1B] mb-2">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-12 text-center">
+          <Users className="w-16 h-16 mx-auto text-[#D8CDC0] dark:text-[#333333] mb-4" />
+          <h3 className="text-lg font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
             No groups found
           </h3>
-          <p className="text-[#6B5D4F]">
+          <p className="text-[#6B5D4F] dark:text-[#888888]">
             {levelGroups.length === 0
               ? `No groups available for Level ${level}`
               : "Try adjusting your filters or search term"}
@@ -568,26 +572,26 @@ const GroupCard = ({
 
   return (
     <div
-      className={`border-2 rounded-2xl p-5 transition-all ${isOpen ? "hover:shadow-md hover:border-[#2B6F5E]/30" : "opacity-75"} ${LEVEL_BG_COLORS[group.level]}`}
+      className={`border-2 rounded-2xl p-5 transition-all ${isOpen ? "hover:shadow-md dark:hover:shadow-black/20 hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20" : "opacity-75"} ${LEVEL_BG_COLORS[group.level]}`}
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-[#1B1B1B] text-lg mb-1 truncate">
+          <h3 className="font-bold text-[#1B1B1B] dark:text-[#E5E5E5] text-lg mb-1 truncate">
             {group.name}
           </h3>
           <div className="flex items-center gap-2 flex-wrap">
             <span
-              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gradient-to-br ${LEVEL_COLORS[group.level]} text-white shadow-sm`}
+              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gradient-to-br ${LEVEL_COLORS[group.level]} text-white shadow-sm dark:shadow-black/20`}
             >
               {group.level}
             </span>
             <span
               className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                 isClosed
-                  ? "bg-[#D8CDC0]/20 text-[#6B5D4F]"
+                  ? "bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] text-[#6B5D4F] dark:text-[#888888]"
                   : isFull
-                    ? "bg-red-50 text-red-700"
-                    : "bg-[#8DB896]/12 text-[#2B6F5E]"
+                    ? "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400"
+                    : "bg-[#8DB896]/12 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80]"
               }`}
             >
               {isClosed ? (
@@ -609,20 +613,24 @@ const GroupCard = ({
       </div>
 
       {/* Teacher */}
-      <div className="mb-4 p-3 bg-white/70 rounded-xl">
-        <p className="text-xs text-[#BEB29E] mb-1">Instructor</p>
+      <div className="mb-4 p-3 bg-white/70 dark:bg-[#1A1A1A]/70 rounded-xl">
+        <p className="text-xs text-[#BEB29E] dark:text-[#666666] mb-1">
+          Instructor
+        </p>
         <div className="flex items-center gap-2 text-sm">
           {group.teacher ? (
             <>
-              <UserCheck className="w-4 h-4 text-[#2B6F5E] shrink-0" />
-              <span className="font-medium text-[#1B1B1B] truncate">
+              <UserCheck className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80] shrink-0" />
+              <span className="font-medium text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
                 {group.teacher.first_name} {group.teacher.last_name}
               </span>
             </>
           ) : (
             <>
-              <User className="w-4 h-4 text-[#BEB29E] shrink-0" />
-              <span className="text-[#BEB29E] italic">Not assigned</span>
+              <User className="w-4 h-4 text-[#BEB29E] dark:text-[#555555] shrink-0" />
+              <span className="text-[#BEB29E] dark:text-[#555555] italic">
+                Not assigned
+              </span>
             </>
           )}
         </div>
@@ -631,14 +639,14 @@ const GroupCard = ({
       {/* Capacity */}
       <div className="mb-4">
         <div className="flex items-center justify-between text-sm mb-2">
-          <span className="text-[#6B5D4F] flex items-center gap-1">
+          <span className="text-[#6B5D4F] dark:text-[#888888] flex items-center gap-1">
             <Users className="w-4 h-4 shrink-0" /> Capacity
           </span>
-          <span className="font-semibold text-[#1B1B1B]">
+          <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
             {currentCapacity} / {maxCapacity}
           </span>
         </div>
-        <div className="w-full bg-[#D8CDC0]/30 rounded-full h-2 overflow-hidden">
+        <div className="w-full bg-[#D8CDC0]/30 dark:bg-[#2A2A2A] rounded-full h-2 overflow-hidden">
           <div
             className={`h-full transition-all duration-300 rounded-full ${
               capacityPercent >= 100
@@ -651,7 +659,7 @@ const GroupCard = ({
           />
         </div>
         <p
-          className={`text-xs mt-1 ${availableSeats <= 0 ? "text-red-600 font-medium" : "text-[#BEB29E]"}`}
+          className={`text-xs mt-1 ${availableSeats <= 0 ? "text-red-600 dark:text-red-400 font-medium" : "text-[#BEB29E] dark:text-[#666666]"}`}
         >
           {availableSeats <= 0 ? (
             <span className="flex items-center gap-1">
@@ -670,7 +678,7 @@ const GroupCard = ({
         className={`w-full gap-2 text-sm font-semibold rounded-xl ${
           isOpen
             ? "bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white shadow-md shadow-[#2B6F5E]/20 hover:shadow-lg"
-            : "bg-[#D8CDC0]/20 text-[#BEB29E] cursor-not-allowed"
+            : "bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] text-[#BEB29E] dark:text-[#555555] cursor-not-allowed"
         }`}
       >
         {isEnrolling ? (

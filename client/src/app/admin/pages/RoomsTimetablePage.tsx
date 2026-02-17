@@ -21,10 +21,6 @@ import {
 } from "lucide-react";
 import { useRoomsScheduleOverview } from "../../../hooks/admin/useAdmin";
 
-/* ═══════════════════════════════════════════════════════════
-   TYPES
-═══════════════════════════════════════════════════════════ */
-
 interface SessionSlot {
   session_id: string;
   session_date: string;
@@ -34,7 +30,6 @@ interface SessionSlot {
   course_name: string;
   teacher_name: string | null;
 }
-
 interface RoomOverview {
   room_id: string;
   name: string;
@@ -44,10 +39,6 @@ interface RoomOverview {
   sessions: SessionSlot[];
   is_occupied: boolean;
 }
-
-/* ═══════════════════════════════════════════════════════════
-   CONSTANTS
-═══════════════════════════════════════════════════════════ */
 
 const ARABIC_DAYS = [
   "الأحد",
@@ -72,7 +63,6 @@ const ARABIC_MONTHS = [
   "نوفمبر",
   "ديسمبر",
 ];
-
 const TIME_SLOTS = [
   "08:00",
   "08:30",
@@ -99,104 +89,107 @@ const THEMES = [
   {
     id: "emerald",
     gradient: "from-emerald-500 to-teal-600",
-    bg: "bg-emerald-50/80",
-    border: "border-emerald-200/50",
-    text: "text-emerald-700",
-    light: "bg-emerald-500/6",
+    bg: "bg-emerald-50/80 dark:bg-emerald-950/30",
+    border: "border-emerald-200/50 dark:border-emerald-400/20",
+    text: "text-emerald-700 dark:text-emerald-400",
+    light: "bg-emerald-500/6 dark:bg-emerald-500/10",
     ring: "ring-emerald-400/30",
-    badge: "bg-emerald-100/80 text-emerald-700",
+    badge:
+      "bg-emerald-100/80 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400",
     accent: "#10b981",
     glow: "shadow-emerald-500/15",
   },
   {
     id: "amber",
     gradient: "from-amber-500 to-orange-500",
-    bg: "bg-amber-50/80",
-    border: "border-amber-200/50",
-    text: "text-amber-700",
-    light: "bg-amber-500/6",
+    bg: "bg-amber-50/80 dark:bg-amber-950/30",
+    border: "border-amber-200/50 dark:border-amber-400/20",
+    text: "text-amber-700 dark:text-amber-400",
+    light: "bg-amber-500/6 dark:bg-amber-500/10",
     ring: "ring-amber-400/30",
-    badge: "bg-amber-100/80 text-amber-700",
+    badge:
+      "bg-amber-100/80 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400",
     accent: "#f59e0b",
     glow: "shadow-amber-500/15",
   },
   {
     id: "violet",
     gradient: "from-violet-500 to-purple-600",
-    bg: "bg-violet-50/80",
-    border: "border-violet-200/50",
-    text: "text-violet-700",
-    light: "bg-violet-500/6",
+    bg: "bg-violet-50/80 dark:bg-violet-950/30",
+    border: "border-violet-200/50 dark:border-violet-400/20",
+    text: "text-violet-700 dark:text-violet-400",
+    light: "bg-violet-500/6 dark:bg-violet-500/10",
     ring: "ring-violet-400/30",
-    badge: "bg-violet-100/80 text-violet-700",
+    badge:
+      "bg-violet-100/80 dark:bg-violet-900/40 text-violet-700 dark:text-violet-400",
     accent: "#8b5cf6",
     glow: "shadow-violet-500/15",
   },
   {
     id: "sky",
     gradient: "from-sky-500 to-blue-600",
-    bg: "bg-sky-50/80",
-    border: "border-sky-200/50",
-    text: "text-sky-700",
-    light: "bg-sky-500/6",
+    bg: "bg-sky-50/80 dark:bg-sky-950/30",
+    border: "border-sky-200/50 dark:border-sky-400/20",
+    text: "text-sky-700 dark:text-sky-400",
+    light: "bg-sky-500/6 dark:bg-sky-500/10",
     ring: "ring-sky-400/30",
-    badge: "bg-sky-100/80 text-sky-700",
+    badge: "bg-sky-100/80 dark:bg-sky-900/40 text-sky-700 dark:text-sky-400",
     accent: "#0ea5e9",
     glow: "shadow-sky-500/15",
   },
   {
     id: "rose",
     gradient: "from-rose-500 to-pink-600",
-    bg: "bg-rose-50/80",
-    border: "border-rose-200/50",
-    text: "text-rose-700",
-    light: "bg-rose-500/6",
+    bg: "bg-rose-50/80 dark:bg-rose-950/30",
+    border: "border-rose-200/50 dark:border-rose-400/20",
+    text: "text-rose-700 dark:text-rose-400",
+    light: "bg-rose-500/6 dark:bg-rose-500/10",
     ring: "ring-rose-400/30",
-    badge: "bg-rose-100/80 text-rose-700",
+    badge:
+      "bg-rose-100/80 dark:bg-rose-900/40 text-rose-700 dark:text-rose-400",
     accent: "#f43f5e",
     glow: "shadow-rose-500/15",
   },
   {
     id: "cyan",
     gradient: "from-cyan-500 to-teal-500",
-    bg: "bg-cyan-50/80",
-    border: "border-cyan-200/50",
-    text: "text-cyan-700",
-    light: "bg-cyan-500/6",
+    bg: "bg-cyan-50/80 dark:bg-cyan-950/30",
+    border: "border-cyan-200/50 dark:border-cyan-400/20",
+    text: "text-cyan-700 dark:text-cyan-400",
+    light: "bg-cyan-500/6 dark:bg-cyan-500/10",
     ring: "ring-cyan-400/30",
-    badge: "bg-cyan-100/80 text-cyan-700",
+    badge:
+      "bg-cyan-100/80 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-400",
     accent: "#06b6d4",
     glow: "shadow-cyan-500/15",
   },
   {
     id: "indigo",
     gradient: "from-indigo-500 to-blue-700",
-    bg: "bg-indigo-50/80",
-    border: "border-indigo-200/50",
-    text: "text-indigo-700",
-    light: "bg-indigo-500/6",
+    bg: "bg-indigo-50/80 dark:bg-indigo-950/30",
+    border: "border-indigo-200/50 dark:border-indigo-400/20",
+    text: "text-indigo-700 dark:text-indigo-400",
+    light: "bg-indigo-500/6 dark:bg-indigo-500/10",
     ring: "ring-indigo-400/30",
-    badge: "bg-indigo-100/80 text-indigo-700",
+    badge:
+      "bg-indigo-100/80 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400",
     accent: "#6366f1",
     glow: "shadow-indigo-500/15",
   },
   {
     id: "lime",
     gradient: "from-lime-500 to-green-600",
-    bg: "bg-lime-50/80",
-    border: "border-lime-200/50",
-    text: "text-lime-700",
-    light: "bg-lime-500/6",
+    bg: "bg-lime-50/80 dark:bg-lime-950/30",
+    border: "border-lime-200/50 dark:border-lime-400/20",
+    text: "text-lime-700 dark:text-lime-400",
+    light: "bg-lime-500/6 dark:bg-lime-500/10",
     ring: "ring-lime-400/30",
-    badge: "bg-lime-100/80 text-lime-700",
+    badge:
+      "bg-lime-100/80 dark:bg-lime-900/40 text-lime-700 dark:text-lime-400",
     accent: "#84cc16",
     glow: "shadow-lime-500/15",
   },
 ];
-
-/* ═══════════════════════════════════════════════════════════
-   HELPERS
-═══════════════════════════════════════════════════════════ */
 
 const toDateStr = (d: Date) => d.toISOString().split("T")[0];
 const isTodayCheck = (d: Date) => toDateStr(d) === toDateStr(new Date());
@@ -220,10 +213,6 @@ const closest = (hm: string) =>
     Math.abs(toMins(c) - toMins(hm)) < Math.abs(toMins(p) - toMins(hm)) ? c : p,
   );
 
-/* ═══════════════════════════════════════════════════════════
-   🕐 LIVE CLOCK + SESSION STATUS HELPERS
-═══════════════════════════════════════════════════════════ */
-
 const useLiveClock = (ms = 30_000) => {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -232,12 +221,10 @@ const useLiveClock = (ms = 30_000) => {
   }, [ms]);
   return now;
 };
-
 const getEnd = (s: { session_date: string; end_time?: string | null }) =>
   s.end_time
     ? new Date(s.end_time)
     : new Date(new Date(s.session_date).getTime() + 90 * 60000);
-
 const isLiveAt = (
   s: { session_date: string; end_time?: string | null },
   now: Date,
@@ -245,17 +232,14 @@ const isLiveAt = (
   const start = new Date(s.session_date);
   return now >= start && now <= getEnd(s);
 };
-
 const isPastAt = (
   s: { session_date: string; end_time?: string | null },
   now: Date,
 ) => now > getEnd(s);
-
 const minsLeft = (
   s: { session_date: string; end_time?: string | null },
   now: Date,
 ) => Math.max(0, Math.round((getEnd(s).getTime() - now.getTime()) / 60000));
-
 const fmtMins = (m: number) => {
   if (m <= 0) return null;
   const h = Math.floor(m / 60),
@@ -264,10 +248,6 @@ const fmtMins = (m: number) => {
   if (r === 0) return `${h}س`;
   return `${h}س ${r}د`;
 };
-
-/* ═══════════════════════════════════════════════════════════
-   LIVE DOT
-═══════════════════════════════════════════════════════════ */
 
 const LiveDot = ({
   size = "h-2 w-2",
@@ -284,10 +264,6 @@ const LiveDot = ({
   </span>
 );
 
-/* ═══════════════════════════════════════════════════════════
-   SESSION CARD — live / past / upcoming states
-═══════════════════════════════════════════════════════════ */
-
 const SessionCard = ({
   session,
   theme,
@@ -303,37 +279,29 @@ const SessionCard = ({
   const live = isLiveAt(session, now);
   const past = isPastAt(session, now);
   const remainLabel = live ? fmtMins(minsLeft(session, now)) : null;
-
   return (
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`
-        group relative overflow-hidden rounded-[14px] p-3 h-full min-h-[80px]
-        border ${past ? "border-[#D8CDC0]/30" : live ? "border-[#C4A035]/40 ring-1 ring-[#C4A035]/20" : theme.border}
-        backdrop-blur-sm transition-all duration-500 ease-out cursor-default
-        animate-[cardReveal_0.45s_cubic-bezier(0.16,1,0.3,1)_both]
-        ${past ? "bg-[#D8CDC0]/5 opacity-50" : hovered ? `${theme.bg} shadow-xl ${theme.glow} -translate-y-1 scale-[1.03]` : live ? "bg-[#C4A035]/5 shadow-md" : "bg-white/60 shadow-sm hover:shadow-md"}
-      `}
+      className={`group relative overflow-hidden rounded-[14px] p-3 h-full min-h-[80px] border ${past ? "border-[#D8CDC0]/30 dark:border-[#555555]/30" : live ? "border-[#C4A035]/40 ring-1 ring-[#C4A035]/20" : theme.border} backdrop-blur-sm transition-all duration-500 ease-out cursor-default animate-[cardReveal_0.45s_cubic-bezier(0.16,1,0.3,1)_both] ${past ? "bg-[#D8CDC0]/5 dark:bg-[#2A2A2A]/30 opacity-50" : hovered ? `${theme.bg} shadow-xl ${theme.glow} -translate-y-1 scale-[1.03]` : live ? "bg-[#C4A035]/5 dark:bg-[#C4A035]/8 shadow-md" : "bg-white/60 dark:bg-[#1A1A1A]/60 shadow-sm hover:shadow-md"}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div
-        className={`absolute top-0 right-0 left-0 h-[3px] ${past ? "bg-[#D8CDC0]/30" : live ? "bg-gradient-to-l from-[#C4A035] to-[#C4A035]/70" : `bg-gradient-to-l ${theme.gradient}`} opacity-90`}
+        className={`absolute top-0 right-0 left-0 h-[3px] ${past ? "bg-[#D8CDC0]/30 dark:bg-[#555555]/30" : live ? "bg-gradient-to-l from-[#C4A035] to-[#C4A035]/70" : `bg-gradient-to-l ${theme.gradient}`} opacity-90`}
       />
       <div
         className={`absolute -top-6 -left-6 w-24 h-24 rounded-full bg-gradient-to-br ${theme.gradient} blur-2xl transition-opacity duration-700 ${hovered && !past ? "opacity-[0.08]" : "opacity-0"}`}
       />
-
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-2">
           <div
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md ${past ? "bg-[#D8CDC0]/15" : live ? "bg-[#C4A035]/10" : theme.light}`}
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md ${past ? "bg-[#D8CDC0]/15 dark:bg-[#2A2A2A]" : live ? "bg-[#C4A035]/10" : theme.light}`}
           >
             <Clock
-              className={`w-2.5 h-2.5 ${past ? "text-[#BEB29E]" : live ? "text-[#C4A035]" : theme.text}`}
+              className={`w-2.5 h-2.5 ${past ? "text-[#BEB29E] dark:text-[#666666]" : live ? "text-[#C4A035]" : theme.text}`}
             />
             <span
-              className={`text-[10px] font-bold tabular-nums ${past ? "text-[#BEB29E] line-through" : live ? "text-[#C4A035]" : theme.text}`}
+              className={`text-[10px] font-bold tabular-nums ${past ? "text-[#BEB29E] dark:text-[#666666] line-through" : live ? "text-[#C4A035]" : theme.text}`}
             >
               {fmt(session.session_date)}
               {session.end_time && (
@@ -348,50 +316,46 @@ const SessionCard = ({
             </span>
           )}
           {past && (
-            <span className="text-[8px] font-medium text-[#BEB29E] bg-[#D8CDC0]/15 px-1.5 py-0.5 rounded">
+            <span className="text-[8px] font-medium text-[#BEB29E] dark:text-[#666666] bg-[#D8CDC0]/15 dark:bg-[#2A2A2A] px-1.5 py-0.5 rounded">
               انتهت
             </span>
           )}
         </div>
-
         {live && remainLabel && (
           <div className="flex items-center gap-1 mb-1.5 text-[9px] text-[#C4A035]/70">
             <Timer className="w-2.5 h-2.5" />
             <span>تنتهي بعد {remainLabel}</span>
           </div>
         )}
-
         <p
-          className={`text-[12px] font-extrabold leading-snug line-clamp-2 mb-1 ${past ? "text-[#BEB29E]" : "text-[#1B1B1B]"}`}
+          className={`text-[12px] font-extrabold leading-snug line-clamp-2 mb-1 ${past ? "text-[#BEB29E] dark:text-[#666666]" : "text-[#1B1B1B] dark:text-[#E5E5E5]"}`}
         >
           {session.course_name}
         </p>
         <div
-          className={`flex items-center gap-1 text-[10px] ${past ? "text-[#BEB29E]" : "text-[#6B5D4F]/60"}`}
+          className={`flex items-center gap-1 text-[10px] ${past ? "text-[#BEB29E] dark:text-[#666666]" : "text-[#6B5D4F]/60 dark:text-[#888888]"}`}
         >
           <Users className="w-2.5 h-2.5 shrink-0" />
           <span className="truncate">{session.group_name}</span>
         </div>
-
         {session.teacher_name && (
           <div className="flex items-center gap-1.5 mt-1.5">
             <div
-              className={`w-[18px] h-[18px] rounded-full ${past ? "bg-[#D8CDC0]/30" : `bg-gradient-to-br ${theme.gradient}`} flex items-center justify-center shadow-sm`}
+              className={`w-[18px] h-[18px] rounded-full ${past ? "bg-[#D8CDC0]/30 dark:bg-[#555555]/30" : `bg-gradient-to-br ${theme.gradient}`} flex items-center justify-center shadow-sm`}
             >
               <span className="text-[8px] font-bold text-white">
                 {session.teacher_name.charAt(0)}
               </span>
             </div>
             <span
-              className={`text-[10px] font-semibold truncate ${past ? "text-[#BEB29E]" : theme.text}`}
+              className={`text-[10px] font-semibold truncate ${past ? "text-[#BEB29E] dark:text-[#666666]" : theme.text}`}
             >
               {session.teacher_name}
             </span>
           </div>
         )}
-
         {session.topic && (
-          <p className="text-[9px] text-[#BEB29E] truncate mt-1.5 leading-relaxed border-t border-[#D8CDC0]/15 pt-1">
+          <p className="text-[9px] text-[#BEB29E] dark:text-[#666666] truncate mt-1.5 leading-relaxed border-t border-[#D8CDC0]/15 dark:border-[#2A2A2A] pt-1">
             {session.topic}
           </p>
         )}
@@ -399,10 +363,6 @@ const SessionCard = ({
     </div>
   );
 };
-
-/* ═══════════════════════════════════════════════════════════
-   ROOM HEADER — live occupancy + countdown
-═══════════════════════════════════════════════════════════ */
 
 const RoomColHeader = ({
   room,
@@ -452,7 +412,7 @@ const RoomColHeader = ({
           <Users className="w-3 h-3" /> {room.capacity}
         </span>
         <span
-          className={`font-extrabold px-2 py-0.5 rounded-lg ${room.sessions_today > 0 ? theme.badge : "bg-[#D8CDC0]/20 text-[#BEB29E]"}`}
+          className={`font-extrabold px-2 py-0.5 rounded-lg ${room.sessions_today > 0 ? theme.badge : "bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] text-[#BEB29E] dark:text-[#666666]"}`}
         >
           {room.sessions_today} حصة
         </span>
@@ -463,22 +423,20 @@ const RoomColHeader = ({
               <span className={`${theme.text} font-extrabold`}>الآن</span>
             </span>
             {remainLabel && (
-              <span className="text-[8px] text-[#6B5D4F]/40">
+              <span className="text-[8px] text-[#6B5D4F]/40 dark:text-[#888888]">
                 {remainLabel}
               </span>
             )}
           </span>
         ) : (
-          <span className="text-[9px] font-bold text-emerald-600">فارغة</span>
+          <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+            فارغة
+          </span>
         )}
       </div>
     </div>
   </th>
 );
-
-/* ═══════════════════════════════════════════════════════════
-   MAIN PAGE
-═══════════════════════════════════════════════════════════ */
 
 export default function RoomsTimetablePage() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -486,9 +444,7 @@ export default function RoomsTimetablePage() {
   const dateStr = toDateStr(currentDate);
   const now = useLiveClock(30_000);
   const isToday = isTodayCheck(currentDate);
-
   const { data, isLoading, isError } = useRoomsScheduleOverview(dateStr);
-
   const nav = useCallback((dir: number) => {
     setCurrentDate((prev) => {
       const d = new Date(prev);
@@ -497,7 +453,6 @@ export default function RoomsTimetablePage() {
     });
   }, []);
 
-  /* ── Client-side live status recalc ── */
   const liveData = useMemo(() => {
     if (!data?.rooms)
       return { rooms: [] as RoomOverview[], occupiedNow: 0, freeNow: 0 };
@@ -512,7 +467,6 @@ export default function RoomsTimetablePage() {
     };
   }, [data, now]);
 
-  /* ── Build grid ── */
   const grid = useMemo(() => {
     if (!liveData.rooms.length)
       return {
@@ -537,13 +491,11 @@ export default function RoomsTimetablePage() {
     });
     return a.length > 0 ? a : TIME_SLOTS.filter((_, i) => i % 2 === 0);
   }, [grid]);
-
   const totalSessions = liveData.rooms.reduce(
     (s, r) => s + r.sessions_today,
     0,
   );
   const nowMins = now.getHours() * 60 + now.getMinutes();
-
   const getRoomCountdown = (room: RoomOverview): string | null => {
     const active = room.sessions.find((s) => isLiveAt(s, now));
     return active ? fmtMins(minsLeft(active, now)) : null;
@@ -555,13 +507,13 @@ export default function RoomsTimetablePage() {
         dir="rtl"
         className="flex flex-col items-center justify-center min-h-[60vh] text-center"
       >
-        <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-red-50 to-rose-50 flex items-center justify-center mb-5 shadow-lg shadow-red-100">
+        <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-red-50 dark:from-red-950/30 to-rose-50 dark:to-red-950/20 flex items-center justify-center mb-5 shadow-lg shadow-red-100 dark:shadow-red-950/30">
           <AlertCircle className="w-10 h-10 text-red-400" />
         </div>
-        <h3 className="text-xl font-bold text-[#1B1B1B] mb-2">
+        <h3 className="text-xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
           حدث خطأ في تحميل الجدول
         </h3>
-        <p className="text-sm text-[#6B5D4F]/50">
+        <p className="text-sm text-[#6B5D4F]/50 dark:text-[#666666]">
           تحقق من الاتصال وحاول مجدداً
         </p>
       </div>
@@ -569,7 +521,7 @@ export default function RoomsTimetablePage() {
 
   return (
     <div dir="rtl" className="space-y-5 pb-10">
-      {/* ═══ HERO ═══ */}
+      {/* HERO */}
       <div className="relative overflow-hidden rounded-[20px]">
         <div className="absolute inset-0 bg-gradient-to-bl from-[#1a3c33] via-[#2B6F5E] to-[#1a3c33]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(196,160,53,0.15),transparent_60%)]" />
@@ -644,30 +596,30 @@ export default function RoomsTimetablePage() {
         </div>
       </div>
 
-      {/* ═══ NAV ═══ */}
-      <div className="flex items-center justify-between bg-white rounded-2xl border border-[#D8CDC0]/25 px-5 py-3.5 shadow-sm">
+      {/* NAV */}
+      <div className="flex items-center justify-between bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/25 dark:border-[#2A2A2A] px-5 py-3.5 shadow-sm dark:shadow-black/20">
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => nav(1)}
-            className="w-10 h-10 rounded-xl bg-[#FAFAF8] hover:bg-[#2B6F5E]/8 border border-[#D8CDC0]/25 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+            className="w-10 h-10 rounded-xl bg-[#FAFAF8] dark:bg-[#222222] hover:bg-[#2B6F5E]/8 dark:hover:bg-[#4ADE80]/10 border border-[#D8CDC0]/25 dark:border-[#2A2A2A] flex items-center justify-center transition-all hover:scale-105 active:scale-95"
           >
-            <ChevronRight className="w-4 h-4 text-[#6B5D4F]" />
+            <ChevronRight className="w-4 h-4 text-[#6B5D4F] dark:text-[#AAAAAA]" />
           </button>
           <button
             onClick={() => nav(-1)}
-            className="w-10 h-10 rounded-xl bg-[#FAFAF8] hover:bg-[#2B6F5E]/8 border border-[#D8CDC0]/25 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+            className="w-10 h-10 rounded-xl bg-[#FAFAF8] dark:bg-[#222222] hover:bg-[#2B6F5E]/8 dark:hover:bg-[#4ADE80]/10 border border-[#D8CDC0]/25 dark:border-[#2A2A2A] flex items-center justify-center transition-all hover:scale-105 active:scale-95"
           >
-            <ChevronLeft className="w-4 h-4 text-[#6B5D4F]" />
+            <ChevronLeft className="w-4 h-4 text-[#6B5D4F] dark:text-[#AAAAAA]" />
           </button>
           <button
             onClick={() => setCurrentDate(new Date())}
-            className={`h-10 px-5 text-xs font-bold rounded-xl transition-all ${isToday ? "bg-gradient-to-r from-[#2B6F5E] to-[#3D8B6E] text-white shadow-lg shadow-[#2B6F5E]/25" : "bg-[#2B6F5E]/8 text-[#2B6F5E] hover:bg-[#2B6F5E]/15"}`}
+            className={`h-10 px-5 text-xs font-bold rounded-xl transition-all ${isToday ? "bg-gradient-to-r from-[#2B6F5E] to-[#3D8B6E] text-white shadow-lg shadow-[#2B6F5E]/25" : "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80] hover:bg-[#2B6F5E]/15 dark:hover:bg-[#4ADE80]/15"}`}
           >
             اليوم
           </button>
         </div>
         <div className="text-center">
-          <h2 className="text-[15px] font-bold text-[#1B1B1B]">
+          <h2 className="text-[15px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
             {formatDateLabel(currentDate)}
           </h2>
           {isToday && (
@@ -682,7 +634,7 @@ export default function RoomsTimetablePage() {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-0.5 bg-[#F5F3EF] rounded-xl p-1 border border-[#D8CDC0]/20">
+        <div className="flex items-center gap-0.5 bg-[#F5F3EF] dark:bg-[#222222] rounded-xl p-1 border border-[#D8CDC0]/20 dark:border-[#2A2A2A]">
           {[
             { m: "grid" as const, icon: LayoutGrid, tip: "شبكة" },
             { m: "list" as const, icon: List, tip: "قائمة" },
@@ -691,7 +643,7 @@ export default function RoomsTimetablePage() {
               key={m}
               onClick={() => setViewMode(m)}
               title={tip}
-              className={`w-9 h-9 rounded-[10px] flex items-center justify-center transition-all duration-300 ${viewMode === m ? "bg-white shadow-md text-[#2B6F5E] scale-105" : "text-[#BEB29E] hover:text-[#6B5D4F]"}`}
+              className={`w-9 h-9 rounded-[10px] flex items-center justify-center transition-all duration-300 ${viewMode === m ? "bg-white dark:bg-[#1A1A1A] shadow-md dark:shadow-black/30 text-[#2B6F5E] dark:text-[#4ADE80] scale-105" : "text-[#BEB29E] dark:text-[#666666] hover:text-[#6B5D4F] dark:hover:text-[#AAAAAA]"}`}
             >
               <Icon className="w-4 h-4" />
             </button>
@@ -699,7 +651,7 @@ export default function RoomsTimetablePage() {
         </div>
       </div>
 
-      {/* ═══ LEGEND ═══ */}
+      {/* LEGEND */}
       {grid.rooms.length > 0 && (
         <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
           {grid.rooms.map((room, idx) => {
@@ -709,17 +661,17 @@ export default function RoomsTimetablePage() {
             return (
               <div
                 key={room.room_id}
-                className={`flex items-center gap-2 shrink-0 bg-white border ${t.border} px-4 py-2.5 rounded-xl transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 ${occ ? `ring-2 ${t.ring}` : ""} animate-[fadeUp_0.3s_ease-out_both]`}
+                className={`flex items-center gap-2 shrink-0 bg-white dark:bg-[#1A1A1A] border ${t.border} px-4 py-2.5 rounded-xl transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 ${occ ? `ring-2 ${t.ring}` : ""} animate-[fadeUp_0.3s_ease-out_both]`}
                 style={{ animationDelay: `${idx * 40}ms` }}
               >
                 <div
                   className={`w-3.5 h-3.5 rounded-[5px] bg-gradient-to-br ${t.gradient} shadow-sm`}
                 />
-                <span className="text-[12px] font-bold text-[#1B1B1B]">
+                <span className="text-[12px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                   {room.name}
                 </span>
                 {room.location && (
-                  <span className="text-[10px] text-[#BEB29E] flex items-center gap-0.5">
+                  <span className="text-[10px] text-[#BEB29E] dark:text-[#666666] flex items-center gap-0.5">
                     <MapPin className="w-2.5 h-2.5" /> {room.location}
                   </span>
                 )}
@@ -732,12 +684,14 @@ export default function RoomsTimetablePage() {
                   <div className="flex items-center gap-1.5">
                     <LiveDot size="h-2 w-2" />
                     {cd && (
-                      <span className="text-[9px] text-[#6B5D4F]/50">{cd}</span>
+                      <span className="text-[9px] text-[#6B5D4F]/50 dark:text-[#888888]">
+                        {cd}
+                      </span>
                     )}
                   </div>
                 ) : (
                   room.sessions_today > 0 && (
-                    <span className="text-[9px] font-bold text-emerald-600">
+                    <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
                       فارغة
                     </span>
                   )
@@ -748,33 +702,31 @@ export default function RoomsTimetablePage() {
         </div>
       )}
 
-      {/* ═══ LOADING ═══ */}
+      {/* LOADING */}
       {isLoading && (
-        <div className="bg-white rounded-[20px] border border-[#D8CDC0]/25 h-[500px] flex flex-col items-center justify-center gap-4">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-[20px] border border-[#D8CDC0]/25 dark:border-[#2A2A2A] h-[500px] flex flex-col items-center justify-center gap-4">
           <div className="relative">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2B6F5E]/10 to-[#2B6F5E]/5 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 text-[#2B6F5E] animate-spin" />
+              <Loader2 className="w-8 h-8 text-[#2B6F5E] dark:text-[#4ADE80] animate-spin" />
             </div>
             <div className="absolute inset-0 rounded-2xl animate-ping bg-[#2B6F5E]/5" />
           </div>
-          <div>
-            <p className="text-sm font-bold text-[#1B1B1B]/60 text-center">
-              جارٍ تحميل الجدول...
-            </p>
-          </div>
+          <p className="text-sm font-bold text-[#1B1B1B]/60 dark:text-[#888888] text-center">
+            جارٍ تحميل الجدول...
+          </p>
         </div>
       )}
 
-      {/* ═══ EMPTY ═══ */}
+      {/* EMPTY */}
       {!isLoading && grid.rooms.length === 0 && (
-        <div className="bg-white rounded-[20px] border border-[#D8CDC0]/25 flex flex-col items-center justify-center py-28 text-center">
-          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#D8CDC0]/20 to-[#D8CDC0]/5 flex items-center justify-center mb-5 shadow-inner">
-            <DoorOpen className="w-10 h-10 text-[#BEB29E]" />
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-[20px] border border-[#D8CDC0]/25 dark:border-[#2A2A2A] flex flex-col items-center justify-center py-28 text-center">
+          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#D8CDC0]/20 dark:from-[#2A2A2A] to-[#D8CDC0]/5 dark:to-[#222222] flex items-center justify-center mb-5 shadow-inner">
+            <DoorOpen className="w-10 h-10 text-[#BEB29E] dark:text-[#666666]" />
           </div>
-          <h3 className="text-xl font-bold text-[#1B1B1B] mb-1">
+          <h3 className="text-xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-1">
             لا توجد قاعات بعد
           </h3>
-          <p className="text-sm text-[#6B5D4F]/40 mb-5">
+          <p className="text-sm text-[#6B5D4F]/40 dark:text-[#666666] mb-5">
             أضف قاعات لتظهر في الجدول الزمني
           </p>
           <Link
@@ -786,17 +738,17 @@ export default function RoomsTimetablePage() {
         </div>
       )}
 
-      {/* ═══ GRID VIEW ═══ */}
+      {/* GRID VIEW */}
       {!isLoading && grid.rooms.length > 0 && viewMode === "grid" && (
-        <div className="bg-white rounded-[20px] border border-[#D8CDC0]/25 overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-[20px] border border-[#D8CDC0]/25 dark:border-[#2A2A2A] overflow-hidden shadow-sm dark:shadow-black/20">
           <div className="overflow-x-auto scrollbar-hide">
             <table className="w-full min-w-[750px]">
               <thead>
                 <tr>
-                  <th className="sticky right-0 z-20 bg-white w-[78px] p-0">
-                    <div className="bg-gradient-to-b from-[#FAFAF8] to-[#F5F3EF] rounded-tl-xl m-0.5 px-2 py-4 border-l border-[#D8CDC0]/12">
-                      <Clock className="w-4.5 h-4.5 mx-auto text-[#BEB29E]" />
-                      <p className="text-[8px] text-[#BEB29E] font-bold mt-1 tracking-wider">
+                  <th className="sticky right-0 z-20 bg-white dark:bg-[#1A1A1A] w-[78px] p-0">
+                    <div className="bg-gradient-to-b from-[#FAFAF8] dark:from-[#0F0F0F] to-[#F5F3EF] dark:to-[#1A1A1A] rounded-tl-xl m-0.5 px-2 py-4 border-l border-[#D8CDC0]/12 dark:border-[#2A2A2A]">
+                      <Clock className="w-4.5 h-4.5 mx-auto text-[#BEB29E] dark:text-[#666666]" />
+                      <p className="text-[8px] text-[#BEB29E] dark:text-[#666666] font-bold mt-1 tracking-wider">
                         الوقت
                       </p>
                     </div>
@@ -823,13 +775,13 @@ export default function RoomsTimetablePage() {
                   return (
                     <tr
                       key={slot}
-                      className={`transition-all duration-300 ${isCurrent ? "bg-gradient-to-l from-[#2B6F5E]/[0.04] via-[#2B6F5E]/[0.02] to-transparent" : hasAny ? "hover:bg-[#FAFAF8]/50" : ""}`}
+                      className={`transition-all duration-300 ${isCurrent ? "bg-gradient-to-l from-[#2B6F5E]/[0.04] via-[#2B6F5E]/[0.02] to-transparent" : hasAny ? "hover:bg-[#FAFAF8]/50 dark:hover:bg-[#222222]/50" : ""}`}
                     >
                       <td
-                        className={`sticky right-0 z-10 px-2 py-2 text-center border-l border-[#D8CDC0]/8 transition-colors ${isCurrent ? "bg-[#2B6F5E]/[0.04]" : "bg-white"}`}
+                        className={`sticky right-0 z-10 px-2 py-2 text-center border-l border-[#D8CDC0]/8 dark:border-[#2A2A2A]/50 transition-colors ${isCurrent ? "bg-[#2B6F5E]/[0.04]" : "bg-white dark:bg-[#1A1A1A]"}`}
                       >
                         <div
-                          className={`relative inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl transition-all duration-500 ${isCurrent ? "bg-gradient-to-r from-[#2B6F5E] to-[#3D8B6E] text-white shadow-lg shadow-[#2B6F5E]/30 scale-110" : hasAny ? "text-[#1B1B1B] font-semibold bg-[#FAFAF8] border border-[#D8CDC0]/15" : "text-[#D8CDC0]"}`}
+                          className={`relative inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl transition-all duration-500 ${isCurrent ? "bg-gradient-to-r from-[#2B6F5E] to-[#3D8B6E] text-white shadow-lg shadow-[#2B6F5E]/30 scale-110" : hasAny ? "text-[#1B1B1B] dark:text-[#E5E5E5] font-semibold bg-[#FAFAF8] dark:bg-[#222222] border border-[#D8CDC0]/15 dark:border-[#2A2A2A]" : "text-[#D8CDC0] dark:text-[#555555]"}`}
                         >
                           {isCurrent && (
                             <LiveDot size="h-1.5 w-1.5" color="bg-white" />
@@ -845,7 +797,7 @@ export default function RoomsTimetablePage() {
                         return (
                           <td
                             key={room.room_id}
-                            className="px-1 py-1 border-l border-[#D8CDC0]/5 last:border-l-0"
+                            className="px-1 py-1 border-l border-[#D8CDC0]/5 dark:border-[#2A2A2A]/30 last:border-l-0"
                           >
                             {session ? (
                               <SessionCard
@@ -856,7 +808,7 @@ export default function RoomsTimetablePage() {
                               />
                             ) : (
                               <div
-                                className={`h-[80px] rounded-[14px] transition-all duration-300 ${isCurrent ? "bg-[#2B6F5E]/[0.015] border border-dashed border-[#2B6F5E]/8" : "hover:bg-[#FAFAF8]/40"}`}
+                                className={`h-[80px] rounded-[14px] transition-all duration-300 ${isCurrent ? "bg-[#2B6F5E]/[0.015] border border-dashed border-[#2B6F5E]/8" : "hover:bg-[#FAFAF8]/40 dark:hover:bg-[#222222]/30"}`}
                               />
                             )}
                           </td>
@@ -868,12 +820,12 @@ export default function RoomsTimetablePage() {
               </tbody>
             </table>
           </div>
-          <div className="px-6 py-3.5 border-t border-[#D8CDC0]/12 bg-gradient-to-l from-[#FAFAF8] to-white flex items-center justify-between">
-            <span className="text-[11px] text-[#6B5D4F]/40 font-medium">
+          <div className="px-6 py-3.5 border-t border-[#D8CDC0]/12 dark:border-[#2A2A2A] bg-gradient-to-l from-[#FAFAF8] dark:from-[#0F0F0F] to-white dark:to-[#1A1A1A] flex items-center justify-between">
+            <span className="text-[11px] text-[#6B5D4F]/40 dark:text-[#666666] font-medium">
               {data?.total_rooms} قاعة · {totalSessions} حصة
             </span>
             <div
-              className={`flex items-center gap-2 text-[11px] font-bold ${liveData.occupiedNow ? "text-emerald-600" : "text-[#BEB29E]"}`}
+              className={`flex items-center gap-2 text-[11px] font-bold ${liveData.occupiedNow ? "text-emerald-600 dark:text-emerald-400" : "text-[#BEB29E] dark:text-[#666666]"}`}
             >
               {liveData.occupiedNow ? (
                 <>
@@ -888,7 +840,7 @@ export default function RoomsTimetablePage() {
         </div>
       )}
 
-      {/* ═══ LIST VIEW ═══ */}
+      {/* LIST VIEW */}
       {!isLoading && grid.rooms.length > 0 && viewMode === "list" && (
         <div className="space-y-4">
           {grid.rooms.map((room, idx) => {
@@ -898,7 +850,7 @@ export default function RoomsTimetablePage() {
             return (
               <div
                 key={room.room_id}
-                className="bg-white rounded-[20px] border border-[#D8CDC0]/25 overflow-hidden shadow-sm animate-[slideUp_0.45s_cubic-bezier(0.16,1,0.3,1)_both]"
+                className="bg-white dark:bg-[#1A1A1A] rounded-[20px] border border-[#D8CDC0]/25 dark:border-[#2A2A2A] overflow-hidden shadow-sm dark:shadow-black/20 animate-[slideUp_0.45s_cubic-bezier(0.16,1,0.3,1)_both]"
                 style={{ animationDelay: `${idx * 80}ms` }}
               >
                 <div
@@ -950,9 +902,8 @@ export default function RoomsTimetablePage() {
                     </div>
                   </div>
                 </div>
-
                 {room.sessions.length > 0 ? (
-                  <div className="divide-y divide-[#D8CDC0]/8">
+                  <div className="divide-y divide-[#D8CDC0]/8 dark:divide-[#2A2A2A]">
                     {room.sessions.map((session) => {
                       const live = isLiveAt(session, now);
                       const past = isPastAt(session, now);
@@ -962,16 +913,16 @@ export default function RoomsTimetablePage() {
                       return (
                         <div
                           key={session.session_id}
-                          className={`px-6 py-4 flex items-center gap-5 transition-all group ${past ? "opacity-50" : live ? "bg-[#C4A035]/[0.03]" : "hover:bg-[#FAFAF8]/60"}`}
+                          className={`px-6 py-4 flex items-center gap-5 transition-all group ${past ? "opacity-50" : live ? "bg-[#C4A035]/[0.03]" : "hover:bg-[#FAFAF8]/60 dark:hover:bg-[#222222]/60"}`}
                         >
                           <div
-                            className={`w-14 h-14 rounded-2xl border flex flex-col items-center justify-center shrink-0 transition-all group-hover:shadow-md group-hover:scale-105 ${past ? "bg-[#D8CDC0]/10 border-[#D8CDC0]/20" : live ? "bg-[#C4A035]/10 border-[#C4A035]/30" : `${t.light} ${t.border}`}`}
+                            className={`w-14 h-14 rounded-2xl border flex flex-col items-center justify-center shrink-0 transition-all group-hover:shadow-md group-hover:scale-105 ${past ? "bg-[#D8CDC0]/10 dark:bg-[#2A2A2A] border-[#D8CDC0]/20 dark:border-[#555555]/20" : live ? "bg-[#C4A035]/10 border-[#C4A035]/30" : `${t.light} ${t.border}`}`}
                           >
                             <Clock
-                              className={`w-3.5 h-3.5 mb-0.5 ${past ? "text-[#BEB29E]" : live ? "text-[#C4A035]" : t.text}`}
+                              className={`w-3.5 h-3.5 mb-0.5 ${past ? "text-[#BEB29E] dark:text-[#666666]" : live ? "text-[#C4A035]" : t.text}`}
                             />
                             <span
-                              className={`text-[11px] font-bold tabular-nums ${past ? "text-[#BEB29E] line-through" : live ? "text-[#C4A035]" : t.text}`}
+                              className={`text-[11px] font-bold tabular-nums ${past ? "text-[#BEB29E] dark:text-[#666666] line-through" : live ? "text-[#C4A035]" : t.text}`}
                             >
                               {fmt(session.session_date)}
                             </span>
@@ -979,7 +930,7 @@ export default function RoomsTimetablePage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p
-                                className={`text-sm font-bold truncate ${past ? "text-[#BEB29E]" : "text-[#1B1B1B]"}`}
+                                className={`text-sm font-bold truncate ${past ? "text-[#BEB29E] dark:text-[#666666]" : "text-[#1B1B1B] dark:text-[#E5E5E5]"}`}
                               >
                                 {session.course_name}
                               </p>
@@ -990,13 +941,13 @@ export default function RoomsTimetablePage() {
                                 </span>
                               )}
                               {past && (
-                                <span className="text-[9px] font-medium text-[#BEB29E] bg-[#D8CDC0]/15 px-1.5 py-0.5 rounded shrink-0">
+                                <span className="text-[9px] font-medium text-[#BEB29E] dark:text-[#666666] bg-[#D8CDC0]/15 dark:bg-[#2A2A2A] px-1.5 py-0.5 rounded shrink-0">
                                   انتهت
                                 </span>
                               )}
                             </div>
                             <div
-                              className={`flex items-center gap-3 mt-1 text-xs ${past ? "text-[#BEB29E]" : "text-[#6B5D4F]/50"}`}
+                              className={`flex items-center gap-3 mt-1 text-xs ${past ? "text-[#BEB29E] dark:text-[#666666]" : "text-[#6B5D4F]/50 dark:text-[#888888]"}`}
                             >
                               <span className="flex items-center gap-1">
                                 <Users className="w-3 h-3" />{" "}
@@ -1022,7 +973,7 @@ export default function RoomsTimetablePage() {
                               </p>
                             )}
                             {session.topic && (
-                              <p className="text-[11px] text-[#BEB29E] truncate mt-1">
+                              <p className="text-[11px] text-[#BEB29E] dark:text-[#666666] truncate mt-1">
                                 {session.topic}
                               </p>
                             )}
@@ -1038,10 +989,10 @@ export default function RoomsTimetablePage() {
                   </div>
                 ) : (
                   <div className="px-6 py-12 text-center">
-                    <div className="w-12 h-12 mx-auto rounded-xl bg-[#D8CDC0]/10 flex items-center justify-center mb-2">
-                      <CalendarDays className="w-5 h-5 text-[#BEB29E]" />
+                    <div className="w-12 h-12 mx-auto rounded-xl bg-[#D8CDC0]/10 dark:bg-[#2A2A2A] flex items-center justify-center mb-2">
+                      <CalendarDays className="w-5 h-5 text-[#BEB29E] dark:text-[#666666]" />
                     </div>
-                    <p className="text-sm font-medium text-[#BEB29E]">
+                    <p className="text-sm font-medium text-[#BEB29E] dark:text-[#666666]">
                       لا توجد حصص اليوم
                     </p>
                   </div>

@@ -32,7 +32,7 @@ export const useLogin = () => {
 
         const redirectMap: Record<string, string> = {
           ADMIN: "/admin",
-          TEACHER: "/admin",
+          TEACHER: "/teacher",
           STUDENT: "/dashboard",
         };
 

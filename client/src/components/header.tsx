@@ -16,6 +16,8 @@ import { useMe, useLogout } from "../hooks/auth/auth.hooks";
 import { useLanguage } from "../hooks/useLanguage";
 import { LanguageSwitcher } from "../i18n/locales/components/LanguageSwitcher";
 import { LocaleLink } from "../i18n/locales/components/LocaleLink";
+import ThemeToggle from "../components/Themetoggle";
+import ThemeToggleHeader from "../components/ThemetoggleHeader";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -86,23 +88,25 @@ export function Header() {
     <>
       <header
         className={`sticky top-0 z-50 w-full transition-all duration-500 ${
-          scrolled ? "shadow-[0_4px_30px_rgba(0,0,0,0.08)]" : "shadow-none"
+          scrolled
+            ? "shadow-[0_4px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.3)]"
+            : "shadow-none"
         }`}
         dir={dir}
       >
         {/* ═══════════════════════════════════════════════
             TOP BAR — University Identity
             ═══════════════════════════════════════════════ */}
-        <div className="relative bg-white overflow-hidden">
+        <div className="relative bg-white dark:bg-[#1A1A1A] overflow-hidden">
           {/* Subtle geometric pattern */}
           <div
-            className="absolute inset-0 opacity-[0.015] pointer-events-none"
+            className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03] pointer-events-none"
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23264230' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }}
           />
           {/* Bottom gold accent line */}
-          <div className="absolute bottom-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand-mustard/50 to-transparent" />
+          <div className="absolute bottom-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand-mustard/50 dark:via-brand-mustard/30 to-transparent" />
 
           <div
             className={`relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-all duration-500 ${
@@ -120,14 +124,14 @@ export function Header() {
                   }`}
                 />
                 {/* Ring on hover */}
-                <div className="absolute -inset-1 rounded-2xl border-2 border-brand-teal-dark/0 group-hover:border-brand-teal-dark/[0.08] transition-all duration-300 scale-90 group-hover:scale-100" />
+                <div className="absolute -inset-1 rounded-2xl border-2 border-brand-teal-dark/0 group-hover:border-brand-teal-dark/[0.08] dark:group-hover:border-[#4ADE80]/[0.08] transition-all duration-300 scale-90 group-hover:scale-100" />
               </div>
             </LocaleLink>
 
             {/* Center — University Name */}
             <div className="hidden sm:flex flex-col items-center text-center flex-1 px-8 select-none">
               <h1
-                className={`font-bold text-brand-teal-dark leading-tight tracking-tight transition-all duration-500 ${
+                className={`font-bold text-brand-teal-dark dark:text-[#E5E5E5] leading-tight tracking-tight transition-all duration-500 ${
                   scrolled ? "text-sm" : "text-base sm:text-lg lg:text-xl"
                 }`}
                 style={{ fontFamily: "var(--font-sans)" }}
@@ -136,19 +140,19 @@ export function Header() {
                 {t("header.universityName")}
               </h1>
               <div className="flex items-center gap-3 mt-1">
-                <span className="w-8 h-px bg-gradient-to-r from-transparent to-brand-mustard/50" />
+                <span className="w-8 h-px bg-gradient-to-r from-transparent to-brand-mustard/50 dark:to-brand-mustard/30" />
                 <p
-                  className={`text-brand-teal-dark/50 font-medium tracking-wide transition-all duration-500 ${
+                  className={`text-brand-teal-dark/50 dark:text-[#888888] font-medium tracking-wide transition-all duration-500 ${
                     scrolled ? "text-[9px]" : "text-[11px] sm:text-xs"
                   }`}
                   dir="ltr"
                 >
                   {t("header.centerName")}
                 </p>
-                <span className="w-8 h-px bg-gradient-to-l from-transparent to-brand-mustard/50" />
+                <span className="w-8 h-px bg-gradient-to-l from-transparent to-brand-mustard/50 dark:to-brand-mustard/30" />
               </div>
               <p
-                className={`text-brand-brown/50 transition-all duration-500 ${
+                className={`text-brand-brown/50 dark:text-[#666666] transition-all duration-500 ${
                   scrolled
                     ? "text-[0px] opacity-0 h-0 mt-0"
                     : "text-[11px] opacity-100 h-auto mt-0.5"
@@ -161,12 +165,12 @@ export function Header() {
             {/* Mobile Title */}
             <div className="flex sm:hidden flex-col items-center text-center flex-1 px-2 select-none">
               <p
-                className="text-sm font-bold text-brand-teal-dark tracking-tight"
+                className="text-sm font-bold text-brand-teal-dark dark:text-[#E5E5E5] tracking-tight"
                 style={{ fontFamily: "var(--font-sans)" }}
               >
                 {t("header.shortName")}
               </p>
-              <p className="text-[9px] text-brand-brown/50 tracking-wide">
+              <p className="text-[9px] text-brand-brown/50 dark:text-[#666666] tracking-wide">
                 {t("header.shortNameAr")}
               </p>
             </div>
@@ -181,7 +185,7 @@ export function Header() {
                     scrolled ? "h-9 w-9" : "h-12 w-12"
                   }`}
                 />
-                <div className="absolute -inset-1 rounded-2xl border-2 border-brand-teal-dark/0 group-hover:border-brand-teal-dark/[0.08] transition-all duration-300 scale-90 group-hover:scale-100" />
+                <div className="absolute -inset-1 rounded-2xl border-2 border-brand-teal-dark/0 group-hover:border-brand-teal-dark/[0.08] dark:group-hover:border-[#4ADE80]/[0.08] transition-all duration-300 scale-90 group-hover:scale-100" />
               </div>
             </LocaleLink>
           </div>
@@ -192,7 +196,7 @@ export function Header() {
             ═══════════════════════════════════════════════ */}
         <div className="relative">
           {/* Main bg */}
-          <div className="absolute inset-0 bg-brand-teal-dark" />
+          <div className="absolute inset-0 bg-brand-teal-dark dark:bg-[#0F0F0F]" />
           {/* Noise texture overlay */}
           <div
             className="absolute inset-0 opacity-[0.04] mix-blend-soft-light pointer-events-none"
@@ -269,6 +273,9 @@ export function Header() {
                 <LanguageSwitcher variant="header" />
               </div>
 
+              {/* Theme Toggle */}
+              <ThemeToggleHeader />
+
               {/* Auth */}
               {!showUser && !isLoading && (
                 <div className="flex items-center gap-1.5">
@@ -326,7 +333,7 @@ export function Header() {
                         </div>
                       )}
                       {/* Online dot */}
-                      <div className="absolute -bottom-[2px] -right-[2px] w-2.5 h-2.5 rounded-full bg-emerald-400 border-[1.5px] border-brand-teal-dark" />
+                      <div className="absolute -bottom-[2px] -right-[2px] w-2.5 h-2.5 rounded-full bg-emerald-400 border-[1.5px] border-brand-teal-dark dark:border-[#0F0F0F]" />
                     </div>
                     <span className="text-[11px] font-medium text-white/75 max-w-[70px] truncate">
                       {user.first_name || t("common.dashboard")}
@@ -350,33 +357,33 @@ export function Header() {
                   >
                     {/* Arrow */}
                     <div
-                      className={`absolute -top-[6px] w-3 h-3 bg-white rotate-45 border-l border-t border-brand-beige/40 ${
+                      className={`absolute -top-[6px] w-3 h-3 bg-white dark:bg-[#1A1A1A] rotate-45 border-l border-t border-brand-beige/40 dark:border-[#2A2A2A] ${
                         isRTL ? "left-4" : "right-4"
                       }`}
                     />
-                    <div className="relative bg-white rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-brand-beige/40 overflow-hidden">
+                    <div className="relative bg-white dark:bg-[#1A1A1A] rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.4)] border border-brand-beige/40 dark:border-[#2A2A2A] overflow-hidden">
                       {/* User card */}
-                      <div className="px-4 py-3 bg-gradient-to-b from-brand-gray/50 to-white border-b border-brand-beige/40">
+                      <div className="px-4 py-3 bg-gradient-to-b from-brand-gray/50 dark:from-[#222222] to-white dark:to-[#1A1A1A] border-b border-brand-beige/40 dark:border-[#2A2A2A]">
                         <div className="flex items-center gap-3">
                           <div className="relative">
                             {user.google_avatar && !avatarError ? (
                               <img
                                 src={user.google_avatar}
-                                className="h-9 w-9 rounded-lg border border-brand-beige object-cover"
+                                className="h-9 w-9 rounded-lg border border-brand-beige dark:border-[#2A2A2A] object-cover"
                                 alt=""
                               />
                             ) : (
-                              <div className="h-9 w-9 rounded-lg border border-brand-beige bg-brand-teal-dark/[0.06] flex items-center justify-center">
-                                <User className="h-4 w-4 text-brand-teal-dark/50" />
+                              <div className="h-9 w-9 rounded-lg border border-brand-beige dark:border-[#2A2A2A] bg-brand-teal-dark/[0.06] dark:bg-[#222222] flex items-center justify-center">
+                                <User className="h-4 w-4 text-brand-teal-dark/50 dark:text-[#888888]" />
                               </div>
                             )}
-                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-white" />
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-white dark:border-[#1A1A1A]" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-brand-black truncate">
+                            <p className="text-sm font-semibold text-brand-black dark:text-[#E5E5E5] truncate">
                               {user.first_name} {user.last_name}
                             </p>
-                            <p className="text-[10px] text-brand-brown/60 truncate">
+                            <p className="text-[10px] text-brand-brown/60 dark:text-[#666666] truncate">
                               {user.email}
                             </p>
                           </div>
@@ -385,7 +392,7 @@ export function Header() {
                       <div className="py-1.5">
                         <Link
                           to={dashboardPath}
-                          className={`flex items-center gap-2.5 px-4 py-2 text-[13px] text-brand-black/65 hover:bg-brand-teal-dark/[0.04] hover:text-brand-teal-dark transition-colors ${
+                          className={`flex items-center gap-2.5 px-4 py-2 text-[13px] text-brand-black/65 dark:text-[#AAAAAA] hover:bg-brand-teal-dark/[0.04] dark:hover:bg-[#222222] hover:text-brand-teal-dark dark:hover:text-[#4ADE80] transition-colors ${
                             isRTL ? "flex-row" : "flex-row"
                           }`}
                         >
@@ -393,11 +400,11 @@ export function Header() {
                           {t("common.dashboard")}
                         </Link>
                       </div>
-                      <div className="border-t border-brand-beige/40 py-1.5">
+                      <div className="border-t border-brand-beige/40 dark:border-[#2A2A2A] py-1.5">
                         <button
                           onClick={() => logoutMutation.mutate()}
                           disabled={logoutMutation.isPending}
-                          className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-red-400/80 hover:bg-red-50/60 hover:text-red-500 transition-colors"
+                          className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-red-400/80 dark:text-red-400/70 hover:bg-red-50/60 dark:hover:bg-red-950/30 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                         >
                           <LogOut className="w-[15px] h-[15px]" />
                           {logoutMutation.isPending
@@ -473,7 +480,7 @@ export function Header() {
             mobileMenuOpen ? "max-h-[600px]" : "max-h-0"
           }`}
         >
-          <div className="relative bg-brand-teal-dark overflow-hidden">
+          <div className="relative bg-brand-teal-dark dark:bg-[#0F0F0F] overflow-hidden">
             {/* Pattern bg */}
             <div
               className="absolute inset-0 opacity-[0.02] pointer-events-none"
@@ -538,6 +545,25 @@ export function Header() {
                   </p>
                 </div>
                 <LanguageSwitcher variant="menu" />
+              </div>
+
+              {/* Theme Toggle — Mobile */}
+              <div
+                className="px-4 pt-2"
+                style={{
+                  animation: mobileMenuOpen
+                    ? "headerMobileIn 0.35s cubic-bezier(0.23,1,0.32,1) 340ms both"
+                    : "none",
+                }}
+              >
+                <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-white/[0.05] border border-white/[0.08]">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-medium text-white/50">
+                      {t("common.theme") || "المظهر"}
+                    </span>
+                  </div>
+                  <ThemeToggle />
+                </div>
               </div>
 
               {/* Auth */}

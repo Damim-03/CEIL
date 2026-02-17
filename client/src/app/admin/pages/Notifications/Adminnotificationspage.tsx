@@ -1,5 +1,5 @@
 /* ===============================================================
-   AdminNotificationsPage.tsx - i18n enabled
+   AdminNotificationsPage.tsx - Brand Colors + Dark Mode
 =============================================================== */
 
 import { useState, useMemo } from "react";
@@ -89,39 +89,48 @@ const PRIORITY_OPTION_KEYS: {
   value: NotificationPriorityType;
   labelKey: string;
   color: string;
+  darkColor: string;
   icon: typeof Info;
 }[] = [
   {
     value: "LOW",
     labelKey: "admin.notifications.priority.low",
-    color: "text-gray-500 bg-gray-50 border-gray-200",
+    color: "text-[#6B5D4F] bg-[#D8CDC0]/15 border-[#D8CDC0]/40",
+    darkColor:
+      "dark:text-[#AAAAAA] dark:bg-[#555555]/15 dark:border-[#555555]/30",
     icon: Info,
   },
   {
     value: "NORMAL",
     labelKey: "admin.notifications.priority.normal",
-    color: "text-blue-600 bg-blue-50 border-blue-200",
+    color: "text-[#2B6F5E] bg-[#2B6F5E]/8 border-[#2B6F5E]/20",
+    darkColor:
+      "dark:text-[#4ADE80] dark:bg-[#4ADE80]/10 dark:border-[#4ADE80]/15",
     icon: Bell,
   },
   {
     value: "HIGH",
     labelKey: "admin.notifications.priority.high",
-    color: "text-amber-600 bg-amber-50 border-amber-200",
+    color: "text-[#C4A035] bg-[#C4A035]/8 border-[#C4A035]/20",
+    darkColor:
+      "dark:text-[#D4A843] dark:bg-[#D4A843]/10 dark:border-[#D4A843]/15",
     icon: AlertTriangle,
   },
   {
     value: "URGENT",
     labelKey: "admin.notifications.priority.urgent",
     color: "text-red-600 bg-red-50 border-red-200",
+    darkColor: "dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/40",
     icon: AlertCircle,
   },
 ];
 
 const PRIORITY_BADGES: Record<string, string> = {
-  LOW: "bg-gray-100 text-gray-600",
-  NORMAL: "bg-blue-100 text-blue-700",
-  HIGH: "bg-amber-100 text-amber-700",
-  URGENT: "bg-red-100 text-red-700",
+  LOW: "bg-[#D8CDC0]/20 text-[#6B5D4F] dark:bg-[#555555]/20 dark:text-[#AAAAAA]",
+  NORMAL:
+    "bg-[#2B6F5E]/10 text-[#2B6F5E] dark:bg-[#4ADE80]/10 dark:text-[#4ADE80]",
+  HIGH: "bg-[#C4A035]/10 text-[#C4A035] dark:bg-[#D4A843]/10 dark:text-[#D4A843]",
+  URGENT: "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400",
 };
 
 function getTargetI18nKey(targetType: string): string {
@@ -159,7 +168,6 @@ function StudentSelector({
   );
   const { data, isLoading } = useSearchStudents(searchQuery);
   const results = data?.students ?? [];
-
   const handleSelect = (student: SelectedStudent) => {
     if (!selectedIds.includes(student.user_id)) {
       setSelectedStudents((prev) => [...prev, student]);
@@ -173,24 +181,24 @@ function StudentSelector({
 
   return (
     <div className="mt-4 space-y-3">
-      <label className="block text-sm font-medium text-gray-700">
+      <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
         {t("admin.notifications.studentSelector.label")}
       </label>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t("admin.notifications.studentSelector.placeholder")}
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] bg-white dark:bg-[#222222] text-[#1B1B1B] dark:text-[#E5E5E5] placeholder:text-[#BEB29E] dark:placeholder:text-[#555555] text-sm focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-1 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery("")}
             className="absolute right-3 top-1/2 -translate-y-1/2"
           >
-            <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+            <X className="w-4 h-4 text-[#BEB29E] dark:text-[#666666] hover:text-[#6B5D4F] dark:hover:text-[#AAAAAA]" />
           </button>
         )}
       </div>
@@ -199,12 +207,12 @@ function StudentSelector({
           {selectedStudents.map((s) => (
             <span
               key={s.user_id}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 border border-teal-200 rounded-lg text-xs text-teal-800"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 border border-[#2B6F5E]/20 dark:border-[#4ADE80]/15 rounded-lg text-xs text-[#2B6F5E] dark:text-[#4ADE80]"
             >
               <GraduationCap className="w-3 h-3" /> {s.first_name} {s.last_name}
               <button
                 onClick={() => handleRemove(s.user_id)}
-                className="text-teal-500 hover:text-teal-700 ml-1"
+                className="text-[#2B6F5E] dark:text-[#4ADE80] hover:text-[#1B1B1B] dark:hover:text-white ml-1"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -213,18 +221,18 @@ function StudentSelector({
         </div>
       )}
       {searchQuery.length >= 2 && (
-        <div className="border border-gray-200 rounded-xl max-h-52 overflow-y-auto">
+        <div className="border border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-xl max-h-52 overflow-y-auto bg-white dark:bg-[#1A1A1A]">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
-              <div className="w-5 h-5 border-2 border-teal-200 border-t-teal-600 rounded-full animate-spin" />
-              <span className="text-sm text-gray-400 ml-2">
+              <div className="w-5 h-5 border-2 border-[#2B6F5E]/20 dark:border-[#4ADE80]/20 border-t-[#2B6F5E] dark:border-t-[#4ADE80] rounded-full animate-spin" />
+              <span className="text-sm text-[#BEB29E] dark:text-[#666666] ml-2">
                 {t("admin.notifications.studentSelector.searching")}
               </span>
             </div>
           ) : results.length === 0 ? (
             <div className="text-center py-6">
-              <GraduationCap className="w-6 h-6 text-gray-200 mx-auto mb-1" />
-              <p className="text-sm text-gray-400">
+              <GraduationCap className="w-6 h-6 text-[#D8CDC0] dark:text-[#555555] mx-auto mb-1" />
+              <p className="text-sm text-[#BEB29E] dark:text-[#666666]">
                 {t("admin.notifications.studentSelector.noResults", {
                   query: searchQuery,
                 })}
@@ -238,24 +246,26 @@ function StudentSelector({
                   key={s.user_id}
                   onClick={() => !isSelected && handleSelect(s)}
                   disabled={isSelected}
-                  className={`w-full flex items-center gap-3 p-3 text-left transition-colors border-b border-gray-50 last:border-b-0 ${isSelected ? "bg-teal-50/50 opacity-60 cursor-not-allowed" : "hover:bg-gray-50 cursor-pointer"}`}
+                  className={`w-full flex items-center gap-3 p-3 text-left transition-colors border-b border-[#D8CDC0]/10 dark:border-[#2A2A2A] last:border-b-0 ${isSelected ? "bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 opacity-60 cursor-not-allowed" : "hover:bg-[#D8CDC0]/8 dark:hover:bg-[#222222] cursor-pointer"}`}
                 >
-                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                    <GraduationCap className="w-4 h-4 text-gray-400" />
+                  <div className="w-8 h-8 rounded-full bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] flex items-center justify-center shrink-0">
+                    <GraduationCap className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-800">
+                    <p className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                       {s.first_name} {s.last_name}
                       {isSelected && (
-                        <span className="text-xs text-teal-600 ml-2">
+                        <span className="text-xs text-[#2B6F5E] dark:text-[#4ADE80] ml-2">
                           ✓ {t("admin.notifications.studentSelector.selected")}
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-gray-400 truncate">{s.email}</p>
+                    <p className="text-xs text-[#BEB29E] dark:text-[#666666] truncate">
+                      {s.email}
+                    </p>
                   </div>
                   {!isSelected && (
-                    <span className="text-xs text-teal-600 shrink-0">
+                    <span className="text-xs text-[#2B6F5E] dark:text-[#4ADE80] shrink-0">
                       + {t("admin.notifications.studentSelector.add")}
                     </span>
                   )}
@@ -266,12 +276,12 @@ function StudentSelector({
         </div>
       )}
       {searchQuery.length > 0 && searchQuery.length < 2 && (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-[#BEB29E] dark:text-[#666666]">
           {t("admin.notifications.studentSelector.minChars")}
         </p>
       )}
       {selectedIds.length > 0 && (
-        <p className="text-xs text-teal-600 font-medium">
+        <p className="text-xs text-[#2B6F5E] dark:text-[#4ADE80] font-medium">
           {t("admin.notifications.studentSelector.selectedCount", {
             count: selectedIds.length,
           })}
@@ -280,6 +290,7 @@ function StudentSelector({
     </div>
   );
 }
+
 /* ── MAIN PAGE ── */
 
 export default function AdminNotificationsPage() {
@@ -290,27 +301,27 @@ export default function AdminNotificationsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
-              <Bell className="w-5 h-5 text-teal-700" />
+          <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 flex items-center justify-center">
+              <Bell className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
             </div>
             {t("admin.notifications.title")}
           </h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-[#BEB29E] dark:text-[#666666] text-sm mt-1">
             {t("admin.notifications.subtitle")}
           </p>
         </div>
       </div>
-      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit">
+      <div className="flex gap-1 p-1 bg-[#D8CDC0]/15 dark:bg-[#222222] rounded-xl w-fit">
         <button
           onClick={() => setActiveTab("send")}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === "send" ? "bg-white text-teal-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === "send" ? "bg-white dark:bg-[#1A1A1A] text-[#2B6F5E] dark:text-[#4ADE80] shadow-sm" : "text-[#6B5D4F] dark:text-[#888888] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]"}`}
         >
           <Send className="w-4 h-4" /> {t("admin.notifications.tabs.send")}
         </button>
         <button
           onClick={() => setActiveTab("list")}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === "list" ? "bg-white text-teal-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === "list" ? "bg-white dark:bg-[#1A1A1A] text-[#2B6F5E] dark:text-[#4ADE80] shadow-sm" : "text-[#6B5D4F] dark:text-[#888888] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]"}`}
         >
           <List className="w-4 h-4" /> {t("admin.notifications.tabs.sent")}
         </button>
@@ -437,13 +448,16 @@ function SendNotificationForm() {
     t,
   ]);
 
+  const inputClass =
+    "w-full rounded-xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] bg-white dark:bg-[#222222] text-[#1B1B1B] dark:text-[#E5E5E5] placeholder:text-[#BEB29E] dark:placeholder:text-[#555555] px-4 py-3 text-sm focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-1 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20";
+
   return (
     <div className="grid lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
         {/* Target Type */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6">
-          <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Users className="w-4 h-4 text-teal-600" />{" "}
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6">
+          <h3 className="text-base font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-4 flex items-center gap-2">
+            <Users className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />{" "}
             {t("admin.notifications.form.targetAudience")}
           </h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -462,22 +476,24 @@ function SendNotificationForm() {
                       user_ids: [],
                     }))
                   }
-                  className={`relative p-4 rounded-xl border-2 text-left transition-all ${isActive ? "border-teal-500 bg-teal-50/50" : "border-gray-200 hover:border-gray-300 bg-white"}`}
+                  className={`relative p-4 rounded-xl border-2 text-left transition-all ${isActive ? "border-[#2B6F5E] dark:border-[#4ADE80] bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5" : "border-[#D8CDC0]/60 dark:border-[#2A2A2A] hover:border-[#D8CDC0] dark:hover:border-[#555555] bg-white dark:bg-[#1A1A1A]"}`}
                 >
                   {isActive && (
                     <div className="absolute top-2 right-2">
-                      <CheckCircle2 className="w-5 h-5 text-teal-600" />
+                      <CheckCircle2 className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
                     </div>
                   )}
                   <Icon
-                    className={`w-6 h-6 mb-2 ${isActive ? "text-teal-600" : "text-gray-400"}`}
+                    className={`w-6 h-6 mb-2 ${isActive ? "text-[#2B6F5E] dark:text-[#4ADE80]" : "text-[#BEB29E] dark:text-[#666666]"}`}
                   />
                   <p
-                    className={`text-sm font-medium ${isActive ? "text-teal-900" : "text-gray-700"}`}
+                    className={`text-sm font-medium ${isActive ? "text-[#2B6F5E] dark:text-[#4ADE80]" : "text-[#1B1B1B] dark:text-[#E5E5E5]"}`}
                   >
                     {t(opt.labelKey)}
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">{t(opt.descKey)}</p>
+                  <p className="text-xs text-[#BEB29E] dark:text-[#666666] mt-1">
+                    {t(opt.descKey)}
+                  </p>
                 </button>
               );
             })}
@@ -485,7 +501,7 @@ function SendNotificationForm() {
 
           {form.target_type === "COURSE" && (
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
                 {t("admin.notifications.form.selectCourse")}
               </label>
               <select
@@ -493,7 +509,7 @@ function SendNotificationForm() {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, course_id: e.target.value }))
                 }
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                className={inputClass}
               >
                 <option value="">
                   {t("admin.notifications.form.selectCourseOption")}
@@ -510,7 +526,7 @@ function SendNotificationForm() {
 
           {form.target_type === "GROUP" && (
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
                 {t("admin.notifications.form.selectGroup")}
               </label>
               <select
@@ -518,7 +534,7 @@ function SendNotificationForm() {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, group_id: e.target.value }))
                 }
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                className={inputClass}
               >
                 <option value="">
                   {t("admin.notifications.form.selectGroupOption")}
@@ -538,46 +554,45 @@ function SendNotificationForm() {
 
           {form.target_type === "SPECIFIC_TEACHERS" && (
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
                 {t("admin.notifications.form.selectTeachers")}
               </label>
-              <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-xl p-3">
+              <div className="space-y-2 max-h-48 overflow-y-auto border border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-xl p-3 bg-white dark:bg-[#1A1A1A]">
                 {targetsLoading ? (
-                  <p className="text-sm text-gray-400 text-center py-4">
+                  <p className="text-sm text-[#BEB29E] dark:text-[#666666] text-center py-4">
                     {t("admin.notifications.loading")}
                   </p>
                 ) : (
                   targets?.teachers.map((teacher: any) => (
                     <label
                       key={teacher.user_id}
-                      className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${form.user_ids.includes(teacher.user_id) ? "bg-teal-50 border border-teal-200" : "hover:bg-gray-50 border border-transparent"}`}
+                      className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${form.user_ids.includes(teacher.user_id) ? "bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 border border-[#2B6F5E]/20 dark:border-[#4ADE80]/15" : "hover:bg-[#D8CDC0]/8 dark:hover:bg-[#222222] border border-transparent"}`}
                     >
                       <input
                         type="checkbox"
                         checked={form.user_ids.includes(teacher.user_id)}
                         onChange={(e) => {
-                          if (e.target.checked) {
+                          if (e.target.checked)
                             setForm((f) => ({
                               ...f,
                               user_ids: [...f.user_ids, teacher.user_id],
                             }));
-                          } else {
+                          else
                             setForm((f) => ({
                               ...f,
                               user_ids: f.user_ids.filter(
                                 (id) => id !== teacher.user_id,
                               ),
                             }));
-                          }
                         }}
-                        className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                        className="rounded border-[#D8CDC0] dark:border-[#555555] text-[#2B6F5E] focus:ring-[#2B6F5E] dark:focus:ring-[#4ADE80]"
                       />
                       <div>
-                        <p className="text-sm font-medium text-gray-800">
+                        <p className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                           {teacher.first_name} {teacher.last_name}
                         </p>
                         {teacher.email && (
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-[#BEB29E] dark:text-[#666666]">
                             {teacher.email}
                           </p>
                         )}
@@ -587,7 +602,7 @@ function SendNotificationForm() {
                 )}
               </div>
               {form.user_ids.length > 0 && (
-                <p className="text-xs text-teal-600 mt-2">
+                <p className="text-xs text-[#2B6F5E] dark:text-[#4ADE80] mt-2">
                   {t("admin.notifications.form.teachersSelected", {
                     count: form.user_ids.length,
                   })}
@@ -605,13 +620,13 @@ function SendNotificationForm() {
         </div>
 
         {/* Message Content */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-          <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-            <Send className="w-4 h-4 text-teal-600" />{" "}
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 space-y-4">
+          <h3 className="text-base font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] flex items-center gap-2">
+            <Send className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />{" "}
             {t("admin.notifications.form.content")}
           </h3>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-1.5">
               {t("admin.notifications.form.titleAr")}{" "}
               <span className="text-red-500">*</span>
             </label>
@@ -622,14 +637,14 @@ function SendNotificationForm() {
                 setForm((f) => ({ ...f, title_ar: e.target.value }))
               }
               placeholder={t("admin.notifications.form.titleArPlaceholder")}
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+              className={inputClass}
               dir="rtl"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-1.5">
               {t("admin.notifications.form.titleFr")}{" "}
-              <span className="text-gray-400 text-xs ml-1">
+              <span className="text-xs text-[#BEB29E] dark:text-[#666666] ml-1">
                 {t("admin.notifications.form.optional")}
               </span>
             </label>
@@ -640,12 +655,12 @@ function SendNotificationForm() {
                 setForm((f) => ({ ...f, title: e.target.value }))
               }
               placeholder={t("admin.notifications.form.titleFrPlaceholder")}
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+              className={inputClass}
               dir="ltr"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-1.5">
               {t("admin.notifications.form.messageAr")}{" "}
               <span className="text-red-500">*</span>
             </label>
@@ -656,14 +671,14 @@ function SendNotificationForm() {
               }
               placeholder={t("admin.notifications.form.messageArPlaceholder")}
               rows={4}
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500 resize-none"
+              className={`${inputClass} resize-none`}
               dir="rtl"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-1.5">
               {t("admin.notifications.form.messageFr")}{" "}
-              <span className="text-gray-400 text-xs ml-1">
+              <span className="text-xs text-[#BEB29E] dark:text-[#666666] ml-1">
                 {t("admin.notifications.form.optional")}
               </span>
             </label>
@@ -674,12 +689,12 @@ function SendNotificationForm() {
               }
               placeholder={t("admin.notifications.form.messageFrPlaceholder")}
               rows={3}
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500 resize-none"
+              className={`${inputClass} resize-none`}
               dir="ltr"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
               {t("admin.notifications.form.priority")}
             </label>
             <div className="flex flex-wrap gap-2">
@@ -691,7 +706,7 @@ function SendNotificationForm() {
                     onClick={() =>
                       setForm((f) => ({ ...f, priority: p.value }))
                     }
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${form.priority === p.value ? p.color + " border-current" : "text-gray-400 bg-white border-gray-200 hover:border-gray-300"}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${form.priority === p.value ? `${p.color} ${p.darkColor} border-current` : "text-[#BEB29E] dark:text-[#666666] bg-white dark:bg-[#1A1A1A] border-[#D8CDC0]/60 dark:border-[#2A2A2A] hover:border-[#D8CDC0] dark:hover:border-[#555555]"}`}
                   >
                     <Icon className="w-3.5 h-3.5" /> {t(p.labelKey)}
                   </button>
@@ -704,11 +719,11 @@ function SendNotificationForm() {
 
       {/* Sidebar */}
       <div className="space-y-6">
-        <div className="bg-white rounded-2xl border border-gray-200 p-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6">
+          <h3 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-4">
             {t("admin.notifications.preview.title")}
           </h3>
-          <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+          <div className="bg-[#D8CDC0]/10 dark:bg-[#222222] rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span
                 className={`text-xs px-2.5 py-1 rounded-full font-medium ${PRIORITY_BADGES[form.priority]}`}
@@ -717,29 +732,29 @@ function SendNotificationForm() {
                   `admin.notifications.priority.${form.priority.toLowerCase()}`,
                 )}
               </span>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-[#BEB29E] dark:text-[#666666]">
                 {t("admin.notifications.preview.now")}
               </span>
             </div>
-            <p className="font-semibold text-gray-900 text-sm">
+            <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] text-sm">
               {form.title_ar ||
                 form.title ||
                 t("admin.notifications.preview.titlePlaceholder")}
             </p>
-            <p className="text-gray-600 text-xs leading-relaxed line-clamp-3">
+            <p className="text-[#6B5D4F] dark:text-[#AAAAAA] text-xs leading-relaxed line-clamp-3">
               {form.message_ar ||
                 form.message ||
                 t("admin.notifications.preview.messagePlaceholder")}
             </p>
-            <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
-              <Users className="w-3.5 h-3.5 text-gray-400" />
-              <span className="text-xs text-gray-500">
+            <div className="flex items-center gap-2 pt-2 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+              <Users className="w-3.5 h-3.5 text-[#BEB29E] dark:text-[#666666]" />
+              <span className="text-xs text-[#6B5D4F] dark:text-[#888888]">
                 {t(
                   `admin.notifications.targets.${getTargetI18nKey(form.target_type)}`,
                 )}
               </span>
               {estimatedRecipients !== null && (
-                <span className="text-xs text-teal-600 font-medium ml-auto">
+                <span className="text-xs text-[#2B6F5E] dark:text-[#4ADE80] font-medium ml-auto">
                   ~{estimatedRecipients}{" "}
                   {t("admin.notifications.preview.recipients")}
                 </span>
@@ -751,7 +766,7 @@ function SendNotificationForm() {
         <button
           onClick={handleSubmit}
           disabled={!canSubmit || sendMutation.isPending}
-          className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold transition-all ${canSubmit && !sendMutation.isPending ? "bg-teal-600 text-white hover:bg-teal-700 shadow-lg shadow-teal-600/25" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
+          className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold transition-all ${canSubmit && !sendMutation.isPending ? "bg-[#2B6F5E] text-white hover:bg-[#2B6F5E]/90 shadow-lg shadow-[#2B6F5E]/25 dark:shadow-[#2B6F5E]/10" : "bg-[#D8CDC0]/30 dark:bg-[#2A2A2A] text-[#BEB29E] dark:text-[#666666] cursor-not-allowed"}`}
         >
           {sendMutation.isPending ? (
             <>
@@ -767,35 +782,35 @@ function SendNotificationForm() {
         </button>
 
         {targets && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6">
+            <h3 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-3">
               {t("admin.notifications.quickStats.title")}
             </h3>
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                <span className="text-xs text-[#6B5D4F] dark:text-[#888888] flex items-center gap-1.5">
                   <BookOpen className="w-3.5 h-3.5" />{" "}
                   {t("admin.notifications.quickStats.courses")}
                 </span>
-                <span className="text-sm font-semibold text-gray-800">
+                <span className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                   {targets.courses.length}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                <span className="text-xs text-[#6B5D4F] dark:text-[#888888] flex items-center gap-1.5">
                   <Layers className="w-3.5 h-3.5" />{" "}
                   {t("admin.notifications.quickStats.groups")}
                 </span>
-                <span className="text-sm font-semibold text-gray-800">
+                <span className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                   {targets.groups.length}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                <span className="text-xs text-[#6B5D4F] dark:text-[#888888] flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5" />{" "}
                   {t("admin.notifications.quickStats.teachers")}
                 </span>
-                <span className="text-sm font-semibold text-gray-800">
+                <span className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                   {targets.teachers.length}
                 </span>
               </div>
@@ -806,8 +821,7 @@ function SendNotificationForm() {
     </div>
   );
 }
-
-/* ── NOTIFICATIONS LIST ── */
+/* ── NOTIFICATIONS LIST (continued) ── */
 
 function NotificationsList() {
   const { t } = useTranslation();
@@ -818,7 +832,6 @@ function NotificationsList() {
   const deleteMutation = useDeleteNotification();
   const notifications = data?.data ?? [];
   const meta = data?.meta;
-
   const filtered = useMemo(() => {
     if (!searchQuery) return notifications;
     const q = searchQuery.toLowerCase();
@@ -839,34 +852,34 @@ function NotificationsList() {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("admin.notifications.list.searchPlaceholder")}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] bg-white dark:bg-[#222222] text-[#1B1B1B] dark:text-[#E5E5E5] placeholder:text-[#BEB29E] dark:placeholder:text-[#555555] text-sm focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-1 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
               className="absolute right-3 top-1/2 -translate-y-1/2"
             >
-              <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+              <X className="w-4 h-4 text-[#BEB29E] dark:text-[#666666] hover:text-[#6B5D4F] dark:hover:text-[#AAAAAA]" />
             </button>
           )}
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <div className="w-8 h-8 border-3 border-teal-200 border-t-teal-600 rounded-full animate-spin" />
+            <div className="w-8 h-8 border-3 border-[#2B6F5E]/20 dark:border-[#4ADE80]/20 border-t-[#2B6F5E] dark:border-t-[#4ADE80] rounded-full animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">
-            <Bell className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">
+            <Bell className="w-12 h-12 text-[#D8CDC0] dark:text-[#555555] mx-auto mb-3" />
+            <p className="text-[#6B5D4F] dark:text-[#888888] text-sm">
               {t("admin.notifications.list.noNotifications")}
             </p>
           </div>
@@ -874,31 +887,31 @@ function NotificationsList() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left text-xs font-medium text-gray-500 px-5 py-3">
+                <tr className="bg-[#D8CDC0]/8 dark:bg-[#0F0F0F] border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+                  <th className="text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] px-5 py-3">
                     {t("admin.notifications.list.colTitle")}
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-5 py-3">
+                  <th className="text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] px-5 py-3">
                     {t("admin.notifications.list.colTarget")}
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-5 py-3">
+                  <th className="text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] px-5 py-3">
                     {t("admin.notifications.list.colPriority")}
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-5 py-3">
+                  <th className="text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] px-5 py-3">
                     {t("admin.notifications.list.colRecipients")}
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-5 py-3">
+                  <th className="text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] px-5 py-3">
                     {t("admin.notifications.list.colRead")}
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-5 py-3">
+                  <th className="text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] px-5 py-3">
                     {t("admin.notifications.list.colDate")}
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-5 py-3">
+                  <th className="text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] px-5 py-3">
                     {t("admin.notifications.list.colActions")}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[#D8CDC0]/15 dark:divide-[#2A2A2A]">
                 {filtered.map((n: any) => {
                   const readPct =
                     n.total_recipients > 0
@@ -907,31 +920,31 @@ function NotificationsList() {
                   return (
                     <tr
                       key={n.notification_id}
-                      className="hover:bg-gray-50/50 transition-colors"
+                      className="hover:bg-[#D8CDC0]/5 dark:hover:bg-[#222222] transition-colors"
                     >
                       <td className="px-5 py-4">
-                        <p className="text-sm font-medium text-gray-900 line-clamp-1">
+                        <p className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] line-clamp-1">
                           {n.title_ar || n.title}
                         </p>
-                        <p className="text-xs text-gray-400 line-clamp-1 mt-0.5">
+                        <p className="text-xs text-[#BEB29E] dark:text-[#666666] line-clamp-1 mt-0.5">
                           {n.message_ar?.slice(0, 60) ||
                             n.message?.slice(0, 60)}
                           ...
                         </p>
                       </td>
                       <td className="px-5 py-4">
-                        <span className="text-xs text-gray-600 bg-gray-100 px-2.5 py-1 rounded-lg">
+                        <span className="text-xs text-[#6B5D4F] dark:text-[#AAAAAA] bg-[#D8CDC0]/15 dark:bg-[#2A2A2A] px-2.5 py-1 rounded-lg">
                           {t(
                             `admin.notifications.targets.${getTargetI18nKey(n.target_type)}`,
                           )}
                         </span>
                         {n.course && (
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-xs text-[#BEB29E] dark:text-[#666666] mt-1">
                             {n.course.course_name}
                           </p>
                         )}
                         {n.group && (
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-xs text-[#BEB29E] dark:text-[#666666] mt-1">
                             {n.group.name}
                           </p>
                         )}
@@ -946,25 +959,25 @@ function NotificationsList() {
                         </span>
                       </td>
                       <td className="px-5 py-4">
-                        <span className="text-sm font-semibold text-gray-800">
+                        <span className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                           {n.total_recipients}
                         </span>
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="w-16 h-1.5 bg-[#D8CDC0]/30 dark:bg-[#2A2A2A] rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-teal-500 rounded-full transition-all"
+                              className="h-full bg-[#2B6F5E] dark:bg-[#4ADE80] rounded-full transition-all"
                               style={{ width: `${readPct}%` }}
                             />
                           </div>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-[#6B5D4F] dark:text-[#888888]">
                             {readPct}%
                           </span>
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <div className="flex items-center gap-1.5 text-xs text-[#6B5D4F] dark:text-[#888888]">
                           <Clock className="w-3.5 h-3.5" />
                           {new Date(n.created_at).toLocaleDateString("en-US", {
                             day: "numeric",
@@ -977,7 +990,7 @@ function NotificationsList() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setSelectedId(n.notification_id)}
-                            className="p-2 rounded-lg hover:bg-teal-50 text-gray-400 hover:text-teal-600 transition-colors"
+                            className="p-2 rounded-lg hover:bg-[#2B6F5E]/8 dark:hover:bg-[#4ADE80]/10 text-[#BEB29E] dark:text-[#666666] hover:text-[#2B6F5E] dark:hover:text-[#4ADE80] transition-colors"
                             title={t("admin.notifications.list.viewDetails")}
                           >
                             <Eye className="w-4 h-4" />
@@ -991,7 +1004,7 @@ function NotificationsList() {
                               )
                                 deleteMutation.mutate(n.notification_id);
                             }}
-                            className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
+                            className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-[#BEB29E] dark:text-[#666666] hover:text-red-600 dark:hover:text-red-400 transition-colors"
                             title={t("admin.notifications.list.delete")}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1007,8 +1020,8 @@ function NotificationsList() {
         )}
 
         {meta && meta.pages > 1 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
-            <p className="text-xs text-gray-500">
+          <div className="flex items-center justify-between px-5 py-3 border-t border-[#D8CDC0]/15 dark:border-[#2A2A2A]">
+            <p className="text-xs text-[#6B5D4F] dark:text-[#888888]">
               {t("admin.notifications.list.pagination", {
                 page: meta.page,
                 pages: meta.pages,
@@ -1019,16 +1032,16 @@ function NotificationsList() {
               <button
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1.5 rounded-lg hover:bg-[#D8CDC0]/15 dark:hover:bg-[#222222] disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4 text-[#6B5D4F] dark:text-[#AAAAAA]" />
               </button>
               <button
                 disabled={page >= meta.pages}
                 onClick={() => setPage((p) => p + 1)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1.5 rounded-lg hover:bg-[#D8CDC0]/15 dark:hover:bg-[#222222] disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4 text-[#6B5D4F] dark:text-[#AAAAAA]" />
               </button>
             </div>
           </div>
@@ -1054,25 +1067,24 @@ function NotificationDetail({
   if (isLoading)
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-3 border-teal-200 border-t-teal-600 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-3 border-[#2B6F5E]/20 dark:border-[#4ADE80]/20 border-t-[#2B6F5E] dark:border-t-[#4ADE80] rounded-full animate-spin" />
       </div>
     );
 
-  if (!notification) {
+  if (!notification)
     return (
       <div className="text-center py-20">
-        <p className="text-gray-500">
+        <p className="text-[#6B5D4F] dark:text-[#888888]">
           {t("admin.notifications.detail.notFound")}
         </p>
         <button
           onClick={onBack}
-          className="text-teal-600 text-sm mt-2 hover:underline"
+          className="text-[#2B6F5E] dark:text-[#4ADE80] text-sm mt-2 hover:underline"
         >
           {t("admin.notifications.detail.goBack")}
         </button>
       </div>
     );
-  }
 
   const readCount =
     notification.recipients?.filter((r: any) => r.is_read).length ?? 0;
@@ -1085,7 +1097,7 @@ function NotificationDetail({
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-2 text-sm text-[#6B5D4F] dark:text-[#AAAAAA] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5] transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />{" "}
           {t("admin.notifications.detail.backToList")}
@@ -1095,14 +1107,14 @@ function NotificationDetail({
             if (confirm(t("admin.notifications.list.confirmDelete")))
               deleteMutation.mutate(id, { onSuccess: () => onBack() });
           }}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 text-red-600 text-sm hover:bg-red-50 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 text-sm hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
         >
           <Trash2 className="w-4 h-4" />{" "}
           {t("admin.notifications.detail.delete")}
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6">
         <div className="flex items-start justify-between gap-4 mb-6">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
@@ -1113,21 +1125,23 @@ function NotificationDetail({
                   `admin.notifications.priority.${(notification.priority || "NORMAL").toLowerCase()}`,
                 )}
               </span>
-              <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-lg">
+              <span className="text-xs text-[#6B5D4F] dark:text-[#888888] bg-[#D8CDC0]/15 dark:bg-[#2A2A2A] px-2.5 py-1 rounded-lg">
                 {t(
                   `admin.notifications.targets.${getTargetI18nKey(notification.target_type)}`,
                 )}
               </span>
             </div>
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
               {notification.title_ar || notification.title}
             </h2>
             {notification.title_ar && notification.title && (
-              <p className="text-sm text-gray-500">{notification.title}</p>
+              <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
+                {notification.title}
+              </p>
             )}
           </div>
           <div className="text-right shrink-0">
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-[#BEB29E] dark:text-[#666666]">
               {new Date(notification.created_at).toLocaleDateString("en-US", {
                 day: "numeric",
                 month: "long",
@@ -1139,35 +1153,39 @@ function NotificationDetail({
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-5 space-y-3">
-          <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
+        <div className="bg-[#D8CDC0]/10 dark:bg-[#222222] rounded-xl p-5 space-y-3">
+          <p className="text-[#1B1B1B] dark:text-[#E5E5E5] text-sm leading-relaxed whitespace-pre-wrap">
             {notification.message_ar || notification.message}
           </p>
           {notification.message_ar && notification.message && (
-            <p className="text-gray-500 text-sm leading-relaxed border-t border-gray-200 pt-3">
+            <p className="text-[#6B5D4F] dark:text-[#888888] text-sm leading-relaxed border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A] pt-3">
               {notification.message}
             </p>
           )}
         </div>
 
         <div className="grid grid-cols-3 gap-4 mt-6">
-          <div className="bg-gray-50 rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-gray-900">{totalCount}</p>
-            <p className="text-xs text-gray-500 mt-1">
+          <div className="bg-[#D8CDC0]/10 dark:bg-[#222222] rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+              {totalCount}
+            </p>
+            <p className="text-xs text-[#6B5D4F] dark:text-[#888888] mt-1">
               {t("admin.notifications.detail.totalRecipients")}
             </p>
           </div>
-          <div className="bg-teal-50 rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-teal-700">{readCount}</p>
-            <p className="text-xs text-teal-600 mt-1">
+          <div className="bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold text-[#2B6F5E] dark:text-[#4ADE80]">
+              {readCount}
+            </p>
+            <p className="text-xs text-[#2B6F5E] dark:text-[#4ADE80] mt-1">
               {t("admin.notifications.detail.read")}
             </p>
           </div>
-          <div className="bg-amber-50 rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-amber-700">
+          <div className="bg-[#C4A035]/5 dark:bg-[#D4A843]/5 rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold text-[#C4A035] dark:text-[#D4A843]">
               {totalCount - readCount}
             </p>
-            <p className="text-xs text-amber-600 mt-1">
+            <p className="text-xs text-[#C4A035] dark:text-[#D4A843] mt-1">
               {t("admin.notifications.detail.unread")}
             </p>
           </div>
@@ -1175,29 +1193,29 @@ function NotificationDetail({
 
         <div className="mt-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-[#6B5D4F] dark:text-[#888888]">
               {t("admin.notifications.detail.readRate")}
             </span>
-            <span className="text-sm font-semibold text-teal-700">
+            <span className="text-sm font-semibold text-[#2B6F5E] dark:text-[#4ADE80]">
               {readPct}%
             </span>
           </div>
-          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-[#D8CDC0]/30 dark:bg-[#2A2A2A] rounded-full overflow-hidden">
             <div
-              className="h-full bg-linear-to-r from-teal-400 to-teal-600 rounded-full transition-all duration-500"
+              className="h-full bg-linear-to-r from-[#8DB896] to-[#2B6F5E] dark:from-[#4ADE80]/70 dark:to-[#4ADE80] rounded-full transition-all duration-500"
               style={{ width: `${readPct}%` }}
             />
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h3 className="text-sm font-semibold text-gray-900">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden">
+        <div className="px-6 py-4 border-b border-[#D8CDC0]/15 dark:border-[#2A2A2A]">
+          <h3 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
             {t("admin.notifications.detail.recipients")} ({totalCount})
           </h3>
         </div>
-        <div className="divide-y divide-gray-50 max-h-96 overflow-y-auto">
+        <div className="divide-y divide-[#D8CDC0]/10 dark:divide-[#2A2A2A] max-h-96 overflow-y-auto">
           {notification.recipients?.map((r: any) => {
             const name = r.user.student
               ? `${r.user.student.first_name} ${r.user.student.last_name}`
@@ -1207,10 +1225,10 @@ function NotificationDetail({
             return (
               <div
                 key={r.recipient_id}
-                className="flex items-center justify-between px-6 py-3 hover:bg-gray-50/50"
+                className="flex items-center justify-between px-6 py-3 hover:bg-[#D8CDC0]/5 dark:hover:bg-[#222222]"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] flex items-center justify-center shrink-0">
                     {r.user.google_avatar ? (
                       <img
                         src={r.user.google_avatar}
@@ -1218,29 +1236,33 @@ function NotificationDetail({
                         alt=""
                       />
                     ) : (
-                      <User className="w-4 h-4 text-gray-400" />
+                      <User className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-800">{name}</p>
-                    <p className="text-xs text-gray-400">{r.user.email}</p>
+                    <p className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
+                      {name}
+                    </p>
+                    <p className="text-xs text-[#BEB29E] dark:text-[#666666]">
+                      {r.user.email}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`text-xs px-2 py-0.5 rounded-full ${r.user.role === "STUDENT" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}
+                    className={`text-xs px-2 py-0.5 rounded-full ${r.user.role === "STUDENT" ? "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80]" : "bg-[#C4A035]/8 dark:bg-[#D4A843]/10 text-[#C4A035] dark:text-[#D4A843]"}`}
                   >
                     {r.user.role === "STUDENT"
                       ? t("admin.notifications.detail.student")
                       : t("admin.notifications.detail.teacher")}
                   </span>
                   {r.is_read ? (
-                    <span className="flex items-center gap-1 text-xs text-teal-600">
+                    <span className="flex items-center gap-1 text-xs text-[#2B6F5E] dark:text-[#4ADE80]">
                       <CheckCircle2 className="w-3.5 h-3.5" />{" "}
                       {t("admin.notifications.detail.read")}
                     </span>
                   ) : (
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-[#BEB29E] dark:text-[#666666]">
                       {t("admin.notifications.detail.unread")}
                     </span>
                   )}

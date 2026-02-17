@@ -45,20 +45,20 @@ const useStatusConfig = () => {
   return {
     PAID: {
       label: t("admin.fees.paid"),
-      color: "text-[#2B6F5E]",
-      bg: "bg-[#8DB896]/12 border-[#8DB896]/30",
+      color: "text-[#2B6F5E] dark:text-[#4ADE80]",
+      bg: "bg-[#8DB896]/12 dark:bg-[#4ADE80]/10 border-[#8DB896]/30 dark:border-[#4ADE80]/20",
       icon: CheckCircle2,
     },
     UNPAID: {
       label: t("admin.fees.unpaid"),
-      color: "text-[#C4A035]",
-      bg: "bg-[#C4A035]/8 border-[#C4A035]/20",
+      color: "text-[#C4A035] dark:text-[#D4A843]",
+      bg: "bg-[#C4A035]/8 dark:bg-[#C4A035]/10 border-[#C4A035]/20 dark:border-[#C4A035]/15",
       icon: Clock,
     },
     OVERDUE: {
       label: t("admin.fees.overdue"),
-      color: "text-red-700",
-      bg: "bg-red-50 border-red-200",
+      color: "text-red-700 dark:text-red-400",
+      bg: "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/40",
       icon: AlertCircle,
     },
   } as Record<
@@ -104,18 +104,20 @@ const Dialog = ({
   return (
     <>
       <div
-        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-[#D8CDC0]/60 overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#D8CDC0]/30 bg-[#D8CDC0]/8">
-            <h3 className="text-lg font-bold text-[#1B1B1B]">{title}</h3>
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-2xl dark:shadow-black/50 w-full max-w-lg border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A] bg-[#D8CDC0]/8 dark:bg-[#0F0F0F]">
+            <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+              {title}
+            </h3>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-[#D8CDC0]/20 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-[#D8CDC0]/20 dark:hover:bg-[#222222] transition-colors"
             >
-              <X className="w-4 h-4 text-[#BEB29E]" />
+              <X className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
             </button>
           </div>
           <div className="px-6 py-5">{children}</div>
@@ -171,25 +173,25 @@ const CreateFeeForm = ({ onClose }: { onClose: () => void }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="block text-sm font-semibold text-[#1B1B1B] mb-2">
+        <label className="block text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
           {t("admin.fees.student")} <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <button
             type="button"
             onClick={() => setShowStudentDropdown(!showStudentDropdown)}
-            className="w-full h-11 flex items-center justify-between px-4 rounded-xl border-2 border-[#D8CDC0]/60 bg-white text-sm font-medium hover:border-[#2B6F5E]/40 transition-all"
+            className="w-full h-11 flex items-center justify-between px-4 rounded-xl border-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] bg-white dark:bg-[#222222] text-sm font-medium hover:border-[#2B6F5E]/40 dark:hover:border-[#4ADE80]/30 transition-all"
           >
             <span
               className={
                 selectedStudent
-                  ? "text-[#1B1B1B] flex items-center gap-2"
-                  : "text-[#BEB29E] flex items-center gap-2"
+                  ? "text-[#1B1B1B] dark:text-[#E5E5E5] flex items-center gap-2"
+                  : "text-[#BEB29E] dark:text-[#666666] flex items-center gap-2"
               }
             >
               {selectedStudent ? (
                 <>
-                  <User className="w-4 h-4 text-[#2B6F5E]" />
+                  <User className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
                   {selectedStudent.first_name} {selectedStudent.last_name}
                 </>
               ) : (
@@ -200,23 +202,23 @@ const CreateFeeForm = ({ onClose }: { onClose: () => void }) => {
               )}
             </span>
             <ChevronDown
-              className={`w-4 h-4 text-[#BEB29E] transition-transform ${showStudentDropdown ? "rotate-180" : ""}`}
+              className={`w-4 h-4 text-[#BEB29E] dark:text-[#666666] transition-transform ${showStudentDropdown ? "rotate-180" : ""}`}
             />
           </button>
           {showStudentDropdown && (
-            <div className="absolute z-10 mt-2 w-full bg-white border-2 border-[#D8CDC0]/60 rounded-xl shadow-2xl overflow-hidden">
-              <div className="p-3 border-b border-[#D8CDC0]/30 bg-[#D8CDC0]/8">
+            <div className="absolute z-10 mt-2 w-full bg-white dark:bg-[#1A1A1A] border-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-xl shadow-2xl dark:shadow-black/50 overflow-hidden">
+              <div className="p-3 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A] bg-[#D8CDC0]/8 dark:bg-[#0F0F0F]">
                 <Input
                   placeholder={t("admin.fees.searchStudents")}
                   value={studentSearch}
                   onChange={(e) => setStudentSearch(e.target.value)}
-                  className="h-9 text-sm border-[#D8CDC0]/60 focus:border-[#2B6F5E] focus:ring-[#2B6F5E]/20"
+                  className="h-9 text-sm border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
                   autoFocus
                 />
               </div>
               <ul className="max-h-48 overflow-y-auto py-1">
                 {studentsLoading ? (
-                  <li className="px-4 py-4 flex items-center justify-center gap-2 text-xs text-[#BEB29E]">
+                  <li className="px-4 py-4 flex items-center justify-center gap-2 text-xs text-[#BEB29E] dark:text-[#666666]">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     {t("common.loading")}
                   </li>
@@ -230,22 +232,24 @@ const CreateFeeForm = ({ onClose }: { onClose: () => void }) => {
                           setShowStudentDropdown(false);
                           setEnrollmentId("");
                         }}
-                        className={`w-full text-left px-4 py-3 flex items-center gap-3 text-sm transition-all ${studentId === s.student_id ? "bg-[#2B6F5E]/5 text-[#2B6F5E] border-l-4 border-[#2B6F5E]" : "text-[#1B1B1B] hover:bg-[#D8CDC0]/10"}`}
+                        className={`w-full text-left px-4 py-3 flex items-center gap-3 text-sm transition-all ${studentId === s.student_id ? "bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 text-[#2B6F5E] dark:text-[#4ADE80] border-l-4 border-[#2B6F5E] dark:border-[#4ADE80]" : "text-[#1B1B1B] dark:text-[#E5E5E5] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222]"}`}
                       >
-                        <div className="w-8 h-8 rounded-full bg-[#C4A035]/10 flex items-center justify-center">
-                          <User className="w-4 h-4 text-[#C4A035]" />
+                        <div className="w-8 h-8 rounded-full bg-[#C4A035]/10 dark:bg-[#D4A843]/10 flex items-center justify-center">
+                          <User className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843]" />
                         </div>
                         <div>
                           <p className="font-medium">
                             {s.first_name} {s.last_name}
                           </p>
-                          <p className="text-xs text-[#BEB29E]">{s.email}</p>
+                          <p className="text-xs text-[#BEB29E] dark:text-[#666666]">
+                            {s.email}
+                          </p>
                         </div>
                       </button>
                     </li>
                   ))
                 ) : (
-                  <li className="px-4 py-8 text-center text-sm text-[#BEB29E]">
+                  <li className="px-4 py-8 text-center text-sm text-[#BEB29E] dark:text-[#666666]">
                     {t("admin.fees.noStudentsFound")}
                   </li>
                 )}
@@ -257,16 +261,16 @@ const CreateFeeForm = ({ onClose }: { onClose: () => void }) => {
 
       {studentId && studentEnrollments.length > 0 && (
         <div>
-          <label className="block text-sm font-semibold text-[#1B1B1B] mb-2">
+          <label className="block text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
             {t("admin.fees.enrollment")}{" "}
-            <span className="text-xs font-normal text-[#BEB29E]">
+            <span className="text-xs font-normal text-[#BEB29E] dark:text-[#666666]">
               ({t("admin.fees.optional")})
             </span>
           </label>
           <select
             value={enrollmentId}
             onChange={(e) => setEnrollmentId(e.target.value)}
-            className="w-full h-11 px-4 rounded-xl border-2 border-[#D8CDC0]/60 bg-white text-sm font-medium hover:border-[#2B6F5E]/40 transition-all focus:outline-none focus:ring-4 focus:ring-[#2B6F5E]/20"
+            className="w-full h-11 px-4 rounded-xl border-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] bg-white dark:bg-[#222222] text-[#1B1B1B] dark:text-[#E5E5E5] text-sm font-medium hover:border-[#2B6F5E]/40 dark:hover:border-[#4ADE80]/30 transition-all focus:outline-none focus:ring-4 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
           >
             <option value="">{t("admin.fees.noSpecificEnrollment")}</option>
             {studentEnrollments.map((e: any) => (
@@ -281,12 +285,12 @@ const CreateFeeForm = ({ onClose }: { onClose: () => void }) => {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold text-[#1B1B1B] mb-2">
+          <label className="block text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
             {t("admin.fees.amountDZD")} <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2">
-              <DollarSign className="w-4 h-4 text-[#BEB29E]" />
+              <DollarSign className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
             </div>
             <Input
               type="number"
@@ -294,20 +298,20 @@ const CreateFeeForm = ({ onClose }: { onClose: () => void }) => {
               placeholder="5000"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="pl-10 h-11 border-[#D8CDC0]/60 focus:border-[#2B6F5E] focus:ring-[#2B6F5E]/20"
+              className="pl-10 h-11 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
               required
             />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-semibold text-[#1B1B1B] mb-2">
+          <label className="block text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
             {t("admin.fees.dueDate")} <span className="text-red-500">*</span>
           </label>
           <Input
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="h-11 border-[#D8CDC0]/60 focus:border-[#2B6F5E] focus:ring-[#2B6F5E]/20"
+            className="h-11 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
             required
           />
         </div>
@@ -318,7 +322,7 @@ const CreateFeeForm = ({ onClose }: { onClose: () => void }) => {
           type="button"
           variant="ghost"
           onClick={onClose}
-          className="text-[#6B5D4F]"
+          className="text-[#6B5D4F] dark:text-[#AAAAAA] dark:hover:bg-[#222222]"
         >
           {t("admin.fees.cancel")}
         </Button>
@@ -365,25 +369,29 @@ const MarkPaidForm = ({ fee, onClose }: { fee: Fee; onClose: () => void }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="p-4 rounded-xl bg-[#2B6F5E]/5 border border-[#2B6F5E]/15">
+      <div className="p-4 rounded-xl bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 border border-[#2B6F5E]/15 dark:border-[#4ADE80]/15">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-[#6B5D4F]">{t("admin.fees.student")}</p>
-            <p className="font-semibold text-[#1B1B1B]">
+            <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
+              {t("admin.fees.student")}
+            </p>
+            <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
               {(fee as any).student?.first_name}{" "}
               {(fee as any).student?.last_name}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-[#6B5D4F]">{t("admin.fees.amount")}</p>
-            <p className="text-2xl font-bold text-[#2B6F5E]">
+            <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
+              {t("admin.fees.amount")}
+            </p>
+            <p className="text-2xl font-bold text-[#2B6F5E] dark:text-[#4ADE80]">
               {formatCurrency(fee.amount)}
             </p>
           </div>
         </div>
       </div>
       <div>
-        <label className="block text-sm font-semibold text-[#1B1B1B] mb-3">
+        <label className="block text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-3">
           {t("admin.fees.paymentMethod")}
         </label>
         <div className="grid grid-cols-2 gap-3">
@@ -392,7 +400,7 @@ const MarkPaidForm = ({ fee, onClose }: { fee: Fee; onClose: () => void }) => {
               key={method.value}
               type="button"
               onClick={() => setPaymentMethod(method.value)}
-              className={`flex items-center gap-3 p-3 rounded-xl border-2 text-sm font-medium transition-all ${paymentMethod === method.value ? "border-[#2B6F5E] bg-[#2B6F5E]/5 text-[#2B6F5E] ring-4 ring-[#2B6F5E]/10" : "border-[#D8CDC0]/60 hover:border-[#D8CDC0] text-[#6B5D4F]"}`}
+              className={`flex items-center gap-3 p-3 rounded-xl border-2 text-sm font-medium transition-all ${paymentMethod === method.value ? "border-[#2B6F5E] dark:border-[#4ADE80] bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 text-[#2B6F5E] dark:text-[#4ADE80] ring-4 ring-[#2B6F5E]/10 dark:ring-[#4ADE80]/10" : "border-[#D8CDC0]/60 dark:border-[#2A2A2A] hover:border-[#D8CDC0] dark:hover:border-[#555555] text-[#6B5D4F] dark:text-[#AAAAAA]"}`}
             >
               <span className="text-xl">{method.icon}</span>
               {t(`admin.fees.paymentMethods.${method.label}`)}
@@ -401,21 +409,21 @@ const MarkPaidForm = ({ fee, onClose }: { fee: Fee; onClose: () => void }) => {
         </div>
       </div>
       <div>
-        <label className="block text-sm font-semibold text-[#1B1B1B] mb-2">
+        <label className="block text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
           {t("admin.fees.referenceCode")}{" "}
-          <span className="text-xs font-normal text-[#BEB29E]">
+          <span className="text-xs font-normal text-[#BEB29E] dark:text-[#666666]">
             ({t("admin.fees.optional")})
           </span>
         </label>
         <div className="relative">
           <div className="absolute left-3 top-1/2 -translate-y-1/2">
-            <Hash className="w-4 h-4 text-[#BEB29E]" />
+            <Hash className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
           </div>
           <Input
             placeholder={t("admin.fees.referenceCodePlaceholder")}
             value={referenceCode}
             onChange={(e) => setReferenceCode(e.target.value)}
-            className="pl-10 h-11 border-[#D8CDC0]/60 focus:border-[#2B6F5E] focus:ring-[#2B6F5E]/20"
+            className="pl-10 h-11 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
           />
         </div>
       </div>
@@ -424,7 +432,7 @@ const MarkPaidForm = ({ fee, onClose }: { fee: Fee; onClose: () => void }) => {
           type="button"
           variant="ghost"
           onClick={onClose}
-          className="text-[#6B5D4F]"
+          className="text-[#6B5D4F] dark:text-[#AAAAAA] dark:hover:bg-[#222222]"
         >
           {t("admin.fees.cancel")}
         </Button>
@@ -472,32 +480,32 @@ const EditFeeForm = ({ fee, onClose }: { fee: Fee; onClose: () => void }) => {
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold text-[#1B1B1B] mb-2">
+          <label className="block text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
             {t("admin.fees.amountDZD")}
           </label>
           <div className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2">
-              <DollarSign className="w-4 h-4 text-[#BEB29E]" />
+              <DollarSign className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
             </div>
             <Input
               type="number"
               min={0}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="pl-10 h-11 border-[#D8CDC0]/60 focus:border-[#2B6F5E]"
+              className="pl-10 h-11 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
               required
             />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-semibold text-[#1B1B1B] mb-2">
+          <label className="block text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
             {t("admin.fees.dueDate")}
           </label>
           <Input
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="h-11 border-[#D8CDC0]/60 focus:border-[#2B6F5E]"
+            className="h-11 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
             required
           />
         </div>
@@ -507,7 +515,7 @@ const EditFeeForm = ({ fee, onClose }: { fee: Fee; onClose: () => void }) => {
           type="button"
           variant="ghost"
           onClick={onClose}
-          className="text-[#6B5D4F]"
+          className="text-[#6B5D4F] dark:text-[#AAAAAA] dark:hover:bg-[#222222]"
         >
           {t("admin.fees.cancel")}
         </Button>
@@ -544,13 +552,13 @@ const DeleteConfirm = ({ fee, onClose }: { fee: Fee; onClose: () => void }) => {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl">
-        <AlertCircle className="w-6 h-6 text-red-600 shrink-0" />
+      <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-xl">
+        <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400 shrink-0" />
         <div>
-          <p className="font-semibold text-red-900">
+          <p className="font-semibold text-red-900 dark:text-red-300">
             {t("admin.fees.deleteThisFee")}
           </p>
-          <p className="text-sm text-red-700 mt-1">
+          <p className="text-sm text-red-700 dark:text-red-400 mt-1">
             {t("admin.fees.amount")}:{" "}
             <strong>{formatCurrency(fee.amount)}</strong> —{" "}
             {t("admin.fees.cannotUndo")}
@@ -562,14 +570,14 @@ const DeleteConfirm = ({ fee, onClose }: { fee: Fee; onClose: () => void }) => {
           type="button"
           variant="ghost"
           onClick={onClose}
-          className="text-[#6B5D4F]"
+          className="text-[#6B5D4F] dark:text-[#AAAAAA] dark:hover:bg-[#222222]"
         >
           {t("admin.fees.cancel")}
         </Button>
         <Button
           onClick={handleDelete}
           disabled={deleteFee.isPending}
-          className="bg-red-500 hover:bg-red-600 text-white gap-2"
+          className="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500 text-white gap-2"
         >
           {deleteFee.isPending ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -607,7 +615,7 @@ const FeeRow = ({
     : t("admin.fees.unknown");
 
   return (
-    <div className="group flex items-center gap-4 p-4 rounded-xl border border-[#D8CDC0]/40 hover:border-[#D8CDC0]/60 hover:bg-[#D8CDC0]/5 transition-all duration-200">
+    <div className="group flex items-center gap-4 p-4 rounded-xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] hover:border-[#D8CDC0]/60 dark:hover:border-[#555555]/30 hover:bg-[#D8CDC0]/5 dark:hover:bg-[#222222] transition-all duration-200">
       <div
         className={`w-11 h-11 rounded-xl flex items-center justify-center border ${config.bg} shrink-0`}
       >
@@ -615,14 +623,16 @@ const FeeRow = ({
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="font-semibold text-[#1B1B1B] truncate">{studentName}</p>
+          <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
+            {studentName}
+          </p>
           <span
             className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${config.bg} ${config.color}`}
           >
             {config.label}
           </span>
         </div>
-        <div className="flex items-center gap-3 mt-1 text-xs text-[#BEB29E]">
+        <div className="flex items-center gap-3 mt-1 text-xs text-[#BEB29E] dark:text-[#666666]">
           {fee.due_date && (
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
@@ -637,7 +647,7 @@ const FeeRow = ({
           )}
           {fee.paid_at && (
             <span className="flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3 text-[#2B6F5E]" />
+              <CheckCircle2 className="w-3 h-3 text-[#2B6F5E] dark:text-[#4ADE80]" />
               {t("admin.fees.paidLabel")}: {formatDate(fee.paid_at)}
             </span>
           )}
@@ -645,7 +655,7 @@ const FeeRow = ({
       </div>
       <div className="text-right shrink-0">
         <p
-          className={`text-lg font-bold ${status === "PAID" ? "text-[#2B6F5E]" : status === "OVERDUE" ? "text-red-700" : "text-[#1B1B1B]"}`}
+          className={`text-lg font-bold ${status === "PAID" ? "text-[#2B6F5E] dark:text-[#4ADE80]" : status === "OVERDUE" ? "text-red-700 dark:text-red-400" : "text-[#1B1B1B] dark:text-[#E5E5E5]"}`}
         >
           {formatCurrency(fee.amount)}
         </p>
@@ -654,7 +664,7 @@ const FeeRow = ({
         {status !== "PAID" && (
           <button
             onClick={() => onMarkPaid(fee)}
-            className="p-2 rounded-lg hover:bg-[#8DB896]/15 text-[#2B6F5E] transition-colors"
+            className="p-2 rounded-lg hover:bg-[#8DB896]/15 dark:hover:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80] transition-colors"
             title={t("admin.fees.markAsPaid")}
           >
             <BadgeCheck className="w-4 h-4" />
@@ -663,7 +673,7 @@ const FeeRow = ({
         {status !== "PAID" && (
           <button
             onClick={() => onEdit(fee)}
-            className="p-2 rounded-lg hover:bg-[#C4A035]/10 text-[#C4A035] transition-colors"
+            className="p-2 rounded-lg hover:bg-[#C4A035]/10 dark:hover:bg-[#C4A035]/10 text-[#C4A035] dark:text-[#D4A843] transition-colors"
             title={t("admin.fees.edit")}
           >
             <Edit className="w-4 h-4" />
@@ -671,7 +681,7 @@ const FeeRow = ({
         )}
         <button
           onClick={() => onDelete(fee)}
-          className="p-2 rounded-lg hover:bg-red-100 text-red-600 transition-colors"
+          className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 transition-colors"
           title={t("admin.fees.delete")}
         >
           <Trash2 className="w-4 h-4" />
@@ -727,25 +737,25 @@ const FeesPage = () => {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
-      <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-6 overflow-hidden">
+      <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10">
               <DollarSign className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-[#1B1B1B]">
+              <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {t("admin.fees.title")}
               </h1>
-              <p className="text-sm text-[#BEB29E]">
+              <p className="text-sm text-[#BEB29E] dark:text-[#666666]">
                 {t("admin.fees.subtitle")}
               </p>
             </div>
           </div>
           <Button
             onClick={() => setCreateOpen(true)}
-            className="bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white gap-2 shadow-md shadow-[#2B6F5E]/20"
+            className="bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white gap-2 shadow-md shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10"
           >
             <Plus className="w-4 h-4" /> {t("admin.fees.newFee")}
           </Button>
@@ -766,50 +776,50 @@ const FeesPage = () => {
             value: formatCurrency(totalCollected),
             icon: TrendingUp,
             color: "green" as const,
-            valueColor: "text-[#2B6F5E]",
+            valueColor: "text-[#2B6F5E] dark:text-[#4ADE80]",
           },
           {
             label: `${t("admin.fees.pending")} (${unpaidFees.length})`,
             value: formatCurrency(totalPending),
             icon: Clock,
             color: "mustard" as const,
-            valueColor: "text-[#C4A035]",
+            valueColor: "text-[#C4A035] dark:text-[#D4A843]",
           },
           {
             label: t("admin.fees.overdue"),
             value: String(overdueFees.length),
             icon: AlertCircle,
             color: "red" as const,
-            valueColor: "text-red-700",
+            valueColor: "text-red-700 dark:text-red-400",
           },
         ].map((stat) => {
           const colors = {
             teal: {
               bar: "from-[#2B6F5E] to-[#2B6F5E]/70",
-              bg: "bg-[#2B6F5E]/8",
-              icon: "text-[#2B6F5E]",
+              bg: "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10",
+              icon: "text-[#2B6F5E] dark:text-[#4ADE80]",
             },
             green: {
               bar: "from-[#8DB896] to-[#8DB896]/70",
-              bg: "bg-[#8DB896]/12",
-              icon: "text-[#3D7A4A]",
+              bg: "bg-[#8DB896]/12 dark:bg-[#8DB896]/10",
+              icon: "text-[#3D7A4A] dark:text-[#8DB896]",
             },
             mustard: {
               bar: "from-[#C4A035] to-[#C4A035]/70",
-              bg: "bg-[#C4A035]/8",
-              icon: "text-[#C4A035]",
+              bg: "bg-[#C4A035]/8 dark:bg-[#D4A843]/10",
+              icon: "text-[#C4A035] dark:text-[#D4A843]",
             },
             red: {
               bar: "from-red-500 to-red-500/70",
-              bg: "bg-red-50",
-              icon: "text-red-600",
+              bg: "bg-red-50 dark:bg-red-950/30",
+              icon: "text-red-600 dark:text-red-400",
             },
           };
           const c = colors[stat.color];
           return (
             <div
               key={stat.label}
-              className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-5 overflow-hidden group hover:shadow-md transition-all"
+              className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md dark:hover:shadow-black/20 transition-all"
             >
               <div
                 className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${c.bar} opacity-60 group-hover:opacity-100 transition-opacity`}
@@ -822,11 +832,13 @@ const FeesPage = () => {
                 </div>
                 <div>
                   <p
-                    className={`text-xl font-bold ${"valueColor" in stat ? stat.valueColor : "text-[#1B1B1B]"}`}
+                    className={`text-xl font-bold ${"valueColor" in stat ? stat.valueColor : "text-[#1B1B1B] dark:text-[#E5E5E5]"}`}
                   >
                     {stat.value}
                   </p>
-                  <p className="text-xs text-[#6B5D4F]">{stat.label}</p>
+                  <p className="text-xs text-[#6B5D4F] dark:text-[#888888]">
+                    {stat.label}
+                  </p>
                 </div>
               </div>
             </div>
@@ -835,19 +847,19 @@ const FeesPage = () => {
       </div>
 
       {/* Search & Filters */}
-      <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-5">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
             <Input
               placeholder={t("admin.fees.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-10 border-[#D8CDC0]/60 focus:border-[#2B6F5E] focus:ring-[#2B6F5E]/20"
+              className="pl-10 h-10 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
             />
           </div>
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-[#BEB29E]" />
+            <Filter className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
             {(["ALL", "UNPAID", "OVERDUE", "PAID"] as FilterStatus[]).map(
               (status) => (
                 <button
@@ -856,13 +868,13 @@ const FeesPage = () => {
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     filterStatus === status
                       ? status === "ALL"
-                        ? "bg-[#1B1B1B] text-white"
+                        ? "bg-[#1B1B1B] dark:bg-[#E5E5E5] text-white dark:text-[#1A1A1A]"
                         : status === "PAID"
                           ? "bg-[#2B6F5E] text-white"
                           : status === "OVERDUE"
                             ? "bg-red-600 text-white"
                             : "bg-[#C4A035] text-white"
-                      : "bg-[#D8CDC0]/20 text-[#6B5D4F] hover:bg-[#D8CDC0]/30"
+                      : "bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/30 dark:hover:bg-[#333333]"
                   }`}
                 >
                   {status === "ALL"
@@ -876,10 +888,10 @@ const FeesPage = () => {
       </div>
 
       {/* Fee List */}
-      <div className="bg-white rounded-2xl border border-[#D8CDC0]/60 p-5">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin text-[#2B6F5E]" />
+            <Loader2 className="w-8 h-8 animate-spin text-[#2B6F5E] dark:text-[#4ADE80]" />
           </div>
         ) : sorted.length > 0 ? (
           <div className="space-y-2">
@@ -895,13 +907,13 @@ const FeesPage = () => {
           </div>
         ) : (
           <div className="text-center py-16">
-            <Banknote className="w-16 h-16 mx-auto text-[#D8CDC0] mb-4" />
-            <p className="font-semibold text-[#6B5D4F]">
+            <Banknote className="w-16 h-16 mx-auto text-[#D8CDC0] dark:text-[#555555] mb-4" />
+            <p className="font-semibold text-[#6B5D4F] dark:text-[#AAAAAA]">
               {search || filterStatus !== "ALL"
                 ? t("admin.fees.noMatchingFees")
                 : t("admin.fees.noFeesYet")}
             </p>
-            <p className="text-sm text-[#BEB29E] mt-1">
+            <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-1">
               {search || filterStatus !== "ALL"
                 ? t("admin.fees.tryDifferentSearch")
                 : t("admin.fees.clickNewFee")}

@@ -19,13 +19,13 @@ export default function Results() {
   if (isError) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4">
-        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mb-4">
-          <AlertCircle className="h-8 w-8 text-red-500" />
+        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-red-50 dark:bg-red-950/20 mb-4">
+          <AlertCircle className="h-8 w-8 text-red-500 dark:text-red-400" />
         </div>
-        <h3 className="text-lg font-semibold text-red-600 mb-1">
+        <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-1">
           Error loading results
         </h3>
-        <p className="text-sm text-[#6B5D4F] text-center max-w-sm mb-4">
+        <p className="text-sm text-[#6B5D4F] dark:text-[#888888] text-center max-w-sm mb-4">
           {error instanceof Error ? error.message : "Failed to load results"}
         </p>
         <button
@@ -50,25 +50,28 @@ export default function Results() {
 
   const getGradeColor = (grade: string) => {
     const g = grade.toUpperCase();
-    if (g === "A" || g === "A+") return "text-[#2B6F5E]";
-    if (g === "B" || g === "B+") return "text-[#2B6F5E]";
-    if (g === "C" || g === "C+") return "text-[#C4A035]";
-    return "text-red-600";
+    if (g === "A" || g === "A+") return "text-[#2B6F5E] dark:text-[#4ADE80]";
+    if (g === "B" || g === "B+") return "text-[#2B6F5E] dark:text-[#4ADE80]";
+    if (g === "C" || g === "C+") return "text-[#C4A035] dark:text-[#D4A843]";
+    return "text-red-600 dark:text-red-400";
   };
 
   const getGradeBg = (grade: string) => {
     const g = grade.toUpperCase();
-    if (g === "A" || g === "A+") return "bg-[#8DB896]/12 border-[#8DB896]/25";
-    if (g === "B" || g === "B+") return "bg-[#2B6F5E]/5 border-[#2B6F5E]/20";
-    if (g === "C" || g === "C+") return "bg-[#C4A035]/8 border-[#C4A035]/20";
-    return "bg-red-100 border-red-200";
+    if (g === "A" || g === "A+")
+      return "bg-[#8DB896]/12 dark:bg-[#4ADE80]/10 border-[#8DB896]/25 dark:border-[#4ADE80]/15";
+    if (g === "B" || g === "B+")
+      return "bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/[0.03] border-[#2B6F5E]/20 dark:border-[#4ADE80]/15";
+    if (g === "C" || g === "C+")
+      return "bg-[#C4A035]/8 dark:bg-[#D4A843]/[0.08] border-[#C4A035]/20 dark:border-[#D4A843]/15";
+    return "bg-red-100 dark:bg-red-950/30 border-red-200 dark:border-red-800/30";
   };
 
   const getPerfColor = (p: number) => {
-    if (p >= 80) return "text-[#2B6F5E]";
-    if (p >= 60) return "text-[#2B6F5E]";
-    if (p >= 50) return "text-[#C4A035]";
-    return "text-red-600";
+    if (p >= 80) return "text-[#2B6F5E] dark:text-[#4ADE80]";
+    if (p >= 60) return "text-[#2B6F5E] dark:text-[#4ADE80]";
+    if (p >= 50) return "text-[#C4A035] dark:text-[#D4A843]";
+    return "text-red-600 dark:text-red-400";
   };
 
   const getPerfLabel = (p: number) => {
@@ -88,23 +91,27 @@ export default function Results() {
   const getSummaryStyle = (s: number) => {
     if (s >= 80)
       return {
-        bg: "bg-[#8DB896]/8",
-        border: "border-[#8DB896]/25",
-        iconBg: "bg-[#8DB896]/12",
+        bg: "bg-[#8DB896]/8 dark:bg-[#4ADE80]/5",
+        border: "border-[#8DB896]/25 dark:border-[#4ADE80]/15",
+        iconBg: "bg-[#8DB896]/12 dark:bg-[#4ADE80]/10",
       };
     if (s >= 60)
       return {
-        bg: "bg-[#2B6F5E]/5",
-        border: "border-[#2B6F5E]/20",
-        iconBg: "bg-[#2B6F5E]/8",
+        bg: "bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/[0.03]",
+        border: "border-[#2B6F5E]/20 dark:border-[#4ADE80]/15",
+        iconBg: "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/[0.08]",
       };
     if (s >= 50)
       return {
-        bg: "bg-[#C4A035]/5",
-        border: "border-[#C4A035]/20",
-        iconBg: "bg-[#C4A035]/8",
+        bg: "bg-[#C4A035]/5 dark:bg-[#D4A843]/[0.03]",
+        border: "border-[#C4A035]/20 dark:border-[#D4A843]/15",
+        iconBg: "bg-[#C4A035]/8 dark:bg-[#D4A843]/[0.08]",
       };
-    return { bg: "bg-red-50", border: "border-red-200", iconBg: "bg-red-100" };
+    return {
+      bg: "bg-red-50 dark:bg-red-950/20",
+      border: "border-red-200 dark:border-red-800/30",
+      iconBg: "bg-red-100 dark:bg-red-950/30",
+    };
   };
 
   const ss = getSummaryStyle(summary.average_score);
@@ -112,15 +119,17 @@ export default function Results() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/60 p-6 overflow-hidden">
+      <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-lg shadow-[#C4A035]/20">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-lg shadow-[#C4A035]/20 dark:shadow-black/30">
             <Award className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[#1B1B1B]">My Results</h1>
-            <p className="text-sm text-[#BEB29E] mt-0.5">
+            <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+              My Results
+            </h1>
+            <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
               View your exam scores and academic performance
             </p>
           </div>
@@ -129,15 +138,17 @@ export default function Results() {
 
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="relative bg-white border border-[#D8CDC0]/60 rounded-2xl p-6 overflow-hidden">
+        <div className="relative bg-white dark:bg-[#1A1A1A] border border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-2xl p-6 overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#2B6F5E] to-[#2B6F5E]/70 opacity-60"></div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-[#2B6F5E]/8 rounded-xl">
-              <Award className="w-5 h-5 text-[#2B6F5E]" />
+            <div className="p-2 bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/[0.08] rounded-xl">
+              <Award className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
             </div>
-            <p className="text-sm font-medium text-[#6B5D4F]">Total Exams</p>
+            <p className="text-sm font-medium text-[#6B5D4F] dark:text-[#888888]">
+              Total Exams
+            </p>
           </div>
-          <p className="text-3xl font-bold text-[#1B1B1B]">
+          <p className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
             {summary.total_exams}
           </p>
         </div>
@@ -174,26 +185,28 @@ export default function Results() {
       {/* Performance Alert */}
       {summary.total_exams > 0 &&
         (summary.average_score >= 80 ? (
-          <div className="bg-[#8DB896]/8 border border-[#8DB896]/25 rounded-2xl p-4">
+          <div className="bg-[#8DB896]/8 dark:bg-[#4ADE80]/5 border border-[#8DB896]/25 dark:border-[#4ADE80]/15 rounded-2xl p-4">
             <div className="flex items-center gap-3">
-              <Star className="w-5 h-5 text-[#2B6F5E]" />
+              <Star className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
               <div>
-                <p className="font-semibold text-[#1B1B1B]">
+                <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                   Outstanding Performance!
                 </p>
-                <p className="text-sm text-[#6B5D4F]">
+                <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                   You're performing exceptionally well. Keep it up!
                 </p>
               </div>
             </div>
           </div>
         ) : summary.average_score >= 60 ? (
-          <div className="bg-[#2B6F5E]/5 border border-[#2B6F5E]/20 rounded-2xl p-4">
+          <div className="bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/[0.03] border border-[#2B6F5E]/20 dark:border-[#4ADE80]/15 rounded-2xl p-4">
             <div className="flex items-center gap-3">
-              <Target className="w-5 h-5 text-[#2B6F5E]" />
+              <Target className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
               <div>
-                <p className="font-semibold text-[#1B1B1B]">Good Performance</p>
-                <p className="text-sm text-[#6B5D4F]">
+                <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                  Good Performance
+                </p>
+                <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                   You're doing well! A little more effort can make you
                   excellent.
                 </p>
@@ -201,26 +214,28 @@ export default function Results() {
             </div>
           </div>
         ) : summary.average_score >= 50 ? (
-          <div className="bg-[#C4A035]/5 border border-[#C4A035]/20 rounded-2xl p-4">
+          <div className="bg-[#C4A035]/5 dark:bg-[#D4A843]/[0.03] border border-[#C4A035]/20 dark:border-[#D4A843]/15 rounded-2xl p-4">
             <div className="flex items-center gap-3">
-              <TrendingUp className="w-5 h-5 text-[#C4A035]" />
+              <TrendingUp className="w-5 h-5 text-[#C4A035] dark:text-[#D4A843]" />
               <div>
-                <p className="font-semibold text-[#1B1B1B]">
+                <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                   Room for Improvement
                 </p>
-                <p className="text-sm text-[#6B5D4F]">
+                <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                   You're passing, but there's potential to do better.
                 </p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+          <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30 rounded-2xl p-4">
             <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600" />
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
               <div>
-                <p className="font-semibold text-[#1B1B1B]">Needs Attention</p>
-                <p className="text-sm text-[#6B5D4F]">
+                <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                  Needs Attention
+                </p>
+                <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                   Your performance needs improvement. Please seek help from
                   instructors.
                 </p>
@@ -240,29 +255,29 @@ export default function Results() {
             return (
               <div
                 key={result.result_id || index}
-                className="bg-white border border-[#D8CDC0]/60 rounded-2xl p-6 hover:shadow-md transition-shadow"
+                className="bg-white dark:bg-[#1A1A1A] border border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-2xl p-6 hover:shadow-md dark:hover:shadow-black/20 transition-shadow"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-4">
                     <div
-                      className={`p-3 rounded-xl ${passed ? "bg-[#8DB896]/12" : "bg-red-100"}`}
+                      className={`p-3 rounded-xl ${passed ? "bg-[#8DB896]/12 dark:bg-[#4ADE80]/10" : "bg-red-100 dark:bg-red-950/30"}`}
                     >
                       <Award
-                        className={`w-6 h-6 ${passed ? "text-[#2B6F5E]" : "text-red-600"}`}
+                        className={`w-6 h-6 ${passed ? "text-[#2B6F5E] dark:text-[#4ADE80]" : "text-red-600 dark:text-red-400"}`}
                       />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg text-[#1B1B1B]">
+                      <h3 className="font-semibold text-lg text-[#1B1B1B] dark:text-[#E5E5E5]">
                         {result.exam.exam_name || "Exam"}
                       </h3>
-                      <div className="flex items-center gap-4 mt-1 text-sm text-[#6B5D4F]">
+                      <div className="flex items-center gap-4 mt-1 text-sm text-[#6B5D4F] dark:text-[#888888]">
                         <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4 text-[#BEB29E]" />
+                          <Calendar className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
                           <span>{formatDate(result.exam.exam_date)}</span>
                         </div>
                         {result.exam.course && (
                           <div className="flex items-center gap-1">
-                            <BookOpen className="w-4 h-4 text-[#BEB29E]" />
+                            <BookOpen className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
                             <span>{result.exam.course.course_name}</span>
                           </div>
                         )}
@@ -278,15 +293,19 @@ export default function Results() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 mb-4 p-4 bg-[#D8CDC0]/8 rounded-xl">
+                <div className="grid grid-cols-3 gap-4 mb-4 p-4 bg-[#D8CDC0]/8 dark:bg-[#151515] rounded-xl">
                   <div>
-                    <p className="text-xs text-[#BEB29E] mb-1">Score</p>
-                    <p className="text-2xl font-bold text-[#1B1B1B]">
+                    <p className="text-xs text-[#BEB29E] dark:text-[#666666] mb-1">
+                      Score
+                    </p>
+                    <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                       {result.marks_obtained} / {result.exam.max_marks}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#BEB29E] mb-1">Percentage</p>
+                    <p className="text-xs text-[#BEB29E] dark:text-[#666666] mb-1">
+                      Percentage
+                    </p>
                     <p
                       className={`text-2xl font-bold ${getPerfColor(percentage)}`}
                     >
@@ -294,12 +313,14 @@ export default function Results() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#BEB29E] mb-1">Result</p>
+                    <p className="text-xs text-[#BEB29E] dark:text-[#666666] mb-1">
+                      Result
+                    </p>
                     <Badge
                       className={
                         passed
-                          ? "bg-[#8DB896]/12 text-[#2B6F5E] border-[#8DB896]/25 text-sm"
-                          : "bg-red-100 text-red-700 border-red-200 text-sm"
+                          ? "bg-[#8DB896]/12 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80] border-[#8DB896]/25 dark:border-[#4ADE80]/15 text-sm"
+                          : "bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/30 text-sm"
                       }
                     >
                       {passed ? "✓ PASS" : "✗ FAIL"}
@@ -309,14 +330,16 @@ export default function Results() {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-[#6B5D4F]">Performance</span>
+                    <span className="text-[#6B5D4F] dark:text-[#888888]">
+                      Performance
+                    </span>
                     <span
                       className={`font-semibold ${getPerfColor(percentage)}`}
                     >
                       {getPerfLabel(percentage)}
                     </span>
                   </div>
-                  <div className="h-3 bg-[#D8CDC0]/30 rounded-full overflow-hidden">
+                  <div className="h-3 bg-[#D8CDC0]/30 dark:bg-[#2A2A2A] rounded-full overflow-hidden">
                     <div
                       className={`h-full ${getBarColor(percentage)} rounded-full transition-all duration-500`}
                       style={{ width: `${Math.min(percentage, 100)}%` }}
@@ -327,14 +350,14 @@ export default function Results() {
             );
           })
         ) : (
-          <div className="text-center py-16 bg-white border border-[#D8CDC0]/60 rounded-2xl">
-            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#D8CDC0]/20 mx-auto mb-4">
-              <Award className="w-8 h-8 text-[#BEB29E]" />
+          <div className="text-center py-16 bg-white dark:bg-[#1A1A1A] border border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-2xl">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] mx-auto mb-4">
+              <Award className="w-8 h-8 text-[#BEB29E] dark:text-[#555555]" />
             </div>
-            <h3 className="text-lg font-semibold text-[#1B1B1B] mb-2">
+            <h3 className="text-lg font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
               No Exam Results Yet
             </h3>
-            <p className="text-sm text-[#6B5D4F] max-w-sm mx-auto">
+            <p className="text-sm text-[#6B5D4F] dark:text-[#888888] max-w-sm mx-auto">
               Your exam results will appear here once you take your first exam
             </p>
           </div>
