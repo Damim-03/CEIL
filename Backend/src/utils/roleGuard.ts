@@ -4,9 +4,7 @@ import { PermissionType, RoleType } from "../enums/role.enum";
 import { RolePermissions } from "../enums/role.enum";
 
 /**
- * ✅ FIXED: Admin now bypasses all permission checks
- *
- * This fixes the 403 error on /api/admin/sessions/:sessionId/attendance
+ * ✅ UPDATED: OWNER and ADMIN both bypass all permission checks
  */
 export const roleGuard =
   (requiredPermissions: PermissionType[]) =>
@@ -17,7 +15,12 @@ export const roleGuard =
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // ✅ CRITICAL FIX: Admin bypasses all permission checks
+    // ✅ OWNER bypasses all permission checks - has full system access
+    if (user.role === "OWNER") {
+      return next();
+    }
+
+    // ✅ ADMIN bypasses all permission checks (existing behavior)
     if (user.role === "ADMIN") {
       return next();
     }
@@ -40,4 +43,44 @@ export const roleGuard =
     }
 
     next();
+  };
+
+/**
+ * ✅ NEW: Middleware that allows only OWNER role
+ */
+export const ownerOnly =
+  () => (req: Request, res: Response, next: NextFunction) => {
+    const user = (req as Request & { user?: JwtUser }).user;
+
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (user.role !== "OWNER") {
+      return res.status(403).json({
+        message: "Forbidden: only OWNER can access this resource",
+      });
+    }
+
+    return next();
+  };
+
+/**
+ * ✅ NEW: Middleware that allows OWNER or ADMIN
+ */
+export const adminOrOwner =
+  () => (req: Request, res: Response, next: NextFunction) => {
+    const user = (req as Request & { user?: JwtUser }).user;
+
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (user.role !== "OWNER" && user.role !== "ADMIN") {
+      return res.status(403).json({
+        message: "Forbidden: only OWNER or ADMIN can access this resource",
+      });
+    }
+
+    return next();
   };

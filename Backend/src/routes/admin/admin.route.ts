@@ -5,7 +5,7 @@ import { Permissions } from "../../enums/role.enum";
 
 import {
   /* ================= USERS ================= */
-  changeUserRoleController,
+  // ❌ changeUserRoleController — REMOVED (OWNER-only)
   getAllUsersController,
   getUserByIdController,
   enableUserController,
@@ -47,11 +47,11 @@ import {
   deleteGroupController,
 
   /* ================= FEES ================= */
-  createFeeController,
+  // ❌ createFeeController — REMOVED (OWNER-only)
   getAllFeesController,
   getFeeByIdController,
   updateFeeController,
-  deleteFeeController,
+  // ❌ deleteFeeController — REMOVED (OWNER-only)
   markFeeAsPaidController,
 
   /* ================= ENROLLMENTS ================= */
@@ -111,6 +111,9 @@ import {
   approveDocumentController,
   rejectDocumentController,
   assignInstructorToGroupController,
+  getAttendanceByDateController,
+  getStudentAttendanceSummaryController,
+  markBulkAttendanceController,
 } from "../../controllers/admin/admin.controller";
 import { reviewDocumentController } from "../../controllers/admin/document.controller";
 import { upload } from "../../middlewares/upload.middleware";
@@ -122,6 +125,8 @@ import {
   deleteAnnouncementController,
   publishAnnouncementController,
   unpublishAnnouncementController,
+  pinAnnouncementController,
+  unpinAnnouncementController,
 } from "../../controllers/admin/Announcement.controller";
 import {
   createOrUpdateCourseProfileController,
@@ -141,7 +146,16 @@ import {
   deleteNotificationController,
   searchStudentsController,
 } from "../../controllers/admin/Notification.controller";
-import { getRoomsScheduleOverviewController, createRoomController, getAllRoomsController, getRoomByIdController, updateRoomController, deleteRoomController, getRoomScheduleController, checkRoomAvailabilityController } from "../../controllers/admin/Room.controller";
+import {
+  getRoomsScheduleOverviewController,
+  createRoomController,
+  getAllRoomsController,
+  getRoomByIdController,
+  updateRoomController,
+  deleteRoomController,
+  getRoomScheduleController,
+  checkRoomAvailabilityController,
+} from "../../controllers/admin/Room.controller";
 
 const adminRoutes = Router();
 
@@ -155,6 +169,20 @@ adminRoutes.patch(
   roleGuard([Permissions.MANAGE_USERS]), // أو Permission خاص
   upload.single("avatar"),
   updateAdminAvatarController,
+);
+
+adminRoutes.patch(
+  "/announcements/:announcementId/pin",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
+  pinAnnouncementController,
+);
+
+adminRoutes.patch(
+  "/announcements/:announcementId/unpin",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
+  unpinAnnouncementController,
 );
 
 /* ======================================================
@@ -175,12 +203,7 @@ adminRoutes.get(
   getUserByIdController,
 );
 
-adminRoutes.patch(
-  "/users/:userId/role",
-  authMiddleware,
-  roleGuard([Permissions.MANAGE_USERS]),
-  changeUserRoleController,
-);
+// ❌ REMOVED: PATCH /users/:userId/role — OWNER-only now
 
 adminRoutes.patch(
   "/users/:userId/enable",
@@ -424,12 +447,7 @@ adminRoutes.delete(
     FEES
   ====================================================== */
 
-adminRoutes.post(
-  "/fees",
-  authMiddleware,
-  roleGuard([Permissions.MANAGE_FEES]),
-  createFeeController,
-);
+// ❌ REMOVED: POST /fees — OWNER-only
 
 adminRoutes.get(
   "/fees",
@@ -459,12 +477,7 @@ adminRoutes.patch(
   markFeeAsPaidController,
 );
 
-adminRoutes.delete(
-  "/fees/:feeId",
-  authMiddleware,
-  roleGuard([Permissions.MANAGE_FEES]),
-  deleteFeeController,
-);
+// ❌ REMOVED: DELETE /fees/:feeId — OWNER-only
 
 /* ======================================================
     ENROLLMENTS
@@ -624,6 +637,29 @@ adminRoutes.put(
   authMiddleware,
   roleGuard([Permissions.MANAGE_ATTENDANCE]),
   updateAttendanceController,
+);
+
+adminRoutes.post(
+  "/sessions/:sessionId/attendance/bulk",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ATTENDANCE]),
+  markBulkAttendanceController,
+);
+
+// Attendance by date
+adminRoutes.get(
+  "/groups/:groupId/attendance/date/:date",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ATTENDANCE]),
+  getAttendanceByDateController,
+);
+
+// Student summary
+adminRoutes.get(
+  "/students/:studentId/attendance/summary",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ATTENDANCE]),
+  getStudentAttendanceSummaryController,
 );
 
 /* ======================================================

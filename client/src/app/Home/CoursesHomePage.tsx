@@ -191,13 +191,13 @@ function CourseCard({ course }: { course: PublicCourse }) {
           >
             {!isLoggedIn ? (
               <LocaleLink
-                to={`/login?redirect=${encodeURIComponent(`/dashboard/courses?courseId=${course.id}`)}`}
+                to={`/login?redirect=${encodeURIComponent(`/student/courses?courseId=${course.id}`)}`}
               >
                 <UserPlus className="w-4 h-4" />
                 {t("courses.loginToRegister")}
               </LocaleLink>
             ) : (
-              <Link to={`/dashboard/courses?courseId=${course.id}`}>
+              <Link to={`/student/courses?courseId=${course.id}`}>
                 <UserPlus className="w-4 h-4" />
                 {t("courses.registerNow")}
               </Link>

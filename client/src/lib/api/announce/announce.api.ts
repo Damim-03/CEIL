@@ -10,6 +10,7 @@ export interface PublicAnnouncement {
   excerpt_ar: string | null;
   category: string | null;
   image_url: string | null;
+  is_pinned: boolean;
   date: string;
 }
 

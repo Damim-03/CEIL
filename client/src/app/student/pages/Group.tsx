@@ -107,7 +107,7 @@ export default function GroupDetails() {
                 : "Failed to load group details"}
             </p>
             <Button
-              onClick={() => navigate("/dashboard/enrollments")}
+              onClick={() => navigate("/student/enrollments")}
               className="w-full bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white rounded-xl"
             >
               Back to Enrollments
@@ -147,7 +147,7 @@ export default function GroupDetails() {
                 <ArrowLeft className="w-4 h-4" /> Go Back
               </Button>
               <Button
-                onClick={() => navigate("/dashboard/enrollments")}
+                onClick={() => navigate("/student/enrollments")}
                 className="gap-2 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white rounded-xl"
               >
                 <Users className="w-4 h-4" /> View All Enrollments
@@ -299,7 +299,7 @@ export default function GroupDetails() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate("/dashboard/enrollments")}
+          onClick={() => navigate("/student/enrollments")}
           className="gap-2 text-[#6B5D4F] hover:text-[#1B1B1B] hover:bg-[#D8CDC0]/10 rounded-xl -ml-2"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Enrollments
@@ -563,7 +563,7 @@ export default function GroupDetails() {
             <CardContent className="p-4 space-y-3">
               <Button
                 className="w-full gap-2 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white rounded-xl shadow-md shadow-[#2B6F5E]/20"
-                onClick={() => navigate("/dashboard/attendance")}
+                onClick={() => navigate("/student/attendance")}
                 disabled={enrollment.registration_status === "PENDING"}
               >
                 {enrollment.registration_status === "PENDING" ? (
@@ -579,7 +579,7 @@ export default function GroupDetails() {
               <Button
                 variant="outline"
                 className="w-full gap-2 border-[#D8CDC0]/60 text-[#6B5D4F] hover:bg-[#C4A035]/5 rounded-xl"
-                onClick={() => navigate("/dashboard/fees")}
+                onClick={() => navigate("/student/fees")}
                 disabled={enrollment.registration_status === "PENDING"}
               >
                 <CreditCard className="w-4 h-4" /> View My Fees
@@ -587,7 +587,7 @@ export default function GroupDetails() {
               <Button
                 variant="outline"
                 className="w-full gap-2 border-[#D8CDC0]/60 text-[#6B5D4F] hover:bg-[#2B6F5E]/5 rounded-xl"
-                onClick={() => navigate("/dashboard/results")}
+                onClick={() => navigate("/student/results")}
                 disabled={enrollment.registration_status === "PENDING"}
               >
                 <Award className="w-4 h-4" /> View My Results
@@ -596,7 +596,7 @@ export default function GroupDetails() {
               <Button
                 variant="outline"
                 className="w-full gap-2 border-[#D8CDC0]/60 text-[#6B5D4F] hover:bg-[#D8CDC0]/10 rounded-xl"
-                onClick={() => navigate("/dashboard/enrollments")}
+                onClick={() => navigate("/student/enrollments")}
               >
                 <Users className="w-4 h-4" /> All Enrollments
               </Button>

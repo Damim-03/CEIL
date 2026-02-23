@@ -7,12 +7,20 @@ import teacherRoutes from "./Teacher/teacher.route";
 import adminRoutes from "./admin/admin.route";
 import studentRoutes from "./student/student.route";
 import publicRoutes from "./announcement/announcement.routes";
+import ownerRoutes from "./owner/owner.route";
 
 const mainRoute: Router = Router();
 
 mainRoute.use("/auth", authRoutes);
 
 mainRoute.use("/public", publicRoutes)
+
+mainRoute.use(
+  "/owner",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ADMINS]),
+  ownerRoutes,
+);
 
 mainRoute.use(
   "/admin",

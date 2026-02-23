@@ -1,3 +1,9 @@
+/* ===============================================================
+   TeacherSidebar.tsx — ✅ Fixed Border Issue in Dark Mode
+   
+   📁 src/app/teacher/components/TeacherSidebar.tsx
+=============================================================== */
+
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { useLogout } from "../../../hooks/auth/auth.hooks";
@@ -44,7 +50,7 @@ const navItems: NavItem[] = [
     icon: CalendarClock,
     labelKey: "teacher.sidebar.schedule",
     href: "/teacher/schedule",
-  }, // NEW
+  },
   {
     icon: ClipboardCheck,
     labelKey: "teacher.sidebar.attendance",
@@ -65,7 +71,7 @@ const navItems: NavItem[] = [
     icon: Megaphone,
     labelKey: "teacher.sidebar.announcements",
     href: "/teacher/announcements",
-  }, // NEW
+  },
 ];
 
 const bottomNavItems: NavItem[] = [
@@ -118,33 +124,33 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
             "relative group flex items-center rounded-xl transition-all duration-200",
             collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
             active
-              ? "bg-[#2B6F5E]/8 text-[#2B6F5E] font-semibold"
-              : "text-[#6B5D4F] hover:bg-[#D8CDC0]/10 hover:text-[#1B1B1B]",
+              ? "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80] font-semibold"
+              : "text-[#6B5D4F] dark:text-[#888888] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]",
           )}
         >
           <div
             className={cn(
               "w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0",
               active
-                ? "bg-[#2B6F5E]/10"
-                : "bg-transparent group-hover:bg-[#D8CDC0]/15",
+                ? "bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/[0.08]"
+                : "bg-transparent group-hover:bg-[#D8CDC0]/15 dark:group-hover:bg-[#2A2A2A]",
             )}
           >
             <item.icon
               className={cn(
                 "h-[18px] w-[18px]",
                 active
-                  ? "text-[#2B6F5E]"
-                  : "text-[#BEB29E] group-hover:text-[#6B5D4F]",
+                  ? "text-[#2B6F5E] dark:text-[#4ADE80]"
+                  : "text-[#BEB29E] dark:text-[#888888] group-hover:text-[#6B5D4F] dark:group-hover:text-[#AAAAAA]",
               )}
             />
           </div>
           {!collapsed && <span className="text-sm">{label}</span>}
           {active && !collapsed && (
-            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#2B6F5E] shrink-0" />
+            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#2B6F5E] dark:bg-[#4ADE80] shrink-0" />
           )}
           {collapsed && (
-            <span className="absolute left-full ml-2 px-2.5 py-1.5 bg-[#1B1B1B] text-white text-xs rounded-lg whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-lg">
+            <span className="absolute left-full ml-2 px-2.5 py-1.5 bg-[#1B1B1B] dark:bg-[#2A2A2A] text-white dark:text-[#E5E5E5] text-xs rounded-lg whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-lg dark:shadow-black/40">
               {label}
             </span>
           )}
@@ -157,19 +163,20 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
     <aside
       className={cn(
         "fixed left-0 top-0 z-40 h-screen flex flex-col transition-all duration-300",
-        "bg-white border-r border-brand-beige/40",
+        // ✅ FIXED: Removed border-r completely - no border in dark mode
+        "bg-white dark:bg-[#1A1A1A]",
         collapsed ? "w-16" : "w-64",
       )}
     >
-      {/* ═══════════ HEADER ═══════════ */}
+      {/* ═══ HEADER ═══ */}
       <div
         className={cn(
-          "flex items-center border-b border-[#D8CDC0]/30 shrink-0",
+          "flex items-center border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A] shrink-0",
           collapsed ? "justify-center p-3" : "justify-between p-4",
         )}
       >
         <Link
-          to="/teacher"
+          to="/"
           className={cn(
             "flex items-center gap-2.5",
             collapsed && "cursor-pointer",
@@ -183,7 +190,7 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
               : undefined
           }
         >
-          <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-md shadow-[#2B6F5E]/15">
+          <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-md shadow-[#2B6F5E]/15 dark:shadow-black/30">
             <img
               src={logo}
               alt="CEIL Logo"
@@ -192,10 +199,10 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
           </div>
           {!collapsed && (
             <div>
-              <span className="text-base font-bold text-[#1B1B1B] block leading-tight">
+              <span className="text-base font-bold text-[#1B1B1B] dark:text-[#E5E5E5] block leading-tight">
                 {t("teacher.sidebar.title")}
               </span>
-              <span className="text-[10px] font-medium text-[#BEB29E] uppercase tracking-wider">
+              <span className="text-[10px] font-medium text-[#BEB29E] dark:text-[#888888] uppercase tracking-wider">
                 {t("teacher.sidebar.ceil")}
               </span>
             </div>
@@ -203,7 +210,7 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
         </Link>
       </div>
 
-      {/* ═══════════ NAVIGATION ═══════════ */}
+      {/* ═══ NAVIGATION ═══ */}
       <nav className="flex-1 overflow-y-auto py-3">
         <ul className={cn("space-y-1", collapsed ? "px-2" : "px-3")}>
           {navItems.map((item) => (
@@ -211,8 +218,7 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
           ))}
         </ul>
 
-        {/* Profile */}
-        <div className="mt-4 pt-4 border-t border-[#D8CDC0]/30">
+        <div className="mt-4 pt-4 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
           <ul className={cn("space-y-1", collapsed ? "px-2" : "px-3")}>
             {bottomNavItems.map((item) => (
               <NavLink key={item.labelKey} item={item} />
@@ -221,11 +227,11 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
         </div>
       </nav>
 
-      {/* ═══════════ USER FOOTER ═══════════ */}
+      {/* ═══ USER FOOTER ═══ */}
       {user && (
         <div
           className={cn(
-            "border-t border-[#D8CDC0]/30 space-y-3",
+            "border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A] space-y-3",
             collapsed ? "p-2" : "p-4",
           )}
         >
@@ -238,7 +244,7 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
           >
             <div
               className={cn(
-                "rounded-full overflow-hidden shrink-0 border-2 border-[#D8CDC0]/40",
+                "rounded-full overflow-hidden shrink-0 border-2 border-[#D8CDC0]/40 dark:border-[#2A2A2A]",
                 collapsed ? "h-8 w-8" : "h-10 w-10",
               )}
             >
@@ -249,17 +255,17 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="h-full w-full bg-gradient-to-br from-[#8DB896] to-[#2B6F5E] flex items-center justify-center text-white font-semibold text-xs">
+                <div className="h-full w-full bg-gradient-to-br from-[#8DB896] to-[#2B6F5E] dark:from-[#4ADE80]/30 dark:to-[#2B6F5E] flex items-center justify-center text-white font-semibold text-xs">
                   {initials}
                 </div>
               )}
             </div>
             {!collapsed && (
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-[#1B1B1B]">
+                <p className="truncate text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                   {user.email}
                 </p>
-                <p className="text-xs text-[#BEB29E]">
+                <p className="text-xs text-[#BEB29E] dark:text-[#888888]">
                   {t("teacher.sidebar.teacher")}
                 </p>
               </div>
@@ -273,7 +279,7 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
             className={cn(
               "w-full flex items-center rounded-xl transition-colors relative group",
               collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
-              "text-[#6B5D4F] hover:bg-red-50 hover:text-red-600",
+              "text-[#6B5D4F] dark:text-[#888888] hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 dark:hover:text-red-400",
               !collapsed &&
                 logoutMutation.isPending &&
                 "opacity-50 cursor-not-allowed",
@@ -288,7 +294,7 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
               </span>
             )}
             {collapsed && (
-              <span className="absolute left-full ml-2 px-2.5 py-1.5 bg-[#1B1B1B] text-white text-xs rounded-lg whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-lg">
+              <span className="absolute left-full ml-2 px-2.5 py-1.5 bg-[#1B1B1B] dark:bg-[#2A2A2A] text-white dark:text-[#E5E5E5] text-xs rounded-lg whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-lg dark:shadow-black/40">
                 {t("teacher.sidebar.logout")}
               </span>
             )}

@@ -5,11 +5,10 @@
  * Permissions = WHAT the user can do
  */
 
-import { permission } from "node:process";
-
 /* ================= ROLES ================= */
 
 export const Roles = {
+  OWNER: "OWNER",
   ADMIN: "ADMIN", // System administrator
   TEACHER: "TEACHER", // Teacher / Instructor
   STUDENT: "STUDENT", // Student / Learner
@@ -42,6 +41,12 @@ export const Permissions = {
   ENTER_RESULTS: "ENTER_RESULTS",
 
   VIEW_STUDENTS: "VIEW_STUDENTS",
+
+  // ── OWNER-only permissions ──
+  MANAGE_ADMINS: "MANAGE_ADMINS",
+  VIEW_AUDIT_LOGS: "VIEW_AUDIT_LOGS",
+  MANAGE_SYSTEM_SETTINGS: "MANAGE_SYSTEM_SETTINGS",
+  SYSTEM_OVERVIEW: "SYSTEM_OVERVIEW",
 
   /* ===== ADMIN PERMISSIONS ===== */
   MANAGE_USERS: "MANAGE_USERS",
@@ -79,6 +84,37 @@ export type PermissionType = keyof typeof Permissions;
 /* ================= ROLE → PERMISSION MAP ================= */
 
 export const RolePermissions: Record<RoleType, PermissionType[]> = {
+  OWNER: [
+    // Owner-only
+    Permissions.MANAGE_ADMINS,
+    Permissions.VIEW_AUDIT_LOGS,
+    Permissions.MANAGE_SYSTEM_SETTINGS,
+    Permissions.SYSTEM_OVERVIEW,
+    // All admin permissions
+    Permissions.MANAGE_USERS,
+    Permissions.MANAGE_STUDENTS,
+    Permissions.MANAGE_TEACHERS,
+    Permissions.MANAGE_COURSES,
+    Permissions.MANAGE_CLASSES,
+    Permissions.MANAGE_FEES,
+    Permissions.MANAGE_ENROLLMENTS,
+    Permissions.MANAGE_SESSIONS,
+    Permissions.MANAGE_ATTENDANCE,
+    Permissions.MANAGE_EXAMS,
+    Permissions.MANAGE_RESULTS,
+    Permissions.MANAGE_PERMISSIONS,
+    Permissions.MANAGE_DOCUMENTS,
+    Permissions.MANAGE_ANNOUNCEMENTS,
+    Permissions.VIEW_REPORTS,
+    // Teacher permissions too
+    Permissions.VIEW_ASSIGNED_COURSES,
+    Permissions.VIEW_STUDENTS,
+    Permissions.CREATE_EXAMS,
+    Permissions.UPDATE_EXAMS,
+    Permissions.ENTER_RESULTS,
+    Permissions.VIEW_ROOMS,
+  ],
+
   ADMIN: [
     Permissions.MANAGE_USERS,
     Permissions.MANAGE_STUDENTS,

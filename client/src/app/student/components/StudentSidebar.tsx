@@ -26,35 +26,35 @@ const navItems: NavItem[] = [
   {
     icon: LayoutDashboard,
     labelKey: "student.nav.dashboard",
-    href: "/dashboard",
+    href: "/student",
   },
-  { icon: User, labelKey: "student.nav.profile", href: "/dashboard/profile" },
+  { icon: User, labelKey: "student.nav.profile", href: "/student/profile" },
   {
     icon: FileText,
     labelKey: "student.nav.documents",
-    href: "/dashboard/documents",
+    href: "/student/documents",
   },
   {
     icon: BookOpen,
     labelKey: "student.nav.courses",
-    href: "/dashboard/courses",
+    href: "/student/courses",
   },
   {
     icon: ClipboardList,
     labelKey: "student.nav.enrollments",
-    href: "/dashboard/enrollments",
+    href: "/student/enrollments",
   },
-  { icon: DollarSign, labelKey: "student.nav.fees", href: "/dashboard/fees" },
+  { icon: DollarSign, labelKey: "student.nav.fees", href: "/student/fees" },
   {
     icon: Calendar,
     labelKey: "student.nav.attendance",
-    href: "/dashboard/attendance",
+    href: "/student/attendance",
   },
-  { icon: Award, labelKey: "student.nav.results", href: "/dashboard/results" },
+  { icon: Award, labelKey: "student.nav.results", href: "/student/results" },
   {
     icon: BellRing,
     labelKey: "student.nav.notifications",
-    href: "/dashboard/notifications",
+    href: "/student/notifications",
   },
 ];
 

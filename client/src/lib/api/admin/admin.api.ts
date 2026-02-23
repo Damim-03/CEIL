@@ -4,7 +4,11 @@
    All admin-related API calls in one place.
    Organized by domain for easy navigation.
    
-   Last updated: February 2026
+   ✅ Updated: February 2026
+   - Removed changeRole (OWNER-only now)
+   - Removed createFee/deleteFee (OWNER-only now)
+   - getAllFees now returns paginated { data, meta }
+   - 📌 Added pin/unpin announcement support
 =============================================================== */
 
 import axiosInstance from "../axios";
@@ -60,6 +64,8 @@ export interface Announcement {
   image_public_id: string | null;
   is_published: boolean;
   published_at: string | null;
+  is_pinned: boolean; // 📌
+  pinned_at: string | null; // 📌
   created_at: string;
   updated_at: string;
 }
@@ -113,7 +119,7 @@ export interface CoursePayload {
   teacher_id?: string;
 }
 
-export type UserRole = "ADMIN" | "TEACHER" | "STUDENT";
+export type UserRole = "OWNER" | "ADMIN" | "TEACHER" | "STUDENT";
 
 export interface User {
   user_id: string;
@@ -307,13 +313,6 @@ export const adminUsersApi = {
   delete: async (userId: string) => {
     await axiosInstance.delete(`/admin/users/${userId}`);
   },
-
-  changeRole: async (userId: string, role: UserRole) => {
-    const response = await axiosInstance.patch(`/admin/users/${userId}/role`, {
-      role,
-    });
-    return response.data;
-  },
 };
 
 /* ===============================================================
@@ -361,10 +360,6 @@ export const adminStudentsApi = {
    TEACHERS API
 =============================================================== */
 
-/* ===============================================================
-   TEACHERS API — UPDATED (add this create method)
-=============================================================== */
-
 export const adminTeachersApi = {
   getAll: async (): Promise<Teacher[]> => {
     const { data } = await axiosInstance.get("/admin/teachers");
@@ -376,7 +371,6 @@ export const adminTeachersApi = {
     return data;
   },
 
-  // ✅ NEW: Create teacher (creates User + Teacher in backend)
   create: async (payload: {
     first_name: string;
     last_name: string;
@@ -553,7 +547,6 @@ export const adminEnrollmentsApi = {
     return res.data;
   },
 
-  // ✅ الصحيح:
   async validate(
     enrollmentId: string,
     payload?: { pricing_id?: string },
@@ -599,14 +592,9 @@ export const adminDocumentsApi = {
   getAll: async () => {
     try {
       const { data } = await axiosInstance.get("/admin/documents");
-      console.log("Documents API response:", data);
       return data;
     } catch (error: any) {
-      console.error("Error in getAll:", {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-      });
+      console.error("Error in getAll:", error.message);
       throw error;
     }
   },
@@ -616,14 +604,9 @@ export const adminDocumentsApi = {
       const { data } = await axiosInstance.get(
         `/admin/documents/${documentId}`,
       );
-      console.log("Document API response:", data);
       return data;
     } catch (error: any) {
-      console.error("Error in getById:", {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-      });
+      console.error("Error in getById:", error.message);
       throw error;
     }
   },
@@ -633,14 +616,9 @@ export const adminDocumentsApi = {
       const { data } = await axiosInstance.delete(
         `/admin/documents/${documentId}`,
       );
-      console.log("Delete API response:", data);
       return data;
     } catch (error: any) {
-      console.error("Error in delete:", {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-      });
+      console.error("Error in delete:", error.message);
       throw error;
     }
   },
@@ -650,14 +628,9 @@ export const adminDocumentsApi = {
       const { data } = await axiosInstance.put(
         `/admin/documents/${documentId}/approve`,
       );
-      console.log("Approve API response:", data);
       return data;
     } catch (error: any) {
-      console.error("Error in approve:", {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-      });
+      console.error("Error in approve:", error.message);
       throw error;
     }
   },
@@ -668,14 +641,9 @@ export const adminDocumentsApi = {
         `/admin/documents/${documentId}/reject`,
         { reason },
       );
-      console.log("Reject API response:", data);
       return data;
     } catch (error: any) {
-      console.error("Error in reject:", {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-      });
+      console.error("Error in reject:", error.message);
       throw error;
     }
   },
@@ -696,26 +664,24 @@ export const adminSessionsApi = {
     return res.data;
   },
 
-  // ✅ Updated: أضف room_id
   async create(payload: {
     group_id: string;
     session_date: string;
     end_time?: string;
     topic?: string;
-    room_id?: string; // ← جديد
+    room_id?: string;
   }): Promise<Session> {
     const res = await axiosInstance.post("/admin/sessions", payload);
     return res.data;
   },
 
-  // ✅ Updated: أضف room_id
   async update(
     sessionId: string,
     payload: {
       session_date?: string;
       end_time?: string | null;
       topic?: string;
-      room_id?: string | null; // ← جديد (null = إزالة القاعة)
+      room_id?: string | null;
     },
   ): Promise<Session> {
     const res = await axiosInstance.put(
@@ -737,7 +703,6 @@ export const adminSessionsApi = {
     return res.data;
   },
 
-  // لم يتغير
   async markAttendance(
     sessionId: string,
     payload: { studentId: string; status: string },
@@ -784,6 +749,35 @@ export const adminAttendanceApi = {
     return res.data;
   },
 
+  // ✅ NEW: Bulk mark attendance
+  async markBulkAttendance(
+    sessionId: string,
+    entries: Array<{ student_id: string; status: AttendanceStatus }>,
+  ) {
+    const res = await axiosInstance.post(
+      `/admin/sessions/${sessionId}/attendance/bulk`,
+      { entries },
+    );
+    return res.data;
+  },
+
+  // ✅ NEW: Get attendance by date for a group
+  async getByDate(groupId: string, date: string) {
+    const res = await axiosInstance.get(
+      `/admin/groups/${groupId}/attendance/date/${date}`,
+    );
+    return res.data;
+  },
+
+  // ✅ NEW: Get student attendance summary
+  async getStudentSummary(studentId: string, groupId?: string) {
+    const res = await axiosInstance.get(
+      `/admin/students/${studentId}/attendance/summary`,
+      { params: groupId ? { group_id: groupId } : {} },
+    );
+    return res.data;
+  },
+
   async updateStatus(
     attendanceId: string,
     status: AttendanceStatus,
@@ -804,23 +798,16 @@ export const adminAttendanceApi = {
 =============================================================== */
 
 export const adminFeesApi = {
-  async getAll(): Promise<Fee[]> {
-    const res = await axiosInstance.get("/admin/fees");
+  async getAll(params?: { page?: number; limit?: number }): Promise<{
+    data: Fee[];
+    meta: { page: number; limit: number; total: number; pages: number };
+  }> {
+    const res = await axiosInstance.get("/admin/fees", { params });
     return res.data;
   },
 
   async getById(feeId: string): Promise<Fee> {
     const res = await axiosInstance.get(`/admin/fees/${feeId}`);
-    return res.data;
-  },
-
-  async create(payload: {
-    student_id: string;
-    enrollment_id?: string;
-    amount: number;
-    due_date: string;
-  }): Promise<Fee> {
-    const res = await axiosInstance.post("/admin/fees", payload);
     return res.data;
   },
 
@@ -832,11 +819,6 @@ export const adminFeesApi = {
     },
   ): Promise<Fee> {
     const res = await axiosInstance.put(`/admin/fees/${feeId}`, payload);
-    return res.data;
-  },
-
-  async delete(feeId: string): Promise<{ message: string }> {
-    const res = await axiosInstance.delete(`/admin/fees/${feeId}`);
     return res.data;
   },
 
@@ -937,7 +919,7 @@ export const adminResultsApi = {
       marks_obtained: number;
       grade?: string;
     },
-  ): Promise<r> {
+  ): Promise<Result> {
     const res = await axiosInstance.post(
       `/admin/exams/${examId}/results`,
       payload,
@@ -951,7 +933,7 @@ export const adminResultsApi = {
       marks_obtained?: number;
       grade?: string;
     },
-  ): Promise<r> {
+  ): Promise<Result> {
     const res = await axiosInstance.put(`/admin/results/${resultId}`, payload);
     return res.data;
   },
@@ -978,9 +960,7 @@ export const adminPermissionsApi = {
   ): Promise<StudentPermission> {
     const res = await axiosInstance.post(
       `/admin/students/${studentId}/permissions`,
-      {
-        permissionId,
-      },
+      { permissionId },
     );
     return res.data;
   },
@@ -1049,21 +1029,23 @@ export const updateAdminAvatarApi = async (file: File) => {
   return data;
 };
 
+/* ===============================================================
+   ANNOUNCEMENTS API
+   📌 Includes pin/unpin support
+=============================================================== */
+
 export const announcementApi = {
-  // GET all
   getAll: (params?: AnnouncementListParams) =>
     axiosInstance
       .get<PaginatedResponse<Announcement>>("/admin/announcements", { params })
       .then((res) => res.data),
 
-  // GET by ID
   getById: (id: string) =>
     axiosInstance
       .get<{ data: Announcement }>(`/admin/announcements/${id}`)
       .then((res) => res.data.data),
 
-  // CREATE
-  create: (data: CreateAnnouncementData) => {
+  create: async (data: CreateAnnouncementData) => {
     const formData = new FormData();
     formData.append("title", data.title);
     if (data.title_ar) formData.append("title_ar", data.title_ar);
@@ -1076,16 +1058,14 @@ export const announcementApi = {
       formData.append("is_published", String(data.is_published));
     if (data.image) formData.append("image", data.image);
 
-    return axiosInstance
-      .post<{
-        message: string;
-        data: Announcement;
-      }>("/admin/announcements", formData)
-      .then((res) => res.data);
+    const res = await axiosInstance.post<{
+      message: string;
+      data: Announcement;
+    }>("/admin/announcements", formData);
+    return res.data;
   },
 
-  // UPDATE
-  update: (id: string, data: UpdateAnnouncementData) => {
+  update: async (id: string, data: UpdateAnnouncementData) => {
     const formData = new FormData();
     if (data.title) formData.append("title", data.title);
     if (data.title_ar) formData.append("title_ar", data.title_ar);
@@ -1096,21 +1076,18 @@ export const announcementApi = {
     if (data.category) formData.append("category", data.category);
     if (data.image) formData.append("image", data.image);
 
-    return axiosInstance
-      .put<{
-        message: string;
-        data: Announcement;
-      }>(`/admin/announcements/${id}`, formData)
-      .then((res) => res.data);
+    const res = await axiosInstance.put<{
+      message: string;
+      data: Announcement;
+    }>(`/admin/announcements/${id}`, formData);
+    return res.data;
   },
 
-  // DELETE
   delete: (id: string) =>
     axiosInstance
       .delete<{ message: string }>(`/admin/announcements/${id}`)
       .then((res) => res.data),
 
-  // PUBLISH
   publish: (id: string) =>
     axiosInstance
       .patch<{
@@ -1119,13 +1096,29 @@ export const announcementApi = {
       }>(`/admin/announcements/${id}/publish`)
       .then((res) => res.data),
 
-  // UNPUBLISH
   unpublish: (id: string) =>
     axiosInstance
       .patch<{
         message: string;
         data: Announcement;
       }>(`/admin/announcements/${id}/unpublish`)
+      .then((res) => res.data),
+
+  // 📌 Pin/Unpin
+  pin: (id: string) =>
+    axiosInstance
+      .patch<{
+        message: string;
+        data: Announcement;
+      }>(`/admin/announcements/${id}/pin`)
+      .then((res) => res.data),
+
+  unpin: (id: string) =>
+    axiosInstance
+      .patch<{
+        message: string;
+        data: Announcement;
+      }>(`/admin/announcements/${id}/unpin`)
       .then((res) => res.data),
 };
 
@@ -1290,6 +1283,10 @@ export const adminCoursePricingApi = {
   },
 };
 
+/* ===============================================================
+   NOTIFICATIONS API
+=============================================================== */
+
 export const adminNotificationApi = {
   getTargets: async (): Promise<NotificationTargets> => {
     const { data } = await axiosInstance.get("/admin/notifications/targets");
@@ -1379,7 +1376,6 @@ export const userNotificationApi = {
     return data;
   },
 
-  // داخل adminNotificationApi:
   searchStudents: async (query: string) => {
     const { data } = await axiosInstance.get(
       `/admin/notifications/search-students?q=${encodeURIComponent(query)}`,
@@ -1387,6 +1383,10 @@ export const userNotificationApi = {
     return data;
   },
 };
+
+/* ===============================================================
+   ROOMS API
+=============================================================== */
 
 export const adminRoomsApi = {
   async getAll(params?: {
@@ -1435,15 +1435,10 @@ export const adminRoomsApi = {
     roomId: string,
     date: string,
     duration?: number,
-  ): Promise<{
-    available: boolean;
-    conflicts: any[];
-  }> {
+  ): Promise<{ available: boolean; conflicts: any[] }> {
     const { data } = await axiosInstance.get(
       `/admin/rooms/${roomId}/availability`,
-      {
-        params: { date, duration },
-      },
+      { params: { date, duration } },
     );
     return data;
   },

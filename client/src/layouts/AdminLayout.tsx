@@ -1,5 +1,5 @@
 /* ===============================================================
-   AdminLayout.tsx — ✅ Dark Mode Support
+   AdminLayout.tsx — ✅ Dark Mode Support + 🔌 Socket.IO
    
    📁 src/layouts/AdminLayout.tsx
 =============================================================== */
@@ -10,10 +10,25 @@ import { TooltipProvider } from "../components/ui/tooltip";
 import Sidebar from "../app/admin/components/Sidebar";
 import { Header } from "../app/admin/components/Header";
 
+// أضف هذا import
+import {
+  usePageTracking,
+  usePresenceHeartbeat,
+} from "../hooks/owner/Useactivitytracking";
+
+// 🔌 Socket.IO — real-time auto-invalidation
+import { useSocketEvents } from "../hooks/useSocketEvents";
+
 const AdminLayout = () => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // 🔌 Socket: listen to admin events → auto-refresh React Query
+  useSocketEvents("ADMIN");
+
+  usePageTracking();
+  usePresenceHeartbeat();
 
   // ✅ Collapse sidebar on click outside
   useEffect(() => {

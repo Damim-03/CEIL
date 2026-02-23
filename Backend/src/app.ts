@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express, { Request, Response } from "express";
+import http from "http"; // 🔌 NEW
 import cors from "cors";
 import session from "cookie-session";
 import cookieParser from "cookie-parser";
@@ -10,9 +11,14 @@ import { asyncHandler } from "./middlewares/asyncHandler.middleware";
 import mainRoute from "./routes/mainRoutes";
 import "./config/passport/passport.config";
 import path from "node:path";
+import { initSocketIO } from "./config/socket"; // 🔌 NEW
 
 const app = express();
+const server = http.createServer(app); // 🔌 NEW
 const BASE_PATH = config.BASE_PATH;
+
+// 🔌 Initialize Socket.IO
+initSocketIO(server); // 🔌 NEW
 
 // ═══ 1. Middleware ═══
 app.use(cors({ origin: config.FRONTEND_ORIGIN, credentials: true }));
@@ -53,6 +59,8 @@ if (config.NODE_ENV === "production") {
 // ═══ 5. Error Handler ═══
 app.use(errorHandler);
 
-app.listen(config.PORT, async () => {
+// 🔌 CHANGED: server.listen instead of app.listen
+server.listen(config.PORT, async () => {
   console.log(`🚀 Server running on port ${config.PORT} in ${config.NODE_ENV}`);
+  console.log(`🔌 Socket.IO ready`);
 });

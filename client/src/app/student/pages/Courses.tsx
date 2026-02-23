@@ -107,7 +107,7 @@ const Courses = () => {
         toast.info(`You're already enrolled in ${course.course_name}!`, {
           description: `Group: ${enrollment.group_name || "Assigned"} | Level: ${enrollment.level || "N/A"}`,
         });
-        setTimeout(() => navigate("/dashboard/enrollments"), 1500);
+        setTimeout(() => navigate("/student/enrollments"), 1500);
         return;
       } else {
         if (enrollment.status === "pending") {
@@ -205,7 +205,7 @@ const Courses = () => {
             duration: 3000,
           });
           setTimeout(
-            () => navigate("/dashboard/enrollments", { replace: true }),
+            () => navigate("/student/enrollments", { replace: true }),
             1500,
           );
         },

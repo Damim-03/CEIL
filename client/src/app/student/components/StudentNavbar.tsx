@@ -24,35 +24,35 @@ import {
 const STUDENT_NAVIGATION = [
   {
     labelKey: "student.nav.dashboard",
-    path: "/dashboard",
+    path: "/student",
     icon: LayoutDashboard,
   },
-  { labelKey: "student.nav.profile", path: "/dashboard/profile", icon: User },
+  { labelKey: "student.nav.profile", path: "/student/profile", icon: User },
   {
     labelKey: "student.nav.documents",
-    path: "/dashboard/documents",
+    path: "/student/documents",
     icon: FileText,
   },
   {
     labelKey: "student.nav.courses",
-    path: "/dashboard/courses",
+    path: "/student/courses",
     icon: BookOpen,
   },
   {
     labelKey: "student.nav.enrollments",
-    path: "/dashboard/enrollments",
+    path: "/student/enrollments",
     icon: ClipboardList,
   },
-  { labelKey: "student.nav.fees", path: "/dashboard/fees", icon: DollarSign },
+  { labelKey: "student.nav.fees", path: "/student/fees", icon: DollarSign },
   {
     labelKey: "student.nav.attendance",
-    path: "/dashboard/attendance",
+    path: "/student/attendance",
     icon: Calendar,
   },
-  { labelKey: "student.nav.results", path: "/dashboard/results", icon: Award },
+  { labelKey: "student.nav.results", path: "/student/results", icon: Award },
   {
     labelKey: "student.nav.notifications",
-    path: "/dashboard/notifications",
+    path: "/student/notifications",
     icon: BellRing,
   },
 ];
@@ -93,7 +93,7 @@ export default function StudentNavbar() {
         {/* ✅ Notification Bell with dropdown */}
         <NotificationBell
           role="student"
-          notificationsPath="/dashboard/notifications"
+          notificationsPath="/student/notifications"
         />
 
         {/* User Info */}

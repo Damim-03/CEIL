@@ -4,10 +4,24 @@ import { TooltipProvider } from "../components/ui/tooltip";
 import TeacherSidebar from "../app/teacher/components/Teachersidebar";
 import { TeacherHeader } from "../app/teacher/components/TeacherHeader";
 
+// 🔌 Socket.IO — real-time auto-invalidation
+import { useSocketEvents } from "../hooks/useSocketEvents";
+
+import {
+  usePageTracking,
+  usePresenceHeartbeat,
+} from "../hooks/owner/Useactivitytracking";
+
 const TeacherLayout = () => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // 🔌 Socket: listen to teacher events → auto-refresh React Query
+  useSocketEvents("TEACHER");
+
+  usePageTracking();
+  usePresenceHeartbeat();
 
   // ✅ Collapse sidebar on click outside (all screen sizes)
   useEffect(() => {
@@ -34,7 +48,7 @@ const TeacherLayout = () => {
 
   return (
     <TooltipProvider>
-      <div className="flex min-h-screen bg-[#FAFAF8]">
+      <div className="flex min-h-screen bg-[#FAFAF8] dark:bg-[#111111] transition-colors duration-300">
         <div ref={sidebarRef}>
           <TeacherSidebar
             collapsed={collapsed}
@@ -49,7 +63,7 @@ const TeacherLayout = () => {
         >
           <TeacherHeader onMenuClick={() => setCollapsed((prev) => !prev)} />
 
-          <main className="flex-1 p-6 bg-[#FAFAF8]">
+          <main className="flex-1 p-6 bg-[#FAFAF8] dark:bg-[#111111] transition-colors duration-300">
             <Outlet />
           </main>
         </div>

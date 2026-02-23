@@ -6,6 +6,7 @@
    3. Disabled account → /unauthorized
    4. Loading → PageLoader (no flash)
    5. ✅ Back-button protection after logout
+   6. ✅ OWNER role support
 =============================================================== */
 
 import { Navigate, useLocation } from "react-router-dom";
@@ -14,7 +15,7 @@ import PageLoader from "./PageLoader";
 import { useEffect } from "react";
 import type { JSX } from "react/jsx-runtime";
 
-type AllowedRole = "ADMIN" | "TEACHER" | "STUDENT";
+type AllowedRole = "OWNER" | "ADMIN" | "TEACHER" | "STUDENT";
 
 interface ProtectedRouteProps {
   children: JSX.Element;
@@ -57,9 +58,10 @@ export default function ProtectedRoute({
 
     if (!allowedRoles.includes(user.role as AllowedRole)) {
       const roleHomeMap: Record<string, string> = {
+        OWNER: "/owner",
         ADMIN: "/admin",
-        TEACHER: "/admin",
-        STUDENT: "/dashboard",
+        TEACHER: "/teacher",
+        STUDENT: "/student",
       };
 
       const target = roleHomeMap[user.role] ?? "/";

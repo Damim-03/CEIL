@@ -1,19 +1,10 @@
 /* ===============================================================
-   Sidebar.tsx — ✅ Dark Mode Support
+   Sidebar.tsx — ✅ Dark Mode Support + Nested <a> Fix
    
    📁 src/app/admin/components/Sidebar.tsx
-   
-   Dark theme palette:
-   - bg:         #0F0F0F (deepest)
-   - surface:    #1A1A1A (cards/sidebar)
-   - border:     #2A2A2A
-   - text:       #E5E5E5 (primary)
-   - muted:      #888888 (secondary)
-   - accent:     #4ADE80 (green glow for active)
-   - gold:       #D4A843 (warm accent)
 =============================================================== */
 
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { useLogout } from "../../../hooks/auth/auth.hooks";
 import { useTranslation } from "react-i18next";
@@ -99,6 +90,7 @@ interface SidebarProps {
 
 const Sidebar = ({ collapsed, onExpand }: SidebarProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const logoutMutation = useLogout();
   const { t } = useTranslation();
@@ -180,41 +172,38 @@ const Sidebar = ({ collapsed, onExpand }: SidebarProps) => {
           collapsed ? "justify-center p-3.5" : "justify-between p-4",
         )}
       >
-        <Link
-          to="/admin/dashboard"
+        {/* ✅ FIX: No nested <Link>. Logo uses onClick + navigate, not <Link> */}
+        <div
           className={cn(
             "flex items-center gap-2.5",
             collapsed && "cursor-pointer",
           )}
-          onClick={
-            collapsed
-              ? (e) => {
-                  e.preventDefault();
-                  onExpand();
-                }
-              : undefined
-          }
+          onClick={collapsed ? onExpand : undefined}
         >
-          <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-md shadow-[#2B6F5E]/15 dark:shadow-black/30">
-            <Link to="/">
-              <img
-                src={logo}
-                alt="CEIL Logo"
-                className="w-full h-full object-cover"
-              />
-            </Link>
+          <div
+            className="w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-md shadow-[#2B6F5E]/15 dark:shadow-black/30 cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate("/");
+            }}
+          >
+            <img
+              src={logo}
+              alt="CEIL Logo"
+              className="w-full h-full object-cover"
+            />
           </div>
           {!collapsed && (
-            <div>
+            <Link to="/admin/dashboard">
               <span className="text-base font-bold text-[#1B1B1B] dark:text-[#E5E5E5] block leading-tight">
                 {t("admin.portal")}
               </span>
               <span className="text-[10px] font-medium text-[#BEB29E] dark:text-[#666666] uppercase tracking-wider">
                 {t("admin.ceil")}
               </span>
-            </div>
+            </Link>
           )}
-        </Link>
+        </div>
       </div>
 
       {/* ═══════════ NAVIGATION ═══════════ */}

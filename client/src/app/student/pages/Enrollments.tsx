@@ -197,7 +197,7 @@ export default function Enrollments() {
           <Button
             size="lg"
             className="gap-2 shadow-lg bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white rounded-xl"
-            onClick={() => navigate("/dashboard/courses")}
+            onClick={() => navigate("/student/courses")}
           >
             Browse Courses <ArrowRight className="w-5 h-5" />
           </Button>
@@ -269,7 +269,7 @@ export default function Enrollments() {
               <Button
                 size="lg"
                 className="gap-2 shrink-0 bg-white text-[#2B6F5E] hover:bg-white/90 dark:bg-[#4ADE80] dark:text-[#0F0F0F] dark:hover:bg-[#4ADE80]/90 rounded-xl font-semibold"
-                onClick={() => navigate("/dashboard/courses")}
+                onClick={() => navigate("/student/courses")}
               >
                 Choose Group <ArrowRight className="w-5 h-5" />
               </Button>
@@ -479,7 +479,7 @@ function EnrollmentsList({ enrollments }: { enrollments: Enrollment[] }) {
                   {canJoin ? (
                     <Button
                       className="w-full gap-2 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white rounded-xl shadow-md shadow-[#2B6F5E]/20"
-                      onClick={() => navigate("/dashboard/courses")}
+                      onClick={() => navigate("/student/courses")}
                     >
                       <Users className="w-4 h-4" /> Join a Group{" "}
                       <ArrowRight className="w-4 h-4" />
@@ -491,7 +491,7 @@ function EnrollmentsList({ enrollments }: { enrollments: Enrollment[] }) {
                         size="sm"
                         className="w-full gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#888888] hover:bg-[#2B6F5E]/5 dark:hover:bg-[#4ADE80]/5 hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 rounded-xl"
                         onClick={() =>
-                          navigate(`/dashboard/group/${enrollment.group_id}`)
+                          navigate(`/student/group/${enrollment.group_id}`)
                         }
                       >
                         View My Group <ArrowRight className="w-4 h-4" />

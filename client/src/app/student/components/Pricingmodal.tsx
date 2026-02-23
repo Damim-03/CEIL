@@ -449,7 +449,7 @@ export const PricingModal = ({
               w-full sm:w-auto order-1 sm:order-2 shadow-lg hover:shadow-xl transition-all
               ${
                 selectedPricingId
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  ? "bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                   : "bg-gray-400 cursor-not-allowed"
               }
             `}

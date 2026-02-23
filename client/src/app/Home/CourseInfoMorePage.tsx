@@ -97,7 +97,7 @@ export default function CourseInfoMorePage() {
   const getDashboardLink = () => {
     if (role === "ADMIN") return "/admin";
     if (role === "TEACHER") return "/teacher";
-    return "/dashboard";
+    return "/student";
   };
 
   return (
@@ -584,7 +584,7 @@ export default function CourseInfoMorePage() {
                           className="w-full bg-brand-mustard hover:bg-brand-mustard/90 text-white gap-2 h-12 text-sm font-semibold rounded-xl shadow-lg"
                         >
                           <LocaleLink
-                            to={`/login?redirect=${encodeURIComponent(`/dashboard/courses?courseId=${course.id}`)}`}
+                            to={`/login?redirect=${encodeURIComponent(`/student/courses?courseId=${course.id}`)}`}
                           >
                             <LogIn className="w-4 h-4" />
                             {t("courses.loginToRegister")}
@@ -596,7 +596,7 @@ export default function CourseInfoMorePage() {
                           asChild
                           className="w-full bg-brand-mustard hover:bg-brand-mustard/90 text-white gap-2 h-12 text-sm font-semibold rounded-xl shadow-lg"
                         >
-                          <Link to={`/dashboard/courses?courseId=${course.id}`}>
+                          <Link to={`/student/courses?courseId=${course.id}`}>
                             <UserPlus className="w-4 h-4" />
                             {t("courses.registerNow")}
                           </Link>

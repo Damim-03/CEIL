@@ -56,6 +56,15 @@ import TeacherResults from "./app/teacher/pages/results/TeacherResults";
 import TeacherStudents from "./app/teacher/pages/student/TeacherStudents";
 import TeacherProfile from "./app/teacher/pages/profile/TeacherProfile";
 
+// ═══ Owner imports ═══
+import OwnerLayout from "./layouts/Ownerlayout";
+import OwnerDashboard from "./app/owner/pages/dashboard/Ownerdashboard";
+import AdminsPage from "./app/owner/pages/users/Adminspage";
+import OwnerUsersPage from "./app/owner/pages/users/Userspage";
+import AuditLogsPage from "./app/owner/pages/AuditLogs/AuditLogs";
+import SettingsPage from "./app/owner/pages/Settings/SettingsPage";
+import SystemPage from "./app/owner/pages/System/SystemPage";
+
 // ═══ i18n ═══
 import { LanguageLayout } from "./i18n/locales/components/LanguageLayout";
 import { DEFAULT_LANG } from "./i18n/i18n";
@@ -70,6 +79,8 @@ import TeacherStudentDetails from "./app/teacher/pages/student/TeacherStudentDet
 import OurPlatform from "./app/Home/OurPlatform";
 import RoomsPage from "./app/admin/pages/RoomsPage";
 import RoomsTimetablePage from "./app/admin/pages/RoomsTimetablePage";
+import OwnerFeeAnalytics from "./app/owner/pages/OwnerFeeAnalytics";
+import ActivityDashboardPage from "./app/owner/pages/activity/Activitydashboardpage";
 
 const App = () => {
   return (
@@ -169,7 +180,7 @@ const App = () => {
           STUDENT ROUTES — no lang prefix (dashboard is internal)
       ═══════════════════════════════════════════ */}
       <Route
-        path="/dashboard"
+        path="/student"
         element={
           <ProtectedRoute allowedRoles={["STUDENT"]}>
             <StudentLayout />
@@ -219,12 +230,35 @@ const App = () => {
       </Route>
 
       {/* ═══════════════════════════════════════════
+          OWNER ROUTES — no lang prefix
+      ═══════════════════════════════════════════ */}
+      <Route
+        path="/owner"
+        element={
+          <ProtectedRoute allowedRoles={["OWNER"]}>
+            <OwnerLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<OwnerDashboard />} />
+        <Route path="dashboard" element={<OwnerDashboard />} />
+        <Route path="admins" element={<AdminsPage />} />
+        <Route path="users" element={<OwnerUsersPage />} />
+        <Route path="fee-analytics" element={<OwnerFeeAnalytics />} />
+        <Route path="activity" element={<ActivityDashboardPage />} />
+        <Route path="audit-logs" element={<AuditLogsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="system" element={<SystemPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+      </Route>
+
+      {/* ═══════════════════════════════════════════
           ADMIN ROUTES — no lang prefix
       ═══════════════════════════════════════════ */}
       <Route
         path="/admin"
         element={
-          <ProtectedRoute allowedRoles={["ADMIN"]}>
+          <ProtectedRoute allowedRoles={["ADMIN", "OWNER"]}>
             <AdminLayout />
           </ProtectedRoute>
         }
@@ -258,7 +292,6 @@ const App = () => {
           path="formations/:courseId/edit"
           element={<CourseProfileManager />}
         />
-
         <Route path="rooms" element={<RoomsPage />} />
         <Route path="rooms/timetable" element={<RoomsTimetablePage />} />
       </Route>
@@ -272,7 +305,6 @@ export default App;
 function RedirectWithLang({ base }: { base: string }) {
   const path = window.location.pathname;
   const segments = path.split("/").filter(Boolean);
-  // e.g. /courses/abc123 → segments = ["courses", "abc123"]
   const id = segments[1] || "";
   return <Navigate to={`/${DEFAULT_LANG}/${base}/${id}`} replace />;
 }

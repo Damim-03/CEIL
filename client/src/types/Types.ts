@@ -12,11 +12,16 @@
 =============================================================== */
 
 export type StudentStatus = "ACTIVE" | "INACTIVE";
-export type UserRole = "ADMIN" | "STUDENT" | "TEACHER";
+export type UserRole = "OWNER" | "ADMIN" | "STUDENT" | "TEACHER";
 export type AttendanceStatus = "PRESENT" | "ABSENT";
 export type FeeStatus = "PAID" | "UNPAID";
 export type Gender = "MALE" | "FEMALE" | "OTHER";
-export type RegistrationStatus = "PENDING" | "VALIDATED" | "REJECTED" | "PAID" | "FINISHED";
+export type RegistrationStatus =
+  | "PENDING"
+  | "VALIDATED"
+  | "REJECTED"
+  | "PAID"
+  | "FINISHED";
 export type Level = "A1" | "A2" | "B1" | "B2" | "C1";
 export type DocumentStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type GroupStatus = "OPEN" | "FULL" | "FINISHED";
@@ -43,7 +48,7 @@ export interface User {
   student_id?: string | null; // UUID, unique
   teacher_id?: string | null; // UUID, unique
   created_at: Date | string;
-  
+
   // Relations
   refresh_tokens?: RefreshToken[];
   student?: Student | null;
@@ -85,7 +90,7 @@ export interface Student {
   created_at: Date | string;
   updated_at: Date | string;
   group_id?: string | null; // UUID
-  
+
   // Relations
   attendance?: Attendance[];
   documents?: Document[];
@@ -122,7 +127,7 @@ export interface Teacher {
   email?: string | null; // VARCHAR(100)
   phone_number?: string | null; // VARCHAR(35)
   created_at: Date | string;
-  
+
   // Relations
   groups?: Group[];
   user?: User | null;
@@ -138,7 +143,7 @@ export interface Course {
   course_code?: string | null; // VARCHAR(20), unique
   course_name: string; // VARCHAR(100)
   credits?: number | null;
-  
+
   // Relations
   enrollments?: Enrollment[];
   exams?: Exam[];
@@ -173,7 +178,7 @@ export interface Department {
   name: string; // VARCHAR(100), unique
   description?: string | null;
   created_at: Date | string;
-  
+
   // Relations
   groups?: Group[];
 }
@@ -198,7 +203,7 @@ export interface Group {
   status: GroupStatus; // Default: OPEN
   teacher_id?: string | null; // UUID
   level: Level;
-  
+
   // Relations
   enrollments?: Enrollment[];
   course?: Course;
@@ -206,7 +211,7 @@ export interface Group {
   teacher?: Teacher | null;
   sessions?: Session[];
   students?: Student[];
-  
+
   // Computed field (not in DB)
   current_capacity?: number;
   _count?: {
@@ -232,21 +237,21 @@ export interface GroupUI extends Group {
   current_capacity: number;
   created_at?: string;
   updated_at?: string;
-  
+
   course?: {
     course_id: string;
     course_name: string;
     course_code?: string;
     credits?: number;
   };
-  
+
   instructor?: {
     teacher_id: string;
     first_name: string;
     last_name: string;
     email?: string;
   };
-  
+
   students?: Array<{
     student_id: string;
     first_name: string;
@@ -270,14 +275,14 @@ export interface Enrollment {
   start_date?: Date | string | null;
   end_date?: Date | string | null;
   registration_status: RegistrationStatus; // Default: PENDING
-  
+
   // Relations
   course?: Course;
   group?: Group | null;
   student?: Student;
   fees?: Fee[];
   history?: RegistrationHistory[];
-  
+
   // Computed/Extended fields (not in DB)
   rejection_reason?: string | null;
 }
@@ -286,13 +291,13 @@ export interface EnrollmentListItem {
   enrollment_id: string;
   enrollment_date: Date | string;
   registration_status: RegistrationStatus;
-  
+
   student: {
     student_id: string;
     first_name: string;
     last_name: string;
   };
-  
+
   course: {
     course_id: string;
     course_name: string;
@@ -309,11 +314,11 @@ export interface Session {
   group_id: string; // UUID
   session_date?: Date;
   topic?: string | null;
-  
+
   // Relations
   attendance?: Attendance[];
   group?: Group;
-  
+
   // Computed fields (not in DB, populated via joins)
   course_id?: string;
   course_name?: string;
@@ -343,11 +348,11 @@ export interface Attendance {
   session_id: string; // UUID
   student_id: string; // UUID
   status: AttendanceStatus;
-  
+
   // Relations
   session?: Session;
   student?: Student;
-  
+
   // Computed field
   marked_at?: Date | string;
 }
@@ -377,7 +382,7 @@ export interface AttendanceWithSession {
   attendance_id: string;
   status: AttendanceStatus;
   marked_at?: Date | string;
-  
+
   session: {
     session_id: string;
     session_date: Date | string;
@@ -409,7 +414,7 @@ export interface Exam {
   exam_name?: string | null;
   exam_date: Date | string;
   max_marks: number;
-  
+
   // Relations
   course?: Course;
   results?: Result[];
@@ -436,7 +441,7 @@ export interface Result {
   student_id: string; // UUID
   marks_obtained: number;
   grade?: string | null;
-  
+
   // Relations
   exam?: Exam;
   student?: Student;
@@ -446,7 +451,7 @@ export interface ResultByExam {
   result_id: string;
   marks_obtained: number;
   grade?: string | null;
-  
+
   student: {
     student_id: string;
     first_name: string;
@@ -459,7 +464,7 @@ export interface ResultByStudent {
   result_id: string;
   marks_obtained: number;
   grade?: string | null;
-  
+
   exam: {
     exam_id: string;
     exam_name?: string | null;
@@ -502,7 +507,7 @@ export interface Fee {
   payment_method?: string | null; // VARCHAR(30)
   reference_code?: string | null; // VARCHAR(100)
   paid_at?: Date | string | null;
-  
+
   // Relations
   enrollment?: Enrollment | null;
   student?: Student;
@@ -513,14 +518,14 @@ export interface FeeListItem {
   amount: number;
   due_date: Date | string;
   status: FeeStatus;
-  
+
   student: {
     student_id: string;
     first_name: string;
     last_name: string;
     email?: string | null;
   };
-  
+
   enrollment?: {
     enrollment_id: string;
   } | null;
@@ -552,15 +557,19 @@ export interface Document {
   reviewed_at?: Date | string | null;
   reviewed_by?: string | null; // UUID
   uploaded_at: Date | string; // Default: now()
-  
+
   // Relations
   student?: Student;
-  
+
   // Computed field
   rejection_reason?: string | null;
 }
 
-export type DocumentType = "PHOTO" | "ID_CARD" | "SCHOOL_CERTIFICATE" | "PAYMENT_RECEIPT";
+export type DocumentType =
+  | "PHOTO"
+  | "ID_CARD"
+  | "SCHOOL_CERTIFICATE"
+  | "PAYMENT_RECEIPT";
 
 export interface AdminDocumentResponse {
   document_id: string;
@@ -599,7 +608,7 @@ export interface Permission {
   permission_id: string; // UUID
   name: string; // unique
   description?: string | null;
-  
+
   // Relations
   students?: StudentPermission[];
 }
@@ -607,7 +616,7 @@ export interface Permission {
 export interface StudentPermission {
   student_id: string; // UUID
   permission_id: string; // UUID
-  
+
   // Relations
   permission?: Permission;
   student?: Student;
@@ -624,7 +633,7 @@ export interface RegistrationHistory {
   new_status: RegistrationStatus;
   changed_at: Date | string; // Default: now()
   changed_by?: string | null; // UUID
-  
+
   // Relations
   enrollment?: Enrollment;
 }
@@ -639,7 +648,7 @@ export interface RefreshToken {
   token: string; // unique
   expires_at: Date | string;
   created_at: Date | string; // Default: now()
-  
+
   // Relations
   user?: User;
 }
@@ -668,7 +677,7 @@ export interface Profile {
   user_id?: string;
   created_at?: Date | string;
   updated_at?: Date | string;
-  
+
   // Computed
   is_profile_complete?: boolean;
 }
@@ -954,7 +963,7 @@ export interface UploadMutation {
     options?: {
       onSuccess?: () => void;
       onError?: (err: Error) => void;
-    }
+    },
   ) => void;
   isPending: boolean;
 }
@@ -1045,8 +1054,8 @@ export function hasGroup(enrollment: Enrollment): boolean {
 
 export function canJoinGroup(enrollment: Enrollment): boolean {
   return (
-    (enrollment.registration_status === "VALIDATED" || 
-     enrollment.registration_status === "PAID") && 
+    (enrollment.registration_status === "VALIDATED" ||
+      enrollment.registration_status === "PAID") &&
     !enrollment.group_id
   );
 }
@@ -1070,5 +1079,457 @@ export function isGroupAvailable(group: Group): boolean {
 =============================================================== */
 
 export type PickFields<T, K extends keyof T> = Pick<T, K>;
-export type PartialFields<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
-export type RequiredFields<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>;
+export type PartialFields<T, K extends keyof T> = Omit<T, K> &
+  Partial<Pick<T, K>>;
+export type RequiredFields<T, K extends keyof T> = Omit<T, K> &
+  Required<Pick<T, K>>;
+
+// ================================================================
+// 📌 ملف: src/types/owner.types.ts
+// ================================================================
+
+/* ═══════════════════════════ Dashboard ═══════════════════════════ */
+
+export interface OwnerDashboard {
+  system: {
+    total_users: number;
+    active_users: number;
+    disabled_users: number;
+    owners: number;
+    admins: number;
+  };
+  users_by_role: Array<{ role: string; count: number }>;
+  academics: {
+    total_students: number;
+    active_students: number;
+    total_teachers: number;
+    total_courses: number;
+    total_groups: number;
+    total_enrollments: number;
+    total_sessions: number;
+    total_exams: number;
+  };
+  enrollments_by_status: Array<{ status: string; count: number }>;
+  finance: {
+    total_revenue: number;
+    collected: number;
+    pending: number;
+    paid_count: number;
+    unpaid_count: number;
+  };
+  recent_activity: AuditLog[];
+}
+
+/* ═══════════════════════════ Admins ═══════════════════════════ */
+
+export interface AdminAccount {
+  user_id: string;
+  email: string;
+  role: "OWNER" | "ADMIN";
+  is_active: boolean;
+  google_avatar?: string | null;
+  created_at: string;
+}
+
+export interface CreateAdminPayload {
+  email: string;
+  password?: string;
+}
+
+/* ═══════════════════════════ Audit Logs ═══════════════════════════ */
+
+export interface AuditLog {
+  log_id: string;
+  user_id: string | null;
+  user_email: string | null;
+  user_role: string | null;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  details: Record<string, any> | null;
+  ip_address: string | null;
+  created_at: string;
+}
+
+export interface AuditLogFilters {
+  page?: number;
+  limit?: number;
+  action?: string;
+  entity_type?: string;
+  user_id?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface AuditLogStats {
+  today: number;
+  this_week: number;
+  by_action: Array<{ action: string; count: number }>;
+  by_entity: Array<{ entity_type: string; count: number }>;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
+/* ═══════════════════════════ System Settings ═══════════════════════════ */
+
+export interface SystemSettingsResponse {
+  settings: Record<string, string>;
+  raw: Array<{
+    setting_id: string;
+    key: string;
+    value: string;
+    updated_by: string | null;
+    updated_at: string;
+  }>;
+}
+
+/* ═══════════════════════════ Users ═══════════════════════════ */
+
+export interface OwnerUser {
+  user_id: string;
+  email: string;
+  role: string;
+  is_active: boolean;
+  google_avatar?: string | null;
+  created_at: string;
+  student?: {
+    student_id: string;
+    first_name: string;
+    last_name: string;
+    email: string | null;
+    status: string;
+  } | null;
+  teacher?: {
+    teacher_id: string;
+    first_name: string;
+    last_name: string;
+    email: string | null;
+  } | null;
+}
+
+export interface UserFilters {
+  page?: number;
+  limit?: number;
+  role?: string;
+  search?: string;
+  is_active?: string;
+}
+
+/* ═══════════════════════════ System Health ═══════════════════════════ */
+
+export interface SystemHealth {
+  status: "healthy" | "unhealthy";
+  database: {
+    connected: boolean;
+    latency_ms: number;
+  };
+  users: number;
+  uptime: number;
+  memory: {
+    rss: number;
+    heapTotal: number;
+    heapUsed: number;
+    external: number;
+  };
+  timestamp: string;
+}
+
+export interface SystemStats {
+  monthly_comparison: {
+    enrollments: {
+      this_month: number;
+      last_month: number;
+      change_percent: number;
+    };
+    revenue: {
+      this_month: number;
+      last_month: number;
+    };
+    new_students: {
+      this_month: number;
+      last_month: number;
+    };
+    sessions_this_month: number;
+  };
+  attendance: {
+    overall_rate: number;
+    present: number;
+    absent: number;
+    total: number;
+  };
+}
+
+// ================================================================
+// 📌 أضف هذه الأنواع إلى ملف src/types/Types.ts
+// ✅ أنواع Owner الجديدة (sections 7-12)
+// ================================================================
+
+/* ═══════ 7. Fees ═══════ */
+
+export interface OwnerFee {
+  fee_id: string;
+  student_id: string;
+  enrollment_id: string | null;
+  amount: number;
+  due_date: string;
+  status: "PAID" | "UNPAID";
+  payment_method: string | null;
+  reference_code: string | null;
+  paid_at: string | null;
+  processed_by: string | null;
+  processed_at: string | null;
+  created_by: string | null;
+  student: {
+    student_id: string;
+    first_name: string;
+    last_name: string;
+    email: string | null;
+  };
+  enrollment?: {
+    enrollment_id: string;
+    registration_status: string;
+    course: {
+      course_id: string;
+      course_name: string;
+      course_code: string | null;
+    };
+  } | null;
+  // Resolved user info (from owner controller)
+  processed_by_user?: { email: string; role: string } | null;
+  created_by_user?: { email: string; role: string } | null;
+}
+
+export interface OwnerFeeFilters {
+  page?: number;
+  limit?: number;
+  status?: "PAID" | "UNPAID";
+  student_id?: string;
+}
+
+export interface OwnerFeeSummary {
+  paid: { count: number; amount: number };
+  unpaid: { count: number; amount: number };
+  total_amount: number;
+}
+
+export interface OwnerRevenue {
+  daily: { amount: number; count: number };
+  monthly: { amount: number; count: number };
+  yearly: { amount: number; count: number };
+  comparison: {
+    month_vs_last: {
+      current: number;
+      previous: number;
+      change_percent: number;
+    };
+    year_vs_last: {
+      current: number;
+      previous: number;
+    };
+  };
+  monthly_breakdown: Array<{ month: number; total: number; count: number }>;
+  recent_payments: Array<{
+    fee_id: string;
+    amount: number;
+    paid_at: string | null;
+    student: string;
+    payment_method: string | null;
+    reference_code: string | null;
+    processed_by: string | null;
+    processed_at: string | null;
+  }>;
+}
+
+/* ═══════ 8. Enrollments ═══════ */
+
+export interface OwnerEnrollment {
+  enrollment_id: string;
+  student_id: string;
+  course_id: string;
+  group_id: string | null;
+  enrollment_date: string;
+  registration_status: string;
+  student: {
+    student_id: string;
+    first_name: string;
+    last_name: string;
+    email: string | null;
+  };
+  course: {
+    course_id: string;
+    course_name: string;
+    course_code: string | null;
+  };
+  group?: { group_id: string; name: string } | null;
+  fees?: OwnerFee[];
+  history?: Array<{
+    old_status: string;
+    new_status: string;
+    changed_at: string;
+    changed_by: string | null;
+  }>;
+  pricing?: { status_fr: string; price: number } | null;
+}
+
+export interface OwnerEnrollmentFilters {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+}
+
+/* ═══════ 9. Students ═══════ */
+
+export interface OwnerStudent {
+  student_id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  status: string;
+  avatar_url: string | null;
+  created_at: string;
+  user?: {
+    user_id: string;
+    email: string;
+    is_active: boolean;
+    google_avatar: string | null;
+  };
+  enrollments?: Array<{
+    course: { course_name: string };
+    group?: { name: string } | null;
+  }>;
+  _count?: { fees: number; attendance: number; documents: number };
+}
+
+export interface OwnerStudentDetail extends OwnerStudent {
+  date_of_birth?: string;
+  gender?: string;
+  phone_number?: string;
+  nationality?: string;
+  education_level?: string;
+  attendance?: any[];
+  fees?: OwnerFee[];
+  documents?: any[];
+}
+
+/* ═══════ 10. Academics ═══════ */
+
+export interface OwnerDepartment {
+  department_id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  groups: OwnerGroup[];
+}
+
+export interface OwnerGroup {
+  group_id: string;
+  name: string;
+  status: string;
+  max_students: number;
+  level: string;
+  course?: { course_name: string };
+  department?: { name: string } | null;
+  teacher?: { first_name: string; last_name: string } | null;
+  _count?: { enrollments: number; sessions: number };
+  current_students?: number;
+  total_sessions?: number;
+}
+
+export interface OwnerCourse {
+  course_id: string;
+  course_name: string;
+  course_code: string | null;
+  credits: number | null;
+  fee_amount: number | null;
+  profile?: {
+    is_published: boolean;
+    language: string | null;
+    level: string | null;
+  } | null;
+  groups?: Array<{
+    group_id: string;
+    name: string;
+    teacher?: { first_name: string; last_name: string } | null;
+  }>;
+  _count?: { enrollments: number; groups: number; exams: number };
+}
+
+/* ═══════ 11. Notifications ═══════ */
+
+export interface OwnerNotification {
+  notification_id: string;
+  title: string;
+  title_ar: string | null;
+  message: string;
+  message_ar: string | null;
+  target_type: string;
+  priority: string;
+  created_by: string | null;
+  created_at: string;
+  total_recipients: number;
+  read_count: number;
+}
+
+/* ═══════ 12. Activity ═══════ */
+
+export interface OwnerActivityFilters {
+  page?: number;
+  limit?: number;
+  user_id?: string;
+  role?: string;
+  action?: string;
+  entity_type?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface OwnerActivity {
+  data: Array<{
+    log_id: string;
+    user_id: string | null;
+    user_email: string | null;
+    user_role: string | null;
+    action: string;
+    entity_type: string;
+    entity_id: string | null;
+    details: any;
+    ip_address: string | null;
+    created_at: string;
+  }>;
+  meta: { page: number; limit: number; total: number; pages: number };
+  analytics: {
+    top_actions: Array<{ action: string; count: number }>;
+    by_role: Array<{ role: string; count: number }>;
+    active_users_today: number;
+  };
+}
+
+export interface OwnerUserActivity {
+  user: {
+    user_id: string;
+    email: string;
+    role: string;
+    is_active: boolean;
+    created_at: string;
+    google_avatar: string | null;
+  };
+  activity: Array<{
+    log_id: string;
+    action: string;
+    entity_type: string;
+    entity_id: string | null;
+    details: any;
+    created_at: string;
+  }>;
+  meta: { page: number; limit: number; total: number; pages: number };
+  top_actions: Array<{ action: string; count: number }>;
+}

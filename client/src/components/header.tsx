@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "../assets/download.png";
-import ceillogo from "../assets/logo.jpg";
+import ceillogo from "../assets/logo-2.png";
 import {
   User,
   LogIn,
@@ -74,7 +74,7 @@ export function Header() {
       ? "/admin"
       : user?.role === "TEACHER"
         ? "/teacher"
-        : "/dashboard";
+        : "/student";
 
   const isActive = (path: string) => {
     const cleaned =
@@ -182,11 +182,11 @@ export function Header() {
                   src={ceillogo}
                   alt="CEIL"
                   className={`object-contain rounded-lg transition-all duration-500 ${
-                    scrolled ? "h-9 w-9" : "h-12 w-12"
+                    scrolled ? "h-10 w-10" : "h-13 w-13"
                   }`}
                 />
-                <div className="absolute -inset-1 rounded-2xl border-2 border-brand-teal-dark/0 group-hover:border-brand-teal-dark/[0.08] dark:group-hover:border-[#4ADE80]/[0.08] transition-all duration-300 scale-90 group-hover:scale-100" />
-              </div>
+                <div className="absolute -inset-1 rounded-2xl border-2 border-brand-teal-dark/0 group-hover:border-brand-teal-dark/8 dark:group-hover:border-[#4ADE80]/8 transition-all duration-300 scale-90 group-hover:scale-100" />
+              </div>  
             </LocaleLink>
           </div>
         </div>

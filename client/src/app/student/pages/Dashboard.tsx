@@ -104,7 +104,7 @@ export default function Dashboard() {
               <p className="text-[#6B5D4F] dark:text-[#888888] mb-4">
                 {t("student.dashboard.enrollmentActiveDesc")}
               </p>
-              <Link to="/dashboard/courses">
+              <Link to="/student/courses">
                 <Button className="bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white gap-2 shadow-md shadow-[#2B6F5E]/20 rounded-xl">
                   <GraduationCap className="w-5 h-5" />
                   {t("student.dashboard.browseCourses")}
@@ -247,7 +247,7 @@ export default function Dashboard() {
                     {t("student.dashboard.progress", { value: 75 })}
                   </p>
                 </div>
-                <Link to="/dashboard/courses">
+                <Link to="/student/courses">
                   <Button
                     variant="outline"
                     size="sm"
@@ -258,7 +258,7 @@ export default function Dashboard() {
                 </Link>
               </div>
             </div>
-            <Link to="/dashboard/courses" className="block mt-4">
+            <Link to="/student/courses" className="block mt-4">
               <Button
                 variant="outline"
                 className="w-full border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#888888] hover:bg-[#2B6F5E]/5 dark:hover:bg-[#4ADE80]/5 hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 rounded-xl"
@@ -308,7 +308,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <Link to="/dashboard/profile">
+                <Link to="/student/profile">
                   <Button className="w-full gap-2 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white rounded-xl">
                     <Edit className="w-4 h-4" />{" "}
                     {t("student.dashboard.completeProfileBtn")}
@@ -384,7 +384,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Link to="/dashboard/documents" className="flex-1">
+                  <Link to="/student/documents" className="flex-1">
                     <Button
                       variant="outline"
                       className="w-full gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#888888] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222] rounded-xl"
@@ -392,7 +392,7 @@ export default function Dashboard() {
                       <Eye className="w-4 h-4" /> View
                     </Button>
                   </Link>
-                  <Link to="/dashboard/documents" className="flex-1">
+                  <Link to="/student/documents" className="flex-1">
                     <Button className="w-full gap-2 bg-[#C4A035] hover:bg-[#C4A035]/90 text-white rounded-xl">
                       <Upload className="w-4 h-4" /> Upload
                     </Button>
@@ -410,7 +410,7 @@ export default function Dashboard() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {!isProfileComplete && (
-                <Link to="/dashboard/profile">
+                <Link to="/student/profile">
                   <Button
                     variant="outline"
                     className="w-full h-auto py-4 flex-col gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 hover:bg-[#2B6F5E]/5 dark:hover:bg-[#4ADE80]/5 rounded-xl transition-all"
@@ -423,7 +423,7 @@ export default function Dashboard() {
                 </Link>
               )}
               {(docStats.total === 0 || docStats.rejected > 0) && (
-                <Link to="/dashboard/documents">
+                <Link to="/student/documents">
                   <Button
                     variant="outline"
                     className="w-full h-auto py-4 flex-col gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] hover:border-[#C4A035]/30 dark:hover:border-[#D4A843]/20 hover:bg-[#C4A035]/5 dark:hover:bg-[#D4A843]/5 rounded-xl transition-all"
@@ -435,7 +435,7 @@ export default function Dashboard() {
                   </Button>
                 </Link>
               )}
-              <Link to="/dashboard/documents">
+              <Link to="/student/documents">
                 <Button
                   variant="outline"
                   className="w-full h-auto py-4 flex-col gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 hover:bg-[#2B6F5E]/5 dark:hover:bg-[#4ADE80]/5 rounded-xl transition-all"

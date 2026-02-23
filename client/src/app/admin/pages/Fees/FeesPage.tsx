@@ -2,53 +2,44 @@ import { useState, type FormEvent } from "react";
 import {
   DollarSign,
   Search,
-  Plus,
   Edit,
-  Trash2,
   CheckCircle2,
   Clock,
   AlertCircle,
   Loader2,
   X,
-  User,
   Calendar,
   CreditCard,
   Receipt,
   Filter,
   BadgeCheck,
-  ChevronDown,
-  TrendingUp,
   Banknote,
   Hash,
+  Info,
 } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
 import {
   useAdminFees,
-  useCreateFee,
   useUpdateFee,
   useMarkFeePaid,
-  useDeleteFee,
-  useAdminStudents,
-  useAdminEnrollments,
 } from "../../../../hooks/admin/useAdmin";
 import type { Fee } from "../../../../types/Types";
 import { useTranslation } from "react-i18next";
 
+// ❌ REMOVED: useCreateFee, useDeleteFee — OWNER-only now
+// ❌ REMOVED: Plus, Trash2, User, ChevronDown icons (used in create/delete)
+// ❌ REMOVED: useAdminStudents, useAdminEnrollments (used in create form)
+
 /* ── TYPES & CONSTANTS ── */
 
-type FeeStatus = "PAID" | "UNPAID" | "OVERDUE";
+type FeeStatus = "UNPAID" | "OVERDUE";
 type FilterStatus = "ALL" | FeeStatus;
 
+// Admin only sees UNPAID fees — no PAID status needed
 const useStatusConfig = () => {
   const { t } = useTranslation();
   return {
-    PAID: {
-      label: t("admin.fees.paid"),
-      color: "text-[#2B6F5E] dark:text-[#4ADE80]",
-      bg: "bg-[#8DB896]/12 dark:bg-[#4ADE80]/10 border-[#8DB896]/30 dark:border-[#4ADE80]/20",
-      icon: CheckCircle2,
-    },
     UNPAID: {
       label: t("admin.fees.unpaid"),
       color: "text-[#C4A035] dark:text-[#D4A843]",
@@ -72,7 +63,6 @@ const PAYMENT_METHODS = [{ value: "CASH", label: "cash", icon: "💵" }];
 /* ── HELPERS ── */
 
 const getFeeStatus = (fee: Fee): FeeStatus => {
-  if (fee.status === "PAID" || fee.paid_at) return "PAID";
   if (fee.due_date && new Date(fee.due_date) < new Date()) return "OVERDUE";
   return "UNPAID";
 };
@@ -127,221 +117,7 @@ const Dialog = ({
   );
 };
 
-/* ── CREATE FEE FORM ── */
-
-const CreateFeeForm = ({ onClose }: { onClose: () => void }) => {
-  const { t } = useTranslation();
-  const createFee = useCreateFee();
-  const { data: students = [], isLoading: studentsLoading } =
-    useAdminStudents();
-  const { data: enrollments = [], isLoading: enrollmentsLoading } =
-    useAdminEnrollments();
-
-  const [studentId, setStudentId] = useState("");
-  const [enrollmentId, setEnrollmentId] = useState("");
-  const [amount, setAmount] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [studentSearch, setStudentSearch] = useState("");
-  const [showStudentDropdown, setShowStudentDropdown] = useState(false);
-
-  const filteredStudents = students.filter((s) => {
-    const full = `${s.first_name} ${s.last_name} ${s.email}`.toLowerCase();
-    return full.includes(studentSearch.toLowerCase());
-  });
-
-  const selectedStudent = students.find((s) => s.student_id === studentId);
-  const studentEnrollments = enrollments.filter(
-    (e: any) => e.student_id === studentId,
-  );
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!studentId || !amount || !dueDate) return;
-    try {
-      await createFee.mutateAsync({
-        student_id: studentId,
-        enrollment_id: enrollmentId || undefined,
-        amount: Number(amount),
-        due_date: dueDate,
-      });
-      onClose();
-    } catch (err) {
-      console.error("Create fee error:", err);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div>
-        <label className="block text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
-          {t("admin.fees.student")} <span className="text-red-500">*</span>
-        </label>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowStudentDropdown(!showStudentDropdown)}
-            className="w-full h-11 flex items-center justify-between px-4 rounded-xl border-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] bg-white dark:bg-[#222222] text-sm font-medium hover:border-[#2B6F5E]/40 dark:hover:border-[#4ADE80]/30 transition-all"
-          >
-            <span
-              className={
-                selectedStudent
-                  ? "text-[#1B1B1B] dark:text-[#E5E5E5] flex items-center gap-2"
-                  : "text-[#BEB29E] dark:text-[#666666] flex items-center gap-2"
-              }
-            >
-              {selectedStudent ? (
-                <>
-                  <User className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
-                  {selectedStudent.first_name} {selectedStudent.last_name}
-                </>
-              ) : (
-                <>
-                  <User className="w-4 h-4" />
-                  {t("admin.fees.selectStudent")}
-                </>
-              )}
-            </span>
-            <ChevronDown
-              className={`w-4 h-4 text-[#BEB29E] dark:text-[#666666] transition-transform ${showStudentDropdown ? "rotate-180" : ""}`}
-            />
-          </button>
-          {showStudentDropdown && (
-            <div className="absolute z-10 mt-2 w-full bg-white dark:bg-[#1A1A1A] border-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-xl shadow-2xl dark:shadow-black/50 overflow-hidden">
-              <div className="p-3 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A] bg-[#D8CDC0]/8 dark:bg-[#0F0F0F]">
-                <Input
-                  placeholder={t("admin.fees.searchStudents")}
-                  value={studentSearch}
-                  onChange={(e) => setStudentSearch(e.target.value)}
-                  className="h-9 text-sm border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
-                  autoFocus
-                />
-              </div>
-              <ul className="max-h-48 overflow-y-auto py-1">
-                {studentsLoading ? (
-                  <li className="px-4 py-4 flex items-center justify-center gap-2 text-xs text-[#BEB29E] dark:text-[#666666]">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {t("common.loading")}
-                  </li>
-                ) : filteredStudents.length > 0 ? (
-                  filteredStudents.map((s) => (
-                    <li key={s.student_id}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setStudentId(s.student_id);
-                          setShowStudentDropdown(false);
-                          setEnrollmentId("");
-                        }}
-                        className={`w-full text-left px-4 py-3 flex items-center gap-3 text-sm transition-all ${studentId === s.student_id ? "bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 text-[#2B6F5E] dark:text-[#4ADE80] border-l-4 border-[#2B6F5E] dark:border-[#4ADE80]" : "text-[#1B1B1B] dark:text-[#E5E5E5] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222]"}`}
-                      >
-                        <div className="w-8 h-8 rounded-full bg-[#C4A035]/10 dark:bg-[#D4A843]/10 flex items-center justify-center">
-                          <User className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843]" />
-                        </div>
-                        <div>
-                          <p className="font-medium">
-                            {s.first_name} {s.last_name}
-                          </p>
-                          <p className="text-xs text-[#BEB29E] dark:text-[#666666]">
-                            {s.email}
-                          </p>
-                        </div>
-                      </button>
-                    </li>
-                  ))
-                ) : (
-                  <li className="px-4 py-8 text-center text-sm text-[#BEB29E] dark:text-[#666666]">
-                    {t("admin.fees.noStudentsFound")}
-                  </li>
-                )}
-              </ul>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {studentId && studentEnrollments.length > 0 && (
-        <div>
-          <label className="block text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
-            {t("admin.fees.enrollment")}{" "}
-            <span className="text-xs font-normal text-[#BEB29E] dark:text-[#666666]">
-              ({t("admin.fees.optional")})
-            </span>
-          </label>
-          <select
-            value={enrollmentId}
-            onChange={(e) => setEnrollmentId(e.target.value)}
-            className="w-full h-11 px-4 rounded-xl border-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] bg-white dark:bg-[#222222] text-[#1B1B1B] dark:text-[#E5E5E5] text-sm font-medium hover:border-[#2B6F5E]/40 dark:hover:border-[#4ADE80]/30 transition-all focus:outline-none focus:ring-4 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
-          >
-            <option value="">{t("admin.fees.noSpecificEnrollment")}</option>
-            {studentEnrollments.map((e: any) => (
-              <option key={e.enrollment_id} value={e.enrollment_id}>
-                {e.course?.course_name || e.enrollment_id.slice(0, 8)} —{" "}
-                {e.status}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
-            {t("admin.fees.amountDZD")} <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2">
-              <DollarSign className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
-            </div>
-            <Input
-              type="number"
-              min={0}
-              placeholder="5000"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="pl-10 h-11 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
-              required
-            />
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
-            {t("admin.fees.dueDate")} <span className="text-red-500">*</span>
-          </label>
-          <Input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            className="h-11 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
-            required
-          />
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-3 pt-2">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={onClose}
-          className="text-[#6B5D4F] dark:text-[#AAAAAA] dark:hover:bg-[#222222]"
-        >
-          {t("admin.fees.cancel")}
-        </Button>
-        <Button
-          type="submit"
-          disabled={createFee.isPending || !studentId || !amount || !dueDate}
-          className="bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white gap-2"
-        >
-          {createFee.isPending ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Plus className="w-4 h-4" />
-          )}{" "}
-          {t("admin.fees.createFee")}
-        </Button>
-      </div>
-    </form>
-  );
-};
+// ❌ REMOVED: CreateFeeForm — Fee creation is now OWNER-only
 
 /* ── MARK PAID FORM ── */
 
@@ -536,60 +312,7 @@ const EditFeeForm = ({ fee, onClose }: { fee: Fee; onClose: () => void }) => {
   );
 };
 
-/* ── DELETE CONFIRM ── */
-
-const DeleteConfirm = ({ fee, onClose }: { fee: Fee; onClose: () => void }) => {
-  const { t } = useTranslation();
-  const deleteFee = useDeleteFee();
-  const handleDelete = async () => {
-    try {
-      await deleteFee.mutateAsync(fee.fee_id);
-      onClose();
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-xl">
-        <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400 shrink-0" />
-        <div>
-          <p className="font-semibold text-red-900 dark:text-red-300">
-            {t("admin.fees.deleteThisFee")}
-          </p>
-          <p className="text-sm text-red-700 dark:text-red-400 mt-1">
-            {t("admin.fees.amount")}:{" "}
-            <strong>{formatCurrency(fee.amount)}</strong> —{" "}
-            {t("admin.fees.cannotUndo")}
-          </p>
-        </div>
-      </div>
-      <div className="flex justify-end gap-3">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={onClose}
-          className="text-[#6B5D4F] dark:text-[#AAAAAA] dark:hover:bg-[#222222]"
-        >
-          {t("admin.fees.cancel")}
-        </Button>
-        <Button
-          onClick={handleDelete}
-          disabled={deleteFee.isPending}
-          className="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500 text-white gap-2"
-        >
-          {deleteFee.isPending ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Trash2 className="w-4 h-4" />
-          )}{" "}
-          {t("admin.fees.deleteFee")}
-        </Button>
-      </div>
-    </div>
-  );
-};
+// ❌ REMOVED: DeleteConfirm — Fee deletion is now OWNER-only
 
 /* ── FEE ROW ── */
 
@@ -597,12 +320,10 @@ const FeeRow = ({
   fee,
   onMarkPaid,
   onEdit,
-  onDelete,
 }: {
   fee: Fee;
   onMarkPaid: (f: Fee) => void;
   onEdit: (f: Fee) => void;
-  onDelete: (f: Fee) => void;
 }) => {
   const { t } = useTranslation();
   const STATUS_CONFIG = useStatusConfig();
@@ -645,47 +366,31 @@ const FeeRow = ({
               {(fee as any).payment_method}
             </span>
           )}
-          {fee.paid_at && (
-            <span className="flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3 text-[#2B6F5E] dark:text-[#4ADE80]" />
-              {t("admin.fees.paidLabel")}: {formatDate(fee.paid_at)}
-            </span>
-          )}
         </div>
       </div>
       <div className="text-right shrink-0">
         <p
-          className={`text-lg font-bold ${status === "PAID" ? "text-[#2B6F5E] dark:text-[#4ADE80]" : status === "OVERDUE" ? "text-red-700 dark:text-red-400" : "text-[#1B1B1B] dark:text-[#E5E5E5]"}`}
+          className={`text-lg font-bold ${status === "OVERDUE" ? "text-red-700 dark:text-red-400" : "text-[#1B1B1B] dark:text-[#E5E5E5]"}`}
         >
           {formatCurrency(fee.amount)}
         </p>
       </div>
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-        {status !== "PAID" && (
-          <button
-            onClick={() => onMarkPaid(fee)}
-            className="p-2 rounded-lg hover:bg-[#8DB896]/15 dark:hover:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80] transition-colors"
-            title={t("admin.fees.markAsPaid")}
-          >
-            <BadgeCheck className="w-4 h-4" />
-          </button>
-        )}
-        {status !== "PAID" && (
-          <button
-            onClick={() => onEdit(fee)}
-            className="p-2 rounded-lg hover:bg-[#C4A035]/10 dark:hover:bg-[#C4A035]/10 text-[#C4A035] dark:text-[#D4A843] transition-colors"
-            title={t("admin.fees.edit")}
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-        )}
         <button
-          onClick={() => onDelete(fee)}
-          className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 transition-colors"
-          title={t("admin.fees.delete")}
+          onClick={() => onMarkPaid(fee)}
+          className="p-2 rounded-lg hover:bg-[#8DB896]/15 dark:hover:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80] transition-colors"
+          title={t("admin.fees.markAsPaid")}
         >
-          <Trash2 className="w-4 h-4" />
+          <BadgeCheck className="w-4 h-4" />
         </button>
+        <button
+          onClick={() => onEdit(fee)}
+          className="p-2 rounded-lg hover:bg-[#C4A035]/10 dark:hover:bg-[#C4A035]/10 text-[#C4A035] dark:text-[#D4A843] transition-colors"
+          title={t("admin.fees.edit")}
+        >
+          <Edit className="w-4 h-4" />
+        </button>
+        {/* ❌ REMOVED: Delete button — OWNER-only */}
       </div>
     </div>
   );
@@ -696,23 +401,24 @@ const FeeRow = ({
 const FeesPage = () => {
   const { t } = useTranslation();
   const STATUS_CONFIG = useStatusConfig();
-  const { data: fees = [], isLoading } = useAdminFees();
+
+  // ✅ UPDATED: useAdminFees now returns paginated { data, meta }
+  // Admin only sees UNPAID fees from the backend
+  const { data: feesResponse, isLoading } = useAdminFees();
+  const fees = feesResponse?.data ?? [];
+  const meta = feesResponse?.meta;
+
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("ALL");
-  const [createOpen, setCreateOpen] = useState(false);
   const [markPaidFee, setMarkPaidFee] = useState<Fee | null>(null);
   const [editFee, setEditFee] = useState<Fee | null>(null);
-  const [deleteFee, setDeleteFee] = useState<Fee | null>(null);
 
-  const totalFees = fees.length;
-  const paidFees = fees.filter((f) => getFeeStatus(f) === "PAID");
+  // ❌ REMOVED: createOpen, deleteFee states
+
+  const totalFees = meta?.total ?? fees.length;
   const unpaidFees = fees.filter((f) => getFeeStatus(f) === "UNPAID");
   const overdueFees = fees.filter((f) => getFeeStatus(f) === "OVERDUE");
-  const totalCollected = paidFees.reduce((sum, f) => sum + Number(f.amount), 0);
-  const totalPending = [...unpaidFees, ...overdueFees].reduce(
-    (sum, f) => sum + Number(f.amount),
-    0,
-  );
+  const totalPending = fees.reduce((sum, f) => sum + Number(f.amount), 0);
 
   const filtered = fees.filter((fee) => {
     const status = getFeeStatus(fee);
@@ -730,7 +436,7 @@ const FeesPage = () => {
   });
 
   const sorted = [...filtered].sort((a, b) => {
-    const order: Record<FeeStatus, number> = { OVERDUE: 0, UNPAID: 1, PAID: 2 };
+    const order: Record<FeeStatus, number> = { OVERDUE: 0, UNPAID: 1 };
     return order[getFeeStatus(a)] - order[getFeeStatus(b)];
   });
 
@@ -753,30 +459,29 @@ const FeesPage = () => {
               </p>
             </div>
           </div>
-          <Button
-            onClick={() => setCreateOpen(true)}
-            className="bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white gap-2 shadow-md shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10"
-          >
-            <Plus className="w-4 h-4" /> {t("admin.fees.newFee")}
-          </Button>
+          {/* ❌ REMOVED: "New Fee" button — OWNER-only */}
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Info Banner — Admin restricted view */}
+      <div className="flex items-center gap-3 p-4 rounded-xl bg-[#C4A035]/5 dark:bg-[#C4A035]/10 border border-[#C4A035]/20 dark:border-[#C4A035]/15">
+        <Info className="w-5 h-5 text-[#C4A035] dark:text-[#D4A843] shrink-0" />
+        <p className="text-sm text-[#6B5D4F] dark:text-[#AAAAAA]">
+          {t("admin.fees.unpaidOnlyNotice", {
+            defaultValue:
+              "You can view and process unpaid fees. Fee creation, deletion, and paid fee history are managed by the system owner.",
+          })}
+        </p>
+      </div>
+
+      {/* Stats — Only unpaid-related stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
           {
-            label: t("admin.fees.totalFees"),
+            label: t("admin.fees.totalUnpaid"),
             value: String(totalFees),
             icon: Receipt,
             color: "teal" as const,
-          },
-          {
-            label: `${t("admin.fees.collected")} (${paidFees.length})`,
-            value: formatCurrency(totalCollected),
-            icon: TrendingUp,
-            color: "green" as const,
-            valueColor: "text-[#2B6F5E] dark:text-[#4ADE80]",
           },
           {
             label: `${t("admin.fees.pending")} (${unpaidFees.length})`,
@@ -798,11 +503,6 @@ const FeesPage = () => {
               bar: "from-[#2B6F5E] to-[#2B6F5E]/70",
               bg: "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10",
               icon: "text-[#2B6F5E] dark:text-[#4ADE80]",
-            },
-            green: {
-              bar: "from-[#8DB896] to-[#8DB896]/70",
-              bg: "bg-[#8DB896]/12 dark:bg-[#8DB896]/10",
-              icon: "text-[#3D7A4A] dark:text-[#8DB896]",
             },
             mustard: {
               bar: "from-[#C4A035] to-[#C4A035]/70",
@@ -846,7 +546,7 @@ const FeesPage = () => {
         })}
       </div>
 
-      {/* Search & Filters */}
+      {/* Search & Filters — No PAID filter (admin can't see paid) */}
       <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <div className="relative flex-1 w-full">
@@ -860,29 +560,25 @@ const FeesPage = () => {
           </div>
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
-            {(["ALL", "UNPAID", "OVERDUE", "PAID"] as FilterStatus[]).map(
-              (status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilterStatus(status)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    filterStatus === status
-                      ? status === "ALL"
-                        ? "bg-[#1B1B1B] dark:bg-[#E5E5E5] text-white dark:text-[#1A1A1A]"
-                        : status === "PAID"
-                          ? "bg-[#2B6F5E] text-white"
-                          : status === "OVERDUE"
-                            ? "bg-red-600 text-white"
-                            : "bg-[#C4A035] text-white"
-                      : "bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/30 dark:hover:bg-[#333333]"
-                  }`}
-                >
-                  {status === "ALL"
-                    ? t("common.all")
-                    : STATUS_CONFIG[status].label}
-                </button>
-              ),
-            )}
+            {(["ALL", "UNPAID", "OVERDUE"] as FilterStatus[]).map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  filterStatus === status
+                    ? status === "ALL"
+                      ? "bg-[#1B1B1B] dark:bg-[#E5E5E5] text-white dark:text-[#1A1A1A]"
+                      : status === "OVERDUE"
+                        ? "bg-red-600 text-white"
+                        : "bg-[#C4A035] text-white"
+                    : "bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/30 dark:hover:bg-[#333333]"
+                }`}
+              >
+                {status === "ALL"
+                  ? t("common.all")
+                  : STATUS_CONFIG[status].label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -901,7 +597,6 @@ const FeesPage = () => {
                 fee={fee}
                 onMarkPaid={setMarkPaidFee}
                 onEdit={setEditFee}
-                onDelete={setDeleteFee}
               />
             ))}
           </div>
@@ -911,24 +606,23 @@ const FeesPage = () => {
             <p className="font-semibold text-[#6B5D4F] dark:text-[#AAAAAA]">
               {search || filterStatus !== "ALL"
                 ? t("admin.fees.noMatchingFees")
-                : t("admin.fees.noFeesYet")}
+                : t("admin.fees.noUnpaidFees", {
+                    defaultValue: "No unpaid fees at the moment",
+                  })}
             </p>
             <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-1">
               {search || filterStatus !== "ALL"
                 ? t("admin.fees.tryDifferentSearch")
-                : t("admin.fees.clickNewFee")}
+                : t("admin.fees.allFeesCollected", {
+                    defaultValue: "All student fees have been collected",
+                  })}
             </p>
           </div>
         )}
       </div>
 
-      <Dialog
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        title={t("admin.fees.createNewFee")}
-      >
-        <CreateFeeForm onClose={() => setCreateOpen(false)} />
-      </Dialog>
+      {/* ❌ REMOVED: Create Fee Dialog */}
+
       <Dialog
         open={!!markPaidFee}
         onClose={() => setMarkPaidFee(null)}
@@ -950,15 +644,8 @@ const FeesPage = () => {
           <EditFeeForm fee={editFee} onClose={() => setEditFee(null)} />
         )}
       </Dialog>
-      <Dialog
-        open={!!deleteFee}
-        onClose={() => setDeleteFee(null)}
-        title={t("admin.fees.deleteFee")}
-      >
-        {deleteFee && (
-          <DeleteConfirm fee={deleteFee} onClose={() => setDeleteFee(null)} />
-        )}
-      </Dialog>
+
+      {/* ❌ REMOVED: Delete Fee Dialog */}
     </div>
   );
 };

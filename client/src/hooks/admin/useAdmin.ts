@@ -279,40 +279,6 @@ export const useDeleteUser = () => {
   });
 };
 
-export const useChangeUserRole = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ userId, role }: { userId: string; role: UserRole }) =>
-      adminUsersApi.changeRole(userId, role),
-    onMutate: async ({ userId, role }) => {
-      await qc.cancelQueries({ queryKey: USERS_KEY });
-      const previousUsers = qc.getQueryData<AdminUser[]>(USERS_KEY);
-      qc.setQueryData<AdminUser[]>(USERS_KEY, (old) =>
-        old ? old.map((u) => (u.user_id === userId ? { ...u, role } : u)) : old,
-      );
-      return { previousUsers };
-    },
-    onError: (_error, _vars, context) => {
-      if (context?.previousUsers) {
-        qc.setQueryData(USERS_KEY, context.previousUsers);
-      }
-    },
-    onSuccess: (data) => {
-      if (!data?.user) return;
-      qc.setQueryData<AdminUser[]>(USERS_KEY, (old) =>
-        old
-          ? old.map((u) =>
-              u.user_id === data.user.user_id ? { ...u, ...data.user } : u,
-            )
-          : old,
-      );
-    },
-    onSettled: () => {
-      qc.invalidateQueries({ queryKey: USERS_KEY });
-    },
-  });
-};
-
 /* ===============================================================
    STUDENTS — 🟢 NORMAL (30s)
 =============================================================== */
@@ -1040,8 +1006,12 @@ export const useMarkSessionAttendance = () => {
       payload: { studentId: string; status: "Present" | "Absent" };
     }) => adminSessionsApi.markAttendance(sessionId, payload),
     onSuccess: (_, vars) => {
+      // ✅ Invalidate BOTH keys
       queryClient.invalidateQueries({
         queryKey: sessionAttendanceKey(vars.sessionId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: [ATTENDANCE_KEY, "session", vars.sessionId],
       });
     },
   });
@@ -1116,10 +1086,10 @@ export const useAdminDeleteAttendance = () => {
    FEES — 🟡 ACTIVE (20s)
 =============================================================== */
 
-export const useAdminFees = () =>
-  useQuery<Fee[]>({
-    queryKey: FEES_KEY,
-    queryFn: adminFeesApi.getAll,
+export const useAdminFees = (params?: { page?: number; limit?: number }) =>
+  useQuery({
+    queryKey: [...FEES_KEY, params],
+    queryFn: () => adminFeesApi.getAll(params),
     refetchInterval: ACTIVE,
     refetchOnWindowFocus: true,
     placeholderData: (prev: any) => prev,
@@ -1131,17 +1101,6 @@ export const useAdminFee = (feeId?: string) =>
     queryFn: () => adminFeesApi.getById(feeId!),
     enabled: !!feeId,
   });
-
-export const useCreateFee = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: adminFeesApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: FEES_KEY });
-      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
-    },
-  });
-};
 
 export const useUpdateFee = () => {
   const queryClient = useQueryClient();
@@ -1175,17 +1134,6 @@ export const useMarkFeePaid = () => {
       queryClient.invalidateQueries({ queryKey: FEES_KEY });
       queryClient.invalidateQueries({ queryKey: feeKey(variables.feeId) });
       queryClient.invalidateQueries({ queryKey: ENROLLMENTS_KEY });
-      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
-    },
-  });
-};
-
-export const useDeleteFee = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (feeId: string) => adminFeesApi.delete(feeId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: FEES_KEY });
       queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
     },
   });
@@ -1501,6 +1449,91 @@ export const usePublishAnnouncement = () => {
     onError: (error: any) => {
       toast.error(
         error?.response?.data?.message || "حدث خطأ أثناء نشر الإعلان",
+      );
+    },
+  });
+};
+
+export const usePinAnnouncement = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => announcementApi.pin(id),
+    onSuccess: (res, id) => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY, id] });
+      toast.success(res.message || "تم تثبيت الإعلان");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message || "حدث خطأ أثناء تثبيت الإعلان",
+      );
+    },
+  });
+};
+
+export const useAdminMarkBulkAttendance = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      sessionId,
+      entries,
+    }: {
+      sessionId: string;
+      entries: Array<{ student_id: string; status: AttendanceStatus }>;
+    }) => adminAttendanceApi.markBulkAttendance(sessionId, entries),
+    onSuccess: (_, variables) => {
+      // ✅ Invalidate the key used by useAdminSessionAttendance (modal)
+      queryClient.invalidateQueries({
+        queryKey: sessionAttendanceKey(variables.sessionId),
+      });
+      // ✅ Invalidate the key used by useAdminAttendanceBySession
+      queryClient.invalidateQueries({
+        queryKey: [ATTENDANCE_KEY, "session", variables.sessionId],
+      });
+      // ✅ Invalidate all attendance queries
+      queryClient.invalidateQueries({ queryKey: ATTENDANCE_KEY });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message || "حدث خطأ أثناء تسجيل الحضور",
+      );
+    },
+  });
+};
+
+// ✅ NEW: Get attendance by date for a group
+export const useAdminAttendanceByDate = (groupId?: string, date?: string) =>
+  useQuery({
+    queryKey: [ATTENDANCE_KEY, "date", groupId, date],
+    queryFn: () => adminAttendanceApi.getByDate(groupId!, date!),
+    enabled: !!groupId && !!date,
+    refetchInterval: FAST,
+    refetchOnWindowFocus: true,
+  });
+
+// ✅ NEW: Student attendance summary with percentage
+export const useAdminStudentAttendanceSummary = (
+  studentId?: string,
+  groupId?: string,
+) =>
+  useQuery({
+    queryKey: [ATTENDANCE_KEY, "summary", studentId, groupId],
+    queryFn: () => adminAttendanceApi.getStudentSummary(studentId!, groupId),
+    enabled: !!studentId,
+  });
+
+export const useUnpinAnnouncement = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => announcementApi.unpin(id),
+    onSuccess: (res, id) => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY, id] });
+      toast.success(res.message || "تم إلغاء تثبيت الإعلان");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message || "حدث خطأ أثناء إلغاء التثبيت",
       );
     },
   });

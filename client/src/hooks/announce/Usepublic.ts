@@ -1,5 +1,45 @@
-import { useQuery } from "@tanstack/react-query";
+// ================================================================
+// 📦 src/hooks/public/usePublic.ts
+// ✅ Public data hooks — Home, Announcements, Courses
+// 🔌 Real-time: auto-refresh announcements on Socket.IO events
+// ================================================================
+
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { publicApis } from "../../lib/api/announce/announce.api";
+import { useSocket } from "../../context/SocketContext";
+
+// ─── 🔌 Real-time Announcements Listener ───
+// Call this hook in any page that displays public announcements.
+// It listens for Socket.IO events and auto-invalidates the cache.
+
+export const useAnnouncementRealtime = () => {
+  const { socket, isConnected } = useSocket();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const events = [
+      "announcement:published",
+      "announcement:unpublished",
+      "announcement:pinned",
+      "announcement:unpinned",
+      "announcement:deleted",
+    ];
+
+    const handler = () => {
+      queryClient.invalidateQueries({ queryKey: ["public", "announcements"] });
+      queryClient.invalidateQueries({ queryKey: ["public", "announcement"] });
+    };
+
+    events.forEach((event) => socket.on(event, handler));
+
+    return () => {
+      events.forEach((event) => socket.off(event, handler));
+    };
+  }, [socket, isConnected, queryClient]);
+};
 
 // ─── Home Stats ───
 export const useHomeStats = () =>

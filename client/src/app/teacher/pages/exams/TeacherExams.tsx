@@ -25,17 +25,14 @@ import {
   useUpdateExam,
   useDeleteExam,
 } from "../../../../hooks/teacher/Useteacher";
+import { useLanguage } from "../../../../hooks/useLanguage";
 
-/* ═══════════════════════════════════════════════════════════
-   TYPES
-═══════════════════════════════════════════════════════════ */
-
+/* ═══ TYPES ═══ */
 interface ExamCourse {
   course_id: string;
   course_name: string;
   course_code: string;
 }
-
 interface ExamData {
   exam_id: string;
   exam_name: string | null;
@@ -45,7 +42,6 @@ interface ExamData {
   course: ExamCourse;
   _count: { results: number };
 }
-
 interface GroupOption {
   group_id: string;
   name: string;
@@ -53,206 +49,231 @@ interface GroupOption {
   course: { course_id: string; course_name: string; course_code: string };
 }
 
-/* ═══════════════════════════════════════════════════════════
-   HELPERS
-═══════════════════════════════════════════════════════════ */
-
-const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("ar-DZ", { weekday: "short", month: "short", day: "numeric" });
-
-const formatFullDate = (d: string) =>
-  new Date(d).toLocaleDateString("ar-DZ", { year: "numeric", month: "long", day: "numeric" });
-
+/* ═══ HELPERS ═══ */
+const getLocale = (lang: string) =>
+  lang === "ar" ? "ar-DZ" : lang === "fr" ? "fr-FR" : "en-US";
 const isPast = (d: string) => new Date(d) < new Date();
 
-const getRelativeTime = (d: string) => {
-  const now = new Date();
-  const date = new Date(d);
-  const diffMs = date.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return "اليوم";
-  if (diffDays === 1) return "غداً";
-  if (diffDays > 0 && diffDays <= 7) return `بعد ${diffDays} أيام`;
-  if (diffDays === -1) return "أمس";
-  if (diffDays < 0 && diffDays >= -7) return `منذ ${Math.abs(diffDays)} أيام`;
-  return formatDate(d);
+const useRelativeTime = () => {
+  const { t, currentLang } = useLanguage();
+  const locale = getLocale(currentLang);
+  return (d: string) => {
+    const diff = Math.ceil((new Date(d).getTime() - Date.now()) / 86400000);
+    if (diff === 0) return t("teacher.exams.today");
+    if (diff === 1) return t("teacher.exams.tomorrow");
+    if (diff > 0 && diff <= 7)
+      return t("teacher.exams.inDays", { count: diff });
+    if (diff === -1) return t("teacher.exams.yesterday");
+    if (diff < 0 && diff >= -7)
+      return t("teacher.exams.daysAgo", { count: Math.abs(diff) });
+    return new Date(d).toLocaleDateString(locale, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  };
 };
 
 const groupByCourse = (exams: ExamData[]) => {
   const map: Record<string, { course: ExamCourse; exams: ExamData[] }> = {};
   exams.forEach((e) => {
-    if (!map[e.course_id]) {
-      map[e.course_id] = { course: e.course, exams: [] };
-    }
+    if (!map[e.course_id]) map[e.course_id] = { course: e.course, exams: [] };
     map[e.course_id].exams.push(e);
   });
   return Object.values(map);
 };
 
-/* ═══════════════════════════════════════════════════════════
-   SKELETON
-═══════════════════════════════════════════════════════════ */
-
-const ExamsSkeleton = () => (
-  <div className="space-y-6 animate-pulse" dir="rtl">
+/* ═══ SKELETON ═══ */
+const ExamsSkeleton = ({ rtl }: { rtl: boolean }) => (
+  <div className="space-y-6 animate-pulse" dir={rtl ? "rtl" : "ltr"}>
     <div className="flex items-center justify-between">
       <div>
-        <div className="h-7 w-36 bg-[#D8CDC0]/30 rounded-lg" />
-        <div className="h-4 w-52 bg-[#D8CDC0]/20 rounded-lg mt-2" />
+        <div className="h-7 w-36 bg-[#D8CDC0]/3 dark:bg-[#2A2A2A]/30 dark:bg-[#2A2A2A]/30 rounded-lg" />
+        <div className="h-4 w-52 bg-[#D8CDC0]/2 dark:bg-[#2A2A2A]/20 dark:bg-[#2A2A2A]/20 rounded-lg mt-2" />
       </div>
-      <div className="h-10 w-32 bg-[#D8CDC0]/30 rounded-xl" />
+      <div className="h-10 w-32 bg-[#D8CDC0]/3 dark:bg-[#2A2A2A]/30 dark:bg-[#2A2A2A]/30 rounded-xl" />
     </div>
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="bg-white rounded-xl border border-[#D8CDC0]/40 h-[76px]" />
+      {[1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-[#D8CDC0]/4 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] h-[76px]"
+        />
       ))}
     </div>
-    <div className="h-11 bg-white rounded-xl border border-[#D8CDC0]/40" />
-    {Array.from({ length: 3 }).map((_, i) => (
-      <div key={i} className="bg-white rounded-2xl border border-[#D8CDC0]/40 h-[140px]" />
+    <div className="h-11 bg-white dark:bg-[#1A1A1A] rounded-xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A]" />
+    {[1, 2, 3].map((i) => (
+      <div
+        key={i}
+        className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/4 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] h-[140px]"
+      />
     ))}
   </div>
 );
 
-/* ═══════════════════════════════════════════════════════════
-   CREATE / EDIT MODAL
-═══════════════════════════════════════════════════════════ */
-
-interface ExamModalProps {
+/* ═══ MODAL ═══ */
+const ExamModal = ({
+  courses,
+  initial,
+  onClose,
+}: {
   courses: { course_id: string; course_name: string }[];
-  initial?: { exam_id: string; course_id: string; exam_name: string | null; exam_date: string; max_marks: number };
+  initial?: {
+    exam_id: string;
+    course_id: string;
+    exam_name: string | null;
+    exam_date: string;
+    max_marks: number;
+  };
   onClose: () => void;
-}
-
-const ExamModal = ({ courses, initial, onClose }: ExamModalProps) => {
+}) => {
+  const { t, dir, isRTL } = useLanguage();
   const isEdit = !!initial;
-  const createMutation = useCreateExam();
-  const updateMutation = useUpdateExam();
-
+  const createMut = useCreateExam();
+  const updateMut = useUpdateExam();
   const [courseId, setCourseId] = useState(initial?.course_id || "");
   const [examName, setExamName] = useState(initial?.exam_name || "");
   const [date, setDate] = useState(
     initial ? new Date(initial.exam_date).toISOString().slice(0, 10) : "",
   );
-  const [maxMarks, setMaxMarks] = useState(initial?.max_marks?.toString() || "20");
+  const [maxMarks, setMaxMarks] = useState(
+    initial?.max_marks?.toString() || "20",
+  );
+  const busy = createMut.isPending || updateMut.isPending;
 
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
-
-  const handleSubmit = async () => {
+  const submit = async () => {
     if (!isEdit && (!courseId || !date || !maxMarks)) return;
     if (isEdit && (!date || !maxMarks)) return;
-
     const marks = Number(maxMarks);
     if (marks <= 0) return;
-
-    if (isEdit && initial) {
-      await updateMutation.mutateAsync({
+    if (isEdit && initial)
+      await updateMut.mutateAsync({
         examId: initial.exam_id,
         exam_name: examName || undefined,
         exam_date: new Date(date).toISOString(),
         max_marks: marks,
       });
-    } else {
-      await createMutation.mutateAsync({
+    else
+      await createMut.mutateAsync({
         course_id: courseId,
         exam_name: examName || undefined,
         exam_date: new Date(date).toISOString(),
         max_marks: marks,
       });
-    }
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" dir="rtl">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/40 shadow-2xl w-full max-w-md overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#D8CDC0]/25">
-          <h2 className="text-base font-semibold text-[#1B1B1B]">
-            {isEdit ? "تعديل الامتحان" : "إنشاء امتحان جديد"}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      dir={dir}
+    >
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/4 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#D8CDC0]/25 dark:border-[#2A2A2A]">
+          <h2 className="text-base font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
+            {isEdit
+              ? t("teacher.exams.editExam")
+              : t("teacher.exams.createExam")}
           </h2>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-[#D8CDC0]/20 flex items-center justify-center transition-colors">
-            <X className="w-4 h-4 text-[#6B5D4F]" />
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg hover:bg-[#D8CDC0]/2 dark:bg-[#2A2A2A]/20 dark:hover:bg-[#222222] flex items-center justify-center transition-colors"
+          >
+            <X className="w-4 h-4 text-[#6B5D4F] dark:text-[#AAAAAA]" />
           </button>
         </div>
-
-        {/* Body */}
         <div className="p-5 space-y-4">
-          {/* Course */}
           {!isEdit && (
             <div>
-              <label className="block text-xs font-medium text-[#6B5D4F] mb-1.5">المادة</label>
+              <label className="block text-xs font-medium text-[#6B5D4F] dark:text-[#AAAAAA] mb-1.5">
+                {t("teacher.exams.course")}
+              </label>
               <div className="relative">
                 <select
                   value={courseId}
                   onChange={(e) => setCourseId(e.target.value)}
-                  className="w-full h-11 pr-4 pl-8 bg-[#FAFAF8] border border-[#D8CDC0]/50 rounded-xl text-sm text-[#1B1B1B] focus:outline-none focus:border-[#2B6F5E]/40 focus:ring-2 focus:ring-[#2B6F5E]/10 appearance-none cursor-pointer"
+                  className={`w-full h-11 ${isRTL ? "pr-4 pl-8" : "pl-4 pr-8"} bg-[#FAFAF8] dark:bg-[#111111] border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] rounded-xl text-sm text-[#1B1B1B] dark:text-[#E5E5E5] focus:outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/40 dark:border-[#4ADE80]/40 focus:ring-2 focus:ring-[#2B6F5E] dark:ring-[#4ADE80]/10 appearance-none cursor-pointer`}
                 >
-                  <option value="">اختر المادة</option>
+                  <option value="">{t("teacher.exams.selectCourse")}</option>
                   {courses.map((c) => (
-                    <option key={c.course_id} value={c.course_id}>{c.course_name}</option>
+                    <option key={c.course_id} value={c.course_id}>
+                      {c.course_name}
+                    </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] pointer-events-none" />
+                <ChevronDown
+                  className={`absolute ${isRTL ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] dark:text-[#888888] pointer-events-none`}
+                />
               </div>
             </div>
           )}
-
-          {/* Name */}
           <div>
-            <label className="block text-xs font-medium text-[#6B5D4F] mb-1.5">
-              اسم الامتحان <span className="text-[#BEB29E] font-normal">(اختياري)</span>
+            <label className="block text-xs font-medium text-[#6B5D4F] dark:text-[#AAAAAA] mb-1.5">
+              {t("teacher.exams.examName")}{" "}
+              <span className="text-[#BEB29E] dark:text-[#888888] font-normal">
+                ({t("teacher.exams.optional")})
+              </span>
             </label>
             <input
               type="text"
               value={examName}
               onChange={(e) => setExamName(e.target.value)}
-              placeholder="مثال: الامتحان الجزئي الأول"
-              className="w-full h-11 px-4 bg-[#FAFAF8] border border-[#D8CDC0]/50 rounded-xl text-sm text-[#1B1B1B] placeholder:text-[#BEB29E] focus:outline-none focus:border-[#2B6F5E]/40 focus:ring-2 focus:ring-[#2B6F5E]/10"
+              placeholder={t("teacher.exams.examNamePlaceholder")}
+              className="w-full h-11 px-4 bg-[#FAFAF8] dark:bg-[#111111] border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] rounded-xl text-sm text-[#1B1B1B] dark:text-[#E5E5E5] placeholder:text-[#BEB29E] dark:text-[#888888] focus:outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/40 dark:border-[#4ADE80]/40 focus:ring-2 focus:ring-[#2B6F5E] dark:ring-[#4ADE80]/10"
             />
           </div>
-
-          {/* Date + Max marks row */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#6B5D4F] mb-1.5">التاريخ</label>
+              <label className="block text-xs font-medium text-[#6B5D4F] dark:text-[#AAAAAA] mb-1.5">
+                {t("teacher.exams.date")}
+              </label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full h-11 px-4 bg-[#FAFAF8] border border-[#D8CDC0]/50 rounded-xl text-sm text-[#1B1B1B] focus:outline-none focus:border-[#2B6F5E]/40 focus:ring-2 focus:ring-[#2B6F5E]/10"
+                className="w-full h-11 px-4 bg-[#FAFAF8] dark:bg-[#111111] border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] rounded-xl text-sm text-[#1B1B1B] dark:text-[#E5E5E5] focus:outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/40 dark:border-[#4ADE80]/40 focus:ring-2 focus:ring-[#2B6F5E] dark:ring-[#4ADE80]/10"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#6B5D4F] mb-1.5">الدرجة القصوى</label>
+              <label className="block text-xs font-medium text-[#6B5D4F] dark:text-[#AAAAAA] mb-1.5">
+                {t("teacher.exams.maxMarks")}
+              </label>
               <input
                 type="number"
                 min="1"
                 value={maxMarks}
                 onChange={(e) => setMaxMarks(e.target.value)}
-                className="w-full h-11 px-4 bg-[#FAFAF8] border border-[#D8CDC0]/50 rounded-xl text-sm text-[#1B1B1B] focus:outline-none focus:border-[#2B6F5E]/40 focus:ring-2 focus:ring-[#2B6F5E]/10"
+                className="w-full h-11 px-4 bg-[#FAFAF8] dark:bg-[#111111] border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] rounded-xl text-sm text-[#1B1B1B] dark:text-[#E5E5E5] focus:outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/40 dark:border-[#4ADE80]/40 focus:ring-2 focus:ring-[#2B6F5E] dark:ring-[#4ADE80]/10"
               />
             </div>
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-[#D8CDC0]/25 bg-[#FAFAF8]/50">
-          <button onClick={onClose} className="h-10 px-5 text-sm font-medium text-[#6B5D4F] hover:bg-[#D8CDC0]/20 rounded-xl transition-colors">
-            إلغاء
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-[#D8CDC0]/2 dark:border-[#2A2A2A]5 dark:border-[#2A2A2A]/70 bg-[#FAFAF8]/50 dark:bg-[#1A1A1A]/50">
+          <button
+            onClick={onClose}
+            className="h-10 px-5 text-sm font-medium text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/2 dark:bg-[#2A2A2A]/20 dark:hover:bg-[#222222] rounded-xl transition-colors"
+          >
+            {t("teacher.exams.cancel")}
           </button>
           <button
-            onClick={handleSubmit}
-            disabled={isSubmitting || (!isEdit && (!courseId || !date || !maxMarks)) || (isEdit && (!date || !maxMarks))}
-            className="h-10 px-6 text-sm font-medium text-white bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl transition-colors flex items-center gap-2"
+            onClick={submit}
+            disabled={
+              busy ||
+              (!isEdit && (!courseId || !date || !maxMarks)) ||
+              (isEdit && (!date || !maxMarks))
+            }
+            className="h-10 px-6 text-sm font-medium text-white bg-[#2B6F5E] dark:bg-[#4ADE80] hover:bg-[#2B6F5E]/9 dark:bg-[#4ADE80]/90 dark:hover:bg-[#4ADE80]/90 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl transition-colors flex items-center gap-2"
           >
-            {isSubmitting ? (
+            {busy ? (
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <Check className="w-4 h-4" />
             )}
-            {isEdit ? "حفظ" : "إنشاء"}
+            {isEdit ? t("teacher.exams.save") : t("teacher.exams.create")}
           </button>
         </div>
       </div>
@@ -260,44 +281,58 @@ const ExamModal = ({ courses, initial, onClose }: ExamModalProps) => {
   );
 };
 
-/* ═══════════════════════════════════════════════════════════
-   DELETE MODAL
-═══════════════════════════════════════════════════════════ */
-
-const DeleteExamModal = ({ examId, onClose }: { examId: string; onClose: () => void }) => {
-  const deleteMutation = useDeleteExam();
-
-  const handleDelete = async () => {
-    await deleteMutation.mutateAsync(examId);
-    onClose();
-  };
-
+/* ═══ DELETE MODAL ═══ */
+const DeleteExamModal = ({
+  examId,
+  onClose,
+}: {
+  examId: string;
+  onClose: () => void;
+}) => {
+  const { t, dir } = useLanguage();
+  const del = useDeleteExam();
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" dir="rtl">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl border border-[#D8CDC0]/40 shadow-2xl w-full max-w-sm overflow-hidden">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      dir={dir}
+    >
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/4 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] shadow-2xl w-full max-w-sm overflow-hidden">
         <div className="p-6 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-4">
-            <Trash2 className="w-6 h-6 text-red-500" />
+          <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-950/20 flex items-center justify-center mx-auto mb-4">
+            <Trash2 className="w-6 h-6 text-red-500 dark:text-red-400" />
           </div>
-          <h3 className="text-base font-semibold text-[#1B1B1B] mb-1">حذف الامتحان</h3>
-          <p className="text-sm text-[#6B5D4F]/70">هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.</p>
+          <h3 className="text-base font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-1">
+            {t("teacher.exams.deleteExam")}
+          </h3>
+          <p className="text-sm text-[#6B5D4F]/70 dark:text-[#AAAAAA]/70">
+            {t("teacher.exams.deleteConfirm")}
+          </p>
         </div>
-        <div className="flex items-center gap-2 px-5 py-4 border-t border-[#D8CDC0]/25 bg-[#FAFAF8]/50">
-          <button onClick={onClose} className="flex-1 h-10 text-sm font-medium text-[#6B5D4F] hover:bg-[#D8CDC0]/20 rounded-xl transition-colors">
-            إلغاء
+        <div className="flex items-center gap-2 px-5 py-4 border-t border-[#D8CDC0]/2 dark:border-[#2A2A2A]5 dark:border-[#2A2A2A]/70 bg-[#FAFAF8]/50 dark:bg-[#1A1A1A]/50">
+          <button
+            onClick={onClose}
+            className="flex-1 h-10 text-sm font-medium text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/2 dark:bg-[#2A2A2A]/20 dark:hover:bg-[#222222] rounded-xl transition-colors"
+          >
+            {t("teacher.exams.cancel")}
           </button>
           <button
-            onClick={handleDelete}
-            disabled={deleteMutation.isPending}
-            className="flex-1 h-10 text-sm font-medium text-white bg-red-500 hover:bg-red-600 disabled:opacity-40 rounded-xl transition-colors flex items-center justify-center gap-2"
+            onClick={async () => {
+              await del.mutateAsync(examId);
+              onClose();
+            }}
+            disabled={del.isPending}
+            className="flex-1 h-10 text-sm font-medium text-white bg-red-50 dark:bg-red-950/200 hover:bg-red-600 disabled:opacity-40 rounded-xl transition-colors flex items-center justify-center gap-2"
           >
-            {deleteMutation.isPending ? (
+            {del.isPending ? (
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <Trash2 className="w-4 h-4" />
             )}
-            حذف
+            {t("teacher.exams.delete")}
           </button>
         </div>
       </div>
@@ -305,10 +340,7 @@ const DeleteExamModal = ({ examId, onClose }: { examId: string; onClose: () => v
   );
 };
 
-/* ═══════════════════════════════════════════════════════════
-   EXAM CARD
-═══════════════════════════════════════════════════════════ */
-
+/* ═══ EXAM CARD ═══ */
 const ExamCard = ({
   exam,
   onEdit,
@@ -318,88 +350,93 @@ const ExamCard = ({
   onEdit: () => void;
   onDelete: () => void;
 }) => {
+  const { t, currentLang } = useLanguage();
+  const locale = getLocale(currentLang);
+  const relTime = useRelativeTime();
   const past = isPast(exam.exam_date);
   const hasResults = exam._count.results > 0;
+  const fmtDate = (d: string) =>
+    new Date(d).toLocaleDateString(locale, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
 
   return (
-    <div className="flex items-center gap-4 p-4 rounded-xl bg-white border border-[#D8CDC0]/30 hover:border-[#D8CDC0]/50 hover:shadow-md transition-all group/exam">
-      {/* Date box */}
+    <div className="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-[#1A1A1A] border border-[#D8CDC0]/3 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A]/80 hover:border-[#D8CDC0]/50 dark:border-[#2A2A2A] hover:shadow-md transition-all group/exam">
       <div
-        className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl shrink-0 ${
-          past ? "bg-[#D8CDC0]/12" : "bg-[#C4A035]/8"
-        }`}
+        className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl shrink-0 ${past ? "bg-[#D8CDC0]/12 dark:bg-[#2A2A2A]/12" : "bg-[#C4A035]/8 dark:bg-[#C4A035]/8"}`}
       >
-        <span className={`text-[11px] font-medium leading-tight ${past ? "text-[#6B5D4F]/50" : "text-[#C4A035]/70"}`}>
-          {new Date(exam.exam_date).toLocaleDateString("ar-DZ", { month: "short" })}
+        <span
+          className={`text-[11px] font-medium leading-tight ${past ? "text-[#6B5D4F]/50 dark:text-[#AAAAAA]/50" : "text-[#C4A035]/70 dark:text-[#C4A035]/70"}`}
+        >
+          {new Date(exam.exam_date).toLocaleDateString(locale, {
+            month: "short",
+          })}
         </span>
-        <span className={`text-lg font-bold leading-tight ${past ? "text-[#6B5D4F]/70" : "text-[#C4A035]"}`}>
+        <span
+          className={`text-lg font-bold leading-tight ${past ? "text-[#6B5D4F]/70 dark:text-[#AAAAAA]/70" : "text-[#C4A035] dark:text-[#C4A035]"}`}
+        >
           {new Date(exam.exam_date).getDate()}
         </span>
       </div>
-
-      {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-          <h3 className="text-sm font-semibold text-[#1B1B1B] truncate">
-            {exam.exam_name || "امتحان"}
+          <h3 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
+            {exam.exam_name || t("teacher.exams.exam")}
           </h3>
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-            past ? "bg-[#D8CDC0]/15 text-[#6B5D4F]/60" : "bg-[#C4A035]/10 text-[#C4A035]"
-          }`}>
-            {getRelativeTime(exam.exam_date)}
+          <span
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${past ? "bg-[#D8CDC0]/15 dark:bg-[#2A2A2A]/15 text-[#6B5D4F]/60 dark:text-[#AAAAAA]/60" : "bg-[#C4A035]/10 dark:bg-[#C4A035]/10 text-[#C4A035] dark:text-[#C4A035]"}`}
+          >
+            {relTime(exam.exam_date)}
           </span>
         </div>
-        <div className="flex items-center gap-3 text-[11px] text-[#6B5D4F]/60 flex-wrap">
+        <div className="flex items-center gap-3 text-[11px] text-[#6B5D4F]/6 dark:text-[#AAAAAA]/60 dark:text-[#888888] flex-wrap">
           <span className="flex items-center gap-1">
-            <Target className="w-3 h-3" />
-            /{exam.max_marks}
+            <Target className="w-3 h-3" />/{exam.max_marks}
           </span>
           <span className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            {formatDate(exam.exam_date)}
+            {fmtDate(exam.exam_date)}
           </span>
         </div>
       </div>
-
-      {/* Results badge */}
       <div className="shrink-0">
         {hasResults ? (
           <Link
-            to={`/teacher/exams`}
-            className="inline-flex items-center gap-1 text-[11px] font-medium text-[#2B6F5E] bg-[#2B6F5E]/8 hover:bg-[#2B6F5E]/15 px-2.5 py-1.5 rounded-full transition-colors"
+            to="/teacher/exams"
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8 hover:bg-[#2B6F5E]/1 dark:bg-[#4ADE80]/15 dark:hover:bg-[#4ADE80]/15 px-2.5 py-1.5 rounded-full transition-colors"
           >
             <ClipboardCheck className="w-3 h-3" />
-            {exam._count.results} نتيجة
+            {exam._count.results} {t("teacher.exams.result")}
           </Link>
         ) : past ? (
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#C4A035] bg-[#C4A035]/8 px-2.5 py-1.5 rounded-full">
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#C4A035] dark:text-[#C4A035] dark:text-[#C4A035] bg-[#C4A035]/8 dark:bg-[#C4A035]/10 dark:bg-[#C4A035]/10 px-2.5 py-1.5 rounded-full">
             <FileText className="w-3 h-3" />
-            بدون نتائج
+            {t("teacher.exams.noResults")}
           </span>
         ) : (
-          <span className="text-[11px] text-[#BEB29E] bg-[#D8CDC0]/10 px-2.5 py-1.5 rounded-full">
-            قادم
+          <span className="text-[11px] text-[#BEB29E] dark:text-[#888888] bg-[#D8CDC0]/1 dark:bg-[#2A2A2A]/10 dark:bg-[#2A2A2A]/15 px-2.5 py-1.5 rounded-full">
+            {t("teacher.exams.upcoming")}
           </span>
         )}
       </div>
-
-      {/* Actions */}
       <div className="flex items-center gap-1 opacity-0 group-hover/exam:opacity-100 transition-opacity shrink-0">
         {!hasResults && (
           <>
             <button
               onClick={onEdit}
-              className="w-8 h-8 rounded-lg hover:bg-[#2B6F5E]/8 flex items-center justify-center transition-colors"
-              title="تعديل"
+              className="w-8 h-8 rounded-lg hover:bg-[#2B6F5E]/8 dark:hover:bg-[#4ADE80]/8 flex items-center justify-center transition-colors"
+              title={t("teacher.exams.edit")}
             >
-              <Pencil className="w-3.5 h-3.5 text-[#2B6F5E]" />
+              <Pencil className="w-3.5 h-3.5 text-[#2B6F5E] dark:text-[#4ADE80]" />
             </button>
             <button
               onClick={onDelete}
-              className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center transition-colors"
-              title="حذف"
+              className="w-8 h-8 rounded-lg hover:bg-red-50 dark:bg-red-950/20 flex items-center justify-center transition-colors"
+              title={t("teacher.exams.delete")}
             >
-              <Trash2 className="w-3.5 h-3.5 text-red-500" />
+              <Trash2 className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
             </button>
           </>
         )}
@@ -408,86 +445,102 @@ const ExamCard = ({
   );
 };
 
-/* ═══════════════════════════════════════════════════════════
-   MAIN COMPONENT
-═══════════════════════════════════════════════════════════ */
-
+/* ═══ MAIN ═══ */
 export default function TeacherExams() {
+  const { t, dir, isRTL, currentLang } = useLanguage();
   const { data: examsData, isLoading, isError } = useTeacherExams();
   const { data: groupsData } = useTeacherGroups();
-
   const [search, setSearch] = useState("");
   const [courseFilter, setCourseFilter] = useState<string>("all");
   const [showModal, setShowModal] = useState(false);
   const [editExam, setEditExam] = useState<ExamData | null>(null);
   const [deleteExamId, setDeleteExamId] = useState<string | null>(null);
-
   const allExams: ExamData[] = examsData ?? [];
   const groups: GroupOption[] = groupsData ?? [];
 
-  /* ── Unique courses from groups ── */
   const courses = useMemo(() => {
-    const map = new Map<string, { course_id: string; course_name: string }>();
+    const m = new Map<string, { course_id: string; course_name: string }>();
     groups.forEach((g) => {
-      if (!map.has(g.course_id)) {
-        map.set(g.course_id, { course_id: g.course_id, course_name: g.course.course_name });
-      }
+      if (!m.has(g.course_id))
+        m.set(g.course_id, {
+          course_id: g.course_id,
+          course_name: g.course.course_name,
+        });
     });
-    return Array.from(map.values());
+    return Array.from(m.values());
   }, [groups]);
+  const stats = useMemo(
+    () => ({
+      total: allExams.length,
+      upcoming: allExams.filter((e) => !isPast(e.exam_date)).length,
+      withResults: allExams.filter((e) => e._count.results > 0).length,
+      coursesCount: new Set(allExams.map((e) => e.course_id)).size,
+    }),
+    [allExams],
+  );
 
-  /* ── Stats ── */
-  const stats = useMemo(() => {
-    const total = allExams.length;
-    const upcoming = allExams.filter((e) => !isPast(e.exam_date)).length;
-    const withResults = allExams.filter((e) => e._count.results > 0).length;
-    const coursesCount = new Set(allExams.map((e) => e.course_id)).size;
-    return { total, upcoming, withResults, coursesCount };
-  }, [allExams]);
-
-  /* ── Filter ── */
   const filtered = useMemo(() => {
-    let result = allExams;
-
-    if (courseFilter !== "all") {
-      result = result.filter((e) => e.course_id === courseFilter);
-    }
-
+    let r = allExams;
+    if (courseFilter !== "all")
+      r = r.filter((e) => e.course_id === courseFilter);
     if (search.trim()) {
       const q = search.trim().toLowerCase();
-      result = result.filter(
+      r = r.filter(
         (e) =>
           e.exam_name?.toLowerCase().includes(q) ||
           e.course.course_name.toLowerCase().includes(q) ||
           e.course.course_code?.toLowerCase().includes(q),
       );
     }
-
-    return result;
+    return r;
   }, [allExams, search, courseFilter]);
-
-  /* ── Group by course ── */
   const grouped = useMemo(() => groupByCourse(filtered), [filtered]);
-
   const hasFilters = search.trim() !== "" || courseFilter !== "all";
 
-  if (isLoading) return <ExamsSkeleton />;
+  const PILL = {
+    teal: {
+      bg: "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8",
+      icon: "text-[#2B6F5E] dark:text-[#4ADE80]",
+      val: "text-[#2B6F5E] dark:text-[#4ADE80]",
+    },
+    gold: {
+      bg: "bg-[#C4A035]/8 dark:bg-[#C4A035]/8",
+      icon: "text-[#C4A035] dark:text-[#C4A035]",
+      val: "text-[#C4A035] dark:text-[#C4A035]",
+    },
+    green: {
+      bg: "bg-[#8DB896]/12 dark:bg-[#4ADE80]/12",
+      icon: "text-[#3D7A4A] dark:text-[#4ADE80]",
+      val: "text-[#3D7A4A] dark:text-[#4ADE80]",
+    },
+    beige: {
+      bg: "bg-[#D8CDC0]/20 dark:bg-[#2A2A2A]/20",
+      icon: "text-[#6B5D4F] dark:text-[#AAAAAA]",
+      val: "text-[#6B5D4F] dark:text-[#AAAAAA]",
+    },
+  };
 
-  if (isError) {
+  if (isLoading) return <ExamsSkeleton rtl={isRTL} />;
+  if (isError)
     return (
-      <div dir="rtl" className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mb-4">
-          <AlertCircle className="w-7 h-7 text-red-500" />
+      <div
+        dir={dir}
+        className="flex flex-col items-center justify-center min-h-[60vh] text-center"
+      >
+        <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/20 flex items-center justify-center mb-4">
+          <AlertCircle className="w-7 h-7 text-red-500 dark:text-red-400" />
         </div>
-        <h3 className="text-lg font-semibold text-[#1B1B1B] mb-1">حدث خطأ أثناء تحميل الامتحانات</h3>
-        <p className="text-sm text-[#6B5D4F]/70">يرجى تحديث الصفحة أو المحاولة لاحقاً</p>
+        <h3 className="text-lg font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-1">
+          {t("teacher.exams.errorTitle")}
+        </h3>
+        <p className="text-sm text-[#6B5D4F]/70 dark:text-[#AAAAAA]/70">
+          {t("teacher.exams.errorDesc")}
+        </p>
       </div>
     );
-  }
 
   return (
-    <div dir="rtl" className="space-y-6 pb-8">
-      {/* ── Modals ── */}
+    <div dir={dir} className="space-y-6 pb-8">
       {(showModal || editExam) && (
         <ExamModal
           courses={courses}
@@ -502,137 +555,173 @@ export default function TeacherExams() {
                 }
               : undefined
           }
-          onClose={() => { setShowModal(false); setEditExam(null); }}
+          onClose={() => {
+            setShowModal(false);
+            setEditExam(null);
+          }}
         />
       )}
       {deleteExamId && (
-        <DeleteExamModal examId={deleteExamId} onClose={() => setDeleteExamId(null)} />
+        <DeleteExamModal
+          examId={deleteExamId}
+          onClose={() => setDeleteExamId(null)}
+        />
       )}
 
-      {/* ══════════════════════════════════════════
-         HEADER
-      ══════════════════════════════════════════ */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#1B1B1B]">الامتحانات</h1>
-          <p className="text-sm text-[#6B5D4F]/70 mt-0.5">
-            إنشاء وإدارة الامتحانات وإدخال النتائج
+          <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+            {t("teacher.exams.title")}
+          </h1>
+          <p className="text-sm text-[#6B5D4F]/7 dark:text-[#AAAAAA]/70 dark:text-[#999999] mt-0.5">
+            {t("teacher.exams.subtitle")}
           </p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="h-10 px-5 text-sm font-medium text-white bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 rounded-xl transition-colors flex items-center gap-2 self-start sm:self-auto"
+          className="h-10 px-5 text-sm font-medium text-white bg-[#2B6F5E] dark:bg-[#4ADE80] hover:bg-[#2B6F5E]/9 dark:bg-[#4ADE80]/90 dark:hover:bg-[#4ADE80]/90 rounded-xl transition-colors flex items-center gap-2 self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          امتحان جديد
+          {t("teacher.exams.newExam")}
         </button>
       </div>
 
-      {/* ══════════════════════════════════════════
-         STATS
-      ══════════════════════════════════════════ */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "إجمالي الامتحانات", value: stats.total, icon: Award, color: "teal" as const },
-          { label: "قادمة", value: stats.upcoming, icon: CalendarDays, color: "gold" as const },
-          { label: "بنتائج", value: stats.withResults, icon: ClipboardCheck, color: "green" as const },
-          { label: "مواد", value: stats.coursesCount, icon: BookOpen, color: "beige" as const },
-        ].map((stat) => {
-          const colors = {
-            teal: { bg: "bg-[#2B6F5E]/8", icon: "text-[#2B6F5E]", val: "text-[#2B6F5E]" },
-            gold: { bg: "bg-[#C4A035]/8", icon: "text-[#C4A035]", val: "text-[#C4A035]" },
-            green: { bg: "bg-[#8DB896]/12", icon: "text-[#3D7A4A]", val: "text-[#3D7A4A]" },
-            beige: { bg: "bg-[#D8CDC0]/20", icon: "text-[#6B5D4F]", val: "text-[#6B5D4F]" },
-          };
-          const c = colors[stat.color];
+          {
+            label: t("teacher.exams.totalExams"),
+            value: stats.total,
+            icon: Award,
+            color: "teal" as const,
+          },
+          {
+            label: t("teacher.exams.upcoming"),
+            value: stats.upcoming,
+            icon: CalendarDays,
+            color: "gold" as const,
+          },
+          {
+            label: t("teacher.exams.withResults"),
+            value: stats.withResults,
+            icon: ClipboardCheck,
+            color: "green" as const,
+          },
+          {
+            label: t("teacher.exams.courses"),
+            value: stats.coursesCount,
+            icon: BookOpen,
+            color: "beige" as const,
+          },
+        ].map((s) => {
+          const c = PILL[s.color];
           return (
-            <div key={stat.label} className="bg-white rounded-xl border border-[#D8CDC0]/40 px-4 py-3 flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg ${c.bg} flex items-center justify-center shrink-0`}>
-                <stat.icon className={`w-[18px] h-[18px] ${c.icon}`} />
+            <div
+              key={s.label}
+              className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-[#D8CDC0]/4 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] px-4 py-3 flex items-center gap-3"
+            >
+              <div
+                className={`w-10 h-10 rounded-lg ${c.bg} flex items-center justify-center shrink-0`}
+              >
+                <s.icon className={`w-[18px] h-[18px] ${c.icon}`} />
               </div>
               <div className="min-w-0">
-                <p className={`text-xl font-bold leading-tight ${c.val}`}>{stat.value}</p>
-                <p className="text-[11px] text-[#6B5D4F]/60 truncate">{stat.label}</p>
+                <p className={`text-xl font-bold leading-tight ${c.val}`}>
+                  {s.value}
+                </p>
+                <p className="text-[11px] text-[#6B5D4F]/6 dark:text-[#AAAAAA]/60 dark:text-[#888888] truncate">
+                  {s.label}
+                </p>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* ══════════════════════════════════════════
-         SEARCH + FILTER
-      ══════════════════════════════════════════ */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] pointer-events-none" />
+          <Search
+            className={`absolute ${isRTL ? "right-3.5" : "left-3.5"} top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] dark:text-[#888888] pointer-events-none`}
+          />
           <input
             type="text"
-            placeholder="ابحث بالاسم أو المادة..."
+            placeholder={t("teacher.exams.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-11 pr-10 pl-9 bg-white border border-[#D8CDC0]/50 rounded-xl text-sm text-[#1B1B1B] placeholder:text-[#BEB29E] focus:outline-none focus:border-[#2B6F5E]/40 focus:ring-2 focus:ring-[#2B6F5E]/10 transition-all"
+            className={`w-full h-11 ${isRTL ? "pr-10 pl-9" : "pl-10 pr-9"} bg-white dark:bg-[#1A1A1A] border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] rounded-xl text-sm text-[#1B1B1B] dark:text-[#E5E5E5] placeholder:text-[#BEB29E] dark:text-[#888888] focus:outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/40 dark:border-[#4ADE80]/40 focus:ring-2 focus:ring-[#2B6F5E] dark:ring-[#4ADE80]/10 transition-all`}
           />
           {search && (
-            <button onClick={() => setSearch("")} className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#D8CDC0]/30 hover:bg-[#D8CDC0]/50 flex items-center justify-center transition-colors">
-              <X className="w-3 h-3 text-[#6B5D4F]" />
+            <button
+              onClick={() => setSearch("")}
+              className={`absolute ${isRTL ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#D8CDC0]/3 dark:bg-[#2A2A2A]/30 dark:bg-[#2A2A2A]/30 hover:bg-[#D8CDC0]/5 dark:hover:bg-[#222222]0 dark:bg-[#2A2A2A]/50 flex items-center justify-center transition-colors`}
+            >
+              <X className="w-3 h-3 text-[#6B5D4F] dark:text-[#AAAAAA]" />
             </button>
           )}
         </div>
-
         <div className="relative shrink-0">
-          <Filter className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] pointer-events-none" />
+          <Filter
+            className={`absolute ${isRTL ? "right-3.5" : "left-3.5"} top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] dark:text-[#888888] pointer-events-none`}
+          />
           <select
             value={courseFilter}
             onChange={(e) => setCourseFilter(e.target.value)}
-            className="h-11 pr-10 pl-8 bg-white border border-[#D8CDC0]/50 rounded-xl text-sm text-[#1B1B1B] focus:outline-none focus:border-[#2B6F5E]/40 focus:ring-2 focus:ring-[#2B6F5E]/10 appearance-none cursor-pointer transition-all min-w-[160px]"
+            className={`h-11 ${isRTL ? "pr-10 pl-8" : "pl-10 pr-8"} bg-white dark:bg-[#1A1A1A] border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] rounded-xl text-sm text-[#1B1B1B] dark:text-[#E5E5E5] focus:outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/40 dark:border-[#4ADE80]/40 focus:ring-2 focus:ring-[#2B6F5E] dark:ring-[#4ADE80]/10 appearance-none cursor-pointer transition-all min-w-[160px]`}
           >
-            <option value="all">جميع المواد</option>
+            <option value="all">{t("teacher.exams.allCourses")}</option>
             {courses.map((c) => (
-              <option key={c.course_id} value={c.course_id}>{c.course_name}</option>
+              <option key={c.course_id} value={c.course_id}>
+                {c.course_name}
+              </option>
             ))}
           </select>
         </div>
       </div>
 
       {hasFilters && (
-        <div className="flex items-center justify-between bg-[#2B6F5E]/5 border border-[#2B6F5E]/10 rounded-xl px-4 py-2.5">
+        <div className="flex items-center justify-between bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 border border-[#2B6F5E]/1 dark:border-[#4ADE80]/10 dark:border-[#4ADE80]/10 rounded-xl px-4 py-2.5">
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-[#6B5D4F]/70">النتائج:</span>
-            <span className="font-semibold text-[#2B6F5E]">{filtered.length}</span>
+            <span className="text-[#6B5D4F]/70 dark:text-[#AAAAAA]/70">
+              {t("teacher.exams.results")}:
+            </span>
+            <span className="font-semibold text-[#2B6F5E] dark:text-[#4ADE80]">
+              {filtered.length}
+            </span>
           </div>
           <button
-            onClick={() => { setSearch(""); setCourseFilter("all"); }}
-            className="text-xs font-medium text-[#2B6F5E] hover:text-[#2B6F5E]/70 flex items-center gap-1 transition-colors shrink-0"
+            onClick={() => {
+              setSearch("");
+              setCourseFilter("all");
+            }}
+            className="text-xs font-medium text-[#2B6F5E] dark:text-[#4ADE80] hover:text-[#2B6F5E] dark:hover:text-[#4ADE80]/70 dark:text-[#4ADE80]/70 flex items-center gap-1 transition-colors shrink-0"
           >
             <X className="w-3.5 h-3.5" />
-            مسح
+            {t("teacher.exams.clear")}
           </button>
         </div>
       )}
 
-      {/* ══════════════════════════════════════════
-         EXAMS LIST (grouped by course)
-      ══════════════════════════════════════════ */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#D8CDC0]/15 flex items-center justify-center mb-4">
-            <Award className="w-7 h-7 text-[#BEB29E]" />
+          <div className="w-16 h-16 rounded-2xl bg-[#D8CDC0]/1 dark:bg-[#2A2A2A]/15 dark:bg-[#2A2A2A]/30 flex items-center justify-center mb-4">
+            <Award className="w-7 h-7 text-[#BEB29E] dark:text-[#888888]" />
           </div>
-          <h3 className="text-base font-semibold text-[#1B1B1B] mb-1">
-            {allExams.length === 0 ? "لا توجد امتحانات" : "لا توجد نتائج مطابقة"}
-          </h3>
-          <p className="text-sm text-[#6B5D4F]/60 max-w-xs">
+          <h3 className="text-base font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-1">
             {allExams.length === 0
-              ? "ابدأ بإنشاء امتحان جديد"
-              : "جرّب تغيير البحث أو الفلتر"}
+              ? t("teacher.exams.noExams")
+              : t("teacher.exams.noMatchResults")}
+          </h3>
+          <p className="text-sm text-[#6B5D4F]/6 dark:text-[#AAAAAA]/60 dark:text-[#888888] max-w-xs">
+            {allExams.length === 0
+              ? t("teacher.exams.noExamsDesc")
+              : t("teacher.exams.noMatchDesc")}
           </p>
           {allExams.length === 0 && (
             <button
               onClick={() => setShowModal(true)}
-              className="mt-4 h-10 px-5 text-sm font-medium text-white bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 rounded-xl transition-colors flex items-center gap-2"
+              className="mt-4 h-10 px-5 text-sm font-medium text-white bg-[#2B6F5E] dark:bg-[#4ADE80] hover:bg-[#2B6F5E]/9 dark:bg-[#4ADE80]/90 dark:hover:bg-[#4ADE80]/90 rounded-xl transition-colors flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              امتحان جديد
+              {t("teacher.exams.newExam")}
             </button>
           )}
         </div>
@@ -640,22 +729,24 @@ export default function TeacherExams() {
         <div className="space-y-6">
           {grouped.map(({ course, exams }) => (
             <Fragment key={course.course_id}>
-              {/* Course divider */}
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 text-xs font-semibold text-[#2B6F5E] bg-[#2B6F5E]/5 border border-[#2B6F5E]/10 px-3 py-1.5 rounded-full">
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 border border-[#2B6F5E]/1 dark:border-[#4ADE80]/10 dark:border-[#4ADE80]/10 px-3 py-1.5 rounded-full">
                   <BookOpen className="w-3.5 h-3.5" />
                   {course.course_name}
                   {course.course_code && (
-                    <span className="font-mono text-[#BEB29E] font-normal">({course.course_code})</span>
+                    <span className="font-mono text-[#BEB29E] dark:text-[#888888] font-normal">
+                      ({course.course_code})
+                    </span>
                   )}
                 </div>
-                <div className="flex-1 h-px bg-[#D8CDC0]/20" />
-                <span className="text-[11px] text-[#BEB29E]">
-                  {exams.length} {exams.length === 1 ? "امتحان" : "امتحانات"}
+                <div className="flex-1 h-px bg-[#D8CDC0]/20 dark:bg-[#2A2A2A]/20" />
+                <span className="text-[11px] text-[#BEB29E] dark:text-[#888888]">
+                  {exams.length}{" "}
+                  {exams.length === 1
+                    ? t("teacher.exams.examSingular")
+                    : t("teacher.exams.examPlural")}
                 </span>
               </div>
-
-              {/* Exams */}
               <div className="space-y-2">
                 {exams.map((exam) => (
                   <ExamCard

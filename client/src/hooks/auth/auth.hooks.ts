@@ -33,10 +33,10 @@ export const useLogin = () => {
         const redirectMap: Record<string, string> = {
           ADMIN: "/admin",
           TEACHER: "/teacher",
-          STUDENT: "/dashboard",
+          STUDENT: "/student",
         };
 
-        navigate(redirectMap[user.role] ?? "/dashboard", { replace: true });
+        navigate(redirectMap[user.role] ?? "/student", { replace: true });
       } catch {
         navigate("/login", { replace: true });
       }

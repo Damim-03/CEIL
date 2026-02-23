@@ -217,12 +217,12 @@ model Enrollment {
 // SESSION
 // ================================================================
 model Session {
-  session_id   String   @id @default(uuid()) @db.Uuid
-  group_id     String   @db.Uuid
+  session_id   String    @id @default(uuid()) @db.Uuid
+  group_id     String    @db.Uuid
   session_date DateTime
   end_time     DateTime?
   topic        String?
-  room_id      String?  @db.Uuid
+  room_id      String?   @db.Uuid
 
   // Relations
   attendance Attendance[]
@@ -253,6 +253,7 @@ model Attendance {
   session_id    String           @db.Uuid
   student_id    String           @db.Uuid
   status        AttendanceStatus
+  attended_at   DateTime         @default(now()) // ✅ NEW
 
   // Relations
   session Session @relation(fields: [session_id], references: [session_id], onDelete: Restrict)
@@ -310,6 +311,13 @@ model Fee {
   payment_method String?   @db.VarChar(30)
   reference_code String?   @db.VarChar(100)
   paid_at        DateTime?
+
+  processed_by String?   @db.Uuid // ✅ من قام بالعملية
+  processed_at DateTime? // ✅ متى تمت العملية
+  created_by   String?   @db.Uuid // ✅ من أنشأ هذا الرسم
+
+  confirmed_by      String? @db.Uuid
+  confirmed_by_user User?   @relation("FeeConfirmedBy", fields: [confirmed_by], references: [user_id])
 
   // Relations
   enrollment Enrollment? @relation(fields: [enrollment_id], references: [enrollment_id])
@@ -405,6 +413,8 @@ model User {
   teacher        Teacher?                @relation(fields: [teacher_id], references: [teacher_id])
   notifications  NotificationRecipient[]
 
+  confirmed_fees Fee[] @relation("FeeConfirmedBy")
+
   @@map("User")
 }
 
@@ -442,6 +452,9 @@ model Announcement {
 
   is_published Boolean   @default(false)
   published_at DateTime?
+
+  is_pinned Boolean   @default(false)
+  pinned_at DateTime?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -498,6 +511,41 @@ model NotificationRecipient {
 }
 
 // ================================================================
+// AUDIT LOG - سجل التدقيق لتتبع جميع العمليات
+// ================================================================
+model AuditLog {
+  log_id      String   @id @default(uuid()) @db.Uuid
+  user_id     String?  @db.Uuid
+  user_email  String?  @db.VarChar(100)
+  user_role   String?  @db.VarChar(20)
+  action      String   @db.VarChar(50) // CREATE, UPDATE, DELETE, LOGIN, ROLE_CHANGE, etc.
+  entity_type String   @db.VarChar(50) // STUDENT, TEACHER, COURSE, ENROLLMENT, etc.
+  entity_id   String?  @db.VarChar(100)
+  details     String?  @db.Text // JSON string with extra details
+  ip_address  String?  @db.VarChar(45)
+  created_at  DateTime @default(now())
+
+  @@index([user_id])
+  @@index([action])
+  @@index([entity_type])
+  @@index([created_at])
+  @@map("AuditLog")
+}
+
+// ================================================================
+// SYSTEM SETTINGS - إعدادات النظام (يديرها الـ OWNER فقط)
+// ================================================================
+model SystemSettings {
+  setting_id String   @id @default(uuid()) @db.Uuid
+  key        String   @unique @db.VarChar(100)
+  value      String   @db.Text
+  updated_by String?  @db.Uuid
+  updated_at DateTime @updatedAt
+
+  @@map("SystemSettings")
+}
+
+// ================================================================
 // NEW ENUMS
 // ================================================================
 enum NotificationTarget {
@@ -532,6 +580,7 @@ enum GroupStatus {
 }
 
 enum UserRole {
+  OWNER // ✅ جديد - أعلى صلاحية
   ADMIN
   STUDENT
   TEACHER

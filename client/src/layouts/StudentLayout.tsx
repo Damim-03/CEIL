@@ -7,12 +7,18 @@ import PageLoader from "../components/PageLoader";
 import { useMe } from "../hooks/auth/auth.hooks";
 import { useLanguage } from "../hooks/useLanguage";
 
+// 🔌 Socket.IO — real-time auto-invalidation
+import { useSocketEvents } from "../hooks/useSocketEvents";
+
 const StudentLayout = () => {
   const location = useLocation();
   const { dir } = useLanguage();
   const [collapsed, setCollapsed] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { isLoading } = useMe();
+
+  // 🔌 Socket: listen to student events → auto-refresh React Query
+  useSocketEvents("STUDENT");
 
   // Auto-collapse on mobile
   useEffect(() => {

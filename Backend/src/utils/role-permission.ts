@@ -74,4 +74,5 @@ export const RolePermissions: Record<RoleType, PermissionType[]> = {
     // Finance
     Permissions.VIEW_OWN_FEES,
   ],
+  OWNER: []
 };

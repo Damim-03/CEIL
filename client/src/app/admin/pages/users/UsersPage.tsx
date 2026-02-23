@@ -6,22 +6,13 @@ import { useTranslation } from "react-i18next";
 import { Input } from "../../../../components/ui/input";
 import { RoleBadge } from "../../components/RoleBadge";
 import { StatusBadge } from "../../components/StatusBadge";
-import {
-  useAdminUsers,
-  useChangeUserRole,
-} from "../../../../hooks/admin/useAdmin";
-import { Search, Users, Eye, Filter, UserCog } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../../../../components/ui/dropdown-menu";
-import { ShieldCheck, Shield, User } from "lucide-react";
-import type { UserRole } from "../../../../lib/api/admin/admin.api";
+import { useAdminUsers } from "../../../../hooks/admin/useAdmin";
+import { Search, Users, Eye, Filter } from "lucide-react";
 import { useAuth } from "../../../../context/AuthContext";
+
+// ❌ REMOVED: useChangeUserRole — Role changes are now OWNER-only
+// ❌ REMOVED: DropdownMenu, UserCog, ShieldCheck, Shield, User
+// ❌ REMOVED: UserRole type import
 
 const UsersPage = () => {
   const { t } = useTranslation();
@@ -30,20 +21,10 @@ const UsersPage = () => {
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [changingUserId, setChangingUserId] = useState<string | null>(null);
-  const { mutate: changeRole, isPending: isChangingRole } = useChangeUserRole();
+
+  // ❌ REMOVED: changingUserId, changeRole, isChangingRole, handleRoleChange
 
   if (isLoading) return <PageLoader />;
-
-  const handleRoleChange = (userId: string, newRole: UserRole) => {
-    const user = users?.find((u) => u.user_id === userId);
-    if (!user || user.role === newRole) return;
-    setChangingUserId(userId);
-    changeRole(
-      { userId, role: newRole },
-      { onSettled: () => setChangingUserId(null) },
-    );
-  };
 
   const filtered = users?.filter((u) => {
     const isCurrentUser =
@@ -104,7 +85,9 @@ const UsersPage = () => {
               <p className="text-xs text-[#6B5D4F] dark:text-[#888888] font-medium">
                 {t("admin.users.totalUsers")}
               </p>
-              <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">{stats.total}</p>
+              <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                {stats.total}
+              </p>
             </div>
           </div>
         </div>
@@ -183,7 +166,9 @@ const UsersPage = () => {
             {filtered?.length || 0}
           </span>{" "}
           {t("admin.users.of")}{" "}
-          <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">{stats.total}</span>{" "}
+          <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
+            {stats.total}
+          </span>{" "}
           {t("admin.users.users_label")}
         </div>
       </div>
@@ -220,66 +205,7 @@ const UsersPage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 sm:shrink-0">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#1B1B1B] dark:text-[#E5E5E5] hover:bg-[#2B6F5E]/5 dark:hover:bg-[#2B6F5E]/10 hover:text-[#2B6F5E] dark:hover:text-[#4ADE80] hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/30"
-                        disabled={
-                          isChangingRole && changingUserId === user.user_id
-                        }
-                      >
-                        <UserCog className="w-4 h-4" />
-                        {t("admin.users.changeRole")}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="dark:bg-[#1A1A1A] dark:border-[#2A2A2A]">
-                      <DropdownMenuLabel className="dark:text-[#E5E5E5]">
-                        {t("admin.users.assignRole")}
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator className="dark:bg-[#2A2A2A]" />
-                      <DropdownMenuItem
-                        onClick={() => handleRoleChange(user.user_id, "ADMIN")}
-                        disabled={user.role === "ADMIN"}
-                        className="gap-2 dark:text-[#E5E5E5] dark:focus:bg-[#222222]"
-                      >
-                        <ShieldCheck className="w-4 h-4" />
-                        <span>{t("admin.users.admin")}</span>
-                        {user.role === "ADMIN" && (
-                          <span className="ml-auto text-xs text-[#BEB29E] dark:text-[#666666]">
-                            {t("admin.users.current")}
-                          </span>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleRoleChange(user.user_id, "TEACHER")}
-                        disabled={user.role === "TEACHER"}
-                        className="gap-2 dark:text-[#E5E5E5] dark:focus:bg-[#222222]"
-                      >
-                        <Shield className="w-4 h-4" />
-                        <span>{t("admin.users.teacher")}</span>
-                        {user.role === "TEACHER" && (
-                          <span className="ml-auto text-xs text-[#BEB29E] dark:text-[#666666]">
-                            {t("admin.users.current")}
-                          </span>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleRoleChange(user.user_id, "STUDENT")}
-                        disabled={user.role === "STUDENT"}
-                        className="gap-2 dark:text-[#E5E5E5] dark:focus:bg-[#222222]"
-                      >
-                        <User className="w-4 h-4" />
-                        <span>{t("admin.users.student")}</span>
-                        {user.role === "STUDENT" && (
-                          <span className="ml-auto text-xs text-[#BEB29E] dark:text-[#666666]">
-                            {t("admin.users.current")}
-                          </span>
-                        )}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {/* ❌ Role change dropdown REMOVED — OWNER-only */}
                   <Button
                     asChild
                     variant="outline"
