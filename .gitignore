@@ -7,23 +7,15 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Dependencies
-node_modules/
-
 # Build outputs
 client/dist/
 server/dist/
 
 # Environment
 .env
-.env.local
-.env.production.local
-
-# DO NOT ignore client/.env.production (it only has VITE_API_URL=/api)
-
-.env
 .env.*
 !.env.example
+!client/.env.production
 
 # OS / Editor
 .DS_Store
@@ -32,15 +24,13 @@ Thumbs.db
 .idea/
 
 # =========================
-# Frontend (Next.js)
+# Frontend
 # =========================
 frontend/node_modules/
 frontend/.next/
 frontend/out/
 frontend/.vercel/
 frontend/next-env.d.ts
-
-# Build artifacts
 frontend/dist/
 frontend/build/
 
@@ -50,11 +40,9 @@ frontend/build/
 Backend/node_modules/
 Backend/dist/
 Backend/generated/
-
 Backend/.env
 client/.env.local
 client/.env
-
 
 # Prisma
 Backend/prisma/dev.db
@@ -74,11 +62,3 @@ Backend/uploads/*
 # =========================
 logs/
 *.log
-
-# =========================
-# Lock files (optional)
-# =========================
-# Uncomment ONE if you want to ignore lock files
-# package-lock.json
-# yarn.lock
-# pnpm-lock.yaml
