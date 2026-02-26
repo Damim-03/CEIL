@@ -52,7 +52,6 @@ Backend/dist/
 Backend/generated/
 
 # Prisma
-Backend/prisma/migrations/
 Backend/prisma/dev.db
 Backend/prisma/dev.db-journal
 
