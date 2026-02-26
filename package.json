@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "cd client && npm install --include=dev && npm run build && cd ../Backend && npm install --include=dev && npx prisma generate && npx prisma migrate deploy && npm run build",
+    "build": "cd client && npm install --include=dev && npm run build && cd ../Backend && npm install --include=dev && npx prisma generate && npm run build",
     "start": "node Backend/dist/app.js"
   },
   "repository": {
