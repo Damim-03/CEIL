@@ -51,6 +51,11 @@ Backend/node_modules/
 Backend/dist/
 Backend/generated/
 
+Backend/.env
+client/.env.local
+client/.env
+
+
 # Prisma
 Backend/prisma/dev.db
 Backend/prisma/dev.db-journal
