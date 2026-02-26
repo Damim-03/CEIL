@@ -41,6 +41,7 @@ import * as RoomService from "../../services/admin/Room.service";
 import * as DocumentService from "../../services/admin/Document.service";
 import { getFeeAnalytics } from "../../services/owner/feeAnalytics.service";
 import { uploadToCloudinary } from "../../middlewares/uploadToCloudinary";
+import { Roles } from "../../enums/role.enum";
 
 // ─── Helpers ──────────────────────────────────────────────
 function handleServiceResult(res: Response, result: any, successStatus = 200) {
@@ -342,13 +343,11 @@ export const getSystemHealthController = async (_: Request, res: Response) => {
   try {
     return res.json(await OwnerService.getSystemHealth());
   } catch (e: any) {
-    return res
-      .status(503)
-      .json({
-        status: "unhealthy",
-        database: { connected: false },
-        error: e.message,
-      });
+    return res.status(503).json({
+      status: "unhealthy",
+      database: { connected: false },
+      error: e.message,
+    });
   }
 };
 
@@ -826,35 +825,80 @@ export const ownerCreateTeacherController = async (
   req: Request,
   res: Response,
 ) => {
-  try {
-    const result = await TeacherService.createTeacher(req.body);
-    if (!isError(result)) {
-      emitToAdminLevel("teacher:created", { teacher: result?.data ?? result });
-      triggerDashboardRefresh("teacher_created");
-    }
-    return handleServiceResult(res, result, 201);
-  } catch {
-    return res.status(500).json({ message: "Failed" });
+  const { first_name, last_name, email, phone_number, password } = req.body;
+  //                                                    ^^^^^^^^ أضف هذا
+  if (!first_name?.trim() || !last_name?.trim() || !email) {
+    return res
+      .status(400)
+      .json({ message: "first_name, last_name and email are required" });
   }
+  const existingUser = await prisma.user.findUnique({
+    where: { email: email.toLowerCase() },
+  });
+  if (existingUser)
+    return res
+      .status(409)
+      .json({ message: "User with this email already exists" });
+  const result = await prisma.$transaction(async (tx) => {
+    const teacher = await tx.teacher.create({
+      data: {
+        first_name: first_name.trim(),
+        last_name: last_name.trim(),
+        email: email.toLowerCase(),
+        phone_number: phone_number || null,
+      },
+    });
+    await tx.user.create({
+      data: {
+        email: email.toLowerCase(),
+        password: password || null, // ← نفس طريقة الأدمن
+        role: Roles.TEACHER,
+        teacher_id: teacher.teacher_id,
+      },
+    });
+    return teacher;
+  });
+  return res.status(201).json(result);
 };
 export const ownerUpdateTeacherController = async (
   req: Request,
   res: Response,
 ) => {
-  try {
-    const result = await TeacherService.updateTeacher(
-      req.params.teacherId,
-      req.body,
-    );
-    if (!isError(result))
-      emitToAdminLevel("teacher:created", {
-        teacherId: req.params.teacherId,
-        action: "updated",
+  const { teacherId } = req.params;
+  if (Object.keys(req.body).length === 0)
+    return res.status(400).json({ message: "Request body is empty" });
+
+  const teacher = await prisma.teacher.findUnique({
+    where: { teacher_id: teacherId },
+    include: { user: true },
+  });
+  if (!teacher) return res.status(404).json({ message: "Teacher not found" });
+
+  const allowedFields = ["first_name", "last_name", "email", "phone_number"];
+  const data = Object.fromEntries(
+    Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
+  );
+
+  const updatedTeacher = await prisma.teacher.update({
+    where: { teacher_id: teacherId },
+    data,
+  });
+
+  // ✅ Update user record if password or email changed
+  if (teacher.user) {
+    const userUpdate: any = {};
+    if (req.body.password?.trim())
+      userUpdate.password = req.body.password.trim();
+    if (req.body.email) userUpdate.email = req.body.email.toLowerCase();
+    if (Object.keys(userUpdate).length > 0) {
+      await prisma.user.update({
+        where: { user_id: teacher.user.user_id },
+        data: userUpdate,
       });
-    return handleServiceResult(res, result);
-  } catch {
-    return res.status(500).json({ message: "Failed" });
+    }
   }
+
+  return res.json(updatedTeacher);
 };
 export const ownerDeleteTeacherController = async (
   req: Request,
@@ -1468,13 +1512,11 @@ export const ownerCreatePermissionController = async (
     where: { name: name.trim() },
   });
   if (ex) return res.status(409).json({ message: "Permission exists" });
-  res
-    .status(201)
-    .json(
-      await prisma.permission.create({
-        data: { name: name.trim(), description: description?.trim() || null },
-      }),
-    );
+  res.status(201).json(
+    await prisma.permission.create({
+      data: { name: name.trim(), description: description?.trim() || null },
+    }),
+  );
 };
 export const ownerGetAllPermissionsController = async (
   _: Request,
@@ -1506,13 +1548,11 @@ export const ownerAssignPermissionToStudentController = async (
     },
   });
   if (ex) return res.status(409).json({ message: "Already assigned" });
-  res
-    .status(201)
-    .json(
-      await prisma.studentPermission.create({
-        data: { student_id: studentId, permission_id: permissionId },
-      }),
-    );
+  res.status(201).json(
+    await prisma.studentPermission.create({
+      data: { student_id: studentId, permission_id: permissionId },
+    }),
+  );
 };
 export const ownerRemovePermissionFromStudentController = async (
   req: Request,
@@ -1810,22 +1850,56 @@ export const ownerGetNotificationTargetsController = async (
     return res.status(500).json({ message: "Failed" });
   }
 };
+// ✅ الجديد — يرسل الإشعار فعلياً
 export const ownerSendNotificationController = async (
   req: Request,
   res: Response,
 ) => {
   try {
-    return handleServiceResult(
-      res,
-      await NotificationService.resolveRecipients(req.body.target_type, {
+    const owner = (req as any).user as JwtUser;
+    const resolved = await NotificationService.resolveRecipients(
+      req.body.target_type,
+      {
         user_ids: req.body.user_ids,
         group_id: req.body.group_id,
         course_id: req.body.course_id,
-      }),
-      201,
+      },
     );
+
+    if (resolved.error) {
+      return res.status(400).json({ message: resolved.error });
+    }
+    if (!resolved.userIds || resolved.userIds.length === 0) {
+      return res.status(400).json({ message: "No recipients found" });
+    }
+
+    const notification =
+      await NotificationService.sendNotificationWithRecipients(
+        {
+          title: req.body.title,
+          title_ar: req.body.title_ar,
+          message: req.body.message,
+          message_ar: req.body.message_ar,
+          target_type: req.body.target_type,
+          priority: req.body.priority,
+          course_id: req.body.course_id,
+          group_id: req.body.group_id,
+          created_by: owner.user_id,
+        },
+        resolved.userIds,
+      );
+
+    emitToAdminLevel("dashboard:refresh", { reason: "notification_sent" });
+
+    return res.status(201).json({
+      message: `Notification sent to ${resolved.userIds.length} recipients`,
+      notification,
+      recipients_count: resolved.userIds.length,
+    });
   } catch (e: any) {
-    return res.status(500).json({ message: e.message || "Failed" });
+    return res
+      .status(500)
+      .json({ message: e.message || "Failed to send notification" });
   }
 };
 export const ownerGetNotificationByIdController = async (

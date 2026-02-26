@@ -7,6 +7,20 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Dependencies
+node_modules/
+
+# Build outputs
+client/dist/
+server/dist/
+
+# Environment
+.env
+.env.local
+.env.production.local
+
+# DO NOT ignore client/.env.production (it only has VITE_API_URL=/api)
+
 .env
 .env.*
 !.env.example

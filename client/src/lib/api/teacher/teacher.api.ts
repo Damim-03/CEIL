@@ -125,7 +125,7 @@ export const teacherApi = {
 
   getRoomsOverview: async (date?: string) => {
     const params = date ? `?date=${date}` : "";
-    const res = await axiosInstance.get(`/teacher/rooms/overview${params}`);
+    const res = await axiosInstance.get(`/teachers/rooms/overview${params}`);
     return res.data;
   },
 

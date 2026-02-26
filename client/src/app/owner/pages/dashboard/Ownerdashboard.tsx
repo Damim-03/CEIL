@@ -214,7 +214,7 @@ const OwnerDashboard = () => {
               <Calendar className="w-4 h-4 text-[#C4A035]" />
               <span>{getCurrentDate()}</span>
             </div>
-            <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
+            <p className="text-sm text-brand-brown dark:text-[#666666] mt-0.5">
               {t(
                 "owner.dashboard.subtitle",
                 "Complete system control & monitoring",

@@ -61,7 +61,7 @@ import OwnerLayout from "./layouts/Ownerlayout";
 import OwnerDashboard from "./app/owner/pages/dashboard/Ownerdashboard";
 import AdminsPage from "./app/owner/pages/users/Adminspage";
 import OwnerUsersPage from "./app/owner/pages/users/Userspage";
-import AuditLogsPage from "./app/owner/pages/AuditLogs/AuditLogs";
+import OwnerTeacherspage from "./app/owner/pages/AuditLogs/OwnerTeacherspage ";
 import SettingsPage from "./app/owner/pages/Settings/SettingsPage";
 import SystemPage from "./app/owner/pages/System/SystemPage";
 
@@ -81,6 +81,7 @@ import RoomsPage from "./app/admin/pages/RoomsPage";
 import RoomsTimetablePage from "./app/admin/pages/RoomsTimetablePage";
 import OwnerFeeAnalytics from "./app/owner/pages/OwnerFeeAnalytics";
 import ActivityDashboardPage from "./app/owner/pages/activity/Activitydashboardpage";
+import OwnerNotificationsPage from "./app/owner/pages/Notifications/OwnerNotificationsPage";
 
 const App = () => {
   return (
@@ -246,7 +247,8 @@ const App = () => {
         <Route path="users" element={<OwnerUsersPage />} />
         <Route path="fee-analytics" element={<OwnerFeeAnalytics />} />
         <Route path="activity" element={<ActivityDashboardPage />} />
-        <Route path="audit-logs" element={<AuditLogsPage />} />
+        <Route path="teachers" element={<OwnerTeacherspage />} />
+        <Route path="notifications" element={<OwnerNotificationsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="system" element={<SystemPage />} />
         <Route path="profile" element={<ProfilePage />} />

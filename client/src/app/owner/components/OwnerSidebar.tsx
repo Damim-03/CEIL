@@ -24,6 +24,7 @@ import {
   LogOut,
   Crown,
   DollarSign,
+  Bell,
 } from "lucide-react";
 
 interface NavItem {
@@ -56,9 +57,15 @@ const navItems: NavItem[] = [
   {
     icon: ScrollText,
     labelKey: "owner.nav.auditLogs",
-    href: "/owner/audit-logs",
+    href: "/owner/teachers",
   },
   { icon: Activity, labelKey: "owner.nav.activity", href: "/owner/activity" },
+
+  {
+    icon: Bell,
+    labelKey: "owner.nav.notifications",
+    href: "/owner/notifications",
+  },
 ];
 
 const systemNavItems: NavItem[] = [

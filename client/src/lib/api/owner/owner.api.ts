@@ -341,6 +341,7 @@ export const ownerTeachersApi = {
     last_name: string;
     email: string;
     phone_number?: string;
+    password?: string; // ← ADD THIS
   }) => {
     const { data } = await axiosInstance.post(`${BASE}/teachers`, payload);
     return data;

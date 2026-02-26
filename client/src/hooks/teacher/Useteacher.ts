@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { teacherApi } from "../../lib/api/teacher/teacher.api";
+import { useMe } from "../auth/auth.hooks";
 
 /* ═══════════════════════════════════════════════════════
    QUERY KEYS
@@ -112,11 +113,15 @@ export const useUploadTeacherAvatar = () => {
    DASHBOARD
 ═══════════════════════════════════════════════════════ */
 
-export const useTeacherDashboard = () =>
-  useQuery({
+// في Useteacher.ts
+export const useTeacherDashboard = () => {
+  const { data: me } = useMe();
+  return useQuery({
     queryKey: teacherKeys.dashboard(),
     queryFn: teacherApi.getDashboard,
+    enabled: me?.role === "TEACHER", // ← ما يشتغل إلا للـ Teacher
   });
+};
 
 /* ═══════════════════════════════════════════════════════
    SCHEDULE

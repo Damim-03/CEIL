@@ -537,6 +537,7 @@ export const useOwnerCreateTeacher = () => {
       last_name: string;
       email: string;
       phone_number?: string;
+      password?: string; // ← ADD THIS
     }) => ownerTeachersApi.create(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: OWNER_KEYS.teachers });
