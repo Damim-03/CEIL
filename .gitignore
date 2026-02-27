@@ -9,7 +9,7 @@ pnpm-debug.log*
 
 # Build outputs
 client/dist/
-server/dist/
+Backend/dist/
 
 # Environment
 .env
