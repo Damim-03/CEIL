@@ -20,15 +20,6 @@ export function Footer() {
     { to: "/courses", label: t("common.courses") },
     { to: "/about-us", label: t("common.features") },
     { to: "/announcements", label: t("common.announcements") },
-    { to: "/contact", label: t("common.contact") },
-  ];
-
-  const LANG_LINKS = [
-    { label: t("footer.french"), to: "/courses" },
-    { label: t("footer.english"), to: "/courses" },
-    { label: t("footer.german"), to: "/courses" },
-    { label: t("footer.spanish"), to: "/courses" },
-    { label: t("footer.italian"), to: "/courses" },
   ];
 
   const OFFICIAL_LINKS = [
@@ -251,9 +242,6 @@ export function Footer() {
                 © {new Date().getFullYear()} {t("footer.copyright")}
               </p>
               <div className="flex items-center gap-4">
-                <p className="text-white/15 text-[10px]">
-                  {t("footer.madeWith")}
-                </p>
                 <div className="flex items-center gap-1.5">
                   {[
                     { code: "عر", lang: "ar" },
