@@ -157,19 +157,6 @@ export function Footer() {
                 <div className="w-1 h-4 rounded-full bg-brand-mustard" />
                 {t("footer.languages")}
               </h3>
-              <ul className="space-y-2">
-                {LANG_LINKS.map((link, i) => (
-                  <li key={i}>
-                    <LocaleLink
-                      to={link.to}
-                      className="group flex items-center gap-2 text-[13px] text-white/35 hover:text-white transition-colors duration-200"
-                    >
-                      <span className="w-1 h-1 rounded-full bg-white/15 group-hover:bg-brand-mustard transition-colors duration-200" />
-                      {link.label}
-                    </LocaleLink>
-                  </li>
-                ))}
-              </ul>
               <div className="mt-5 pt-4 border-t border-white/[0.06]">
                 <p className="text-[10px] font-semibold text-white/20 uppercase tracking-[0.1em] mb-2.5">
                   {t("footer.officialPlatforms")}
