@@ -4,17 +4,14 @@ import {
   Users,
   GraduationCap,
   BookOpen,
-  DollarSign,
   TrendingUp,
   Activity,
   Calendar,
   Clock,
   CheckCircle,
   ArrowRight,
-  Banknote,
   FileText,
   LayoutGrid,
-  BadgeCheck,
   UserPlus,
   ClipboardList,
   BarChart3,
@@ -48,23 +45,9 @@ interface RecentEnrollment {
   };
 }
 
-interface RecentFee {
-  fee_id: string;
-  amount: number;
-  paid_at: string;
-  payment_method?: string;
-  student: {
-    first_name: string;
-    last_name: string;
-  };
-}
-
 /* ===============================================================
    HELPERS
 =============================================================== */
-
-const formatCurrency = (amount: number) =>
-  `${Number(amount).toLocaleString("en-US")} DA`;
 
 const formatDate = (date: string) =>
   new Date(date).toLocaleDateString("en-US", {
@@ -164,19 +147,9 @@ const AdminDashboard = () => {
     teachers = 0,
     courses = 0,
     groups = 0,
-    unpaidFees = 0,
     gender = {},
     enrollments = { pending: 0, validated: 0, paid: 0, finished: 0, total: 0 },
-    revenue = {
-      collected: 0,
-      pending: 0,
-      total: 0,
-      paidCount: 0,
-      unpaidCount: 0,
-      totalCount: 0,
-    },
     recentEnrollments = [],
-    recentFees = [],
   } = (dashboardData as any) ?? {};
 
   const totalUsers = students + teachers;
@@ -247,182 +220,118 @@ const AdminDashboard = () => {
         />
       </div>
 
-      {/* ================= ENROLLMENT PIPELINE + REVENUE ================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Enrollment Pipeline */}
-        <div className="lg:col-span-2 relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
-          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#C4A035] to-[#C4A035]/60"></div>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-md shadow-[#C4A035]/20 dark:shadow-[#C4A035]/10">
-                <ClipboardList className="w-5 h-5 text-white" />
-              </div>
-              <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                {t("admin.dashboard.enrollmentPipeline")}
-              </h3>
+      {/* ================= ENROLLMENT PIPELINE ================= */}
+      <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
+        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#C4A035] to-[#C4A035]/60"></div>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-md shadow-[#C4A035]/20 dark:shadow-[#C4A035]/10">
+              <ClipboardList className="w-5 h-5 text-white" />
             </div>
-            <Link
-              to="/admin/enrollments"
-              className="text-sm font-medium text-[#2B6F5E] dark:text-[#4ADE80] hover:text-[#2B6F5E]/80 dark:hover:text-[#4ADE80]/80 flex items-center gap-1 transition-colors"
-            >
-              {t("admin.dashboard.viewAll")}{" "}
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+              {t("admin.dashboard.enrollmentPipeline")}
+            </h3>
           </div>
-
-          <div className="grid grid-cols-4 gap-3">
-            <PipelineStep
-              icon={Clock}
-              label={t("admin.dashboard.pending")}
-              count={enrollments.pending}
-              variant="mustard"
-              badge={enrollments.pending > 0}
-            />
-            <PipelineStep
-              icon={CheckCircle}
-              label={t("admin.dashboard.validated")}
-              count={enrollments.validated}
-              variant="teal"
-            />
-            <PipelineStep
-              icon={DollarSign}
-              label={t("admin.dashboard.paid")}
-              count={enrollments.paid}
-              variant="green"
-            />
-            <PipelineStep
-              icon={GraduationCap}
-              label={t("admin.dashboard.finished")}
-              count={enrollments.finished}
-              variant="beige"
-            />
-          </div>
-
-          {enrollments.total > 0 && (
-            <div className="mt-5">
-              <div className="flex h-3 rounded-full overflow-hidden bg-[#D8CDC0]/30 dark:bg-[#333333]">
-                {enrollments.pending > 0 && (
-                  <div
-                    className="bg-[#C4A035] transition-all"
-                    style={{
-                      width: `${(enrollments.pending / enrollments.total) * 100}%`,
-                    }}
-                    title={`${t("admin.dashboard.pending")}: ${enrollments.pending}`}
-                  />
-                )}
-                {enrollments.validated > 0 && (
-                  <div
-                    className="bg-[#2B6F5E] transition-all"
-                    style={{
-                      width: `${(enrollments.validated / enrollments.total) * 100}%`,
-                    }}
-                    title={`${t("admin.dashboard.validated")}: ${enrollments.validated}`}
-                  />
-                )}
-                {enrollments.paid > 0 && (
-                  <div
-                    className="bg-[#8DB896] transition-all"
-                    style={{
-                      width: `${(enrollments.paid / enrollments.total) * 100}%`,
-                    }}
-                    title={`${t("admin.dashboard.paid")}: ${enrollments.paid}`}
-                  />
-                )}
-                {enrollments.finished > 0 && (
-                  <div
-                    className="bg-[#BEB29E] transition-all"
-                    style={{
-                      width: `${(enrollments.finished / enrollments.total) * 100}%`,
-                    }}
-                    title={`${t("admin.dashboard.finished")}: ${enrollments.finished}`}
-                  />
-                )}
-              </div>
-              <div className="flex items-center gap-4 mt-2.5 text-xs text-[#6B5D4F] dark:text-[#AAAAAA]">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#C4A035]"></span>
-                  {t("admin.dashboard.pending")}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#2B6F5E]"></span>
-                  {t("admin.dashboard.validated")}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#8DB896]"></span>
-                  {t("admin.dashboard.paid")}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#BEB29E]"></span>
-                  {t("admin.dashboard.finished")}
-                </span>
-              </div>
-            </div>
-          )}
+          <Link
+            to="/admin/enrollments"
+            className="text-sm font-medium text-[#2B6F5E] dark:text-[#4ADE80] hover:text-[#2B6F5E]/80 dark:hover:text-[#4ADE80]/80 flex items-center gap-1 transition-colors"
+          >
+            {t("admin.dashboard.viewAll")}{" "}
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
 
-        {/* Revenue Card — gradient stays same, works in both modes */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-[#2B6F5E] via-[#2B6F5E] to-[#2B6F5E]/90 rounded-2xl shadow-xl shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10 p-6 text-white">
-          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C4A035]"></div>
-          <div className="absolute inset-0 opacity-[0.07]">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -translate-y-20 translate-x-20"></div>
-            <div className="absolute bottom-0 left-0 w-28 h-28 bg-white rounded-full translate-y-14 -translate-x-14"></div>
-          </div>
-          <div className="relative">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/10">
-                <Banknote className="w-5 h-5 text-[#C4A035]" />
-              </div>
-              <h3 className="text-lg font-bold">
-                {t("admin.dashboard.revenue")}
-              </h3>
-            </div>
-            <div className="mb-5">
-              <p className="text-white/60 text-xs font-medium mb-1 uppercase tracking-wider">
-                {t("admin.dashboard.totalCollected")}
-              </p>
-              <p className="text-3xl font-bold text-[#C4A035]">
-                {formatCurrency(revenue.collected)}
-              </p>
-              <p className="text-white/50 text-xs mt-1">
-                {t("admin.dashboard.paymentsReceived", {
-                  count: revenue.paidCount,
-                })}
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/15">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/5">
-                <p className="text-white/60 text-xs mb-1">
-                  {t("admin.dashboard.pendingRevenue")}
-                </p>
-                <p className="text-xl font-bold">
-                  {formatCurrency(revenue.pending)}
-                </p>
-                <p className="text-white/40 text-[10px] mt-0.5">
-                  {t("admin.dashboard.unpaid", { count: revenue.unpaidCount })}
-                </p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/5">
-                <p className="text-white/60 text-xs mb-1">
-                  {t("admin.dashboard.totalFees")}
-                </p>
-                <p className="text-xl font-bold">{revenue.totalCount}</p>
-                <p className="text-white/40 text-[10px] mt-0.5">
-                  {t("admin.dashboard.allRecords")}
-                </p>
-              </div>
-            </div>
-            <Link
-              to="/admin/fees"
-              className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 bg-[#C4A035] hover:bg-[#C4A035]/90 rounded-xl text-sm font-semibold transition-colors text-[#1B1B1B]"
-            >
-              <DollarSign className="w-4 h-4" />
-              {t("admin.dashboard.manageFees")}
-            </Link>
-          </div>
+        <div className="grid grid-cols-4 gap-3">
+          <PipelineStep
+            icon={Clock}
+            label={t("admin.dashboard.pending")}
+            count={enrollments.pending}
+            variant="mustard"
+            badge={enrollments.pending > 0}
+          />
+          <PipelineStep
+            icon={CheckCircle}
+            label={t("admin.dashboard.validated")}
+            count={enrollments.validated}
+            variant="teal"
+          />
+          <PipelineStep
+            icon={GraduationCap}
+            label={t("admin.dashboard.paid")}
+            count={enrollments.paid}
+            variant="green"
+          />
+          <PipelineStep
+            icon={GraduationCap}
+            label={t("admin.dashboard.finished")}
+            count={enrollments.finished}
+            variant="beige"
+          />
         </div>
+
+        {enrollments.total > 0 && (
+          <div className="mt-5">
+            <div className="flex h-3 rounded-full overflow-hidden bg-[#D8CDC0]/30 dark:bg-[#333333]">
+              {enrollments.pending > 0 && (
+                <div
+                  className="bg-[#C4A035] transition-all"
+                  style={{
+                    width: `${(enrollments.pending / enrollments.total) * 100}%`,
+                  }}
+                  title={`${t("admin.dashboard.pending")}: ${enrollments.pending}`}
+                />
+              )}
+              {enrollments.validated > 0 && (
+                <div
+                  className="bg-[#2B6F5E] transition-all"
+                  style={{
+                    width: `${(enrollments.validated / enrollments.total) * 100}%`,
+                  }}
+                  title={`${t("admin.dashboard.validated")}: ${enrollments.validated}`}
+                />
+              )}
+              {enrollments.paid > 0 && (
+                <div
+                  className="bg-[#8DB896] transition-all"
+                  style={{
+                    width: `${(enrollments.paid / enrollments.total) * 100}%`,
+                  }}
+                  title={`${t("admin.dashboard.paid")}: ${enrollments.paid}`}
+                />
+              )}
+              {enrollments.finished > 0 && (
+                <div
+                  className="bg-[#BEB29E] transition-all"
+                  style={{
+                    width: `${(enrollments.finished / enrollments.total) * 100}%`,
+                  }}
+                  title={`${t("admin.dashboard.finished")}: ${enrollments.finished}`}
+                />
+              )}
+            </div>
+            <div className="flex items-center gap-4 mt-2.5 text-xs text-[#6B5D4F] dark:text-[#AAAAAA]">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#C4A035]"></span>
+                {t("admin.dashboard.pending")}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#2B6F5E]"></span>
+                {t("admin.dashboard.validated")}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#8DB896]"></span>
+                {t("admin.dashboard.paid")}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#BEB29E]"></span>
+                {t("admin.dashboard.finished")}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* ================= RECENT ACTIVITY + QUICK ACTIONS ================= */}
+      {/* ================= RECENT ENROLLMENTS + QUICK ACTIONS ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Enrollments */}
         <div className="lg:col-span-2 relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
@@ -470,11 +379,6 @@ const AdminDashboard = () => {
                       </div>
                       <p className="text-xs text-[#6B5D4F] dark:text-[#888888] truncate">
                         {enrollment.course.course_name}
-                        {enrollment.pricing && (
-                          <span className="text-[#C4A035] font-medium ml-1">
-                            · {formatCurrency(Number(enrollment.pricing.price))}
-                          </span>
-                        )}
                       </p>
                     </div>
                     <span className="text-[11px] text-[#BEB29E] dark:text-[#666666] shrink-0">
@@ -493,103 +397,44 @@ const AdminDashboard = () => {
           )}
         </div>
 
-        {/* Quick Actions + Recent Payments */}
-        <div className="space-y-6">
-          <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#C4A035] to-[#C4A035]/60"></div>
-            <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-4">
-              {t("admin.dashboard.quickActions")}
-            </h3>
-            <div className="grid grid-cols-2 gap-2.5">
-              <QuickActionLink
-                to="/admin/enrollments"
-                icon={ClipboardList}
-                label={t("admin.dashboard.enrollments")}
-                variant="mustard"
-                badge={
-                  enrollments.pending > 0 ? enrollments.pending : undefined
-                }
-              />
-              <QuickActionLink
-                to="/admin/fees"
-                icon={DollarSign}
-                label={t("admin.dashboard.fees")}
-                variant="teal"
-                badge={
-                  revenue.unpaidCount > 0 ? revenue.unpaidCount : undefined
-                }
-              />
-              <QuickActionLink
-                to="/admin/students"
-                icon={UserPlus}
-                label={t("admin.dashboard.students")}
-                variant="mustard"
-              />
-              <QuickActionLink
-                to="/admin/courses"
-                icon={BookOpen}
-                label={t("admin.dashboard.courses")}
-                variant="teal"
-              />
-              <QuickActionLink
-                to="/admin/groups"
-                icon={LayoutGrid}
-                label={t("admin.dashboard.groups")}
-                variant="mustard"
-              />
-              <QuickActionLink
-                to="/admin/sessions"
-                icon={Calendar}
-                label={t("admin.dashboard.sessions")}
-                variant="teal"
-              />
-            </div>
-          </div>
-
-          <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#8DB896] to-[#8DB896]/60"></div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                {t("admin.dashboard.recentPayments")}
-              </h3>
-              <Link
-                to="/admin/fees"
-                className="text-xs text-[#2B6F5E] dark:text-[#4ADE80] hover:text-[#2B6F5E]/80 dark:hover:text-[#4ADE80]/80 font-medium transition-colors"
-              >
-                {t("admin.dashboard.viewAll")}
-              </Link>
-            </div>
-            {(recentFees as RecentFee[]).length > 0 ? (
-              <div className="space-y-2.5">
-                {(recentFees as RecentFee[]).map((fee) => (
-                  <div
-                    key={fee.fee_id}
-                    className="flex items-center justify-between py-2 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A] last:border-0"
-                  >
-                    <div className="flex items-center gap-2">
-                      <BadgeCheck className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
-                      <div>
-                        <p className="text-xs font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                          {fee.student.first_name} {fee.student.last_name}
-                        </p>
-                        <p className="text-[10px] text-[#BEB29E] dark:text-[#666666]">
-                          {fee.paid_at
-                            ? formatRelativeTime(fee.paid_at)
-                            : "N/A"}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-[#2B6F5E] dark:text-[#4ADE80]">
-                      {formatCurrency(fee.amount)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-xs text-[#BEB29E] dark:text-[#666666] py-4">
-                {t("admin.dashboard.noRecentPayments")}
-              </p>
-            )}
+        {/* Quick Actions */}
+        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
+          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#C4A035] to-[#C4A035]/60"></div>
+          <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-4">
+            {t("admin.dashboard.quickActions")}
+          </h3>
+          <div className="grid grid-cols-2 gap-2.5">
+            <QuickActionLink
+              to="/admin/enrollments"
+              icon={ClipboardList}
+              label={t("admin.dashboard.enrollments")}
+              variant="mustard"
+              badge={enrollments.pending > 0 ? enrollments.pending : undefined}
+            />
+            <QuickActionLink
+              to="/admin/students"
+              icon={UserPlus}
+              label={t("admin.dashboard.students")}
+              variant="teal"
+            />
+            <QuickActionLink
+              to="/admin/courses"
+              icon={BookOpen}
+              label={t("admin.dashboard.courses")}
+              variant="mustard"
+            />
+            <QuickActionLink
+              to="/admin/groups"
+              icon={LayoutGrid}
+              label={t("admin.dashboard.groups")}
+              variant="teal"
+            />
+            <QuickActionLink
+              to="/admin/sessions"
+              icon={Calendar}
+              label={t("admin.dashboard.sessions")}
+              variant="mustard"
+            />
           </div>
         </div>
       </div>
@@ -634,7 +479,7 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Platform Overview — dark gradient card (looks great in both modes) */}
+        {/* Platform Overview */}
         <div className="relative overflow-hidden bg-gradient-to-br from-[#1B1B1B] via-[#1B1B1B] to-[#2B6F5E]/40 rounded-2xl shadow-xl p-6 text-white">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C4A035]"></div>
           <div className="absolute inset-0 opacity-[0.04]">
@@ -704,43 +549,6 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
-
-      {/* ================= PAYMENT ALERT ================= */}
-      {Number(unpaidFees) > 0 && (
-        <div className="relative overflow-hidden bg-gradient-to-br from-[#C4A035]/10 to-[#C4A035]/5 dark:from-[#C4A035]/15 dark:to-[#C4A035]/5 border-2 border-[#C4A035]/30 dark:border-[#C4A035]/25 rounded-2xl p-6">
-          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#C4A035] to-[#C4A035]/60"></div>
-          <div className="relative flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shrink-0 shadow-lg shadow-[#C4A035]/20 dark:shadow-[#C4A035]/10">
-              <DollarSign className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                  {t("admin.dashboard.paymentAlert")}
-                </h3>
-                <span className="px-2.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full uppercase">
-                  {t("admin.dashboard.actionNeeded")}
-                </span>
-              </div>
-              <p className="text-[#6B5D4F] dark:text-[#AAAAAA] mb-3 text-sm leading-relaxed">
-                {t("admin.dashboard.unpaidFeesCount", {
-                  count: revenue.unpaidCount,
-                })}{" "}
-                {t("admin.dashboard.unpaidFeesTotal", {
-                  amount: formatCurrency(Number(unpaidFees)),
-                })}
-              </p>
-              <Link
-                to="/admin/fees"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#C4A035] to-[#C4A035]/90 hover:from-[#C4A035]/90 hover:to-[#C4A035]/80 text-white font-semibold rounded-xl transition-all shadow-md hover:shadow-lg text-sm"
-              >
-                <DollarSign className="w-4 h-4" />
-                {t("admin.dashboard.viewUnpaidFees")}
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
