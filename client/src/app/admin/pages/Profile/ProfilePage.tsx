@@ -77,27 +77,27 @@ const ProfilePage = () => {
   > = {
     ADMIN: {
       bg: "bg-[#2B6F5E]/10",
-      text: "text-[#2B6F5E]",
-      dot: "bg-[#2B6F5E]",
+      text: "text-[#2B6F5E] dark:text-[#4ADE80]",
+      dot: "bg-[#2B6F5E] dark:bg-[#4ADE80]",
       labelKey: "admin.profile.roles.admin",
     },
     TEACHER: {
       bg: "bg-[#C4A035]/10",
-      text: "text-[#C4A035]",
-      dot: "bg-[#C4A035]",
+      text: "text-[#C4A035] dark:text-[#D4A843]",
+      dot: "bg-[#C4A035] dark:bg-[#D4A843]",
       labelKey: "admin.profile.roles.teacher",
     },
     STUDENT: {
       bg: "bg-[#8DB896]/12",
-      text: "text-[#3D7A4A]",
+      text: "text-[#3D7A4A] dark:text-[#8DB896]",
       dot: "bg-[#8DB896]",
       labelKey: "admin.profile.roles.student",
     },
   };
   const role = roleConfig[user.role || ""] || {
-    bg: "bg-[#D8CDC0]/20",
-    text: "text-[#6B5D4F]",
-    dot: "bg-[#BEB29E]",
+    bg: "bg-[#D8CDC0]/20 dark:bg-[#555555]/20",
+    text: "text-[#6B5D4F] dark:text-[#AAAAAA]",
+    dot: "bg-[#BEB29E] dark:bg-[#888888]",
     labelKey: "",
   };
   const roleLabel = role.labelKey
@@ -110,18 +110,21 @@ const ProfilePage = () => {
       label: t("admin.profile.info.email"),
       value: user.email,
       color: "#2B6F5E",
+      darkColor: "#4ADE80",
     },
     {
       icon: Shield,
       label: t("admin.profile.info.role"),
       value: roleLabel,
       color: "#C4A035",
+      darkColor: "#D4A843",
     },
     {
       icon: Hash,
       label: t("admin.profile.info.userId"),
       value: user.user_id?.slice(0, 12) + "..." || "N/A",
       color: "#6B5D4F",
+      darkColor: "#AAAAAA",
       mono: true,
     },
     {
@@ -131,6 +134,7 @@ const ProfilePage = () => {
         ? t("admin.profile.active")
         : t("admin.profile.inactive"),
       color: user.is_active ? "#2B6F5E" : "#dc2626",
+      darkColor: user.is_active ? "#4ADE80" : "#ef4444",
     },
   ];
 
@@ -235,55 +239,59 @@ const ProfilePage = () => {
           {/* ── LEFT: Info Cards ── */}
           <div className="lg:col-span-3 space-y-4">
             {/* Info Grid */}
-            <div className="bg-white rounded-2xl border border-[#D8CDC0]/50 shadow-lg shadow-black/[0.03] overflow-hidden">
-              <div className="p-5 border-b border-[#D8CDC0]/30">
-                <h2 className="text-sm font-semibold text-[#1B1B1B] tracking-wide uppercase flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#C4A035]" />
+            <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] shadow-lg shadow-black/[0.03] dark:shadow-black/20 overflow-hidden">
+              <div className="p-5 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+                <h2 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] tracking-wide uppercase flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843]" />
                   {t("admin.profile.profileDetails")}
                 </h2>
               </div>
-              <div className="divide-y divide-[#D8CDC0]/20">
+              <div className="divide-y divide-[#D8CDC0]/20 dark:divide-[#2A2A2A]">
                 {infoItems.map((item, i) => (
                   <div
                     key={i}
-                    className="group flex items-center gap-4 px-5 py-4 hover:bg-[#D8CDC0]/5 transition-colors"
+                    className="group flex items-center gap-4 px-5 py-4 hover:bg-[#D8CDC0]/5 dark:hover:bg-[#222222] transition-colors"
                   >
                     <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors"
                       style={{ backgroundColor: `${item.color}10` }}
                     >
                       <item.icon
-                        className="w-[18px] h-[18px]"
+                        className="w-[18px] h-[18px] hidden dark:block"
+                        style={{ color: item.darkColor }}
+                      />
+                      <item.icon
+                        className="w-[18px] h-[18px] dark:hidden"
                         style={{ color: item.color }}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-medium text-[#BEB29E] uppercase tracking-wider">
+                      <p className="text-[11px] font-medium text-[#BEB29E] dark:text-[#666666] uppercase tracking-wider">
                         {item.label}
                       </p>
                       <p
-                        className={`text-sm font-semibold text-[#1B1B1B] truncate ${item.mono ? "font-mono text-xs mt-0.5" : ""}`}
+                        className={`text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate ${item.mono ? "font-mono text-xs mt-0.5" : ""}`}
                       >
                         {item.value}
                       </p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-[#D8CDC0] group-hover:text-[#BEB29E] transition-colors" />
+                    <ChevronRight className="w-4 h-4 text-[#D8CDC0] dark:text-[#444444] group-hover:text-[#BEB29E] dark:group-hover:text-[#666666] transition-colors" />
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Quick Actions - Mobile */}
-            <div className="md:hidden bg-white rounded-2xl border border-[#D8CDC0]/50 shadow-lg shadow-black/[0.03] p-4 space-y-2">
+            <div className="md:hidden bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] shadow-lg shadow-black/[0.03] dark:shadow-black/20 p-4 space-y-2">
               <Button
                 variant="outline"
-                className="w-full border-[#D8CDC0]/50 text-[#6B5D4F] hover:bg-[#D8CDC0]/10 rounded-xl justify-start gap-3 h-11"
+                className="w-full border-[#D8CDC0]/50 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222] rounded-xl justify-start gap-3 h-11"
               >
                 <Settings className="w-4 h-4" />{" "}
                 {t("admin.profile.securitySettings")}
               </Button>
               <Button
-                className="w-full bg-red-600 hover:bg-red-700 text-white rounded-xl justify-start gap-3 h-11"
+                className="w-full bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white rounded-xl justify-start gap-3 h-11"
                 onClick={() => logoutMutation.mutate()}
                 disabled={logoutMutation.isPending}
               >
@@ -295,10 +303,10 @@ const ProfilePage = () => {
             </div>
 
             {/* Account Insights */}
-            <div className="bg-white rounded-2xl border border-[#D8CDC0]/50 shadow-lg shadow-black/[0.03] overflow-hidden">
-              <div className="p-5 border-b border-[#D8CDC0]/30">
-                <h2 className="text-sm font-semibold text-[#1B1B1B] tracking-wide uppercase flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-[#2B6F5E]" />
+            <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] shadow-lg shadow-black/[0.03] dark:shadow-black/20 overflow-hidden">
+              <div className="p-5 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+                <h2 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] tracking-wide uppercase flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
                   {t("admin.profile.accountOverview")}
                 </h2>
               </div>
@@ -314,35 +322,42 @@ const ProfilePage = () => {
                         ? t("admin.profile.allSystemsGo")
                         : t("admin.profile.accountDisabled"),
                       color: user.is_active ? "#2B6F5E" : "#dc2626",
+                      darkColor: user.is_active ? "#4ADE80" : "#ef4444",
                     },
                     {
                       label: t("admin.profile.auth"),
                       value: "Google",
                       sub: "OAuth 2.0",
                       color: "#C4A035",
+                      darkColor: "#D4A843",
                     },
                     {
                       label: t("admin.profile.access"),
                       value: roleLabel,
                       sub: t("admin.profile.fullPrivileges"),
                       color: "#6B5D4F",
+                      darkColor: "#AAAAAA",
                     },
                   ].map((stat, i) => (
                     <div
                       key={i}
-                      className="text-center p-4 rounded-xl bg-[#D8CDC0]/[0.06] border border-[#D8CDC0]/20"
+                      className="text-center p-4 rounded-xl bg-[#D8CDC0]/[0.06] dark:bg-[#222222] border border-[#D8CDC0]/20 dark:border-[#2A2A2A]"
                     >
                       <div
-                        className="w-2 h-2 rounded-full mx-auto mb-2.5"
+                        className="w-2 h-2 rounded-full mx-auto mb-2.5 hidden dark:block"
+                        style={{ backgroundColor: stat.darkColor }}
+                      ></div>
+                      <div
+                        className="w-2 h-2 rounded-full mx-auto mb-2.5 dark:hidden"
                         style={{ backgroundColor: stat.color }}
                       ></div>
-                      <p className="text-sm font-bold text-[#1B1B1B]">
+                      <p className="text-sm font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                         {stat.value}
                       </p>
-                      <p className="text-[10px] text-[#BEB29E] uppercase tracking-wider mt-0.5 font-medium">
+                      <p className="text-[10px] text-[#BEB29E] dark:text-[#888888] uppercase tracking-wider mt-0.5 font-medium">
                         {stat.label}
                       </p>
-                      <p className="text-[10px] text-[#BEB29E]/70 mt-1">
+                      <p className="text-[10px] text-[#BEB29E]/70 dark:text-[#666666] mt-1">
                         {stat.sub}
                       </p>
                     </div>
@@ -355,16 +370,16 @@ const ProfilePage = () => {
           {/* ── RIGHT: ID Card ── */}
           <div className="lg:col-span-2 space-y-4">
             {/* ID Card */}
-            <div className="bg-white rounded-2xl border border-[#D8CDC0]/50 shadow-lg shadow-black/[0.03] overflow-hidden">
+            <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] shadow-lg shadow-black/[0.03] dark:shadow-black/20 overflow-hidden">
               <button
                 onClick={() => setShowIdCard(!showIdCard)}
-                className="w-full p-5 border-b border-[#D8CDC0]/30 flex items-center justify-between hover:bg-[#D8CDC0]/5 transition-colors"
+                className="w-full p-5 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A] flex items-center justify-between hover:bg-[#D8CDC0]/5 dark:hover:bg-[#222222] transition-colors"
               >
-                <h2 className="text-sm font-semibold text-[#1B1B1B] tracking-wide uppercase flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-[#2B6F5E]" />
+                <h2 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] tracking-wide uppercase flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
                   {t("admin.profile.digitalIdCard")}
                 </h2>
-                <span className="text-[10px] font-medium text-[#BEB29E] uppercase tracking-wider">
+                <span className="text-[10px] font-medium text-[#BEB29E] dark:text-[#666666] uppercase tracking-wider">
                   {showIdCard
                     ? t("admin.profile.tapToHide")
                     : t("admin.profile.tapToFlip")}
@@ -376,10 +391,10 @@ const ProfilePage = () => {
             </div>
 
             {/* Security Card */}
-            <div className="bg-white rounded-2xl border border-[#D8CDC0]/50 shadow-lg shadow-black/[0.03] overflow-hidden">
-              <div className="p-5 border-b border-[#D8CDC0]/30">
-                <h2 className="text-sm font-semibold text-[#1B1B1B] tracking-wide uppercase flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-[#C4A035]" />
+            <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] shadow-lg shadow-black/[0.03] dark:shadow-black/20 overflow-hidden">
+              <div className="p-5 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+                <h2 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] tracking-wide uppercase flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843]" />
                   {t("admin.profile.security")}
                 </h2>
               </div>
@@ -388,12 +403,12 @@ const ProfilePage = () => {
                   {
                     label: t("admin.profile.securityItems.twoFactor"),
                     status: t("admin.profile.securityItems.notEnabled"),
-                    statusColor: "text-[#C4A035]",
+                    statusColor: "text-[#C4A035] dark:text-[#D4A843]",
                   },
                   {
                     label: t("admin.profile.securityItems.loginMethod"),
                     status: "Google OAuth",
-                    statusColor: "text-[#2B6F5E]",
+                    statusColor: "text-[#2B6F5E] dark:text-[#4ADE80]",
                   },
                   {
                     label: t("admin.profile.securityItems.accountVerification"),
@@ -401,15 +416,15 @@ const ProfilePage = () => {
                       ? t("admin.profile.securityItems.verified")
                       : t("admin.profile.securityItems.pending"),
                     statusColor: user.is_active
-                      ? "text-[#2B6F5E]"
-                      : "text-[#C4A035]",
+                      ? "text-[#2B6F5E] dark:text-[#4ADE80]"
+                      : "text-[#C4A035] dark:text-[#D4A843]",
                   },
                 ].map((item, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-[#D8CDC0]/5 transition-colors"
+                    className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-[#D8CDC0]/5 dark:hover:bg-[#222222] transition-colors"
                   >
-                    <span className="text-xs font-medium text-[#6B5D4F]">
+                    <span className="text-xs font-medium text-[#6B5D4F] dark:text-[#AAAAAA]">
                       {item.label}
                     </span>
                     <span
@@ -423,14 +438,14 @@ const ProfilePage = () => {
             </div>
 
             {/* Desktop Support */}
-            <div className="hidden md:block bg-gradient-to-br from-[#2B6F5E]/5 to-[#C4A035]/5 rounded-2xl border border-[#D8CDC0]/40 p-5">
-              <p className="text-xs text-[#BEB29E] mb-3 font-medium">
+            <div className="hidden md:block bg-gradient-to-br from-[#2B6F5E]/5 to-[#C4A035]/5 dark:from-[#2B6F5E]/10 dark:to-[#C4A035]/10 rounded-2xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] p-5">
+              <p className="text-xs text-[#BEB29E] dark:text-[#888888] mb-3 font-medium">
                 {t("admin.profile.supportText")}
               </p>
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full border-[#D8CDC0]/50 text-[#6B5D4F] hover:bg-white rounded-xl text-xs h-9"
+                className="w-full border-[#D8CDC0]/50 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-white dark:hover:bg-[#222222] rounded-xl text-xs h-9"
               >
                 {t("admin.profile.contactSupport")}
               </Button>
