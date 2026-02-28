@@ -25,7 +25,7 @@ export type RegistrationStatus =
   | "FINISHED";
 export type Level = "BASICS" | "A1" | "A2" | "B1" | "B2" | "C1";
 export type DocumentStatus = "PENDING" | "APPROVED" | "REJECTED";
-export type GroupStatus = "OPEN" | "FULL" | "FINISHED";
+export type GroupStatus = "OPEN" | "CLOSED" | "FULL" | "FINISHED";
 
 // Helper type alias
 export type GroupLevel = Level;
@@ -204,6 +204,8 @@ export interface Group {
   status: GroupStatus; // Default: OPEN
   teacher_id?: string | null; // UUID
   level: Level;
+
+  created_at?: string;
 
   // Relations
   enrollments?: Enrollment[];

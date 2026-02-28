@@ -32,8 +32,10 @@ import {
 } from "lucide-react";
 import GroupFormModal from "../../components/GroupFormModal";
 import AssignInstructorModal from "../../components/Assigninstructormodal";
+import type { UpdateGroupPayload } from "../../../../types/Types";
 
 const LEVEL_COLORS = {
+  BASICS: "from-[#7C8FA6] to-[#4A6178]",
   A1: "from-[#8DB896] to-[#2B6F5E]",
   A2: "from-[#2B6F5E] to-[#2B6F5E]/80",
   B1: "from-[#C4A035] to-[#C4A035]/80",
@@ -102,7 +104,11 @@ const GroupDetailsPage = () => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
-  const getNestedValue = (obj: any, path: string, defaultValue: any = null) => {
+  const getNestedValue = (
+    obj: Record<string, unknown>,
+    path: string,
+    defaultValue: unknown = null,
+  ): unknown => {
     try {
       const value = path.split(".").reduce((acc, part) => acc?.[part], obj);
       return value !== undefined && value !== null ? value : defaultValue;
@@ -210,7 +216,7 @@ const GroupDetailsPage = () => {
       showToast(t("admin.groupDetails.deleteFailed"), "error");
     }
   };
-  const handleUpdate = async (payload: any) => {
+  const handleUpdate = async (payload: UpdateGroupPayload) => {
     try {
       await updateGroup.mutateAsync({ groupId: group.group_id, payload });
       showToast(t("admin.groupDetails.groupUpdated"), "success");
@@ -306,14 +312,14 @@ const GroupDetailsPage = () => {
                     className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
                       group.status === "OPEN"
                         ? "bg-[#8DB896]/15 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80] border border-[#8DB896]/30 dark:border-[#4ADE80]/20"
-                        : group.status === "CLOSED"
+                        : (group.status as string) === "CLOSED"
                           ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40"
                           : "bg-[#D8CDC0]/30 dark:bg-[#555555]/20 text-[#6B5D4F] dark:text-[#AAAAAA] border border-[#D8CDC0]/50 dark:border-[#555555]/30"
                     }`}
                   >
                     {group.status === "OPEN"
                       ? t("admin.groupDetails.open")
-                      : group.status === "CLOSED"
+                      : (group.status as string) === "CLOSED"
                         ? t("admin.groupDetails.closed")
                         : group.status}
                   </span>
@@ -643,7 +649,7 @@ const GroupDetailsPage = () => {
               value={
                 group.status === "OPEN"
                   ? t("admin.groupDetails.open")
-                  : group.status === "CLOSED"
+                  : (group.status as string) === "CLOSED"
                     ? t("admin.groupDetails.closed")
                     : group.status
               }
@@ -689,8 +695,8 @@ const GroupDetailsPage = () => {
           level: group.level,
           course_id: group.course_id,
           max_students: maxCapacity,
-          teacher_id: group.teacher_id,
-          department_id: group.department_id,
+          teacher_id: group.teacher_id ?? undefined,
+          department_id: group.department_id ?? undefined,
           current_capacity: currentCapacity,
         }}
         mode="edit"
