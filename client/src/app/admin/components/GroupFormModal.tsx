@@ -59,9 +59,12 @@ const EMPTY_FORM: GroupFormState = {
   current_capacity: 0,
 };
 
-const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
+// ✅ FIXED: Added BASICS level
+const LEVELS = ["BASICS", "A1", "A2", "B1", "B2", "C1"];
 
+// ✅ FIXED: Added BASICS color
 const LEVEL_COLORS = {
+  BASICS: "from-slate-500 to-slate-700",
   A1: "from-green-500 to-emerald-600",
   A2: "from-blue-500 to-cyan-600",
   B1: "from-purple-500 to-indigo-600",
@@ -69,7 +72,9 @@ const LEVEL_COLORS = {
   C1: "from-red-500 to-rose-600",
 };
 
+// ✅ FIXED: Added BASICS ring color
 const LEVEL_RING_COLORS = {
+  BASICS: "ring-slate-500/20",
   A1: "ring-green-500/20",
   A2: "ring-blue-500/20",
   B1: "ring-purple-500/20",
@@ -448,7 +453,7 @@ const GroupFormModal = ({
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-gray-100 overflow-hidden">
           {/* Enhanced Header with Gradient */}
           <div
-            className={`relative px-6 pt-6 pb-5 bg-gradient-to-br ${LEVEL_COLORS[form.level as keyof typeof LEVEL_COLORS]} overflow-hidden`}
+            className={`relative px-6 pt-6 pb-5 bg-gradient-to-br ${LEVEL_COLORS[form.level as keyof typeof LEVEL_COLORS] || LEVEL_COLORS.A1} overflow-hidden`}
           >
             {/* Decorative circles */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
@@ -457,7 +462,7 @@ const GroupFormModal = ({
             <div className="relative flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div
-                  className={`w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg ring-4 ${LEVEL_RING_COLORS[form.level as keyof typeof LEVEL_RING_COLORS]}`}
+                  className={`w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg ring-4 ${LEVEL_RING_COLORS[form.level as keyof typeof LEVEL_RING_COLORS] || LEVEL_RING_COLORS.A1}`}
                 >
                   <Users className="w-7 h-7 text-white" />
                 </div>
@@ -527,7 +532,8 @@ const GroupFormModal = ({
                   Proficiency Level
                   <span className="text-red-500 ml-1">*</span>
                 </label>
-                <div className="grid grid-cols-5 gap-3">
+                {/* ✅ FIXED: grid-cols-3 sm:grid-cols-6 for 6 levels */}
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
                   {LEVELS.map((level) => (
                     <button
                       key={level}
@@ -1236,7 +1242,8 @@ const GroupFormModal = ({
                   type="submit"
                   disabled={isSubmitting}
                   className={`gap-2 min-w-[140px] shadow-lg bg-gradient-to-r ${
-                    LEVEL_COLORS[form.level as keyof typeof LEVEL_COLORS]
+                    LEVEL_COLORS[form.level as keyof typeof LEVEL_COLORS] ||
+                    LEVEL_COLORS.A1
                   } hover:shadow-xl transition-all duration-200 transform hover:scale-105`}
                 >
                   {isSubmitting ? (
