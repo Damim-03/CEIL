@@ -1,0 +1,11 @@
+-- CreateEnum
+CREATE TYPE "RegistrantCategory" AS ENUM ('STUDENT', 'EXTERNAL', 'EMPLOYEE');
+
+-- CreateEnum
+CREATE TYPE "DocumentType" AS ENUM ('PHOTO', 'ID_CARD', 'STUDENT_CARD', 'SCHOOL_CERTIFICATE', 'REGISTRATION_CERTIFICATE', 'WORK_CERTIFICATE', 'ADMIN_CERTIFICATE', 'PAYMENT_RECEIPT');
+
+-- AlterEnum
+ALTER TYPE "Level" ADD VALUE 'BASICS';
+
+-- AlterTable
+ALTER TABLE "Student" ADD COLUMN     "registrant_category" "RegistrantCategory" NOT NULL DEFAULT 'STUDENT';

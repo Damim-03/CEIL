@@ -1,12 +1,20 @@
 // ================================================================
-// 📦 src/services/studentPortal.service.ts
-// ✅ Student-facing business logic (student sees their OWN data)
-// 🔌 Socket.IO realtime events included
-// Profile, Documents, Enrollment, Dashboard, Fees, Attendance, Results
+// 📦 src/services/student/Studentportal.service.ts
+// ✅ Updated: Category-based document requirements
+// ✅ Updated: BASICS level support
+// ✅ LEVEL_ORDER now includes BASICS
 // ================================================================
 
 import { prisma } from "../../prisma/client";
-import { REQUIRED_DOCUMENTS } from "../../constants/document.constants";
+import {
+  REQUIRED_DOCUMENTS_BY_CATEGORY,
+  areDocumentsComplete,
+  DOCUMENT_TYPES,
+} from "../../constants/document.constants";
+import type {
+  RegistrantCategory,
+  DocumentType,
+} from "../../constants/document.constants";
 import { Level } from "../../../generated/prisma/client";
 import cloudinary from "../../middlewares/cloudinary";
 import streamifier from "streamifier";
@@ -19,6 +27,7 @@ import {
 
 // ─── Constants ───────────────────────────────────────────
 const LEVEL_ORDER: Record<Level, number> = {
+  BASICS: 0, // ← جديد: المستوى القاعدي
   A1: 1,
   A2: 2,
   B1: 3,
@@ -55,6 +64,11 @@ async function getStudentByUserId(userId: string) {
   return prisma.student.findUnique({ where: { user_id: userId } });
 }
 
+// ─── Helper: get registrant category ─────────────────────
+function getCategory(student: any): RegistrantCategory {
+  return (student.registrant_category as RegistrantCategory) || "STUDENT";
+}
+
 // ══════════════════════════════════════════════
 // 1. PROFILE
 // ══════════════════════════════════════════════
@@ -76,6 +90,8 @@ export async function getProfile(userId: string) {
   });
   if (!student) return null;
 
+  const category = getCategory(student);
+
   const isProfileComplete = Boolean(
     student.first_name &&
     student.last_name &&
@@ -87,15 +103,23 @@ export async function getProfile(userId: string) {
     student.education_level &&
     student.study_location,
   );
-  const approvedDocs = student.documents.filter((d) => d.status === "APPROVED");
-  const isDocumentsComplete = approvedDocs.length === REQUIRED_DOCUMENTS.length;
+
+  // ✅ Category-based document validation
+  const uploadedTypes = student.documents.map((d) => d.type as DocumentType);
+  const approvedTypes = student.documents
+    .filter((d) => d.status === "APPROVED")
+    .map((d) => d.type as DocumentType);
+  const docCheck = areDocumentsComplete(category, uploadedTypes, approvedTypes);
 
   return {
     ...student,
     email: student.user?.email,
     google_avatar: student.user?.google_avatar,
+    registrant_category: category,
     is_profile_complete: isProfileComplete,
-    is_documents_complete: isDocumentsComplete,
+    is_documents_complete: docCheck.complete,
+    missing_documents: docCheck.missing,
+    required_documents: REQUIRED_DOCUMENTS_BY_CATEGORY[category],
   };
 }
 
@@ -105,23 +129,32 @@ export async function updateProfile(userId: string, data: any) {
       ? new Date(data.date_of_birth)
       : undefined;
 
+  const updateData: any = {
+    first_name: data.first_name?.trim() || undefined,
+    last_name: data.last_name?.trim() || undefined,
+    phone_number: data.phone_number || undefined,
+    nationality: data.nationality || undefined,
+    gender: data.gender ? data.gender.toUpperCase() : undefined,
+    address: data.address || undefined,
+    language: data.language || undefined,
+    education_level: data.education_level || undefined,
+    study_location: data.study_location || undefined,
+    date_of_birth: parsedDOB,
+  };
+
+  // ✅ Allow updating registrant_category
+  if (
+    data.registrant_category &&
+    ["STUDENT", "EXTERNAL", "EMPLOYEE"].includes(data.registrant_category)
+  ) {
+    updateData.registrant_category = data.registrant_category;
+  }
+
   const updated = await prisma.student.update({
     where: { user_id: userId },
-    data: {
-      first_name: data.first_name?.trim() || undefined,
-      last_name: data.last_name?.trim() || undefined,
-      phone_number: data.phone_number || undefined,
-      nationality: data.nationality || undefined,
-      gender: data.gender ? data.gender.toUpperCase() : undefined,
-      address: data.address || undefined,
-      language: data.language || undefined,
-      education_level: data.education_level || undefined,
-      study_location: data.study_location || undefined,
-      date_of_birth: parsedDOB,
-    },
+    data: updateData,
   });
 
-  // 🔌 Socket
   emitToAdminLevel("student:profileUpdated", {
     student_id: updated.student_id,
     name: `${updated.first_name} ${updated.last_name}`,
@@ -144,7 +177,15 @@ export async function uploadDocuments(
   const created: any[] = [];
   const skipped: any[] = [];
 
-  for (const type of REQUIRED_DOCUMENTS) {
+  // ✅ Accept all valid document types (not just REQUIRED_DOCUMENTS)
+  const validTypes = DOCUMENT_TYPES as readonly string[];
+
+  for (const type of Object.keys(files)) {
+    if (!validTypes.includes(type)) {
+      skipped.push({ type, reason: "invalid_type" });
+      continue;
+    }
+
     const file = files[type]?.[0];
     if (!file) continue;
 
@@ -171,7 +212,6 @@ export async function uploadDocuments(
     created.push(document);
   }
 
-  // 🔌 Socket
   if (created.length > 0) {
     emitToAdminLevel("document:uploaded", {
       student_id: student.student_id,
@@ -194,7 +234,23 @@ export async function getDocuments(userId: string) {
     include: { documents: true },
   });
   if (!student) return { error: "not_found" as const };
-  return { data: student.documents };
+
+  const category = getCategory(student);
+  const uploadedTypes = student.documents.map((d) => d.type as DocumentType);
+  const approvedTypes = student.documents
+    .filter((d) => d.status === "APPROVED")
+    .map((d) => d.type as DocumentType);
+  const docCheck = areDocumentsComplete(category, uploadedTypes, approvedTypes);
+
+  return {
+    data: {
+      documents: student.documents,
+      registrant_category: category,
+      required_documents: REQUIRED_DOCUMENTS_BY_CATEGORY[category],
+      is_complete: docCheck.complete,
+      missing: docCheck.missing,
+    },
+  };
 }
 
 export async function deleteDocument(userId: string, documentId: string) {
@@ -211,7 +267,6 @@ export async function deleteDocument(userId: string, documentId: string) {
   if (document.public_id) await cloudinary.uploader.destroy(document.public_id);
   await prisma.document.delete({ where: { document_id: documentId } });
 
-  // 🔌 Socket
   emitToAdminLevel("document:deleted", {
     document_id: documentId,
     student_id: document.student_id,
@@ -258,7 +313,6 @@ export async function reuploadDocument(
     },
   });
 
-  // 🔌 Socket
   emitToAdminLevel("document:reuploaded", {
     document_id: documentId,
     student_id: student.student_id,
@@ -270,7 +324,7 @@ export async function reuploadDocument(
 }
 
 // ══════════════════════════════════════════════
-// 3. ENROLLMENT
+// 3. ENROLLMENT (unchanged except LEVEL_ORDER)
 // ══════════════════════════════════════════════
 
 export async function createEnrollment(
@@ -389,7 +443,6 @@ export async function createEnrollment(
     },
   });
 
-  // 🔌 Socket
   emitToAdminLevel("enrollment:created", {
     enrollment_id: enrollment.enrollment_id,
     student_id: student.student_id,
@@ -522,7 +575,6 @@ export async function cancelEnrollment(userId: string, enrollmentId: string) {
   });
   await prisma.enrollment.delete({ where: { enrollment_id: enrollmentId } });
 
-  // 🔌 Socket
   emitToAdminLevel("enrollment:cancelled", {
     enrollment_id: enrollmentId,
     student_id: student.student_id,
@@ -646,7 +698,6 @@ export async function joinGroup(userId: string, groupId: string) {
       data: { status: "FULL" },
     });
 
-  // 🔌 Socket
   emitToAdminLevel("group:studentJoined", {
     group_id: groupId,
     group_name: group.name,
@@ -705,7 +756,6 @@ export async function leaveGroup(userId: string) {
       data: { status: "OPEN" },
     });
 
-  // 🔌 Socket
   emitToAdminLevel("group:studentLeft", {
     group_id: groupId,
     student_id: student.student_id,
@@ -725,7 +775,7 @@ export async function leaveGroup(userId: string) {
 }
 
 // ══════════════════════════════════════════════
-// 5. COURSES (Student view — read-only, no socket needed)
+// 5. COURSES (updated LEVEL_ORDER)
 // ══════════════════════════════════════════════
 
 export async function getCourseGroups(courseId: string) {
@@ -827,8 +877,7 @@ export async function getCoursesWithGroups() {
 }
 
 // ══════════════════════════════════════════════
-// 6-9. DASHBOARD, FEES, ATTENDANCE, RESULTS
-// (Read-only — no socket events needed)
+// 6. DASHBOARD (updated with category-based docs)
 // ══════════════════════════════════════════════
 
 export async function getDashboard(userId: string) {
@@ -844,6 +893,9 @@ export async function getDashboard(userId: string) {
   });
   if (!student) return null;
 
+  const category = getCategory(student);
+
+  // Profile completeness
   const profileFields = [
     student.first_name,
     student.last_name,
@@ -872,6 +924,13 @@ export async function getDashboard(userId: string) {
   const isProfileComplete = percentage === 100;
   const missingFields = fieldNames.filter((_, i) => !profileFields[i]);
 
+  // ✅ Category-based document completeness
+  const uploadedTypes = student.documents.map((d) => d.type as DocumentType);
+  const approvedTypes = student.documents
+    .filter((d) => d.status === "APPROVED")
+    .map((d) => d.type as DocumentType);
+  const docCheck = areDocumentsComplete(category, uploadedTypes, approvedTypes);
+
   const approved = student.documents.filter(
     (d) => d.status === "APPROVED",
   ).length;
@@ -881,15 +940,10 @@ export async function getDashboard(userId: string) {
   const rejected = student.documents.filter(
     (d) => d.status === "REJECTED",
   ).length;
-  const uploadedTypes = new Set(student.documents.map((d) => d.type));
-  const hasAllDocuments = REQUIRED_DOCUMENTS.every((t) => uploadedTypes.has(t));
-  const missingDocuments = REQUIRED_DOCUMENTS.filter(
-    (t) => !uploadedTypes.has(t),
-  );
-  const isDocumentsComplete =
-    hasAllDocuments && approved === REQUIRED_DOCUMENTS.length;
 
+  const isDocumentsComplete = docCheck.complete;
   const isEnrollmentReady = isProfileComplete && isDocumentsComplete;
+
   const activeEnrollments = student.enrollments.filter((e) =>
     ["PENDING", "VALIDATED", "PAID"].includes(e.registration_status),
   );
@@ -915,6 +969,7 @@ export async function getDashboard(userId: string) {
     .filter((g) => g.group_id);
 
   return {
+    registrant_category: category,
     profile: {
       completedFields,
       totalFields,
@@ -927,8 +982,9 @@ export async function getDashboard(userId: string) {
       approved,
       pending,
       rejected,
-      missingDocuments,
+      missingDocuments: docCheck.missing,
       isComplete: isDocumentsComplete,
+      required: REQUIRED_DOCUMENTS_BY_CATEGORY[category],
     },
     enrollment: {
       isReady: isEnrollmentReady,
@@ -962,6 +1018,10 @@ export async function getDashboard(userId: string) {
     current_groups: currentGroups,
   };
 }
+
+// ══════════════════════════════════════════════
+// 7-9. FEES, ATTENDANCE, RESULTS (unchanged)
+// ══════════════════════════════════════════════
 
 export async function getMyFees(userId: string) {
   const student = await getStudentByUserId(userId);
@@ -1049,7 +1109,7 @@ export async function getMyResults(userId: string) {
 }
 
 // ══════════════════════════════════════════════
-// 10. COURSE PROFILE WITH PRICING (read-only)
+// 10. COURSE PROFILE WITH PRICING (unchanged)
 // ══════════════════════════════════════════════
 
 export async function getCourseProfileWithPricing(courseId: string) {

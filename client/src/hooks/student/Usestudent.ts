@@ -4,8 +4,8 @@
    All student-related React Query hooks in one place.
    Organized by domain for easy navigation.
    
-   ✅ UPDATED: useEnrollInCourse now supports pricing_id
-   ✅ UPDATED: Aggressive refresh strategy (15s/20s/30s)
+   ✅ UPDATED: useStudentDocuments now returns category-aware data
+   ✅ UPDATED: BASICS level support
    
    Last updated: February 2026
 =============================================================== */
@@ -38,9 +38,9 @@ const ME_KEY = ["me"];
    🔄 REFRESH CONSTANTS
 =============================================================== */
 
-const FAST = 15_000; // 15s — بيانات حية
-const ACTIVE = 20_000; // 20s — بيانات تتغير كثيراً
-const NORMAL = 30_000; // 30s — بيانات عادية
+const FAST = 15_000;
+const ACTIVE = 20_000;
+const NORMAL = 30_000;
 
 /* ===============================================================
    TYPE DEFINITIONS
@@ -150,7 +150,7 @@ export const useStudentDashboard = () => {
 };
 
 /* ===============================================================
-   DOCUMENTS — 🟢 30s
+   DOCUMENTS — 🟢 30s ✅ UPDATED for category-based documents
 =============================================================== */
 
 export const useStudentDocuments = () => {
@@ -162,6 +162,27 @@ export const useStudentDocuments = () => {
     refetchInterval: NORMAL,
     refetchOnWindowFocus: true,
     placeholderData: (prev: any) => prev,
+    select: (data: any) => {
+      // ✅ Normalize response: backend returns
+      // { documents, registrant_category, required_documents, is_complete, missing }
+      // Older format: just an array
+      if (Array.isArray(data)) {
+        return {
+          documents: data,
+          registrant_category: "STUDENT" as const,
+          required_documents: [],
+          is_complete: false,
+          missing: [],
+        };
+      }
+      return {
+        documents: data.documents || [],
+        registrant_category: data.registrant_category || "STUDENT",
+        required_documents: data.required_documents || [],
+        is_complete: data.is_complete || false,
+        missing: data.missing || [],
+      };
+    },
   });
 
   const uploadDocuments = useMutation({
@@ -218,6 +239,12 @@ export const useStudentDocuments = () => {
 
   return {
     ...documentsQuery,
+    // ✅ Convenience getters
+    documents: documentsQuery.data?.documents || [],
+    registrantCategory: documentsQuery.data?.registrant_category || "STUDENT",
+    requiredDocuments: documentsQuery.data?.required_documents || [],
+    isDocumentsComplete: documentsQuery.data?.is_complete || false,
+    missingDocuments: documentsQuery.data?.missing || [],
     uploadDocuments,
     deleteDocument,
     reuploadDocument,
@@ -288,17 +315,6 @@ export const useEnrollmentDetails = (enrollmentId?: string) =>
     placeholderData: (prev: any) => prev,
   });
 
-/**
- * ✅ UPDATED: PRIMARY ENROLLMENT MUTATION
- *
- * Now accepts pricing_id from PricingModal.
- * The student selects their category (طالب/موظف/خارجي)
- * and this choice is saved with the enrollment.
- *
- * Usage:
- * - With pricing: mutate({ course_id: "...", group_id: "...", pricing_id: "..." })
- * - Without pricing: mutate({ course_id: "...", group_id: "..." })
- */
 export const useEnrollInCourse = () => {
   const qc = useQueryClient();
 
@@ -329,12 +345,6 @@ export const useEnrollInCourse = () => {
     },
     onError: (error: any) => {
       console.error("❌ ENROLLMENT FAILED:", error);
-      console.error("Error details:", {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-      });
-
       const msg =
         error.response?.data?.message ||
         error.response?.data?.error ||
@@ -409,7 +419,6 @@ export const useJoinGroup = () => {
     },
     onError: (error: any) => {
       console.error("❌ JOIN GROUP FAILED:", error);
-
       const msg =
         error.response?.data?.message ||
         error.response?.data?.error ||
@@ -455,7 +464,7 @@ export const useLeaveGroup = () => {
 };
 
 /* ===============================================================
-   ATTENDANCE — 🔴 15s (حي)
+   ATTENDANCE — 🔴 15s
 =============================================================== */
 
 export const useStudentAttendance = () =>
@@ -494,7 +503,7 @@ export const useStudentResults = () =>
   });
 
 /* ===============================================================
-   LEGACY HOOKS (Backward Compatibility)
+   LEGACY HOOKS
 =============================================================== */
 
 export const useMyProfile = () =>
@@ -545,7 +554,7 @@ export const useStudentUnreadCount = () =>
   useQuery({
     queryKey: STUDENT_UNREAD_COUNT_KEY,
     queryFn: studentApi.getUnreadCount,
-    refetchInterval: FAST, // 15s — أسرع للإشعارات الجديدة
+    refetchInterval: FAST,
   });
 
 export const useMarkStudentNotificationRead = () => {

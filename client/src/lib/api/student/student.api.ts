@@ -31,6 +31,18 @@ export const studentApi = {
 
   getDocuments: async () => {
     const { data } = await axiosInstance.get("/students/documents");
+    // ✅ Backend now returns:
+    // { documents: [...], registrant_category, required_documents, is_complete, missing }
+    // For backward compat, if it's just an array, wrap it
+    if (Array.isArray(data)) {
+      return {
+        documents: data,
+        registrant_category: "STUDENT",
+        required_documents: [],
+        is_complete: false,
+        missing: [],
+      };
+    }
     return data;
   },
 
@@ -64,12 +76,11 @@ export const studentApi = {
 
   // ======================== ENROLLMENT ========================
 
-  // ✅ UPDATED: Now accepts pricing_id
   enroll: async (payload: {
     course_id: string;
     group_id?: string;
     level?: string;
-    pricing_id?: string; // ✅ NEW
+    pricing_id?: string;
   }) => {
     const { data } = await axiosInstance.post("/students/enroll", payload);
     return data;
@@ -155,24 +166,30 @@ export const studentApi = {
   getNotifications: async (page = 1, unreadOnly = false) => {
     const params = new URLSearchParams({ page: String(page), limit: "15" });
     if (unreadOnly) params.append("unread", "true");
-    const { data } = await axiosInstance.get(`/students/notifications?${params}`);
+    const { data } = await axiosInstance.get(
+      `/students/notifications?${params}`,
+    );
     return data;
   },
 
   getUnreadCount: async () => {
-    const { data } = await axiosInstance.get("/students/notifications/unread-count");
-    return data;  // { unread_count: number }
+    const { data } = await axiosInstance.get(
+      "/students/notifications/unread-count",
+    );
+    return data;
   },
 
   markNotificationRead: async (recipientId: string) => {
     const { data } = await axiosInstance.patch(
-      `/students/notifications/${recipientId}/read`
+      `/students/notifications/${recipientId}/read`,
     );
     return data;
   },
 
   markAllNotificationsRead: async () => {
-    const { data } = await axiosInstance.patch("/students/notifications/read-all");
+    const { data } = await axiosInstance.patch(
+      "/students/notifications/read-all",
+    );
     return data;
   },
 };

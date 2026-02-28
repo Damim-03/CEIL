@@ -21,17 +21,115 @@ import {
   Calendar,
   ExternalLink,
   Trash2,
+  AlertCircle,
+  GraduationCap,
+  User,
+  Briefcase,
+  RefreshCw,
 } from "lucide-react";
 import { useStudentDocuments } from "../../../hooks/student/Usestudent";
+
+/* ================= CONSTANTS ================= */
+
+type RegistrantCategory = "STUDENT" | "EXTERNAL" | "EMPLOYEE";
+
+interface DocumentTypeOption {
+  value: string;
+  label: string;
+  label_ar: string;
+}
+
+const DOCUMENT_TYPES_BY_CATEGORY: Record<
+  RegistrantCategory,
+  DocumentTypeOption[]
+> = {
+  STUDENT: [
+    { value: "STUDENT_CARD", label: "Student Card", label_ar: "بطاقة طالب" },
+    {
+      value: "SCHOOL_CERTIFICATE",
+      label: "School Certificate",
+      label_ar: "شهادة مدرسية",
+    },
+    {
+      value: "REGISTRATION_CERTIFICATE",
+      label: "Registration Certificate",
+      label_ar: "شهادة تسجيل",
+    },
+  ],
+  EXTERNAL: [
+    {
+      value: "ID_CARD",
+      label: "National ID Card",
+      label_ar: "بطاقة التعريف الوطنية",
+    },
+  ],
+  EMPLOYEE: [
+    {
+      value: "ID_CARD",
+      label: "National ID Card",
+      label_ar: "بطاقة التعريف الوطنية",
+    },
+    {
+      value: "WORK_CERTIFICATE",
+      label: "Work Certificate",
+      label_ar: "شهادة عمل",
+    },
+    {
+      value: "ADMIN_CERTIFICATE",
+      label: "Administrative Certificate",
+      label_ar: "شهادة إدارية",
+    },
+  ],
+};
+
+// Optional documents available for all categories
+const OPTIONAL_DOCUMENTS: DocumentTypeOption[] = [
+  { value: "PHOTO", label: "Personal Photo", label_ar: "صورة شمسية" },
+  { value: "PAYMENT_RECEIPT", label: "Payment Receipt", label_ar: "وصل الدفع" },
+];
+
+const CATEGORY_INFO: Record<
+  RegistrantCategory,
+  {
+    label: string;
+    label_ar: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+  }
+> = {
+  STUDENT: {
+    label: "Student",
+    label_ar: "طالب",
+    icon: GraduationCap,
+    color: "text-blue-600 dark:text-blue-400",
+  },
+  EXTERNAL: {
+    label: "External",
+    label_ar: "شخص خارجي",
+    icon: User,
+    color: "text-purple-600 dark:text-purple-400",
+  },
+  EMPLOYEE: {
+    label: "Employee",
+    label_ar: "موظف",
+    icon: Briefcase,
+    color: "text-orange-600 dark:text-orange-400",
+  },
+};
 
 /* ================= PAGE ================= */
 
 export default function Documents() {
   const {
-    data: documents = [],
+    documents = [],
+    registrantCategory,
+    requiredDocuments,
+    isDocumentsComplete,
+    missingDocuments,
     isLoading,
     uploadDocuments,
     deleteDocument,
+    reuploadDocument,
   } = useStudentDocuments();
 
   const { alertState, hideAlert, showConfirm, showSuccess, showError } =
@@ -41,9 +139,12 @@ export default function Documents() {
   const [filterType, setFilterType] = useState("all");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [viewDocument, setViewDocument] = useState<Document | null>(null);
-  const [documentToDelete, setDocumentToDelete] = useState<number | null>(null);
+  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
+  const [reuploadDoc, setReuploadDoc] = useState<Document | null>(null);
 
   if (isLoading) return <PageLoader />;
+
+  const category = (registrantCategory || "STUDENT") as RegistrantCategory;
 
   const filteredDocuments = documents.filter((doc: Document) => {
     const matchesSearch =
@@ -63,7 +164,7 @@ export default function Documents() {
     rejected: documents.filter((d: Document) => d.status === "REJECTED").length,
   };
 
-  const handleDeleteClick = (documentId: number, documentType: string) => {
+  const handleDeleteClick = (documentId: string, documentType: string) => {
     setDocumentToDelete(documentId);
     showConfirm(
       "Delete Document",
@@ -90,6 +191,10 @@ export default function Documents() {
     );
   };
 
+  const handleReupload = (doc: Document) => {
+    setReuploadDoc(doc);
+  };
+
   return (
     <>
       <div className="space-y-6">
@@ -106,7 +211,7 @@ export default function Documents() {
                   My Documents
                 </h1>
                 <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
-                  Upload and manage your academic documents
+                  Upload and manage your required documents
                 </p>
               </div>
             </div>
@@ -118,6 +223,14 @@ export default function Documents() {
             </Button>
           </div>
         </div>
+
+        {/* Category & Requirements Banner */}
+        <CategoryBanner
+          category={category}
+          isComplete={isDocumentsComplete}
+          missingDocuments={missingDocuments}
+          requiredDocuments={requiredDocuments}
+        />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -198,6 +311,7 @@ export default function Documents() {
                   document={doc}
                   onView={setViewDocument}
                   onDelete={handleDeleteClick}
+                  onReupload={handleReupload}
                   isDeleting={
                     deleteDocument.isPending &&
                     documentToDelete === doc.document_id
@@ -216,6 +330,8 @@ export default function Documents() {
 
       {uploadModalOpen && (
         <UploadModal
+          category={category}
+          existingTypes={documents.map((d: Document) => d.type)}
           onClose={() => setUploadModalOpen(false)}
           uploadDocuments={uploadDocuments}
           onSuccess={() => {
@@ -227,6 +343,24 @@ export default function Documents() {
           }}
           onError={(message: string) => {
             showError("Upload Failed", message);
+          }}
+        />
+      )}
+
+      {reuploadDoc && (
+        <ReuploadModal
+          document={reuploadDoc}
+          onClose={() => setReuploadDoc(null)}
+          reuploadDocument={reuploadDocument}
+          onSuccess={() => {
+            setReuploadDoc(null);
+            showSuccess(
+              "Re-upload Successful",
+              "Your document has been re-uploaded and is pending review.",
+            );
+          }}
+          onError={(message: string) => {
+            showError("Re-upload Failed", message);
           }}
         />
       )}
@@ -249,6 +383,107 @@ export default function Documents() {
         cancelText="Cancel"
       />
     </>
+  );
+}
+
+/* ================= CATEGORY BANNER ================= */
+
+interface CategoryBannerProps {
+  category: RegistrantCategory;
+  isComplete: boolean;
+  missingDocuments: string[];
+  requiredDocuments: any[];
+}
+
+function CategoryBanner({
+  category,
+  isComplete,
+  missingDocuments,
+  requiredDocuments,
+}: CategoryBannerProps) {
+  const info = CATEGORY_INFO[category];
+  const Icon = info.icon;
+
+  return (
+    <div
+      className={`relative bg-white dark:bg-[#1A1A1A] rounded-2xl border overflow-hidden ${
+        isComplete
+          ? "border-[#8DB896]/60 dark:border-[#4ADE80]/20"
+          : "border-[#C4A035]/40 dark:border-[#D4A843]/20"
+      }`}
+    >
+      <div
+        className={`absolute left-0 top-0 bottom-0 w-1.5 ${
+          isComplete
+            ? "bg-gradient-to-b from-[#8DB896] to-[#2B6F5E]"
+            : "bg-gradient-to-b from-[#C4A035] to-[#C4A035]/60"
+        }`}
+      ></div>
+      <div className="p-5">
+        <div className="flex items-start gap-4">
+          <div
+            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              isComplete
+                ? "bg-[#8DB896]/12 dark:bg-[#4ADE80]/10"
+                : "bg-[#C4A035]/8 dark:bg-[#D4A843]/10"
+            }`}
+          >
+            {isComplete ? (
+              <CheckCircle className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-[#C4A035] dark:text-[#D4A843]" />
+            )}
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <Icon className={`w-4 h-4 ${info.color}`} />
+              <span className={`text-sm font-medium ${info.color}`}>
+                {info.label} — {info.label_ar}
+              </span>
+            </div>
+            {isComplete ? (
+              <p className="text-sm text-[#2B6F5E] dark:text-[#4ADE80] font-medium">
+                All required documents are approved ✓
+              </p>
+            ) : (
+              <>
+                <p className="text-sm text-[#6B5D4F] dark:text-[#888888] mb-2">
+                  Required documents for your category:
+                </p>
+                <div className="space-y-1.5">
+                  {requiredDocuments.map((req: any, i: number) => {
+                    const isMissing = missingDocuments.includes(req.label);
+                    return (
+                      <div key={i} className="flex items-center gap-2 text-sm">
+                        {isMissing ? (
+                          <XCircle className="w-3.5 h-3.5 text-red-500 dark:text-red-400 shrink-0" />
+                        ) : (
+                          <CheckCircle className="w-3.5 h-3.5 text-[#2B6F5E] dark:text-[#4ADE80] shrink-0" />
+                        )}
+                        <span
+                          className={
+                            isMissing
+                              ? "text-red-600 dark:text-red-400"
+                              : "text-[#2B6F5E] dark:text-[#4ADE80]"
+                          }
+                        >
+                          {req.label} — {req.label_ar}
+                        </span>
+                        {req.alternatives?.length > 1 && (
+                          <span className="text-xs text-[#BEB29E] dark:text-[#666666]">
+                            (one of: {req.alternatives.join(" / ")})
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -313,7 +548,8 @@ function StatCard({ icon: Icon, label, value, color }: StatCardProps) {
 interface DocumentCardProps {
   document: Document;
   onView: (doc: Document) => void;
-  onDelete: (documentId: number, documentType: string) => void;
+  onDelete: (documentId: string, documentType: string) => void;
+  onReupload: (doc: Document) => void;
   isDeleting: boolean;
 }
 
@@ -321,6 +557,7 @@ function DocumentCard({
   document,
   onView,
   onDelete,
+  onReupload,
   isDeleting,
 }: DocumentCardProps) {
   const getIcon = () => {
@@ -365,9 +602,10 @@ function DocumentCard({
     }
   };
 
-  const uploadedAt = document.uploaded_at || document.created_at;
+  const uploadedAt = document.uploaded_at || (document as any).created_at;
   const canDelete =
     document.status === "PENDING" || document.status === "REJECTED";
+  const canReupload = document.status === "REJECTED";
 
   return (
     <div className="flex flex-col lg:flex-row lg:items-center justify-between p-4 hover:bg-[#D8CDC0]/5 dark:hover:bg-[#222222] transition-colors gap-4">
@@ -397,7 +635,7 @@ function DocumentCard({
       </div>
 
       {document.file_path && (
-        <div className="flex items-center gap-2 lg:shrink-0">
+        <div className="flex items-center gap-2 lg:shrink-0 flex-wrap">
           <Button
             onClick={() => onView(document)}
             size="sm"
@@ -414,6 +652,16 @@ function DocumentCard({
           >
             <Download className="h-4 w-4" /> Download
           </Button>
+          {canReupload && (
+            <Button
+              onClick={() => onReupload(document)}
+              size="sm"
+              variant="outline"
+              className="gap-1 border-[#C4A035]/40 dark:border-[#D4A843]/20 text-[#C4A035] dark:text-[#D4A843] hover:bg-[#C4A035]/5 dark:hover:bg-[#D4A843]/5 rounded-xl"
+            >
+              <RefreshCw className="h-4 w-4" /> Re-upload
+            </Button>
+          )}
           {canDelete && (
             <Button
               onClick={() => onDelete(document.document_id, document.type)}
@@ -497,7 +745,7 @@ function ViewDocumentModal({ document, onClose }: ViewDocumentModalProps) {
             </div>
           )}
           {!isImage && !isPDF && (
-            <div className="flex flex-col items-center justify-center min-h-100 text-center">
+            <div className="flex flex-col items-center justify-center min-h-[200px] text-center">
               <File className="w-16 h-16 text-[#D8CDC0] dark:text-[#333333] mb-4" />
               <p className="text-[#1B1B1B] dark:text-[#E5E5E5] font-medium mb-2">
                 Preview not available
@@ -565,7 +813,7 @@ function EmptyState({
       <p className="text-[#6B5D4F] dark:text-[#888888] text-sm mb-4">
         {hasDocuments
           ? "Try adjusting your search or filters"
-          : "Upload your required documents to complete your account"}
+          : "Upload your required documents to complete your registration"}
       </p>
       {!hasDocuments && (
         <Button
@@ -582,6 +830,8 @@ function EmptyState({
 /* ================= UPLOAD MODAL ================= */
 
 interface UploadModalProps {
+  category: RegistrantCategory;
+  existingTypes: string[];
   onClose: () => void;
   uploadDocuments: UploadMutation;
   onSuccess: () => void;
@@ -589,6 +839,8 @@ interface UploadModalProps {
 }
 
 function UploadModal({
+  category,
+  existingTypes,
   onClose,
   uploadDocuments,
   onSuccess,
@@ -596,6 +848,15 @@ function UploadModal({
 }: UploadModalProps) {
   const [file, setFile] = useState<File | null>(null);
   const [type, setType] = useState("");
+
+  // ✅ Build available types: category-specific + optional
+  const categoryTypes = DOCUMENT_TYPES_BY_CATEGORY[category] || [];
+  const allTypes = [...categoryTypes, ...OPTIONAL_DOCUMENTS];
+
+  // ✅ Filter out already-uploaded types
+  const availableTypes = allTypes.filter(
+    (t) => !existingTypes.includes(t.value),
+  );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
@@ -641,22 +902,71 @@ function UploadModal({
         </div>
 
         <div className="p-6 space-y-4">
+          {/* Category indicator */}
+          <div className="flex items-center gap-2 px-3 py-2 bg-[#D8CDC0]/10 dark:bg-[#222222] rounded-xl">
+            {(() => {
+              const info = CATEGORY_INFO[category];
+              const Icon = info.icon;
+              return (
+                <>
+                  <Icon className={`w-4 h-4 ${info.color}`} />
+                  <span className="text-sm text-[#6B5D4F] dark:text-[#888888]">
+                    Category:{" "}
+                    <span className={`font-medium ${info.color}`}>
+                      {info.label} — {info.label_ar}
+                    </span>
+                  </span>
+                </>
+              );
+            })()}
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
               Document Type <span className="text-red-500">*</span>
             </label>
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              disabled={isUploading}
-              className="w-full px-3 py-2.5 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/10 focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/30"
-            >
-              <option value="">Select document type</option>
-              <option value="PHOTO">Personal Photo</option>
-              <option value="ID_CARD">ID Card</option>
-              <option value="SCHOOL_CERTIFICATE">School Certificate</option>
-              <option value="PAYMENT_RECEIPT">Payment Receipt</option>
-            </select>
+            {availableTypes.length > 0 ? (
+              <select
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                disabled={isUploading}
+                className="w-full px-3 py-2.5 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/10 focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/30"
+              >
+                <option value="">Select document type</option>
+                {categoryTypes.filter((t) => !existingTypes.includes(t.value))
+                  .length > 0 && (
+                  <optgroup label="Required Documents">
+                    {categoryTypes
+                      .filter((t) => !existingTypes.includes(t.value))
+                      .map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.label} — {t.label_ar}
+                        </option>
+                      ))}
+                  </optgroup>
+                )}
+                {OPTIONAL_DOCUMENTS.filter(
+                  (t) => !existingTypes.includes(t.value),
+                ).length > 0 && (
+                  <optgroup label="Optional Documents">
+                    {OPTIONAL_DOCUMENTS.filter(
+                      (t) => !existingTypes.includes(t.value),
+                    ).map((t) => (
+                      <option key={t.value} value={t.value}>
+                        {t.label} — {t.label_ar}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+            ) : (
+              <div className="px-3 py-4 bg-[#8DB896]/8 dark:bg-[#4ADE80]/5 rounded-xl text-center">
+                <CheckCircle className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80] mx-auto mb-1" />
+                <p className="text-sm text-[#2B6F5E] dark:text-[#4ADE80] font-medium">
+                  All document types have been uploaded!
+                </p>
+              </div>
+            )}
           </div>
 
           <div>
@@ -724,13 +1034,163 @@ function UploadModal({
   );
 }
 
+/* ================= REUPLOAD MODAL ================= */
+
+interface ReuploadModalProps {
+  document: Document;
+  onClose: () => void;
+  reuploadDocument: any;
+  onSuccess: () => void;
+  onError: (message: string) => void;
+}
+
+function ReuploadModal({
+  document,
+  onClose,
+  reuploadDocument,
+  onSuccess,
+  onError,
+}: ReuploadModalProps) {
+  const [file, setFile] = useState<File | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
+  };
+
+  const handleReupload = () => {
+    if (!file) {
+      onError("Please select a file");
+      return;
+    }
+
+    reuploadDocument.mutate(
+      { documentId: document.document_id, file },
+      {
+        onSuccess: () => onSuccess(),
+        onError: (err: Error) => {
+          const errorMessage =
+            (err as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message || "Re-upload failed. Please try again.";
+          onError(errorMessage);
+        },
+      },
+    );
+  };
+
+  const isUploading = reuploadDocument.isPending;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-xl dark:shadow-black/50 max-w-md w-full border border-[#D8CDC0]/60 dark:border-[#2A2A2A]">
+        <div className="flex items-center justify-between p-6 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+          <div>
+            <h2 className="text-xl font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
+              Re-upload Document
+            </h2>
+            <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-1">
+              {formatDocumentType(document.type)}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-[#D8CDC0]/15 dark:hover:bg-[#222222] rounded-xl transition-colors"
+            disabled={isUploading}
+            aria-label="Close"
+          >
+            <X className="w-5 h-5 text-[#BEB29E] dark:text-[#666666]" />
+          </button>
+        </div>
+
+        <div className="p-6">
+          {document.rejection_reason && (
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30 rounded-xl">
+              <p className="text-sm text-red-700 dark:text-red-400">
+                <span className="font-medium">Rejection reason:</span>{" "}
+                {document.rejection_reason}
+              </p>
+            </div>
+          )}
+
+          <div className="border-2 border-dashed border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-xl p-6 text-center hover:border-[#2B6F5E]/40 dark:hover:border-[#4ADE80]/20 transition-colors bg-[#D8CDC0]/5 dark:bg-[#151515]">
+            <input
+              type="file"
+              onChange={handleFileChange}
+              className="hidden"
+              id="reupload-file"
+              disabled={isUploading}
+              accept=".pdf,.jpg,.jpeg,.png"
+            />
+            <label
+              htmlFor="reupload-file"
+              className={`cursor-pointer flex flex-col items-center ${isUploading ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <RefreshCw className="w-8 h-8 text-[#BEB29E] dark:text-[#555555] mb-2" />
+              {file ? (
+                <div>
+                  <p className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
+                    {file.name}
+                  </p>
+                  <p className="text-xs text-[#BEB29E] dark:text-[#666666] mt-1">
+                    {formatFileSize(file.size)}
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
+                    Select a new file to replace the rejected one
+                  </p>
+                  <p className="text-xs text-[#BEB29E] dark:text-[#666666] mt-1">
+                    PDF, JPG, PNG (max 10MB)
+                  </p>
+                </div>
+              )}
+            </label>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A] bg-[#D8CDC0]/5 dark:bg-[#151515] rounded-b-2xl">
+          <Button
+            onClick={onClose}
+            variant="outline"
+            disabled={isUploading}
+            className="border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#888888] rounded-xl"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleReupload}
+            disabled={isUploading || !file}
+            className="gap-2 bg-[#C4A035] hover:bg-[#C4A035]/90 text-white rounded-xl"
+          >
+            <RefreshCw className="w-4 h-4" />{" "}
+            {isUploading ? "Re-uploading..." : "Re-upload"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ================= UTILITIES ================= */
 
 function formatDocumentType(type: string): string {
-  return type
-    .split("_")
-    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
-    .join(" ");
+  const labels: Record<string, string> = {
+    STUDENT_CARD: "Student Card — بطاقة طالب",
+    SCHOOL_CERTIFICATE: "School Certificate — شهادة مدرسية",
+    REGISTRATION_CERTIFICATE: "Registration Certificate — شهادة تسجيل",
+    ID_CARD: "National ID Card — بطاقة التعريف",
+    WORK_CERTIFICATE: "Work Certificate — شهادة عمل",
+    ADMIN_CERTIFICATE: "Administrative Certificate — شهادة إدارية",
+    PHOTO: "Personal Photo — صورة شمسية",
+    PAYMENT_RECEIPT: "Payment Receipt — وصل الدفع",
+  };
+  return (
+    labels[type] ||
+    type
+      .split("_")
+      .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+      .join(" ")
+  );
 }
 
 function formatFileSize(bytes: number): string {

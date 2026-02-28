@@ -16,13 +16,14 @@ export type UserRole = "OWNER" | "ADMIN" | "STUDENT" | "TEACHER";
 export type AttendanceStatus = "PRESENT" | "ABSENT";
 export type FeeStatus = "PAID" | "UNPAID";
 export type Gender = "MALE" | "FEMALE" | "OTHER";
+export type RegistrantCategory = "STUDENT" | "EXTERNAL" | "EMPLOYEE";
 export type RegistrationStatus =
   | "PENDING"
   | "VALIDATED"
   | "REJECTED"
   | "PAID"
   | "FINISHED";
-export type Level = "A1" | "A2" | "B1" | "B2" | "C1";
+export type Level = "BASICS" | "A1" | "A2" | "B1" | "B2" | "C1";
 export type DocumentStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type GroupStatus = "OPEN" | "FULL" | "FINISHED";
 
@@ -30,7 +31,7 @@ export type GroupStatus = "OPEN" | "FULL" | "FINISHED";
 export type GroupLevel = Level;
 
 // Available levels constant
-export const LEVELS = ["A1", "A2", "B1", "B2", "C1"] as const;
+export const LEVELS = ["BASICS", "A1", "A2", "B1", "B2", "C1"] as const;
 
 /* ===============================================================
    USER (Prisma Model)
@@ -566,9 +567,13 @@ export interface Document {
 }
 
 export type DocumentType =
-  | "PHOTO"
-  | "ID_CARD"
+  | "STUDENT_CARD"
   | "SCHOOL_CERTIFICATE"
+  | "REGISTRATION_CERTIFICATE"
+  | "ID_CARD"
+  | "WORK_CERTIFICATE"
+  | "ADMIN_CERTIFICATE"
+  | "PHOTO"
   | "PAYMENT_RECEIPT";
 
 export interface AdminDocumentResponse {

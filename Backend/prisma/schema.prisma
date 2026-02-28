@@ -34,6 +34,8 @@ model Student {
   permissions     StudentPermission[]
   user            User?
 
+  registrant_category RegistrantCategory @default(STUDENT)
+
   @@map("Student")
 }
 
@@ -465,7 +467,25 @@ enum RegistrationStatus {
   FINISHED
 }
 
+enum RegistrantCategory {
+  STUDENT
+  EXTERNAL
+  EMPLOYEE
+}
+
+enum DocumentType {
+  PHOTO
+  ID_CARD
+  STUDENT_CARD 
+  SCHOOL_CERTIFICATE
+  REGISTRATION_CERTIFICATE 
+  WORK_CERTIFICATE 
+  ADMIN_CERTIFICATE 
+  PAYMENT_RECEIPT
+}
+
 enum Level {
+  BASICS
   A1
   A2
   B1
