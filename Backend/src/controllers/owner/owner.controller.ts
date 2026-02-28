@@ -42,6 +42,7 @@ import * as DocumentService from "../../services/admin/Document.service";
 import { getFeeAnalytics } from "../../services/owner/feeAnalytics.service";
 import { uploadToCloudinary } from "../../middlewares/uploadToCloudinary";
 import { Roles } from "../../enums/role.enum";
+import { hashPassword } from "../../utils/password.util";
 
 // ─── Helpers ──────────────────────────────────────────────
 function handleServiceResult(res: Response, result: any, successStatus = 200) {
@@ -851,7 +852,7 @@ export const ownerCreateTeacherController = async (
     await tx.user.create({
       data: {
         email: email.toLowerCase(),
-        password: password || null, // ← نفس طريقة الأدمن
+        password: password ? await hashPassword(password) : null, // ← نفس طريقة الأدمن
         role: Roles.TEACHER,
         teacher_id: teacher.teacher_id,
       },
@@ -888,7 +889,7 @@ export const ownerUpdateTeacherController = async (
   if (teacher.user) {
     const userUpdate: any = {};
     if (req.body.password?.trim())
-      userUpdate.password = req.body.password.trim();
+      userUpdate.password = await hashPassword(req.body.password.trim());
     if (req.body.email) userUpdate.email = req.body.email.toLowerCase();
     if (Object.keys(userUpdate).length > 0) {
       await prisma.user.update({

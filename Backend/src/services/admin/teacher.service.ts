@@ -10,6 +10,7 @@ import {
   emitToAdminLevel,
   triggerDashboardRefresh,
 } from "../socket.service";
+import { hashPassword } from "../../utils/password.util";
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -18,6 +19,7 @@ interface CreateTeacherInput {
   last_name: string;
   email: string;
   phone_number?: string;
+  password?: string;
 }
 
 // ─── CREATE ──────────────────────────────────────────────
@@ -50,7 +52,7 @@ export async function createTeacher(input: CreateTeacherInput) {
     await tx.user.create({
       data: {
         email: email.toLowerCase(),
-        password: null,
+        password: input.password ? await hashPassword(input.password) : null,
         role: Roles.TEACHER,
         teacher_id: teacher.teacher_id,
       },
