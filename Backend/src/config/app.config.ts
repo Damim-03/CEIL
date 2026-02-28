@@ -2,7 +2,7 @@ import { getEnv } from "../utils/get-env";
 
 const appConfig = () => ({
   NODE_ENV: getEnv("NODE_ENV", "development"),
-  PORT: Number(getEnv("PORT", "5000")),
+  PORT: Number(process.env.PORT) || 3000,
   BASE_PATH: getEnv("BASE_PATH", "/"),
 
   DATABASE_URL: getEnv("DATABASE_URL"),
@@ -19,7 +19,7 @@ const appConfig = () => ({
   FRONTEND_ORIGIN: getEnv("FRONTEND_ORIGIN", "http://localhost:5173"),
   FRONTEND_GOOGLE_CALLBACK_URL: getEnv(
     "FRONTEND_GOOGLE_CALLBACK_URL",
-    "http://localhost:5173/google/oauth/callback"
+    "http://localhost:5173/google/oauth/callback",
   ),
 });
 
