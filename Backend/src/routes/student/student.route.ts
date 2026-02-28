@@ -24,7 +24,12 @@ import { authMiddleware } from "../../middlewares/auth.middleware";
 import { upload } from "../../middlewares/upload.middleware";
 import { requireApprovedDocuments } from "../../middlewares/requireApprovedDocuments.middleware";
 import { requireCompletedProfile } from "../../middlewares/requireCompletedProfile.middleware";
-import { getMyNotificationsController, getUnreadCountController, markAllNotificationsReadController, markNotificationReadController } from "../../controllers/admin/Notification.controller";
+import {
+  getMyNotificationsController,
+  getUnreadCountController,
+  markAllNotificationsReadController,
+  markNotificationReadController,
+} from "../../controllers/admin/Notification.controller";
 
 const studentRoutes: Router = Router();
 
@@ -43,9 +48,13 @@ studentRoutes.post(
   "/documents",
   authMiddleware,
   upload.fields([
-    { name: "PHOTO", maxCount: 1 },
-    { name: "ID_CARD", maxCount: 1 },
+    { name: "STUDENT_CARD", maxCount: 1 },
     { name: "SCHOOL_CERTIFICATE", maxCount: 1 },
+    { name: "REGISTRATION_CERTIFICATE", maxCount: 1 },
+    { name: "ID_CARD", maxCount: 1 },
+    { name: "WORK_CERTIFICATE", maxCount: 1 },
+    { name: "ADMIN_CERTIFICATE", maxCount: 1 },
+    { name: "PHOTO", maxCount: 1 },
     { name: "PAYMENT_RECEIPT", maxCount: 1 },
   ]),
   uploadDocumentsController,
