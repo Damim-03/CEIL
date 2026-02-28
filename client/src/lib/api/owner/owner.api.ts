@@ -1056,10 +1056,7 @@ export const ownerNotificationsApi = {
   broadcast: async (
     payload: OwnerNotificationPayload,
   ): Promise<{ message: string; notification: OwnerNotification }> => {
-    const { data } = await axiosInstance.post(
-      `${BASE}/notifications/broadcast`,
-      payload,
-    );
+    const { data } = await axiosInstance.post(`${BASE}/notifications`, payload);
     return data;
   },
 
