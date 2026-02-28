@@ -8,7 +8,7 @@
    ✅ Who paid, when, who confirmed
    ✅ Who hasn't paid, when due
    ✅ Revenue charts & breakdowns
-   ✅ Dark mode · i18n
+   ✅ Dark mode · i18n (AR / EN / FR)
 =============================================================== */
 
 import { useState, useMemo } from "react";
@@ -100,11 +100,13 @@ export default function OwnerFeeAnalytics() {
     limit: 15,
   });
 
-  // ── Display label (must be after data) ──
+  // ── Display label ──
+  // ── Display label ──
+  const periodLabel = data?.period_label;
   const displayLabel = useMemo(() => {
-    if (data?.period_label) return data.period_label;
+    if (periodLabel) return periodLabel;
     return apiDate;
-  }, [data?.period_label, apiDate]);
+  }, [periodLabel, apiDate]);
 
   // ── Navigation ──
   const navigateDate = (dir: -1 | 1) => {
@@ -152,7 +154,7 @@ export default function OwnerFeeAnalytics() {
                   {t("owner.feeAnalytics.title", "Fee Analytics")}
                 </h1>
                 <span className="px-2 py-0.5 bg-[#C4A035]/15 dark:bg-[#C4A035]/20 text-[#9A7D2A] dark:text-[#D4A843] text-[10px] font-bold rounded-full uppercase tracking-wider">
-                  Owner
+                  {t("owner.feeAnalytics.ownerBadge", "Owner")}
                 </span>
               </div>
               <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
@@ -211,7 +213,6 @@ export default function OwnerFeeAnalytics() {
           >
             <ChevronRight className="w-4 h-4 text-[#6B5D4F] dark:text-[#888888]" />
           </button>
-          {/* Date input — adapts to period */}
           {period === "daily" && (
             <input
               type="date"
@@ -326,7 +327,7 @@ export default function OwnerFeeAnalytics() {
                     <div
                       key={idx}
                       className="flex flex-col items-center gap-1 flex-1 min-w-[28px]"
-                      title={`${formatCurrency(val)} · ${item.paid_count || item.count || 0} payments`}
+                      title={`${formatCurrency(val)} · ${item.paid_count || item.count || 0} ${t("owner.feeAnalytics.payments", "payments")}`}
                     >
                       <span className="text-[9px] font-medium text-[#6B5D4F] dark:text-[#888888]">
                         {val > 0
@@ -422,8 +423,9 @@ export default function OwnerFeeAnalytics() {
         {pagination && pagination.pages > 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
             <p className="text-xs text-[#BEB29E] dark:text-[#666666]">
-              Page {pagination.page} / {pagination.pages} · {pagination.total}{" "}
-              total
+              {t("owner.feeAnalytics.page", "Page")} {pagination.page} /{" "}
+              {pagination.pages} · {pagination.total}{" "}
+              {t("owner.feeAnalytics.total", "total")}
             </p>
             <div className="flex items-center gap-1">
               <button
@@ -537,6 +539,8 @@ function SummaryCard({
 
 /* ── Paid Fee Row ── */
 function PaidFeeRow({ fee }: { fee: any }) {
+  const { t } = useTranslation();
+
   return (
     <div className="p-5 hover:bg-[#D8CDC0]/5 dark:hover:bg-[#222222] transition-colors">
       <div className="flex items-start gap-4">
@@ -553,7 +557,7 @@ function PaidFeeRow({ fee }: { fee: any }) {
               <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {fee.student
                   ? `${fee.student.first_name} ${fee.student.last_name}`
-                  : "Unknown Student"}
+                  : t("owner.feeAnalytics.unknownStudent", "Unknown Student")}
               </p>
               {/* Course */}
               {fee.course && (
@@ -578,27 +582,27 @@ function PaidFeeRow({ fee }: { fee: any }) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 p-3 bg-[#D8CDC0]/8 dark:bg-[#151515] rounded-xl">
             <DetailItem
               icon={Calendar}
-              label="Paid At"
+              label={t("owner.feeAnalytics.paidAt", "Paid At")}
               value={fee.paid_at ? formatDateTime(fee.paid_at) : "—"}
             />
             <DetailItem
               icon={CreditCard}
-              label="Method"
+              label={t("owner.feeAnalytics.method", "Method")}
               value={fee.payment_method || "—"}
             />
             <DetailItem
               icon={Eye}
-              label="Reference"
+              label={t("owner.feeAnalytics.reference", "Reference")}
               value={fee.reference_code || "—"}
               mono
             />
             <DetailItem
               icon={ShieldCheck}
-              label="Confirmed By"
+              label={t("owner.feeAnalytics.confirmedBy", "Confirmed By")}
               value={
                 fee.confirmed_by
                   ? `${fee.confirmed_by.email} (${fee.confirmed_by.role})`
-                  : "System"
+                  : t("owner.feeAnalytics.system", "System")
               }
               highlight
             />
@@ -611,6 +615,7 @@ function PaidFeeRow({ fee }: { fee: any }) {
 
 /* ── Unpaid Fee Row ── */
 function UnpaidFeeRow({ fee }: { fee: any }) {
+  const { t } = useTranslation();
   const now = new Date();
   const dueDate = fee.due_date ? new Date(fee.due_date) : null;
   const isOverdue = dueDate ? dueDate < now : false;
@@ -641,11 +646,11 @@ function UnpaidFeeRow({ fee }: { fee: any }) {
                 <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                   {fee.student
                     ? `${fee.student.first_name} ${fee.student.last_name}`
-                    : "Unknown Student"}
+                    : t("owner.feeAnalytics.unknownStudent", "Unknown Student")}
                 </p>
                 {isOverdue && (
                   <span className="px-2 py-0.5 bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-[10px] font-bold rounded-full uppercase">
-                    Overdue
+                    {t("owner.feeAnalytics.overdue", "Overdue")}
                   </span>
                 )}
               </div>
@@ -670,14 +675,18 @@ function UnpaidFeeRow({ fee }: { fee: any }) {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3 p-3 bg-[#D8CDC0]/8 dark:bg-[#151515] rounded-xl">
             <DetailItem
               icon={Calendar}
-              label="Due Date"
+              label={t("owner.feeAnalytics.dueDate", "Due Date")}
               value={fee.due_date ? formatDate(fee.due_date) : "—"}
             />
-            <DetailItem icon={Clock} label="Status" value={fee.status} />
+            <DetailItem
+              icon={Clock}
+              label={t("owner.feeAnalytics.status", "Status")}
+              value={fee.status}
+            />
             {fee.student?.email && (
               <DetailItem
                 icon={Users}
-                label="Email"
+                label={t("owner.feeAnalytics.email", "Email")}
                 value={fee.student.email}
               />
             )}
@@ -722,6 +731,8 @@ function DetailItem({
 
 /* ── Empty State ── */
 function EmptyState({ type }: { type: "paid" | "unpaid" }) {
+  const { t } = useTranslation();
+
   return (
     <div className="text-center py-16">
       <div className="w-16 h-16 rounded-2xl bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] flex items-center justify-center mx-auto mb-4">
@@ -733,11 +744,14 @@ function EmptyState({ type }: { type: "paid" | "unpaid" }) {
       </div>
       <p className="text-sm font-medium text-[#6B5D4F] dark:text-[#888888]">
         {type === "paid"
-          ? "No payments for this period"
-          : "No unpaid fees for this period"}
+          ? t("owner.feeAnalytics.noPayments", "No payments for this period")
+          : t("owner.feeAnalytics.noUnpaid", "No unpaid fees for this period")}
       </p>
       <p className="text-xs text-[#BEB29E] dark:text-[#666666] mt-1">
-        Try selecting a different date range
+        {t(
+          "owner.feeAnalytics.tryDifferent",
+          "Try selecting a different date range",
+        )}
       </p>
     </div>
   );

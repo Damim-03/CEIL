@@ -18,7 +18,6 @@ import {
   ShieldCheck,
   Users,
   ScrollText,
-  Settings,
   Activity,
   UserCircle,
   LogOut,
@@ -65,19 +64,6 @@ const navItems: NavItem[] = [
     icon: Bell,
     labelKey: "owner.nav.notifications",
     href: "/owner/notifications",
-  },
-];
-
-const systemNavItems: NavItem[] = [
-  {
-    icon: Settings,
-    labelKey: "owner.nav.settings",
-    href: "/owner/settings",
-  },
-  {
-    icon: Activity,
-    labelKey: "owner.nav.systemHealth",
-    href: "/owner/system",
   },
 ];
 
@@ -224,21 +210,6 @@ const OwnerSidebar = ({ collapsed, onExpand }: SidebarProps) => {
             <NavLink key={item.labelKey} item={item} />
           ))}
         </ul>
-
-        {/* System Section */}
-        <div className="mt-4 pt-4 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
-          {!collapsed && (
-            <p className="px-4 mb-2 text-[10px] font-semibold text-[#BEB29E] dark:text-[#555555] uppercase tracking-wider">
-              {t("owner.nav.systemSection", "System")}
-            </p>
-          )}
-          <ul className={cn("space-y-1.5", collapsed ? "px-2" : "px-3")}>
-            {systemNavItems.map((item) => (
-              <NavLink key={item.labelKey} item={item} />
-            ))}
-          </ul>
-        </div>
-
         {/* Profile */}
         <div className="mt-4 pt-4 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
           <ul className={cn("space-y-1.5", collapsed ? "px-2" : "px-3")}>
