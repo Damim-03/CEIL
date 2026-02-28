@@ -5,7 +5,7 @@ const appConfig = () => ({
   PORT: Number(process.env.PORT) || 3000,
   BASE_PATH: getEnv("BASE_PATH", "/"),
 
-  DATABASE_URL: getEnv("DATABASE_URL"),
+  DATABASE_URL: process.env.DATABASE_URL,
 
   SESSION_SECRET: getEnv("SESSION_SECRET", "secret"),
   SESSION_EXPIRES_IN: getEnv("SESSION_EXPIRES_IN", "1d"),
