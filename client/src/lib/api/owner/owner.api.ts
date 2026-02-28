@@ -1041,7 +1041,7 @@ export const ownerNotificationsApi = {
     return data;
   },
 
-  searchStudents: async (query: string) => {
+  searchStudents: async (query: string, targetType: string | undefined) => {
     const { data } = await axiosInstance.get(
       `${BASE}/notifications/search-students?q=${encodeURIComponent(query)}`,
     );
@@ -1056,7 +1056,10 @@ export const ownerNotificationsApi = {
   broadcast: async (
     payload: OwnerNotificationPayload,
   ): Promise<{ message: string; notification: OwnerNotification }> => {
-    const { data } = await axiosInstance.post(`${BASE}/notifications`, payload);
+    const { data } = await axiosInstance.post(
+      `${BASE}/notifications/broadcast`,
+      payload,
+    );
     return data;
   },
 

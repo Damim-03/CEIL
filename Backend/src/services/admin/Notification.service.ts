@@ -404,6 +404,45 @@ export async function searchStudentsForNotification(search: string) {
     }));
 }
 
+export async function searchUsersForNotification(
+  search: string,
+  targetType?: string,
+) {
+  if (search.trim().length < 2) return [];
+
+  // Determine role filter based on target type
+  let roleFilter: any = { role: "STUDENT" };
+  if (targetType === "SPECIFIC_TEACHERS") {
+    roleFilter = { role: "TEACHER" };
+  } else if (targetType === "SPECIFIC_ADMINS") {
+    roleFilter = { role: { in: ["ADMIN", "OWNER"] } };
+  }
+
+  const users = await prisma.user.findMany({
+    where: {
+      ...roleFilter,
+      is_active: true,
+      OR: [
+        { email: { contains: search, mode: "insensitive" } },
+        { student: { first_name: { contains: search, mode: "insensitive" } } },
+        { student: { last_name: { contains: search, mode: "insensitive" } } },
+        { teacher: { first_name: { contains: search, mode: "insensitive" } } },
+        { teacher: { last_name: { contains: search, mode: "insensitive" } } },
+      ],
+    },
+    include: { student: true, teacher: true },
+    take: 20,
+  });
+
+  return users.map((u) => ({
+    user_id: u.user_id,
+    first_name:
+      u.student?.first_name || u.teacher?.first_name || u.email.split("@")[0],
+    last_name: u.student?.last_name || u.teacher?.last_name || "",
+    email: u.email,
+  }));
+}
+
 // ─── GET MY NOTIFICATIONS (Student/Teacher) ──────────────
 
 export async function getMyNotifications(

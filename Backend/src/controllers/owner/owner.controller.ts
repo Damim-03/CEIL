@@ -1931,11 +1931,21 @@ export const ownerSearchStudentsController = async (
   res: Response,
 ) => {
   try {
-    return res.json(
-      await NotificationService.searchStudentsForNotification(
-        String(req.query.q || "").trim(),
-      ),
-    );
+    const q = String(req.query.q || "").trim();
+    const targetType = String(req.query.target_type || "").trim();
+
+    // Use new universal search if target_type is provided
+    if (
+      targetType === "SPECIFIC_TEACHERS" ||
+      targetType === "SPECIFIC_ADMINS"
+    ) {
+      return res.json(
+        await NotificationService.searchUsersForNotification(q, targetType),
+      );
+    }
+
+    // Default: search students (backward compatible)
+    return res.json(await NotificationService.searchStudentsForNotification(q));
   } catch {
     return res.status(500).json({ message: "Failed" });
   }

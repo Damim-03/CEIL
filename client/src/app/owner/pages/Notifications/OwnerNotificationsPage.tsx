@@ -335,7 +335,7 @@ const ComposeNotification: React.FC<{
   // ✅ FIX: Search with proper enabled check
   const searchEnabled = searchQuery.trim().length >= 2;
   const { data: searchResultsRaw, isFetching: isSearching } =
-    useOwnerSearchStudents(searchEnabled ? searchQuery.trim() : "");
+    useOwnerSearchStudents(searchEnabled ? searchQuery.trim() : "", targetType);
 
   // ✅ FIX: Normalize to always get an array
   const searchResults = useMemo(

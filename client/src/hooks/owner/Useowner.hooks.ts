@@ -1676,13 +1676,13 @@ export const useOwnerNotificationTargets = () =>
     staleTime: 2 * 60 * 1000,
   });
 
-export const useOwnerSearchStudents = (query: string) =>
-  useQuery({
-    queryKey: [...OWNER_KEYS.searchStudents, query],
-    queryFn: () => ownerNotificationsApi.searchStudents(query),
+export const useOwnerSearchStudents = (query: string, targetType?: string) => {
+  return useQuery({
+    queryKey: ["owner", "search-students", query, targetType],
+    queryFn: () => ownerNotificationsApi.searchStudents(query, targetType),
     enabled: query.length >= 2,
-    staleTime: 30_000,
   });
+};
 
 export const useOwnerSendNotification = () => {
   const qc = useQueryClient();
