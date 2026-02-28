@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSocket } from "../context/SocketContext";
 import { toast } from "sonner";
+import axiosInstance from "../lib/api/axios";
 
 /* ══════════════════════════════════════════════════════════════
    EVENT → QUERY KEY MAPPING
@@ -281,6 +282,31 @@ export function useSocketEvents(role: Role) {
       const message = data?.message || data?.message_ar || "";
       toast.info(title, { description: message, duration: 5000 });
     };
+
+    // ── Force logout when account is disabled ──
+    // ── Force logout when account is disabled ──
+    const disabledHandler = async () => {
+      console.log(`🚫 [${role}] Account disabled — forcing logout`);
+      toast.error("تم تعطيل حسابك من قبل الإدارة", { duration: 5000 });
+
+      // 1. مسح الكوكيز من السيرفر
+      try {
+        await axiosInstance.post("/auth/logout");
+      } catch {
+        // ignore — الحساب معطّل أصلاً
+      }
+
+      // 2. مسح كل الـ cache
+      qc.clear();
+
+      // 3. توجيه لصفحة unauthorized
+      setTimeout(() => {
+        window.location.replace("/unauthorized?reason=disabled");
+      }, 1500);
+    };
+
+    socket.on("user:disabled", disabledHandler);
+    handlers.push(["user:disabled", disabledHandler]);
 
     socket.on("notification:new", notifHandler);
     handlers.push(["notification:new", notifHandler]);

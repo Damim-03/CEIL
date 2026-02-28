@@ -76,7 +76,7 @@ export default function ProtectedRoute({
   if (!user || isError) {
     return (
       <Navigate
-        to="/unauthorized"
+        to="/login"
         replace
         state={{ from: location.pathname + location.search }}
       />

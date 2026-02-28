@@ -35,7 +35,7 @@ export function generateTokens(userId: string, role: string): TokenPair {
   const accessToken = jwt.sign(
     { user_id: userId, role },
     config.SESSION_SECRET,
-    { expiresIn: "15m" },
+    { expiresIn: "1h" },
   );
 
   const refreshToken = jwt.sign(
