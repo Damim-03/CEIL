@@ -1041,9 +1041,11 @@ export const ownerNotificationsApi = {
     return data;
   },
 
-  searchStudents: async (query: string, targetType: string | undefined) => {
+  searchStudents: async (query: string, targetType?: string) => {
+    const params = new URLSearchParams({ q: query });
+    if (targetType) params.append("target_type", targetType);
     const { data } = await axiosInstance.get(
-      `${BASE}/notifications/search-students?q=${encodeURIComponent(query)}`,
+      `${BASE}/notifications/search-students?${params.toString()}`,
     );
     return data;
   },
