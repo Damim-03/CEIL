@@ -2175,7 +2175,10 @@
       "settings": "إعدادات النظام",
       "systemHealth": "صحة النظام",
       "profile": "الملف الشخصي",
-      "systemSection": "النظام"
+      "systemSection": "النظام",
+      "fees": "تحليل الرسوم",
+      "notifications": "الإشعارات",
+      "activity": "مراقبة النشاط"
     },
     "dashboard": {
       "title": "نظرة عامة على النظام",
@@ -2198,10 +2201,7 @@
       "usersByRole": "المستخدمون حسب الدور",
       "enrollmentsByStatus": "التسجيلات حسب الحالة",
       "recentActivity": "النشاط الأخير",
-      "noActivity": "لا يوجد نشاط حديث",
-      "fees": "تحليل الرسوم",
-      "notifications": "الإشعارات",
-      "activity": "مراقبة النشاط"
+      "noActivity": "لا يوجد نشاط حديث"
     },
     "admins": {
       "title": "إدارة المديرين",

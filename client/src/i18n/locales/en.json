@@ -2176,7 +2176,10 @@
       "settings": "System Settings",
       "systemHealth": "System Health",
       "profile": "Profile",
-      "systemSection": "System"
+      "systemSection": "System",
+      "fees": "Fee Analytics",
+      "notifications": "Notifications",
+      "activity": "Activity Monitor"
     },
     "dashboard": {
       "title": "System Overview",
@@ -2199,10 +2202,7 @@
       "usersByRole": "Users by Role",
       "enrollmentsByStatus": "Enrollments by Status",
       "recentActivity": "Recent Activity",
-      "noActivity": "No recent activity",
-      "fees": "Fee Analytics",
-      "notifications": "Notifications",
-      "activity": "Activity Monitor"
+      "noActivity": "No recent activity"
     },
     "feeAnalytics": {
       "title": "Fee Analytics",

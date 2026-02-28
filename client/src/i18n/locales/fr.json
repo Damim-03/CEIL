@@ -2175,7 +2175,10 @@
       "settings": "Paramètres Système",
       "systemHealth": "Santé du Système",
       "profile": "Profil",
-      "systemSection": "Système"
+      "systemSection": "Système",
+      "fees": "Analyse des Frais",
+      "notifications": "Notifications",
+      "activity": "Surveillance d'Activité"
     },
     "dashboard": {
       "title": "Vue d'ensemble du Système",
@@ -2198,10 +2201,7 @@
       "usersByRole": "Utilisateurs par Rôle",
       "enrollmentsByStatus": "Inscriptions par Statut",
       "recentActivity": "Activité Récente",
-      "noActivity": "Aucune activité récente",
-      "fees": "Analyse des Frais",
-      "notifications": "Notifications",
-      "activity": "Surveillance d'Activité"
+      "noActivity": "Aucune activité récente"
     },
     "feeAnalytics": {
       "title": "Analyse des Frais",
