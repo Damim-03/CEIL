@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "Attendance" ADD COLUMN     "attended_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
