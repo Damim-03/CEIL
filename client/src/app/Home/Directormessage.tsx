@@ -2,7 +2,7 @@ import { Quote, GraduationCap } from "lucide-react";
 import { useLanguage } from "../../hooks/useLanguage";
 import { useState, useEffect, useRef } from "react";
 
-import directorPhoto from "../../assets/director.JPG";
+import directoPhoto from "../../assets/director.JPG";
 
 export function DirectorMessage() {
   const { t, dir, isRTL } = useLanguage();
@@ -106,7 +106,7 @@ export function DirectorMessage() {
               {/* Photo */}
               <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-brand-teal-dark/15 dark:shadow-black/40 group-hover:shadow-brand-teal-dark/25 dark:group-hover:shadow-black/50 transition-shadow duration-500">
                 <img
-                  src={directorPhoto}
+                  src={directoPhoto}
                   alt={t("director.name")}
                   className="w-full aspect-[4/5] object-cover object-top transition-transform duration-700 group-hover:scale-[1.03]"
                 />
