@@ -20,11 +20,37 @@ import {
   ClipboardList,
   FileCheck,
   ChevronDown,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "../../components/ui/button";
 import { useLanguage } from "../../hooks/useLanguage";
 import { LocaleLink } from "../../i18n/locales/components/LocaleLink";
+
+
+const SLIDESHOW_IMAGES = [
+  {
+    src: "../../assets/ceil-1.jpg",
+    alt: "CEIL Campus",
+  },
+  {
+    src: "../../assets/ceil-2.jpg",
+    alt: "Language Classes",
+  },
+  {
+    src: "../../assets/ceil-3.jpg",
+    alt: "Students Learning",
+  },
+  {
+    src: "../../assets/ceil-4.jpg",
+    alt: "Certificate Ceremony",
+  },
+  {
+    src: "../../assets/ceil-5.jpg",
+    alt: "Library Resources",
+  },
+];
 
 /* ═══════════════════════════════════════════════════════
    Shared scroll-trigger hook
@@ -368,7 +394,182 @@ function TestimonialsSection() {
 /* ═══════════════════════════════════════════════════════
    Section 3 — Presentation & Offers
    ═══════════════════════════════════════════════════════ */
-function PresentationSection() {
+function ImageSlideshow({ visible }: { visible: boolean }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const goToSlide = useCallback(
+    (index: number) => {
+      if (isTransitioning) return;
+      setIsTransitioning(true);
+      setCurrentIndex(index);
+      setTimeout(() => setIsTransitioning(false), 800);
+    },
+    [isTransitioning],
+  );
+
+  const nextSlide = useCallback(() => {
+    goToSlide((currentIndex + 1) % SLIDESHOW_IMAGES.length);
+  }, [currentIndex, goToSlide]);
+
+  const prevSlide = useCallback(() => {
+    goToSlide(
+      (currentIndex - 1 + SLIDESHOW_IMAGES.length) % SLIDESHOW_IMAGES.length,
+    );
+  }, [currentIndex, goToSlide]);
+
+  // Auto-advance every 5 seconds
+  useEffect(() => {
+    if (isPaused || !visible) return;
+    const timer = setInterval(nextSlide, 5000);
+    return () => clearInterval(timer);
+  }, [nextSlide, isPaused, visible]);
+
+  return (
+    <div
+      className="relative rounded-2xl overflow-hidden shadow-2xl group cursor-pointer"
+      style={{
+        boxShadow:
+          "0 25px 50px -12px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)",
+      }}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* Main Image Container */}
+      <div className="aspect-[4/3] relative bg-[#1a1a1a]">
+        {SLIDESHOW_IMAGES.map((image, index) => (
+          <div
+            key={index}
+            className="absolute inset-0 transition-all duration-[800ms] ease-out"
+            style={{
+              opacity: currentIndex === index ? 1 : 0,
+              transform:
+                currentIndex === index ? "scale(1)" : "scale(1.08)",
+              zIndex: currentIndex === index ? 2 : 1,
+            }}
+          >
+            <img
+              src={image.src}
+              alt={image.alt}
+              className="w-full h-full object-cover"
+              loading={index === 0 ? "eager" : "lazy"}
+            />
+
+            {/* Gradient Overlays */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
+          </div>
+        ))}
+
+        {/* Bottom Info Bar */}
+        <div className="absolute bottom-0 left-0 right-0 z-10 p-5">
+          <div className="flex items-end justify-between">
+            {/* Text */}
+            <div>
+              <p className="text-white/90 font-bold text-lg tracking-wide drop-shadow-lg">
+                CEIL – UHLO
+              </p>
+              <p className="text-white/60 text-sm mt-0.5 drop-shadow">
+                مركز التعليم المكثف للغات
+              </p>
+            </div>
+
+            {/* Slide Counter */}
+            <div className="flex items-center gap-1 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1.5">
+              <span className="text-white/90 text-xs font-bold">
+                {String(currentIndex + 1).padStart(2, "0")}
+              </span>
+              <span className="text-white/40 text-xs">/</span>
+              <span className="text-white/40 text-xs">
+                {String(SLIDESHOW_IMAGES.length).padStart(2, "0")}
+              </span>
+            </div>
+          </div>
+
+          {/* Progress Dots */}
+          <div className="flex gap-1.5 mt-3">
+            {SLIDESHOW_IMAGES.map((_, index) => (
+              <button
+                key={index}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToSlide(index);
+                }}
+                className="relative h-1 rounded-full overflow-hidden transition-all duration-500"
+                style={{
+                  width: currentIndex === index ? "2rem" : "0.75rem",
+                  backgroundColor:
+                    currentIndex === index
+                      ? "rgba(255,255,255,0.9)"
+                      : "rgba(255,255,255,0.3)",
+                }}
+              >
+                {/* Animated fill for active dot */}
+                {currentIndex === index && !isPaused && (
+                  <div
+                    className="absolute inset-0 bg-[#C4A035] rounded-full origin-left"
+                    style={{
+                      animation: "progressFill 5s linear forwards",
+                    }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Navigation Arrows (show on hover) */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            prevSlide();
+          }}
+          className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/25 hover:scale-110"
+        >
+          <ChevronLeft className="w-5 h-5 text-white" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            nextSlide();
+          }}
+          className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/25 hover:scale-110"
+        >
+          <ChevronRight className="w-5 h-5 text-white" />
+        </button>
+
+        {/* Corner Decorations */}
+        <div className="absolute top-3 left-3 w-10 h-10 border-t-2 border-l-2 border-[#C4A035]/40 rounded-tl-lg z-10" />
+        <div className="absolute bottom-16 right-3 w-10 h-10 border-b-2 border-r-2 border-[#C4A035]/40 rounded-br-lg z-10" />
+
+        {/* Pause Indicator */}
+        {isPaused && (
+          <div className="absolute top-3 right-3 z-10 bg-black/40 backdrop-blur-sm rounded-full px-2.5 py-1 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex gap-0.5">
+              <div className="w-0.5 h-3 bg-white/80 rounded-full" />
+              <div className="w-0.5 h-3 bg-white/80 rounded-full" />
+            </div>
+            <span className="text-white/70 text-[10px] font-medium uppercase tracking-wider">
+              Paused
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* CSS Animation */}
+      <style>{`
+        @keyframes progressFill {
+          from { transform: scaleX(0); }
+          to { transform: scaleX(1); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ─── Main PresentationSection ────────────────────────────────
+export default function PresentationSection() {
   const { t, dir, isRTL } = useLanguage();
   const { ref, visible } = useScrollVisible();
   const AUDIENCE_KEYS = [
@@ -479,31 +680,12 @@ function PresentationSection() {
             </div>
           </div>
 
-          {/* Image */}
+          {/* ✅ Image Slideshow (بدل الـ placeholder القديم) */}
           <div
             className={`order-1 lg:order-2 transition-all duration-1000 ${visible ? "opacity-100 translate-x-0" : `opacity-0 ${isRTL ? "-translate-x-8" : "translate-x-8"}`}`}
             style={{ transitionDelay: "400ms" }}
           >
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-brand-teal-dark/10 dark:shadow-black/30 group">
-              <div className="aspect-[4/3] bg-gradient-to-br from-brand-teal-dark/20 dark:from-[#4ADE80]/10 via-brand-teal-dark/[0.08] dark:via-[#4ADE80]/[0.04] to-brand-mustard/[0.08] dark:to-brand-mustard/[0.05] flex items-center justify-center">
-                <div className="text-center space-y-4">
-                  <div className="w-20 h-20 rounded-2xl bg-brand-teal-dark/[0.1] dark:bg-[#4ADE80]/[0.08] flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-500">
-                    <GraduationCap
-                      className="w-10 h-10 text-brand-teal-dark dark:text-[#4ADE80]"
-                      strokeWidth={1.5}
-                    />
-                  </div>
-                  <p className="text-brand-teal-dark dark:text-[#4ADE80] font-bold text-lg">
-                    CEIL – UHLO
-                  </p>
-                  <p className="text-brand-brown/60 dark:text-[#888888] text-sm">
-                    {t("header.shortNameAr")}
-                  </p>
-                </div>
-              </div>
-              <div className="absolute top-4 left-4 w-12 h-12 border-t-2 border-l-2 border-brand-mustard/30 rounded-tl-lg" />
-              <div className="absolute bottom-4 right-4 w-12 h-12 border-b-2 border-r-2 border-brand-mustard/30 rounded-br-lg" />
-            </div>
+            <ImageSlideshow visible={visible} />
           </div>
         </div>
       </div>
