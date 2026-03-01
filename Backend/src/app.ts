@@ -61,7 +61,7 @@ if (config.NODE_ENV === "production") {
 app.use(errorHandler);
 
 // 🔌 CHANGED: server.listen instead of app.listen
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT} in ${config.NODE_ENV}`);
   console.log("🔌 Socket.IO ready");
 });
