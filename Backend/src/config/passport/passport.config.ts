@@ -17,9 +17,9 @@ import { verifyPassword } from "../../utils/password.util";
 passport.use(
   new GoogleStrategy(
     {
-      clientID: String(process.env.GOOGLE_CLIENT_ID),
-      clientSecret: String(process.env.GOOGLE_CLIENT_SECRET),
-      callbackURL: process.env.GOOGLE_CALLBACK_URL,
+      clientID: config.GOOGLE_CLIENT_ID,
+      clientSecret: config.GOOGLE_CLIENT_SECRET,
+      callbackURL: config.GOOGLE_CALLBACK_URL,
       passReqToCallback: true,
     },
     async (_req: Request, _accessToken, _refreshToken, profile, done) => {
