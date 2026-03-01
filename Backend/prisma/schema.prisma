@@ -4,23 +4,23 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
 }
 
 model Student {
-  student_id      String              @id @default(uuid()) @db.VarChar(36)
+  student_id      String              @id @default(uuid()) @db.Uuid
   first_name      String              @db.VarChar(100)
   last_name       String              @db.VarChar(100)
   date_of_birth   DateTime?
   gender          Gender?
-  user_id         String              @unique @db.VarChar(36)
+  user_id         String              @unique @db.Uuid
   phone_number    String?             @db.VarChar(35)
   email           String?             @db.VarChar(100)
   secondary_email String?             @db.VarChar(100)
-  address         String?             @db.Text
+  address         String?
   nationality     String?             @db.VarChar(50)
-  language        String?             @db.VarChar(50)
-  avatar_url      String?             @db.Text
+  language        String?
+  avatar_url      String?
   education_level String?             @db.VarChar(100)
   study_location  String?             @db.VarChar(100)
   status          StudentStatus       @default(ACTIVE)
@@ -40,7 +40,7 @@ model Student {
 }
 
 model Teacher {
-  teacher_id   String   @id @default(uuid()) @db.VarChar(36)
+  teacher_id   String   @id @default(uuid()) @db.Uuid
   first_name   String   @db.VarChar(100)
   last_name    String   @db.VarChar(100)
   email        String?  @db.VarChar(100)
@@ -53,7 +53,7 @@ model Teacher {
 }
 
 model Course {
-  course_id     String         @id @default(uuid()) @db.VarChar(36)
+  course_id     String         @id @default(uuid()) @db.Uuid
   course_code   String?        @unique @db.VarChar(20)
   course_name   String         @db.VarChar(100)
   credits       Int?
@@ -68,11 +68,11 @@ model Course {
 }
 
 model CourseProfile {
-  profile_id        String          @id @default(uuid()) @db.VarChar(36)
-  course_id         String          @unique @db.VarChar(36)
+  profile_id        String          @id @default(uuid()) @db.Uuid
+  course_id         String          @unique @db.Uuid
   title_ar          String?         @db.VarChar(200)
-  description       String?         @db.Text
-  description_ar    String?         @db.Text
+  description       String?
+  description_ar    String?
   language          String?         @db.VarChar(50)
   level             String?         @db.VarChar(20)
   flag_emoji        String?         @db.VarChar(10)
@@ -83,8 +83,8 @@ model CourseProfile {
   end_date          DateTime?
   registration_open Boolean         @default(true)
   is_published      Boolean         @default(false)
-  image_url         String?         @db.Text
-  image_public_id   String?         @db.VarChar(255)
+  image_url         String?
+  image_public_id   String?
   created_at        DateTime        @default(now())
   updated_at        DateTime        @updatedAt
   pricing           CoursePricing[]
@@ -94,8 +94,8 @@ model CourseProfile {
 }
 
 model CoursePricing {
-  pricing_id  String        @id @default(uuid()) @db.VarChar(36)
-  profile_id  String        @db.VarChar(36)
+  pricing_id  String        @id @default(uuid()) @db.Uuid
+  profile_id  String        @db.Uuid
   status_fr   String        @db.VarChar(200)
   status_ar   String?       @db.VarChar(200)
   status_en   String?       @db.VarChar(200)
@@ -112,9 +112,9 @@ model CoursePricing {
 }
 
 model Department {
-  department_id String   @id @default(uuid()) @db.VarChar(36)
+  department_id String   @id @default(uuid()) @db.Uuid
   name          String   @unique @db.VarChar(100)
-  description   String?  @db.Text
+  description   String?
   created_at    DateTime @default(now())
   groups        Group[]
 
@@ -122,13 +122,13 @@ model Department {
 }
 
 model Group {
-  group_id      String         @id @default(uuid()) @db.VarChar(36)
-  name          String         @db.VarChar(255)
-  department_id String?        @db.VarChar(36)
-  course_id     String         @db.VarChar(36)
+  group_id      String         @id @default(uuid()) @db.Uuid
+  name          String
+  department_id String?        @db.Uuid
+  course_id     String         @db.Uuid
   max_students  Int            @default(25)
   status        GroupStatus    @default(OPEN)
-  teacher_id    String?        @db.VarChar(36)
+  teacher_id    String?        @db.Uuid
   level         Level
   enrollments   Enrollment[]
   course        Course         @relation(fields: [course_id], references: [course_id])
@@ -141,16 +141,16 @@ model Group {
 }
 
 model Enrollment {
-  enrollment_id       String                @id @default(uuid()) @db.VarChar(36)
-  student_id          String                @db.VarChar(36)
-  course_id           String                @db.VarChar(36)
-  group_id            String?               @db.VarChar(36)
+  enrollment_id       String                @id @default(uuid()) @db.Uuid
+  student_id          String                @db.Uuid
+  course_id           String                @db.Uuid
+  group_id            String?               @db.Uuid
   enrollment_date     DateTime              @default(now())
   level               Level?
   start_date          DateTime?
   end_date            DateTime?
   registration_status RegistrationStatus    @default(PENDING)
-  pricing_id          String?               @db.VarChar(36)
+  pricing_id          String?               @db.Uuid
   course              Course                @relation(fields: [course_id], references: [course_id])
   group               Group?                @relation(fields: [group_id], references: [group_id])
   pricing             CoursePricing?        @relation(fields: [pricing_id], references: [pricing_id])
@@ -163,11 +163,11 @@ model Enrollment {
 }
 
 model Session {
-  session_id   String       @id @default(uuid()) @db.VarChar(36)
-  group_id     String       @db.VarChar(36)
+  session_id   String       @id @default(uuid()) @db.Uuid
+  group_id     String       @db.Uuid
   session_date DateTime
-  topic        String?      @db.VarChar(255)
-  room_id      String?      @db.VarChar(36)
+  topic        String?
+  room_id      String?      @db.Uuid
   end_time     DateTime?
   attendance   Attendance[]
   group        Group        @relation(fields: [group_id], references: [group_id])
@@ -177,10 +177,10 @@ model Session {
 }
 
 model Room {
-  room_id    String    @id @default(uuid()) @db.VarChar(36)
-  name       String    @unique @db.VarChar(255)
+  room_id    String    @id @default(uuid()) @db.Uuid
+  name       String    @unique
   capacity   Int       @default(30)
-  location   String?   @db.VarChar(255)
+  location   String?
   is_active  Boolean   @default(true)
   created_at DateTime  @default(now())
   sessions   Session[]
@@ -189,9 +189,9 @@ model Room {
 }
 
 model Attendance {
-  attendance_id String           @id @default(uuid()) @db.VarChar(36)
-  session_id    String           @db.VarChar(36)
-  student_id    String           @db.VarChar(36)
+  attendance_id String           @id @default(uuid()) @db.Uuid
+  session_id    String           @db.Uuid
+  student_id    String           @db.Uuid
   status        AttendanceStatus
   attended_at   DateTime         @default(now())
   session       Session          @relation(fields: [session_id], references: [session_id])
@@ -202,9 +202,9 @@ model Attendance {
 }
 
 model Exam {
-  exam_id   String   @id @default(uuid()) @db.VarChar(36)
-  course_id String   @db.VarChar(36)
-  exam_name String?  @db.VarChar(255)
+  exam_id   String   @id @default(uuid()) @db.Uuid
+  course_id String   @db.Uuid
+  exam_name String?
   exam_date DateTime
   max_marks Int
   course    Course   @relation(fields: [course_id], references: [course_id])
@@ -214,11 +214,11 @@ model Exam {
 }
 
 model Result {
-  result_id      String  @id @default(uuid()) @db.VarChar(36)
-  exam_id        String  @db.VarChar(36)
-  student_id     String  @db.VarChar(36)
+  result_id      String  @id @default(uuid()) @db.Uuid
+  exam_id        String  @db.Uuid
+  student_id     String  @db.Uuid
   marks_obtained Int
-  grade          String? @db.VarChar(10)
+  grade          String?
   exam           Exam    @relation(fields: [exam_id], references: [exam_id], onDelete: Cascade)
   student        Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
 
@@ -227,19 +227,19 @@ model Result {
 }
 
 model Fee {
-  fee_id            String      @id @default(uuid()) @db.VarChar(36)
-  student_id        String      @db.VarChar(36)
-  enrollment_id     String?     @db.VarChar(36)
+  fee_id            String      @id @default(uuid()) @db.Uuid
+  student_id        String      @db.Uuid
+  enrollment_id     String?     @db.Uuid
   amount            Decimal     @db.Decimal(10, 2)
   due_date          DateTime
   status            FeeStatus   @default(UNPAID)
   payment_method    String?     @db.VarChar(30)
   reference_code    String?     @db.VarChar(100)
   paid_at           DateTime?
-  created_by        String?     @db.VarChar(36)
+  created_by        String?     @db.Uuid
   processed_at      DateTime?
-  processed_by      String?     @db.VarChar(36)
-  confirmed_by      String?     @db.VarChar(36)
+  processed_by      String?     @db.Uuid
+  confirmed_by      String?     @db.Uuid
   confirmed_by_user User?       @relation("FeeConfirmedBy", fields: [confirmed_by], references: [user_id])
   enrollment        Enrollment? @relation(fields: [enrollment_id], references: [enrollment_id])
   student           Student     @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
@@ -248,14 +248,14 @@ model Fee {
 }
 
 model Document {
-  document_id String         @id @default(uuid()) @db.VarChar(36)
-  student_id  String         @db.VarChar(36)
-  type        String         @db.VarChar(50)
-  file_path   String         @db.Text
-  public_id   String?        @db.VarChar(255)
+  document_id String         @id @default(uuid())
+  student_id  String         @db.Uuid
+  type        String
+  file_path   String
+  public_id   String?
   status      DocumentStatus @default(PENDING)
   reviewed_at DateTime?
-  reviewed_by String?        @db.VarChar(36)
+  reviewed_by String?        @db.Uuid
   uploaded_at DateTime       @default(now())
   student     Student        @relation("StudentDocuments", fields: [student_id], references: [student_id])
 
@@ -263,17 +263,17 @@ model Document {
 }
 
 model Permission {
-  permission_id String              @id @default(uuid()) @db.VarChar(36)
-  name          String              @unique @db.VarChar(255)
-  description   String?             @db.Text
+  permission_id String              @id @default(uuid()) @db.Uuid
+  name          String              @unique
+  description   String?
   students      StudentPermission[]
 
   @@map("Permission")
 }
 
 model StudentPermission {
-  student_id    String     @db.VarChar(36)
-  permission_id String     @db.VarChar(36)
+  student_id    String     @db.Uuid
+  permission_id String     @db.Uuid
   permission    Permission @relation(fields: [permission_id], references: [permission_id], onDelete: Cascade)
   student       Student    @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
 
@@ -282,28 +282,28 @@ model StudentPermission {
 }
 
 model RegistrationHistory {
-  history_id    String             @id @default(uuid()) @db.VarChar(36)
-  enrollment_id String             @db.VarChar(36)
+  history_id    String             @id @default(uuid()) @db.Uuid
+  enrollment_id String             @db.Uuid
   old_status    RegistrationStatus
   new_status    RegistrationStatus
   changed_at    DateTime           @default(now())
-  changed_by    String?            @db.VarChar(36)
+  changed_by    String?            @db.Uuid
   enrollment    Enrollment         @relation(fields: [enrollment_id], references: [enrollment_id], onDelete: Cascade)
 
   @@map("RegistrationHistory")
 }
 
 model User {
-  user_id        String                  @id @default(uuid()) @db.VarChar(36)
+  user_id        String                  @id @default(uuid()) @db.Uuid
   email          String                  @unique @db.VarChar(100)
-  password       String?                 @db.VarChar(255)
+  password       String?
   role           UserRole                @default(STUDENT)
   is_active      Boolean                 @default(true)
-  google_id      String?                 @unique @db.VarChar(255)
-  google_email   String?                 @db.VarChar(100)
-  google_avatar  String?                 @db.Text
-  student_id     String?                 @unique @db.VarChar(36)
-  teacher_id     String?                 @unique @db.VarChar(36)
+  google_id      String?                 @unique
+  google_email   String?
+  google_avatar  String?
+  student_id     String?                 @unique @db.Uuid
+  teacher_id     String?                 @unique @db.Uuid
   created_at     DateTime                @default(now())
   confirmed_fees Fee[]                   @relation("FeeConfirmedBy")
   notifications  NotificationRecipient[]
@@ -315,9 +315,9 @@ model User {
 }
 
 model RefreshToken {
-  token_id   String   @id @default(uuid()) @db.VarChar(36)
-  user_id    String   @db.VarChar(36)
-  token      String   @unique @db.VarChar(500)
+  token_id   String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  token      String   @unique
   expires_at DateTime
   created_at DateTime @default(now())
   user       User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
@@ -327,16 +327,16 @@ model RefreshToken {
 }
 
 model Announcement {
-  announcement_id String    @id @default(uuid()) @db.VarChar(36)
-  title           String    @db.VarChar(255)
-  title_ar        String?   @db.VarChar(255)
-  content         String    @db.Text
-  content_ar      String?   @db.Text
-  excerpt         String?   @db.VarChar(500)
-  excerpt_ar      String?   @db.VarChar(500)
-  category        String?   @db.VarChar(50)
-  image_url       String?   @db.Text
-  image_public_id String?   @db.VarChar(255)
+  announcement_id String    @id @default(uuid())
+  title           String
+  title_ar        String?
+  content         String
+  content_ar      String?
+  excerpt         String?
+  excerpt_ar      String?
+  category        String?
+  image_url       String?
+  image_public_id String?
   is_published    Boolean   @default(false)
   published_at    DateTime?
   created_at      DateTime  @default(now())
@@ -348,16 +348,16 @@ model Announcement {
 }
 
 model Notification {
-  notification_id String                  @id @default(uuid()) @db.VarChar(36)
+  notification_id String                  @id @default(uuid()) @db.Uuid
   title           String                  @db.VarChar(200)
   title_ar        String?                 @db.VarChar(200)
-  message         String                  @db.Text
-  message_ar      String?                 @db.Text
+  message         String
+  message_ar      String?
   target_type     NotificationTarget
-  course_id       String?                 @db.VarChar(36)
-  group_id        String?                 @db.VarChar(36)
+  course_id       String?                 @db.Uuid
+  group_id        String?                 @db.Uuid
   priority        NotificationPriority    @default(NORMAL)
-  created_by      String?                 @db.VarChar(36)
+  created_by      String?                 @db.Uuid
   created_at      DateTime                @default(now())
   course          Course?                 @relation(fields: [course_id], references: [course_id])
   group           Group?                  @relation(fields: [group_id], references: [group_id])
@@ -367,9 +367,9 @@ model Notification {
 }
 
 model NotificationRecipient {
-  recipient_id    String       @id @default(uuid()) @db.VarChar(36)
-  notification_id String       @db.VarChar(36)
-  user_id         String       @db.VarChar(36)
+  recipient_id    String       @id @default(uuid()) @db.Uuid
+  notification_id String       @db.Uuid
+  user_id         String       @db.Uuid
   is_read         Boolean      @default(false)
   read_at         DateTime?
   notification    Notification @relation(fields: [notification_id], references: [notification_id], onDelete: Cascade)
@@ -381,14 +381,14 @@ model NotificationRecipient {
 }
 
 model AuditLog {
-  log_id      String   @id @default(uuid()) @db.VarChar(36)
-  user_id     String?  @db.VarChar(36)
+  log_id      String   @id @default(uuid()) @db.Uuid
+  user_id     String?  @db.Uuid
   user_email  String?  @db.VarChar(100)
   user_role   String?  @db.VarChar(20)
   action      String   @db.VarChar(50)
   entity_type String   @db.VarChar(50)
   entity_id   String?  @db.VarChar(100)
-  details     String?  @db.Text
+  details     String?
   ip_address  String?  @db.VarChar(45)
   created_at  DateTime @default(now())
 
@@ -400,10 +400,10 @@ model AuditLog {
 }
 
 model SystemSettings {
-  setting_id String   @id @default(uuid()) @db.VarChar(36)
+  setting_id String   @id @default(uuid()) @db.Uuid
   key        String   @unique @db.VarChar(100)
-  value      String   @db.Text
-  updated_by String?  @db.VarChar(36)
+  value      String
+  updated_by String?  @db.Uuid
   updated_at DateTime @updatedAt
 
   @@map("SystemSettings")
