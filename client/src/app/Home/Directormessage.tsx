@@ -2,7 +2,7 @@ import { Quote, GraduationCap } from "lucide-react";
 import { useLanguage } from "../../hooks/useLanguage";
 import { useState, useEffect, useRef } from "react";
 
-import directorPhoto from "../../assets/logo.jpg";
+import directorPhoto from "../../assets/Derictore.jpg";
 
 export function DirectorMessage() {
   const { t, dir, isRTL } = useLanguage();
