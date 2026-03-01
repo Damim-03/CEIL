@@ -28,33 +28,18 @@ import { Button } from "../../components/ui/button";
 import { useLanguage } from "../../hooks/useLanguage";
 import { LocaleLink } from "../../i18n/locales/components/LocaleLink";
 
-import ceil_1 from "../../assets/ceil-1.jpg";
-import ceil_2 from "../../assets/ceil-2.jpg";
-import ceil_3 from "../../assets/ceil-3.jpg";
-import ceil_4 from "../../assets/ceil-4.jpg";
-import ceil_5 from "../../assets/ceil-5.jpg";
+import ceil1 from "../../assets/images/ceil-1.jpg";
+import ceil2 from "../../assets/images/ceil-2.jpg";
+import ceil3 from "../../assets/images/ceil-3.jpg";
+import ceil4 from "../../assets/images/ceil-4.jpg";
+import ceil5 from "../../assets/images/ceil-5.jpg";
 
 const SLIDESHOW_IMAGES = [
-  {
-    src: { ceil_1 },
-    alt: "CEIL Campus",
-  },
-  {
-    src: { ceil_2 },
-    alt: "Language Classes",
-  },
-  {
-    src: { ceil_3 },
-    alt: "Students Learning",
-  },
-  {
-    src: { ceil_4 },
-    alt: "Certificate Ceremony",
-  },
-  {
-    src: { ceil_5 },
-    alt: "Library Resources",
-  },
+  { src: ceil1, alt: "CEIL Campus" },
+  { src: ceil2, alt: "Language Classes" },
+  { src: ceil3, alt: "Students Learning" },
+  { src: ceil4, alt: "Certificate Ceremony" },
+  { src: ceil5, alt: "Library Resources" },
 ];
 
 /* ═══════════════════════════════════════════════════════
