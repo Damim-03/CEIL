@@ -106,8 +106,8 @@ const GroupDetailsPage = () => {
   const getNestedValue = (
     obj: Record<string, unknown>,
     path: string,
-    defaultValue: unknown = null,
-  ): unknown => {
+    defaultValue: any = null,
+  ): any => {
     try {
       const value = path.split(".").reduce((acc, part) => acc?.[part], obj);
       return value !== undefined && value !== null ? value : defaultValue;
@@ -342,7 +342,7 @@ const GroupDetailsPage = () => {
           <div className="mt-6">
             <div className="w-full bg-[#D8CDC0]/30 dark:bg-[#2A2A2A] rounded-full h-3 overflow-hidden">
               <div
-                className={`h-full transition-all duration-300 rounded-full ${capacityPercent >= 100 ? "bg-gradient-to-r from-red-500 to-red-600" : capacityPercent >= CAPACITY_THRESHOLD_PERCENT ? "bg-gradient-to-r from-[#C4A035] to-[#C4A035]/80" : "bg-gradient-to-r from-[#2B6F5E] to-[#8DB896]"}`}
+                className={`h-full transition-all duration-300 rounded-full ${capacityPercent >= 100 ? "bg-gradient-to-r from-red-500 to-red-600" : capacityPercent >= 80 ? "bg-gradient-to-r from-[#C4A035] to-[#C4A035]/80" : "bg-gradient-to-r from-[#2B6F5E] to-[#8DB896]"}`}
                 style={{ width: `${Math.min(capacityPercent, 100)}%` }}
               />
             </div>
