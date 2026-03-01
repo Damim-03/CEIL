@@ -60,12 +60,8 @@ if (config.NODE_ENV === "production") {
 // ═══ 5. Error Handler ═══
 app.use(errorHandler);
 
-if (!PORT) {
-  throw new Error("PORT is not defined");
-}
-
 // 🔌 CHANGED: server.listen instead of app.listen
-server.listen(PORT, "0.0.0.0", () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT} in ${config.NODE_ENV}`);
   console.log("🔌 Socket.IO ready");
 });
