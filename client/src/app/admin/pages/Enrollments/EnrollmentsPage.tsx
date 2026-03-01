@@ -1,5 +1,6 @@
 /* ===============================================================
    ADMIN ENROLLMENTS MANAGEMENT PAGE - Dark Mode Applied
+   ✅ FIXED: Category-based document requirements
 =============================================================== */
 
 import { useState } from "react";
@@ -57,6 +58,89 @@ import {
 import type { Enrollment } from "../../../../types/Types";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+
+/* ===============================================================
+   ✅ CATEGORY-BASED DOCUMENT REQUIREMENTS
+   (mirrors backend document.constants.ts)
+=============================================================== */
+
+type RegistrantCategory = "STUDENT" | "EXTERNAL" | "EMPLOYEE";
+
+interface DocRequirement {
+  label: string;
+  label_ar: string;
+  alternatives: string[];
+}
+
+const REQUIRED_DOCUMENTS_BY_CATEGORY: Record<
+  RegistrantCategory,
+  DocRequirement[]
+> = {
+  STUDENT: [
+    {
+      label: "Student Card",
+      label_ar: "بطاقة طالب",
+      alternatives: ["STUDENT_CARD"],
+    },
+    {
+      label: "School or Registration Certificate",
+      label_ar: "شهادة مدرسية أو شهادة تسجيل",
+      alternatives: ["SCHOOL_CERTIFICATE", "REGISTRATION_CERTIFICATE"],
+    },
+  ],
+  EXTERNAL: [
+    {
+      label: "National ID Card",
+      label_ar: "بطاقة التعريف الوطنية",
+      alternatives: ["ID_CARD"],
+    },
+  ],
+  EMPLOYEE: [
+    {
+      label: "National ID Card",
+      label_ar: "بطاقة التعريف الوطنية",
+      alternatives: ["ID_CARD"],
+    },
+    {
+      label: "Work or Administrative Certificate",
+      label_ar: "شهادة عمل أو شهادة إدارية",
+      alternatives: ["WORK_CERTIFICATE", "ADMIN_CERTIFICATE"],
+    },
+  ],
+};
+
+/** Check document status for a student based on their category */
+function checkDocumentStatus(student: any) {
+  const category: RegistrantCategory =
+    student?.registrant_category || "EXTERNAL";
+  const requirements = REQUIRED_DOCUMENTS_BY_CATEGORY[category] || [];
+  const docs = student?.documents || [];
+
+  const approvedTypes: string[] = docs
+    .filter((d: any) => d.status === "APPROVED")
+    .map((d: any) => d.type);
+
+  const uploadedTypes: string[] = docs.map((d: any) => d.type);
+
+  const missing: string[] = [];
+  const pending: string[] = [];
+
+  for (const req of requirements) {
+    const hasApproved = req.alternatives.some((t) => approvedTypes.includes(t));
+    if (hasApproved) continue;
+
+    const hasUploaded = req.alternatives.some((t) => uploadedTypes.includes(t));
+    if (hasUploaded) {
+      pending.push(req.label_ar);
+    } else {
+      missing.push(req.label_ar);
+    }
+  }
+
+  const allApproved = missing.length === 0 && pending.length === 0;
+
+  return { category, allApproved, missing, pending };
+}
 
 /* ===============================================================
    MAIN PAGE COMPONENT
@@ -662,7 +746,7 @@ export default function AdminEnrollmentsPage() {
 }
 
 /* ===============================================================
-   ENROLLMENT CARD
+   ENROLLMENT CARD — ✅ Uses category-based document check
 =============================================================== */
 
 interface EnrollmentCardProps {
@@ -744,24 +828,8 @@ function EnrollmentCard({
       })
     : "N/A";
 
-  const REQUIRED_DOCUMENTS = [
-    "PHOTO",
-    "ID_CARD",
-    "SCHOOL_CERTIFICATE",
-    "PAYMENT_RECEIPT",
-  ];
-  const studentDocs = enrollment.student?.documents || [];
-  const requiredDocsStatus = REQUIRED_DOCUMENTS.map((type) => {
-    const doc = studentDocs.find((d: any) => d.type === type);
-    return { type, exists: !!doc, approved: doc?.status === "APPROVED" };
-  });
-  const allRequiredDocsApproved = requiredDocsStatus.every((d) => d.approved);
-  const missingDocs = requiredDocsStatus
-    .filter((d) => !d.exists)
-    .map((d) => d.type);
-  const pendingDocs = requiredDocsStatus
-    .filter((d) => d.exists && !d.approved)
-    .map((d) => d.type);
+  // ✅ Category-based document check (replaces old hardcoded list)
+  const docStatus = checkDocumentStatus(enrollment.student);
 
   return (
     <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] shadow-sm hover:shadow-md dark:hover:shadow-black/20 transition-shadow overflow-hidden">
@@ -899,25 +967,30 @@ function EnrollmentCard({
           </div>
         )}
 
+        {/* ✅ Category-based document status */}
         {enrollment.registration_status === "PENDING" &&
-          !allRequiredDocsApproved && (
+          !docStatus.allApproved && (
             <div className="p-3 bg-[#C4A035]/5 dark:bg-[#C4A035]/8 rounded-xl border border-[#C4A035]/15 dark:border-[#C4A035]/15">
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843] mt-0.5 shrink-0" />
                 <div className="flex-1">
                   <p className="text-xs font-semibold text-[#C4A035] dark:text-[#D4A843] mb-1">
                     {t("admin.enrollments.card.docIssues")}
+                    <span className="font-normal text-[#C4A035]/60 dark:text-[#D4A843]/50 mr-2">
+                      {" "}
+                      ({docStatus.category})
+                    </span>
                   </p>
-                  {missingDocs.length > 0 && (
+                  {docStatus.missing.length > 0 && (
                     <p className="text-xs text-[#C4A035]/80 dark:text-[#D4A843]/70">
                       {t("admin.enrollments.card.missing")}:{" "}
-                      {missingDocs.join(", ")}
+                      {docStatus.missing.join("، ")}
                     </p>
                   )}
-                  {pendingDocs.length > 0 && (
+                  {docStatus.pending.length > 0 && (
                     <p className="text-xs text-[#C4A035]/80 dark:text-[#D4A843]/70">
                       {t("admin.enrollments.card.pendingApproval")}:{" "}
-                      {pendingDocs.join(", ")}
+                      {docStatus.pending.join("، ")}
                     </p>
                   )}
                 </div>
@@ -926,7 +999,7 @@ function EnrollmentCard({
           )}
 
         {enrollment.registration_status === "PENDING" &&
-          allRequiredDocsApproved && (
+          docStatus.allApproved && (
             <div className="p-3 bg-[#8DB896]/10 dark:bg-[#4ADE80]/8 rounded-xl border border-[#8DB896]/20 dark:border-[#4ADE80]/15">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
@@ -952,7 +1025,7 @@ function EnrollmentCard({
               onClick={onValidate}
               className="w-full bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white"
               size="sm"
-              disabled={!allRequiredDocsApproved}
+              disabled={!docStatus.allApproved}
             >
               <CheckCircle className="w-4 h-4 mr-2" />{" "}
               {t("admin.enrollments.actions.validateCreateFee")}
