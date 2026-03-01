@@ -82,8 +82,6 @@ const LEVEL_RING_COLORS = {
   C1: "ring-red-500/20",
 };
 
-const CAPACITY_THRESHOLD_PERCENT = 80;
-
 const GroupFormModal = ({
   open,
   onClose,
@@ -224,9 +222,7 @@ const GroupFormModal = ({
   const maxCapacity = form.max_students || 20;
   const capacityPercent =
     maxCapacity > 0 ? (currentCapacity / maxCapacity) * 100 : 0;
-  const isInstructorAssignmentEnabled =
-    mode === "edit" && capacityPercent >= CAPACITY_THRESHOLD_PERCENT;
-  const canAssignInstructor = isInstructorAssignmentEnabled || form.teacher_id;
+  const canAssignInstructor = true;
 
   const validate = (): boolean => {
     const next: Record<string, string> = {};
@@ -622,7 +618,7 @@ const GroupFormModal = ({
                       className={`h-11 rounded-xl border-2 ${
                         capacityPercent >= 100
                           ? "border-red-200 bg-red-50"
-                          : capacityPercent >= CAPACITY_THRESHOLD_PERCENT
+                          : capacityPercent >= 80
                             ? "border-orange-200 bg-orange-50"
                             : "border-blue-200 bg-blue-50"
                       } px-4 flex items-center justify-between`}
@@ -632,7 +628,7 @@ const GroupFormModal = ({
                           className={`w-4 h-4 ${
                             capacityPercent >= 100
                               ? "text-red-600"
-                              : capacityPercent >= CAPACITY_THRESHOLD_PERCENT
+                              : capacityPercent >= 80
                                 ? "text-orange-600"
                                 : "text-blue-600"
                           }`}
@@ -645,7 +641,7 @@ const GroupFormModal = ({
                         className={`text-xs font-bold ${
                           capacityPercent >= 100
                             ? "text-red-600"
-                            : capacityPercent >= CAPACITY_THRESHOLD_PERCENT
+                            : capacityPercent >= 80
                               ? "text-orange-600"
                               : "text-blue-600"
                         }`}
@@ -659,7 +655,7 @@ const GroupFormModal = ({
                           className={`h-full transition-all duration-500 rounded-full ${
                             capacityPercent >= 100
                               ? "bg-gradient-to-r from-red-500 to-rose-600"
-                              : capacityPercent >= CAPACITY_THRESHOLD_PERCENT
+                              : capacityPercent >= 80
                                 ? "bg-gradient-to-r from-orange-500 to-amber-600"
                                 : "bg-gradient-to-r from-blue-500 to-indigo-600"
                           }`}
@@ -1068,7 +1064,7 @@ const GroupFormModal = ({
                       ) : !canAssignInstructor ? (
                         <>
                           <Lock className="w-4 h-4" />
-                          Reach {CAPACITY_THRESHOLD_PERCENT}% capacity first
+                          Reach {80}% capacity first
                         </>
                       ) : (
                         <>
@@ -1085,42 +1081,6 @@ const GroupFormModal = ({
                       />
                     )}
                   </button>
-
-                  {/* Enhanced Info Messages */}
-                  {mode === "create" && (
-                    <div className="mt-2 flex items-start gap-2 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
-                      <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-                      <p className="text-xs text-blue-700 leading-relaxed">
-                        <span className="font-semibold">Note:</span> Instructor
-                        assignment unlocks when the group reaches{" "}
-                        <span className="font-bold">
-                          {CAPACITY_THRESHOLD_PERCENT}%
-                        </span>{" "}
-                        capacity (
-                        {Math.ceil(
-                          (maxCapacity * CAPACITY_THRESHOLD_PERCENT) / 100,
-                        )}{" "}
-                        students)
-                      </p>
-                    </div>
-                  )}
-
-                  {mode === "edit" && !canAssignInstructor && (
-                    <div className="mt-2 flex items-start gap-2 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
-                      <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                      <p className="text-xs text-amber-700 leading-relaxed">
-                        <span className="font-semibold">Almost there!</span>{" "}
-                        Need{" "}
-                        <span className="font-bold">
-                          {Math.ceil(
-                            (maxCapacity * CAPACITY_THRESHOLD_PERCENT) / 100 -
-                              currentCapacity,
-                          )}
-                        </span>{" "}
-                        more student(s) to assign an instructor
-                      </p>
-                    </div>
-                  )}
 
                   {instructorDropdownOpen && canAssignInstructor && (
                     <div className="absolute z-10 mt-2 w-full bg-white border-2 border-gray-200 rounded-xl shadow-2xl overflow-hidden">

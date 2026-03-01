@@ -42,7 +42,6 @@ const LEVEL_COLORS = {
   B2: "from-[#BEB29E] to-[#6B5D4F]",
   C1: "from-[#1B1B1B] to-[#1B1B1B]/80",
 };
-const CAPACITY_THRESHOLD_PERCENT = 80;
 
 const Toast = ({
   message,
@@ -186,7 +185,7 @@ const GroupDetailsPage = () => {
   const maxCapacity = group.max_students ?? 25;
   const capacityPercent =
     maxCapacity > 0 ? (currentCapacity / maxCapacity) * 100 : 0;
-  const canAssignInstructor = capacityPercent >= CAPACITY_THRESHOLD_PERCENT;
+  const canAssignInstructor = true;
   const hasInstructor = !!group.teacher_id;
 
   const students = Array.isArray(group.students) ? group.students : [];
@@ -359,18 +358,10 @@ const GroupDetailsPage = () => {
                 {t("admin.groupDetails.assignedTeacher")}
               </h2>
               <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
-                {canAssignInstructor
-                  ? t("admin.groupDetails.teacherAvailable")
-                  : t("admin.groupDetails.teacherRequires", {
-                      percent: CAPACITY_THRESHOLD_PERCENT,
-                    })}
+                {t("admin.groupDetails.teacherAvailable")}
               </p>
             </div>
-            {canAssignInstructor ? (
-              <Unlock className="w-6 h-6 text-[#2B6F5E] dark:text-[#4ADE80]" />
-            ) : (
-              <Lock className="w-6 h-6 text-[#C4A035] dark:text-[#D4A843]" />
-            )}
+            <Unlock className="w-6 h-6 text-[#2B6F5E] dark:text-[#4ADE80]" />
           </div>
           <div className="mt-4">
             {hasInstructor && group.teacher ? (
