@@ -65,3 +65,7 @@ server.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT} in ${config.NODE_ENV}`);
   console.log(`🔌 Socket.IO ready`);
 });
+
+console.log("ENV CHECK");
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
+console.log("NODE_ENV:", process.env.NODE_ENV);
