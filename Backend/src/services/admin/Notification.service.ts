@@ -378,15 +378,15 @@ export async function searchStudentsForNotification(search: string) {
       OR: [
         {
           student: {
-            first_name: { contains: search, mode: "insensitive" },
+            first_name: { contains: search },
           },
         },
         {
           student: {
-            last_name: { contains: search, mode: "insensitive" },
+            last_name: { contains: search },
           },
         },
-        { email: { contains: search, mode: "insensitive" } },
+        { email: { contains: search } },
       ],
     },
     include: { student: true },
