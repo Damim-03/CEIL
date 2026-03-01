@@ -23,7 +23,6 @@ import {
   GraduationCap,
   CheckCircle2,
   XCircle,
-  Lock,
   Unlock,
   Plus,
   Search,
@@ -103,13 +102,16 @@ const GroupDetailsPage = () => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
+
   const getNestedValue = (
-    obj: Record<string, unknown>,
+    obj: Record<string, any>,
     path: string,
     defaultValue: any = null,
   ): any => {
     try {
-      const value = path.split(".").reduce((acc, part) => acc?.[part], obj);
+      const value = path
+        .split(".")
+        .reduce((acc: any, part: string) => acc?.[part], obj);
       return value !== undefined && value !== null ? value : defaultValue;
     } catch {
       return defaultValue;
@@ -185,18 +187,17 @@ const GroupDetailsPage = () => {
   const maxCapacity = group.max_students ?? 25;
   const capacityPercent =
     maxCapacity > 0 ? (currentCapacity / maxCapacity) * 100 : 0;
-  const canAssignInstructor = true;
   const hasInstructor = !!group.teacher_id;
 
   const students = Array.isArray(group.students) ? group.students : [];
-  const filteredStudents = students.filter((student) => {
+  const filteredStudents = students.filter((student: any) => {
     if (!student) return false;
     const sl = searchTerm.toLowerCase();
     return (
-      getNestedValue(student, "first_name", "").toLowerCase().includes(sl) ||
-      getNestedValue(student, "last_name", "").toLowerCase().includes(sl) ||
-      getNestedValue(student, "email", "").toLowerCase().includes(sl) ||
-      getNestedValue(student, "student_id", "").toLowerCase().includes(sl)
+      (student.first_name || "").toLowerCase().includes(sl) ||
+      (student.last_name || "").toLowerCase().includes(sl) ||
+      (student.email || "").toLowerCase().includes(sl) ||
+      (student.student_id || "").toLowerCase().includes(sl)
     );
   });
 
@@ -215,6 +216,7 @@ const GroupDetailsPage = () => {
       showToast(t("admin.groupDetails.deleteFailed"), "error");
     }
   };
+
   const handleUpdate = async (payload: UpdateGroupPayload) => {
     try {
       await updateGroup.mutateAsync({ groupId: group.group_id, payload });
@@ -224,6 +226,7 @@ const GroupDetailsPage = () => {
       showToast(t("admin.groupDetails.updateFailed"), "error");
     }
   };
+
   const handleAssignInstructor = async (instructorId: string) => {
     try {
       await assignInstructor.mutateAsync({
@@ -236,6 +239,7 @@ const GroupDetailsPage = () => {
       showToast(t("admin.groupDetails.assignFailed"), "error");
     }
   };
+
   const handleRemoveInstructor = async () => {
     if (!window.confirm(t("admin.groupDetails.removeTeacherConfirm"))) return;
     try {
@@ -342,14 +346,20 @@ const GroupDetailsPage = () => {
           <div className="mt-6">
             <div className="w-full bg-[#D8CDC0]/30 dark:bg-[#2A2A2A] rounded-full h-3 overflow-hidden">
               <div
-                className={`h-full transition-all duration-300 rounded-full ${capacityPercent >= 100 ? "bg-gradient-to-r from-red-500 to-red-600" : capacityPercent >= 80 ? "bg-gradient-to-r from-[#C4A035] to-[#C4A035]/80" : "bg-gradient-to-r from-[#2B6F5E] to-[#8DB896]"}`}
+                className={`h-full transition-all duration-300 rounded-full ${
+                  capacityPercent >= 100
+                    ? "bg-gradient-to-r from-red-500 to-red-600"
+                    : capacityPercent >= 80
+                      ? "bg-gradient-to-r from-[#C4A035] to-[#C4A035]/80"
+                      : "bg-gradient-to-r from-[#2B6F5E] to-[#8DB896]"
+                }`}
                 style={{ width: `${Math.min(capacityPercent, 100)}%` }}
               />
             </div>
           </div>
         </div>
 
-        {/* Teacher */}
+        {/* Teacher — Always unlocked */}
         <div className="border-b border-[#D8CDC0]/40 dark:border-[#2A2A2A] px-6 py-5 bg-gradient-to-r from-[#2B6F5E]/3 dark:from-[#2B6F5E]/5 to-[#8DB896]/5 dark:to-[#8DB896]/5">
           <div className="flex items-center justify-between">
             <div>
@@ -413,54 +423,23 @@ const GroupDetailsPage = () => {
                 </div>
               </div>
             ) : (
-              <div
-                className={`border-2 border-dashed rounded-xl p-6 text-center ${canAssignInstructor ? "border-[#8DB896]/40 dark:border-[#4ADE80]/20 bg-[#8DB896]/5 dark:bg-[#4ADE80]/5" : "border-[#C4A035]/30 dark:border-[#C4A035]/20 bg-[#C4A035]/5 dark:bg-[#C4A035]/5"}`}
-              >
-                <div
-                  className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-3 ${canAssignInstructor ? "bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10" : "bg-[#C4A035]/10 dark:bg-[#C4A035]/10"}`}
-                >
-                  {canAssignInstructor ? (
-                    <UserCheck className="w-8 h-8 text-[#2B6F5E] dark:text-[#4ADE80]" />
-                  ) : (
-                    <Lock className="w-8 h-8 text-[#C4A035] dark:text-[#D4A843]" />
-                  )}
+              <div className="border-2 border-dashed rounded-xl p-6 text-center border-[#8DB896]/40 dark:border-[#4ADE80]/20 bg-[#8DB896]/5 dark:bg-[#4ADE80]/5">
+                <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-3 bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10">
+                  <UserCheck className="w-8 h-8 text-[#2B6F5E] dark:text-[#4ADE80]" />
                 </div>
-                <p
-                  className={`font-medium mb-2 ${canAssignInstructor ? "text-[#1B1B1B] dark:text-[#E5E5E5]" : "text-[#C4A035] dark:text-[#D4A843]"}`}
-                >
-                  {canAssignInstructor
-                    ? t("admin.groupDetails.noTeacherYet")
-                    : t("admin.groupDetails.teacherLocked")}
+                <p className="font-medium mb-2 text-[#1B1B1B] dark:text-[#E5E5E5]">
+                  {t("admin.groupDetails.noTeacherYet")}
                 </p>
-                <p
-                  className={`text-sm mb-4 ${canAssignInstructor ? "text-[#6B5D4F] dark:text-[#AAAAAA]" : "text-[#C4A035]/80 dark:text-[#D4A843]/70"}`}
-                >
-                  {canAssignInstructor
-                    ? t("admin.groupDetails.groupReachedCapacity")
-                    : t("admin.groupDetails.needMoreStudents", {
-                        count: Math.ceil(
-                          (maxCapacity * CAPACITY_THRESHOLD_PERCENT) / 100 -
-                            currentCapacity,
-                        ),
-                      })}
+                <p className="text-sm mb-4 text-[#6B5D4F] dark:text-[#AAAAAA]">
+                  {t("admin.groupDetails.groupReachedCapacity")}
                 </p>
                 <Button
                   size="sm"
                   onClick={() => setAssignInstructorOpen(true)}
-                  disabled={!canAssignInstructor}
-                  className={`gap-2 ${canAssignInstructor ? "bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white" : ""}`}
+                  className="gap-2 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white"
                 >
-                  {canAssignInstructor ? (
-                    <>
-                      <Plus className="w-4 h-4" />{" "}
-                      {t("admin.groupDetails.assignTeacher")}
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="w-4 h-4" />{" "}
-                      {t("admin.groupDetails.locked")}
-                    </>
-                  )}
+                  <Plus className="w-4 h-4" />{" "}
+                  {t("admin.groupDetails.assignTeacher")}
                 </Button>
               </div>
             )}
@@ -522,7 +501,7 @@ const GroupDetailsPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#D8CDC0]/30 dark:divide-[#2A2A2A] bg-white dark:bg-[#1A1A1A]">
-                  {filteredStudents.map((student, index) => (
+                  {filteredStudents.map((student: any, index: number) => (
                     <tr
                       key={student.student_id || index}
                       className="hover:bg-[#D8CDC0]/8 dark:hover:bg-[#222222] transition-colors"
@@ -539,8 +518,7 @@ const GroupDetailsPage = () => {
                             <User className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843]" />
                           </div>
                           <span className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
-                            {getNestedValue(student, "first_name", "")}{" "}
-                            {getNestedValue(student, "last_name", "")}
+                            {student.first_name || ""} {student.last_name || ""}
                           </span>
                         </div>
                       </td>
@@ -657,16 +635,16 @@ const GroupDetailsPage = () => {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#1B1B1B] dark:text-[#E5E5E5] hover:bg-[#C4A035]/8 dark:hover:bg-[#C4A035]/10 hover:border-[#C4A035]/40 dark:hover:border-[#C4A035]/30 hover:text-[#C4A035] dark:hover:text-[#D4A843]"
                 onClick={() => setEditOpen(true)}
+                className="gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#1B1B1B] dark:text-[#E5E5E5] hover:bg-[#C4A035]/8 dark:hover:bg-[#C4A035]/10 hover:border-[#C4A035]/40 dark:hover:border-[#C4A035]/30 hover:text-[#C4A035] dark:hover:text-[#D4A843]"
               >
                 <Edit className="w-4 h-4" />
                 {t("admin.groupDetails.editGroup")}
               </Button>
               <Button
                 variant="outline"
-                className="gap-2 border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 dark:hover:border-red-700/50"
                 onClick={handleDelete}
+                className="gap-2 border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 dark:hover:border-red-700/50"
               >
                 <Trash2 className="w-4 h-4" />
                 {t("admin.groupDetails.deleteGroup")}
