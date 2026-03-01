@@ -28,26 +28,31 @@ import { Button } from "../../components/ui/button";
 import { useLanguage } from "../../hooks/useLanguage";
 import { LocaleLink } from "../../i18n/locales/components/LocaleLink";
 
+import ceil_1 from "../../assets/ceil-1.jpg";
+import ceil_2 from "../../assets/ceil-2.jpg";
+import ceil_3 from "../../assets/ceil-3.jpg";
+import ceil_4 from "../../assets/ceil-4.jpg";
+import ceil_5 from "../../assets/ceil-5.jpg";
 
 const SLIDESHOW_IMAGES = [
   {
-    src: "../../assets/ceil-1.jpg",
+    src: { ceil_1 },
     alt: "CEIL Campus",
   },
   {
-    src: "../../assets/ceil-2.jpg",
+    src: { ceil_2 },
     alt: "Language Classes",
   },
   {
-    src: "../../assets/ceil-3.jpg",
+    src: { ceil_3 },
     alt: "Students Learning",
   },
   {
-    src: "../../assets/ceil-4.jpg",
+    src: { ceil_4 },
     alt: "Certificate Ceremony",
   },
   {
-    src: "../../assets/ceil-5.jpg",
+    src: { ceil_5 },
     alt: "Library Resources",
   },
 ];
@@ -444,8 +449,7 @@ function ImageSlideshow({ visible }: { visible: boolean }) {
             className="absolute inset-0 transition-all duration-[800ms] ease-out"
             style={{
               opacity: currentIndex === index ? 1 : 0,
-              transform:
-                currentIndex === index ? "scale(1)" : "scale(1.08)",
+              transform: currentIndex === index ? "scale(1)" : "scale(1.08)",
               zIndex: currentIndex === index ? 2 : 1,
             }}
           >
