@@ -15,7 +15,7 @@ import { initSocketIO } from "./config/socket"; // 🔌 NEW
 
 const app = express();
 const server = http.createServer(app); // 🔌 NEW
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT);
 const BASE_PATH = config.BASE_PATH;
 
 // 🔌 Initialize Socket.IO
@@ -60,8 +60,12 @@ if (config.NODE_ENV === "production") {
 // ═══ 5. Error Handler ═══
 app.use(errorHandler);
 
+if (!PORT) {
+  throw new Error("PORT is not defined");
+}
+
 // 🔌 CHANGED: server.listen instead of app.listen
-server.listen(PORT, async () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT} in ${config.NODE_ENV}`);
-  console.log(`🔌 Socket.IO ready`);
+  console.log("🔌 Socket.IO ready");
 });
