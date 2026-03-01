@@ -28,11 +28,11 @@ import { Button } from "../../components/ui/button";
 import { useLanguage } from "../../hooks/useLanguage";
 import { LocaleLink } from "../../i18n/locales/components/LocaleLink";
 
-import ceil1 from "../../assets/images/ceil-1.jpg";
-import ceil2 from "../../assets/images/ceil-2.jpg";
-import ceil3 from "../../assets/images/ceil-3.jpg";
-import ceil4 from "../../assets/images/ceil-4.jpg";
-import ceil5 from "../../assets/images/ceil-5.jpg";
+import ceil1 from "../../assets/ceil-1.jpg";
+import ceil2 from "../../assets/ceil-2.jpg";
+import ceil3 from "../../assets/ceil-3.jpg";
+import ceil4 from "../../assets/ceil-4.jpg";
+import ceil5 from "../../assets/ceil-5.jpg";
 
 const SLIDESHOW_IMAGES = [
   { src: ceil1, alt: "CEIL Campus" },
