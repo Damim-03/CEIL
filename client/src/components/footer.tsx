@@ -193,10 +193,10 @@ export function Footer() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center shrink-0">
-                    <Phone className="w-3.5 h-3.5 text-brand-mustard/60" />
+                    <Facebook className="w-3.5 h-3.5 text-brand-mustard/60" />
                   </div>
                   <p className="text-white/50 text-[13px]" dir="ltr">
-                    +213 29 71 19 61
+                    مركز التعليم المكثف للغات بجامعة الشهيد حمه لخضر بالوادي
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -212,13 +212,6 @@ export function Footer() {
                   </a>
                 </div>
               </div>
-              <LocaleLink
-                to="/contact"
-                className="mt-5 flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-brand-mustard/10 border border-brand-mustard/15 text-brand-mustard text-[12px] font-semibold hover:bg-brand-mustard/[0.15] hover:border-brand-mustard/25 transition-all duration-200"
-              >
-                <Mail className="w-3 h-3" />
-                {t("footer.contactUs")}
-              </LocaleLink>
             </div>
           </div>
 

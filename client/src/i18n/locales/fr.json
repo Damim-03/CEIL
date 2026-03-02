@@ -129,6 +129,8 @@
     "testimonials": "Témoignages",
     "presentationTitle": "Présentation et Offres",
     "youAre": "Vous êtes :",
+    "intensiveCourse": "Formation intensive",
+    "intensiveCourseDesc": "Des formations intensives pour un progrès rapide et efficace en peu de temps",
     "audience": {
       "student": "Étudiant universitaire",
       "employee": "Employé administratif",
@@ -146,7 +148,7 @@
     "adaptedProgram": "Programme adapté",
     "adaptedProgramDesc": "Programmes riches adaptés aux besoins",
     "hourlyVolume": "Volume horaire",
-    "hourlyVolumeDesc": "60 heures par session",
+    "hourlyVolumeDesc": "32 heures par session",
     "certifiedDiploma": "Diplôme certifié",
     "certifiedDiplomaDesc": "Certificat officiellement reconnu",
     "educationalResources": "Ressources pédagogiques",
@@ -178,18 +180,18 @@
       ],
       "warnings": "Avertissements importants",
       "warningsList": [
-        "L'absence injustifiée de plus de 3 séances consécutives entraîne l'exclusion définitive",
-        "Les frais d'inscription ne sont pas remboursables en cas de retrait après le début de la formation",
+        "Toute absence non justifiée de plus de 5 séances consécutives entraîne l'exclusion définitive",
+        "Les frais d'inscription ne sont pas remboursables",
+        "L'étudiant est considéré comme officiellement inscrit après avoir complété son dossier et réglé les frais auprès du centre",
         "Le changement de groupe ou d'horaire après le début de la session n'est possible que dans des cas exceptionnels",
         "Tous les documents originaux doivent être présentés lors de l'inscription effective",
         "Tout comportement contraire au règlement intérieur peut exposer l'apprenant à des sanctions disciplinaires"
       ],
       "importantNotes": "Notes importantes",
       "notesList": [
-        "Durée de la formation : 60 heures réparties en deux séances hebdomadaires (oral et écrit)",
-        "Chaque séance dure une heure et demie (1h30)",
-        "L'évaluation est continue tout au long de la période de formation",
-        "Le certificat n'est délivré qu'aux apprenants ayant terminé la formation avec succès"
+        "Durée de la formation : 32 heures réparties en séances de 3 heures ou deux séances d'1h30",
+        "L'évaluation est continue tout au long de la formation",
+        "Le certificat est délivré uniquement aux apprenants ayant terminé la formation avec succès"
       ],
       "acceptTerms": "Je reconnais avoir lu et compris toutes les conditions et avertissements ci-dessus et j'accepte",
       "proceedToRegister": "Procéder à l'inscription",
@@ -253,7 +255,7 @@
     "address": "Université Hamma Lakhdar, El-Oued, Algérie",
     "backToTop": "Retour en Haut",
     "copyright": "CEIL - Université Hamma Lakhdar El-Oued. Tous droits réservés.",
-    "madeWith": "Fait avec ❤️ à El-Oued"
+    "madeWith": "Fait avec par Chiraz kahla et imad eddine kir"
   },
   "auth": {
     "signIn": "Se connecter",

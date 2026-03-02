@@ -129,6 +129,8 @@
     "testimonials": "Testimonials",
     "presentationTitle": "Presentation & Offers",
     "youAre": "You are:",
+    "intensiveCourse": "Intensive Course",
+    "intensiveCourseDesc": "Intensive training courses for rapid and effective progress in a short time",
     "audience": {
       "student": "University Student",
       "employee": "Administrative Employee",
@@ -146,7 +148,7 @@
     "adaptedProgram": "Adapted Program",
     "adaptedProgramDesc": "Rich programs adapted to needs",
     "hourlyVolume": "Hourly Volume",
-    "hourlyVolumeDesc": "60 hours per session",
+    "hourlyVolumeDesc": "32 hours per session",
     "certifiedDiploma": "Certified Diploma",
     "certifiedDiplomaDesc": "Officially recognized certificate",
     "educationalResources": "Educational Resources",
@@ -178,18 +180,18 @@
       ],
       "warnings": "Important Warnings",
       "warningsList": [
-        "Unjustified absence of more than 3 consecutive sessions leads to permanent exclusion",
-        "Registration fees are non-refundable in case of withdrawal after training begins",
-        "Group or schedule changes after the session starts are only possible in exceptional cases",
-        "All original documents must be brought during actual registration",
-        "Any behavior contrary to internal regulations may subject the learner to disciplinary sanctions"
+        "More than 5 consecutive unjustified absences will result in permanent exclusion",
+        "Registration fees are non-refundable",
+        "The student is considered officially enrolled after completing the required documents and paying the fees at the center",
+        "Group or schedule changes after the start of the session are only possible in exceptional cases",
+        "All original documents must be presented at the time of official registration",
+        "Any behavior violating the internal regulations may subject the learner to disciplinary action"
       ],
       "importantNotes": "Important Notes",
       "notesList": [
-        "Training duration: 60 hours distributed over two weekly sessions (oral and written)",
-        "Each session lasts one and a half hours (1h30)",
+        "Training duration: 32 hours divided into 3-hour sessions or two 1.5-hour sessions",
         "Assessment is continuous throughout the training period",
-        "The certificate is only delivered to learners who successfully complete the training"
+        "The certificate is issued only to learners who have successfully completed the training"
       ],
       "acceptTerms": "I acknowledge that I have read and understood all the above terms and warnings and I agree to them",
       "proceedToRegister": "Proceed to Registration",
@@ -253,7 +255,7 @@
     "address": "Hamma Lakhdar University, El-Oued, Algeria",
     "backToTop": "Back to Top",
     "copyright": "CEIL - Hamma Lakhdar University El-Oued. All rights reserved.",
-    "madeWith": "Made with ❤️ in El-Oued"
+    "madeWith": "Made it by Chiraz kahla and imad eddine kir"
   },
   "auth": {
     "signIn": "Sign In",

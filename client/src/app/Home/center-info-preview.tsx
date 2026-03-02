@@ -22,6 +22,8 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronLeft,
+  Zap,
+  Facebook,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "../../components/ui/button";
@@ -713,6 +715,12 @@ function TrainingNatureSection() {
       accent: "bg-blue-500",
     },
     {
+      icon: Zap,
+      title: t("centerInfo.intensiveCourse"),
+      desc: t("centerInfo.intensiveCourseDesc"),
+      accent: "bg-amber-500",
+    },
+    {
       icon: Award,
       title: t("centerInfo.certifiedDiploma"),
       desc: t("centerInfo.certifiedDiplomaDesc"),
@@ -744,7 +752,7 @@ function TrainingNatureSection() {
           </div>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-3 max-w-4xl mx-auto">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto">
           {TRAINING.map((item, i) => {
             const Icon = item.icon;
             return (
@@ -1423,7 +1431,7 @@ function LocationContactSection() {
           style={{ transitionDelay: "200ms" }}
         >
           <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3329.5!2d6.8628!3d33.3683!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12830604e3e1eb71%3A0x7f22b0c1b25e84f7!2sUniversit%C3%A9%20Hamma%20Lakhdar%20El%20Oued!5e0!3m2!1sfr!2sdz!4v1"
+            src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d906.2739290721481!2d6.85836637739475!3d33.39644648821209!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2s!5e1!3m2!1sfr!2sdz!4v1772443521691!5m2!1sfr!2sdz"
             width="100%"
             height="350"
             style={{ border: 0 }}
@@ -1470,16 +1478,30 @@ function LocationContactSection() {
               {
                 icon: MapPin,
                 text: t("footer.universityLabel"),
+                href: "https://maps.app.goo.gl/6Er2h85M9BPXovvW6",
                 dir: undefined,
               },
-              { icon: Phone, text: "+213 32 24 33 63", dir: "ltr" as const },
-              { icon: Mail, text: "ceil@univ-eloued.dz", dir: "ltr" as const },
+              {
+                icon: Facebook,
+                text: "Facebook",
+                href: "https://www.facebook.com/share/1C1T8Ru8K9/",
+                dir: "ltr" as const,
+              },
+              {
+                icon: Mail,
+                text: "ceil@univ-eloued.dz",
+                href: "mailto:ceil@univ-eloued.dz",
+                dir: "ltr" as const,
+              },
             ].map((item, i) => {
               const Icon = item.icon;
               return (
-                <div
+                <a
                   key={i}
-                  className={`group flex flex-col items-center gap-2.5 p-5 rounded-xl bg-brand-gray/40 dark:bg-[#1A1A1A] border border-brand-beige/50 dark:border-[#2A2A2A] hover:shadow-lg hover:shadow-brand-teal-dark/[0.04] dark:hover:shadow-black/20 hover:-translate-y-0.5 transition-all duration-300 ${
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`group flex flex-col items-center gap-2.5 p-5 rounded-xl bg-brand-gray/40 dark:bg-[#1A1A1A] border border-brand-beige/50 dark:border-[#2A2A2A] hover:shadow-lg hover:shadow-brand-teal-dark/[0.04] dark:hover:shadow-black/20 hover:-translate-y-0.5 cursor-pointer transition-all duration-300 ${
                     visible
                       ? "opacity-100 translate-y-0"
                       : "opacity-0 translate-y-6"
@@ -1498,7 +1520,7 @@ function LocationContactSection() {
                   >
                     {item.text}
                   </p>
-                </div>
+                </a>
               );
             })}
           </div>
