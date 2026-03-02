@@ -209,7 +209,7 @@
     "title": "À propos",
     "subtitle": "Découvrez notre histoire, notre mission et l'équipe passionnée derrière notre plateforme de langues",
     "ourStory": "Notre histoire",
-    "storyP1": "Le Centre d'Enseignement Intensif des Langues (CEIL) de l'Université Kasdi Merbah Ouargla a été fondé pour offrir un enseignement des langues de haute qualité et accessible aux étudiants, enseignants, personnels et à la communauté.",
+    "storyP1": "Le Centre d'Enseignement Intensif des Langues (CEIL) de l'Université Hamma Lakhder El-Oued a été fondé pour offrir un enseignement des langues de haute qualité et accessible aux étudiants, enseignants, personnels et à la communauté.",
     "storyP2": "Le centre combine les technologies modernes et les méthodologies d'enseignement éprouvées pour offrir une expérience d'apprentissage immersive. Notre équipe d'enseignants expérimentés et passionnés de langues travaille à développer des cours qui rendent l'apprentissage d'une nouvelle langue agréable et enrichissant.",
     "whatDrivesUs": "Ce qui nous anime",
     "mission": "Notre mission",
@@ -626,7 +626,7 @@
       "publicSection": "Site public"
     },
     "portal": "Portail Admin",
-    "ceil": "CEIL - UKMO",
+    "ceil": "CEIL - ELOUED",
     "role": "Administrateur",
     "dashboard": {
       "title": "Tableau de bord",

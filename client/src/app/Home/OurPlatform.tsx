@@ -152,7 +152,7 @@ const DesktopMockup = ({
             </div>
             <div className="flex-1 mx-8">
               <div className="bg-[#3a3a3a] rounded-md px-3 py-1 text-[10px] text-gray-400 text-center font-mono">
-                ceil.univ-ouargla.dz/admin
+                ceil.univ-Eloued.dz/admin
               </div>
             </div>
           </div>

@@ -3,40 +3,58 @@ import { useLanguage } from "../../hooks/useLanguage";
 
 const TEAM = [
   {
-    name: "د. أحمد م.",
-    nameEn: "Dr. Ahmed M.",
-    nameFr: "Dr. Ahmed M.",
+    name: "أ. نصر دحدة",
+    nameEn: "Prof. Nacer Dehda",
+    nameFr: "Prof. Nacer Dehda",
     role: "مدير المركز",
     roleEn: "Center Director",
     roleFr: "Directeur du centre",
-    initials: "أم",
+    initials: "ن.د",
   },
   {
-    name: "أ. سارة ب.",
-    nameEn: "Ms. Sara B.",
-    nameFr: "Mme. Sara B.",
-    role: "رئيسة قسم الإنجليزية",
-    roleEn: "Head of English Dept.",
-    roleFr: "Cheffe du dpt. d'anglais",
-    initials: "سب",
+    name: "أ. بدر الدين عكيشي",
+    nameEn: "Mr. Badreddine Akichi",
+    nameFr: "M. Badreddine Akichi",
+    role: "مسؤول إداري",
+    roleEn: "Administrative Officer",
+    roleFr: "Responsable administratif",
+    initials: "ب.ع",
   },
   {
-    name: "أ. كريم ل.",
-    nameEn: "Mr. Karim L.",
-    nameFr: "M. Karim L.",
-    role: "رئيس قسم الفرنسية",
-    roleEn: "Head of French Dept.",
-    roleFr: "Chef du dpt. de français",
-    initials: "كل",
+    name: "أ. كرشو زكريا",
+    nameEn: "Mr. Karchou Zakaria",
+    nameFr: "M. Karchou Zakaria",
+    role: "مسؤول إداري",
+    roleEn: "Administrative Officer",
+    roleFr: "Responsable administratif",
+    initials: "ك.ز",
   },
   {
-    name: "أ. نادية ر.",
-    nameEn: "Ms. Nadia R.",
-    nameFr: "Mme. Nadia R.",
-    role: "مسؤولة الشؤون الإدارية",
-    roleEn: "Admin Manager",
-    roleFr: "Responsable administrative",
-    initials: "نر",
+    name: "أ. مصباحي حسن",
+    nameEn: "Mr. Mesbahi Hassan",
+    nameFr: "M. Mesbahi Hassan",
+    role: "مسؤول تسيير حالات الطلبة",
+    roleEn: "Student Affairs Manager",
+    roleFr: "Responsable de la gestion des étudiants",
+    initials: "م.ح",
+  },
+  {
+    name: "أ. قادي سليمان",
+    nameEn: "Mr. Gadi Slimane",
+    nameFr: "M. Gadi Slimane",
+    role: "أستاذ",
+    roleEn: "Teacher",
+    roleFr: "Enseignant",
+    initials: "ق.س",
+  },
+  {
+    name: "أ. عياطي معتز بالله",
+    nameEn: "Mr. Ayati Mouatez Billah",
+    nameFr: "M. Ayati Mouatez Billah",
+    role: "أستاذ اللغة الإنجليزية",
+    roleEn: "English Language Teacher",
+    roleFr: "Enseignant d'anglais",
+    initials: "ع.م",
   },
 ];
 
@@ -67,7 +85,10 @@ const AboutUs = () => {
     currentLang === "en" ? m.roleEn : currentLang === "fr" ? m.roleFr : m.role;
 
   return (
-    <div className="min-h-screen bg-brand-gray dark:bg-[#0F0F0F] flex flex-col" dir={dir}>
+    <div
+      className="min-h-screen bg-brand-gray dark:bg-[#0F0F0F] flex flex-col"
+      dir={dir}
+    >
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-brand-teal-dark via-brand-teal-dark to-brand-teal dark:from-[#0A1A10] dark:via-[#0F1F15] dark:to-[#0A1A10]" />
         <div className="absolute inset-0 pointer-events-none">
@@ -159,28 +180,34 @@ const AboutUs = () => {
           <div className="flex mt-2 mb-8">
             <div className="w-12 h-1 rounded-full bg-brand-mustard" />
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {TEAM.map((member) => (
-              <div
-                key={member.name}
-                className="text-center bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] p-6 hover:shadow-lg dark:hover:shadow-black/20 hover:-translate-y-1 transition-all duration-300"
-              >
-                <div className="w-20 h-20 rounded-full bg-brand-teal-dark/10 dark:bg-[#4ADE80]/[0.1] flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl font-bold text-brand-teal-dark dark:text-[#4ADE80]">
-                    {member.initials}
-                  </span>
-                </div>
-                <h3
-                  className="text-lg font-semibold text-brand-black dark:text-[#E5E5E5]"
-                  style={{ fontFamily: "var(--font-sans)" }}
+
+          <div className="overflow-hidden relative">
+            <div
+              className="flex gap-6 animate-scroll hover:[animation-play-state:paused]"
+              style={{ width: "max-content" }}
+            >
+              {[...TEAM, ...TEAM].map((member, idx) => (
+                <div
+                  key={`${member.name}-${idx}`}
+                  className="text-center bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] p-6 hover:shadow-lg dark:hover:shadow-black/20 hover:-translate-y-1 transition-all duration-300 w-[220px] flex-shrink-0"
                 >
-                  {getMemberName(member)}
-                </h3>
-                <p className="text-sm text-brand-brown dark:text-[#888888]">
-                  {getMemberRole(member)}
-                </p>
-              </div>
-            ))}
+                  <div className="w-20 h-20 rounded-full bg-brand-teal-dark/10 dark:bg-[#4ADE80]/[0.1] flex items-center justify-center mx-auto mb-4">
+                    <span className="text-2xl font-bold text-brand-teal-dark dark:text-[#4ADE80]">
+                      {member.initials}
+                    </span>
+                  </div>
+                  <h3
+                    className="text-lg font-semibold text-brand-black dark:text-[#E5E5E5]"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    {getMemberName(member)}
+                  </h3>
+                  <p className="text-sm text-brand-brown dark:text-[#888888]">
+                    {getMemberRole(member)}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       </div>

@@ -221,6 +221,9 @@ export function Footer() {
               <p className="text-white/20 text-[11px] text-center sm:text-start">
                 © {new Date().getFullYear()} {t("footer.copyright")}
               </p>
+              <p className="text-white/15 text-[10px]">
+                {t("footer.madeWith")}
+              </p>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   {[

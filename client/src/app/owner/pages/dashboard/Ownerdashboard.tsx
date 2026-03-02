@@ -1054,7 +1054,7 @@ const OwnerDashboard = () => {
               variant="teal"
             />
             <QuickActionLink
-              to="/owner/audit-logs"
+              to="/owner/teachers"
               icon={ScrollText}
               label={t("owner.dashboard.auditLogs", "Audit Logs")}
               variant="mustard"
