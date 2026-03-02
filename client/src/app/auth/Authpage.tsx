@@ -616,7 +616,6 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
                 <SelectContent className="dark:bg-[#1A1A1A] dark:border-[#2A2A2A]">
                   <SelectItem value="Male">{t("auth.male")}</SelectItem>
                   <SelectItem value="Female">{t("auth.female")}</SelectItem>
-                  <SelectItem value="Other">{t("auth.other")}</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
