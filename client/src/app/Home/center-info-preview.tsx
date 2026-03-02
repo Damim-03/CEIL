@@ -33,6 +33,11 @@ import ceil2 from "../../assets/ceil-2.jpg";
 import ceil3 from "../../assets/ceil-3.jpg";
 import ceil4 from "../../assets/ceil-4.jpg";
 import ceil5 from "../../assets/ceil-5.jpg";
+import ceil6 from "../../assets/ceil6.jpg";
+import ceil7 from "../../assets/ceil7.jpg";
+import ceil8 from "../../assets/ceil8.jpg";
+import ceil9 from "../../assets/ceil9.jpg";
+import ceil10 from "../../assets/ceil10.jpg";
 
 const SLIDESHOW_IMAGES = [
   { src: ceil1, alt: "CEIL Campus" },
@@ -40,6 +45,11 @@ const SLIDESHOW_IMAGES = [
   { src: ceil3, alt: "Students Learning" },
   { src: ceil4, alt: "Certificate Ceremony" },
   { src: ceil5, alt: "Library Resources" },
+  { src: ceil6, alt: "CEIL Campus" },
+  { src: ceil7, alt: "Language Classes" },
+  { src: ceil8, alt: "Students Learning" },
+  { src: ceil9, alt: "Certificate Ceremony" },
+  { src: ceil10, alt: "Library Resources" },
 ];
 
 /* ═══════════════════════════════════════════════════════
