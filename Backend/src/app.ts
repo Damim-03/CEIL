@@ -15,7 +15,7 @@ import { initSocketIO } from "./config/socket"; // 🔌 NEW
 
 const app = express();
 const server = http.createServer(app); // 🔌 NEW
-const PORT = process.env.PORT || 3000;
+const PORT = config.PORT;
 const BASE_PATH = config.BASE_PATH;
 
 // 🔌 Initialize Socket.IO
