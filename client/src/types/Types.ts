@@ -23,7 +23,7 @@ export type RegistrationStatus =
   | "REJECTED"
   | "PAID"
   | "FINISHED";
-export type Level = "BASICS" | "A1" | "A2" | "B1" | "B2" | "C1";
+export type Level = "PRE_A1" | "A1" | "A2" | "B1" | "B2" | "C1";
 export type DocumentStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type GroupStatus = "OPEN" | "CLOSED" | "FULL" | "FINISHED";
 
@@ -31,7 +31,7 @@ export type GroupStatus = "OPEN" | "CLOSED" | "FULL" | "FINISHED";
 export type GroupLevel = Level;
 
 // Available levels constant
-export const LEVELS = ["BASICS", "A1", "A2", "B1", "B2", "C1"] as const;
+export const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"] as const;
 
 /* ===============================================================
    USER (Prisma Model)

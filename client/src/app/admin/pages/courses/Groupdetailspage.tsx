@@ -34,7 +34,7 @@ import AssignInstructorModal from "../../components/Assigninstructormodal";
 import type { UpdateGroupPayload } from "../../../../types/Types";
 
 const LEVEL_COLORS = {
-  BASICS: "from-[#7C8FA6] to-[#4A6178]",
+  PRE_A1: "from-[#7C8FA6] to-[#4A6178]",
   A1: "from-[#8DB896] to-[#2B6F5E]",
   A2: "from-[#2B6F5E] to-[#2B6F5E]/80",
   B1: "from-[#C4A035] to-[#C4A035]/80",

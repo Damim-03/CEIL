@@ -485,7 +485,7 @@ enum DocumentType {
 }
 
 enum Level {
-  BASICS
+  PRE_A1
   A1
   A2
   B1

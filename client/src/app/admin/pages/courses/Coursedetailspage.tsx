@@ -38,10 +38,10 @@ import type {
 import { toast } from "sonner";
 import { DEFAULT_LANG } from "../../../../i18n/i18n";
 
-const LEVELS: readonly Level[] = ["BASICS", "A1", "A2", "B1", "B2", "C1"];
+const LEVELS: readonly Level[] = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
 
 const LEVEL_COLORS: Record<Level, string> = {
-  BASICS: "from-[#7C8FA6] to-[#4A6178]",
+  PRE_A1: "from-[#7C8FA6] to-[#4A6178]",
   A1: "from-[#8DB896] to-[#2B6F5E]",
   A2: "from-[#2B6F5E] to-[#2B6F5E]/80",
   B1: "from-[#C4A035] to-[#C4A035]/80",
@@ -50,7 +50,7 @@ const LEVEL_COLORS: Record<Level, string> = {
 };
 
 const LEVEL_BG_COLORS: Record<Level, string> = {
-  BASICS: "bg-[#7C8FA6]/8 dark:bg-[#94A3B8]/5",
+  PRE_A1: "bg-[#7C8FA6]/8 dark:bg-[#94A3B8]/5",
   A1: "bg-[#8DB896]/8 dark:bg-[#8DB896]/5",
   A2: "bg-[#2B6F5E]/5 dark:bg-[#2B6F5E]/5",
   B1: "bg-[#C4A035]/5 dark:bg-[#C4A035]/5",
@@ -59,7 +59,7 @@ const LEVEL_BG_COLORS: Record<Level, string> = {
 };
 
 const LEVEL_BORDER_COLORS: Record<Level, string> = {
-  BASICS: "border-[#7C8FA6]/30 dark:border-[#94A3B8]/20",
+  PRE_A1: "border-[#7C8FA6]/30 dark:border-[#94A3B8]/20",
   A1: "border-[#8DB896]/30 dark:border-[#8DB896]/20",
   A2: "border-[#2B6F5E]/20 dark:border-[#2B6F5E]/15",
   B1: "border-[#C4A035]/20 dark:border-[#C4A035]/15",

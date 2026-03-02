@@ -1140,7 +1140,7 @@ function ReuploadModal({
                     Select a new file to replace the rejected one
                   </p>
                   <p className="text-xs text-[#BEB29E] dark:text-[#666666] mt-1">
-                    PDF, JPG, PNG (max 10MB)
+                    JPG, PNG (max 10MB)
                   </p>
                 </div>
               )}
@@ -1182,7 +1182,6 @@ function formatDocumentType(type: string): string {
     WORK_CERTIFICATE: "Work Certificate — شهادة عمل",
     ADMIN_CERTIFICATE: "Administrative Certificate — شهادة إدارية",
     PHOTO: "Personal Photo — صورة شمسية",
-    PAYMENT_RECEIPT: "Payment Receipt — وصل الدفع",
   };
   return (
     labels[type] ||

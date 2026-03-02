@@ -31,11 +31,11 @@ type Level = (typeof LEVELS)[number];
 type Status = (typeof STATUSES)[number];
 type Step = "courses" | "levels" | "groups";
 
-const LEVELS = ["BASICS", "A1", "A2", "B1", "B2", "C1"] as const;
+const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"] as const;
 const STATUSES = ["ALL", "OPEN", "FULL", "CLOSED"] as const;
 
 const LEVEL_COLORS = {
-  BASICS: "from-[#7C8FA6] to-[#4A6178]",
+  PRE_A1: "from-[#7C8FA6] to-[#4A6178]",
   A1: "from-[#8DB896] to-[#2B6F5E]",
   A2: "from-[#2B6F5E] to-[#1a4a3d]",
   B1: "from-[#C4A035] to-[#8B6914]",
@@ -44,7 +44,7 @@ const LEVEL_COLORS = {
 } as const;
 
 const LEVEL_BG_COLORS = {
-  BASICS:
+  PRE_A1:
     "bg-[#7C8FA6]/8 border-[#7C8FA6]/25 dark:bg-[#94A3B8]/5 dark:border-[#94A3B8]/15",
   A1: "bg-[#8DB896]/8 border-[#8DB896]/25 dark:bg-[#4ADE80]/5 dark:border-[#4ADE80]/15",
   A2: "bg-[#2B6F5E]/5 border-[#2B6F5E]/20 dark:bg-[#4ADE80]/[0.03] dark:border-[#4ADE80]/15",
