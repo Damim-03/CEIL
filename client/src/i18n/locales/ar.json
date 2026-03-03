@@ -2172,7 +2172,22 @@
   "platform.roles.student.f5": "استقبال الإشعارات والتحديثات",
   "platform.multilingual.title": "دعم ثلاثي اللغات",
   "platform.multilingual.desc": "دعم كامل للعربية مع واجهة RTL، بالإضافة إلى الفرنسية والإنجليزية لخدمة مجتمعنا الطلابي المتنوع.",
-
+  "completeProfileToEnroll": "أكمل ملفك الشخصي للتسجيل",
+  "completeProfileDesc": "يجب إكمال ملفك الشخصي ورفع الوثائق المطلوبة قبل تصفح الدورات",
+  "personalInfoComplete": "المعلومات الشخصية مكتملة",
+  "completePersonalInfo": "أكمل معلوماتك الشخصية",
+  "requiredDocsUploaded": "الوثائق المطلوبة مرفوعة",
+  "uploadRequiredDocs": "ارفع الوثائق المطلوبة ({{count}} ناقصة)",
+  "completeProfile": "أكمل الملف الشخصي",
+  "uploadDocuments": "ارفع الوثائق",
+  "docTypes": {
+    "STUDENT_CARD": "بطاقة الطالب",
+    "SCHOOL_CERTIFICATE": "شهادة مدرسية",
+    "REGISTRATION_CERTIFICATE": "شهادة التسجيل",
+    "ID_CARD": "بطاقة التعريف",
+    "WORK_CERTIFICATE": "شهادة العمل",
+    "ADMIN_CERTIFICATE": "شهادة إدارية"
+  },
   "owner": {
     "portal": "بوابة المالك",
     "systemControl": "التحكم بالنظام",

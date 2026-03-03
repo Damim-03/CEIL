@@ -2166,6 +2166,23 @@
   "platform.multilingual.title": "Trilingual Support",
   "platform.multilingual.desc": "Full RTL Arabic support with French and English, serving our diverse student community.",
 
+  "completeProfileToEnroll": "Complete Your Profile to Enroll",
+  "completeProfileDesc": "You must complete your profile and upload required documents before browsing courses",
+  "personalInfoComplete": "Personal information completed",
+  "completePersonalInfo": "Complete your personal information",
+  "requiredDocsUploaded": "Required documents uploaded",
+  "uploadRequiredDocs": "Upload required documents ({{count}} missing)",
+  "completeProfile": "Complete Profile",
+  "uploadDocuments": "Upload Documents",
+  "docTypes": {
+    "STUDENT_CARD": "Student Card",
+    "SCHOOL_CERTIFICATE": "School Certificate",
+    "REGISTRATION_CERTIFICATE": "Registration Certificate",
+    "ID_CARD": "ID Card",
+    "WORK_CERTIFICATE": "Work Certificate",
+    "ADMIN_CERTIFICATE": "Administrative Certificate"
+  },
+
   "owner": {
     "portal": "Owner Portal",
     "systemControl": "System Control",

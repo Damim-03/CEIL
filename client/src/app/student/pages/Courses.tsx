@@ -340,7 +340,7 @@ const Courses = () => {
               >
                 {isDocumentsComplete
                   ? "Required documents uploaded"
-                  : `Upload required documents (${missingDocuments.length} missing)`}
+                  : `Upload required documents (${docCheck.missing.length} missing)`}
               </span>
             </div>
           </div>

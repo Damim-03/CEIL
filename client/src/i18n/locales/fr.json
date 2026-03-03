@@ -2164,7 +2164,22 @@
   "platform.roles.student.f5": "Recevoir des notifications et mises à jour",
   "platform.multilingual.title": "Support Trilingue",
   "platform.multilingual.desc": "Support complet de l'arabe avec interface RTL, plus le français et l'anglais pour servir notre communauté étudiante diversifiée.",
-
+  "completeProfileToEnroll": "Complétez votre profil pour vous inscrire",
+  "completeProfileDesc": "Vous devez compléter votre profil et télécharger les documents requis avant de parcourir les cours",
+  "personalInfoComplete": "Informations personnelles complètes",
+  "completePersonalInfo": "Complétez vos informations personnelles",
+  "requiredDocsUploaded": "Documents requis téléchargés",
+  "uploadRequiredDocs": "Téléchargez les documents requis ({{count}} manquants)",
+  "completeProfile": "Compléter le profil",
+  "uploadDocuments": "Télécharger les documents",
+  "docTypes": {
+    "STUDENT_CARD": "Carte d'étudiant",
+    "SCHOOL_CERTIFICATE": "Certificat scolaire",
+    "REGISTRATION_CERTIFICATE": "Certificat d'inscription",
+    "ID_CARD": "Carte d'identité",
+    "WORK_CERTIFICATE": "Certificat de travail",
+    "ADMIN_CERTIFICATE": "Certificat administratif"
+  },
   "owner": {
     "portal": "Portail Propriétaire",
     "systemControl": "Contrôle du Système",
