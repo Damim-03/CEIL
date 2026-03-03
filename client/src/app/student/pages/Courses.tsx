@@ -114,8 +114,10 @@ const Courses = () => {
     profile.nationality &&
     profile.education_level;
 
-  const { data: documents = [], isLoading: documentsLoading } =
-    useMyDocuments();
+  const { data: documentsData, isLoading: documentsLoading } = useMyDocuments();
+  const documents = Array.isArray(documentsData)
+    ? documentsData
+    : documentsData?.documents || [];
 
   const uploadedTypes = documents.map((d: any) => d.type);
   const registrantCategory: RegistrantCategory =
