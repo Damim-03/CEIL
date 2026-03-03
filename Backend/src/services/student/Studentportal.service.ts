@@ -2,7 +2,7 @@
 // 📦 src/services/student/Studentportal.service.ts
 // ✅ Updated: Category-based document requirements
 // ✅ Updated: BASICS level support
-// ✅ LEVEL_ORDER now includes BASICS
+// ✅ FIXED: Robust registrant_category fallback (null-safe)
 // ================================================================
 
 import { prisma } from "../../prisma/client";
@@ -27,7 +27,7 @@ import {
 
 // ─── Constants ───────────────────────────────────────────
 const LEVEL_ORDER: Record<Level, number> = {
-  PRE_A1: 0, // ← جديد: المستوى القاعدي
+  PRE_A1: 0,
   A1: 1,
   A2: 2,
   B1: 3,
@@ -35,6 +35,12 @@ const LEVEL_ORDER: Record<Level, number> = {
   C1: 5,
 };
 const MAX_ACTIVE_ENROLLMENTS = 3;
+
+const VALID_CATEGORIES: RegistrantCategory[] = [
+  "STUDENT",
+  "EXTERNAL",
+  "EMPLOYEE",
+];
 
 // ─── Cloudinary Helper ───────────────────────────────────
 export function uploadToCloudinaryStream(
@@ -64,9 +70,14 @@ async function getStudentByUserId(userId: string) {
   return prisma.student.findUnique({ where: { user_id: userId } });
 }
 
-// ─── Helper: get registrant category ─────────────────────
+// ─── Helper: get registrant category (null-safe) ─────────
+// ✅ FIXED: handles null, undefined, and invalid values from DB
 function getCategory(student: any): RegistrantCategory {
-  return (student.registrant_category as RegistrantCategory) || "STUDENT";
+  const cat = student?.registrant_category;
+  if (cat && VALID_CATEGORIES.includes(cat as RegistrantCategory)) {
+    return cat as RegistrantCategory;
+  }
+  return "STUDENT";
 }
 
 // ══════════════════════════════════════════════
@@ -104,7 +115,6 @@ export async function getProfile(userId: string) {
     student.study_location,
   );
 
-  // ✅ Category-based document validation
   const uploadedTypes = student.documents.map((d) => d.type as DocumentType);
   const approvedTypes = student.documents
     .filter((d) => d.status === "APPROVED")
@@ -142,10 +152,9 @@ export async function updateProfile(userId: string, data: any) {
     date_of_birth: parsedDOB,
   };
 
-  // ✅ Allow updating registrant_category
   if (
     data.registrant_category &&
-    ["STUDENT", "EXTERNAL", "EMPLOYEE"].includes(data.registrant_category)
+    VALID_CATEGORIES.includes(data.registrant_category)
   ) {
     updateData.registrant_category = data.registrant_category;
   }
@@ -177,7 +186,6 @@ export async function uploadDocuments(
   const created: any[] = [];
   const skipped: any[] = [];
 
-  // ✅ Accept all valid document types (not just REQUIRED_DOCUMENTS)
   const validTypes = DOCUMENT_TYPES as readonly string[];
 
   for (const type of Object.keys(files)) {
@@ -324,7 +332,7 @@ export async function reuploadDocument(
 }
 
 // ══════════════════════════════════════════════
-// 3. ENROLLMENT (unchanged except LEVEL_ORDER)
+// 3. ENROLLMENT
 // ══════════════════════════════════════════════
 
 export async function createEnrollment(
@@ -775,7 +783,7 @@ export async function leaveGroup(userId: string) {
 }
 
 // ══════════════════════════════════════════════
-// 5. COURSES (updated LEVEL_ORDER)
+// 5. COURSES
 // ══════════════════════════════════════════════
 
 export async function getCourseGroups(courseId: string) {
@@ -877,7 +885,7 @@ export async function getCoursesWithGroups() {
 }
 
 // ══════════════════════════════════════════════
-// 6. DASHBOARD (updated with category-based docs)
+// 6. DASHBOARD
 // ══════════════════════════════════════════════
 
 export async function getDashboard(userId: string) {
@@ -895,7 +903,6 @@ export async function getDashboard(userId: string) {
 
   const category = getCategory(student);
 
-  // Profile completeness
   const profileFields = [
     student.first_name,
     student.last_name,
@@ -924,7 +931,6 @@ export async function getDashboard(userId: string) {
   const isProfileComplete = percentage === 100;
   const missingFields = fieldNames.filter((_, i) => !profileFields[i]);
 
-  // ✅ Category-based document completeness
   const uploadedTypes = student.documents.map((d) => d.type as DocumentType);
   const approvedTypes = student.documents
     .filter((d) => d.status === "APPROVED")
@@ -1020,7 +1026,7 @@ export async function getDashboard(userId: string) {
 }
 
 // ══════════════════════════════════════════════
-// 7-9. FEES, ATTENDANCE, RESULTS (unchanged)
+// 7-9. FEES, ATTENDANCE, RESULTS
 // ══════════════════════════════════════════════
 
 export async function getMyFees(userId: string) {
@@ -1109,7 +1115,7 @@ export async function getMyResults(userId: string) {
 }
 
 // ══════════════════════════════════════════════
-// 10. COURSE PROFILE WITH PRICING (unchanged)
+// 10. COURSE PROFILE WITH PRICING
 // ══════════════════════════════════════════════
 
 export async function getCourseProfileWithPricing(courseId: string) {
