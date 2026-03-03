@@ -1,7 +1,6 @@
 // ================================================================
 // 📌 src/controllers/student/student.controller.ts
-// ✅ Refactored: Uses StudentPortalService
-// Before: 1413 lines | After: ~180 lines
+// ✅ FIXED: uploadDocumentsController wrapped in try/catch
 // ================================================================
 
 import { Request, Response } from "express";
@@ -43,28 +42,36 @@ export const updateMyStudentProfile = async (req: Request, res: Response) => {
 };
 
 // ═══ DOCUMENTS ═══
+// ✅ FIXED: wrapped in try/catch to expose real error instead of silent 500
 export const uploadDocumentsController = async (
   req: Request,
   res: Response,
 ) => {
-  const user = (req as AuthenticatedRequest).user;
-  if (!user) return res.status(401).json({ message: "Unauthorized" });
-  const files = req.files as Record<string, Express.Multer.File[]>;
-  if (!files)
-    return res
-      .status(400)
-      .json({ message: "No documents uploaded - files is null" });
-  if (Object.keys(files).length === 0)
-    return res
-      .status(400)
-      .json({ message: "No documents uploaded - empty object" });
-  const result = await Portal.uploadDocuments(user.user_id, files);
-  if ("error" in result) return handleResult(res, result);
-  return res.status(201).json({
-    message: "Documents uploaded successfully",
-    documents: result.data.documents,
-    skipped: result.data.skipped,
-  });
+  try {
+    const user = (req as AuthenticatedRequest).user;
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+
+    const files = req.files as Record<string, Express.Multer.File[]>;
+    if (!files || Object.keys(files).length === 0)
+      return res.status(400).json({ message: "No documents uploaded" });
+
+    console.log("🔵 uploadDocuments - user:", user.user_id);
+    console.log("🔵 uploadDocuments - files:", Object.keys(files));
+
+    const result = await Portal.uploadDocuments(user.user_id, files);
+    if ("error" in result) return handleResult(res, result);
+
+    return res.status(201).json({
+      message: "Documents uploaded successfully",
+      documents: result.data.documents,
+      skipped: result.data.skipped,
+    });
+  } catch (err: any) {
+    console.error("❌ uploadDocumentsController ERROR:", err?.message || err);
+    return res.status(500).json({
+      message: err?.message || "Internal Server Error",
+    });
+  }
 };
 
 export const getMyDocumentsController = async (req: Request, res: Response) => {
@@ -269,8 +276,7 @@ export const getCourseProfileWithPricing = async (
   } catch {
     return res.status(500).json({
       message: "Internal server error",
-      error:
-        "An error occurred while fetching course information. Please try again later.",
+      error: "An error occurred while fetching course information.",
     });
   }
 };
