@@ -341,7 +341,6 @@ export default function Documents() {
       {uploadModalOpen && (
         <UploadModal
           category={category}
-          approvedTypes={approvedTypes} // ✅ Pass approved types only
           onClose={() => setUploadModalOpen(false)}
           uploadDocuments={uploadDocuments}
           onSuccess={() => {
@@ -817,7 +816,6 @@ function EmptyState({
 
 interface UploadModalProps {
   category: RegistrantCategory;
-  approvedTypes: string[]; // ✅ Changed: only approved types are blocked
   onClose: () => void;
   uploadDocuments: UploadMutation;
   onSuccess: () => void;
@@ -826,7 +824,6 @@ interface UploadModalProps {
 
 function UploadModal({
   category,
-  approvedTypes, // ✅ Changed
   onClose,
   uploadDocuments,
   onSuccess,
@@ -836,12 +833,6 @@ function UploadModal({
   const [type, setType] = useState("");
 
   const categoryTypes = DOCUMENT_TYPES_BY_CATEGORY[category] || [];
-  const allTypes = [...categoryTypes, ...OPTIONAL_DOCUMENTS];
-
-  // ✅ Fixed: Only hide APPROVED documents, allow re-selecting PENDING/REJECTED
-  const availableTypes = allTypes.filter(
-    (t) => !approvedTypes.includes(t.value),
-  );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
@@ -869,13 +860,10 @@ function UploadModal({
 
   const isUploading = uploadDocuments.isPending;
 
-  // ✅ Separate optional from category types for grouping
-  const availableCategoryTypes = categoryTypes.filter(
-    (t) => !approvedTypes.includes(t.value),
-  );
-  const availableOptionalTypes = OPTIONAL_DOCUMENTS.filter(
-    (t) => !approvedTypes.includes(t.value),
-  );
+  // ✅ Always show all category types + optional, no filtering
+  const availableCategoryTypes = categoryTypes;
+  const availableOptionalTypes = OPTIONAL_DOCUMENTS;
+  const availableTypes = [...categoryTypes, ...OPTIONAL_DOCUMENTS];
 
   return (
     <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4">
