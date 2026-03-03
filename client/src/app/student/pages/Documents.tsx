@@ -1163,7 +1163,7 @@ function ReuploadModal({
             className="gap-2 bg-[#C4A035] hover:bg-[#C4A035]/90 text-white rounded-xl"
           >
             <RefreshCw className="w-4 h-4" />{" "}
-            {isUploading ? "Re-uploading..." : "Re-upload"}
+            {isUploading ? "Re-uploading...." : "Re-upload"}
           </Button>
         </div>
       </div>
