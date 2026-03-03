@@ -22,6 +22,7 @@ import {
   useEnrollInCourse,
   useStudentEnrollments,
 } from "../../../hooks/student/Usestudent";
+import { useMyProfile } from "../../../hooks/student/Usestudent";
 import PageLoader from "../../../components/PageLoader";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -95,6 +96,17 @@ const Courses = () => {
 
   const enrollMutation = useEnrollInCourse();
   const { data: courses = [], isLoading: coursesLoading } = useCourses();
+
+  const { data: profile, isLoading: profileLoading } = useMyProfile();
+  const isProfileComplete =
+    profile &&
+    profile.first_name &&
+    profile.last_name &&
+    profile.phone_number &&
+    profile.date_of_birth &&
+    profile.nationality &&
+    profile.education_level;
+
   const { data: enrollments = [], isLoading: enrollmentsLoading } =
     useStudentEnrollments();
   const { data: groups = [], isLoading: groupsLoading } = useCourseGroups(
@@ -228,87 +240,90 @@ const Courses = () => {
     );
   };
 
-  if (coursesLoading || enrollmentsLoading) return <PageLoader />;
+  if (coursesLoading || enrollmentsLoading || profileLoading)
+    return <PageLoader />;
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
-        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20 dark:shadow-black/30">
-            <GraduationCap className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-              {step === "courses"
-                ? "Browse Courses"
-                : step === "levels"
-                  ? `Select Level — ${selectedCourse?.course_name}`
-                  : `Select Group — Level ${selectedLevel}`}
-            </h1>
-            <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
-              {step === "courses"
-                ? "Choose a course to start your learning journey"
-                : step === "levels"
-                  ? "Pick your proficiency level"
-                  : "Join a group that fits your schedule"}
-            </p>
+  if (!isProfileComplete) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
+          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20 dark:shadow-black/30">
+              <GraduationCap className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                {step === "courses"
+                  ? "Browse Courses"
+                  : step === "levels"
+                    ? `Select Level — ${selectedCourse?.course_name}`
+                    : `Select Group — Level ${selectedLevel}`}
+              </h1>
+              <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
+                {step === "courses"
+                  ? "Choose a course to start your learning journey"
+                  : step === "levels"
+                    ? "Pick your proficiency level"
+                    : "Join a group that fits your schedule"}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {step !== "courses" && (
-        <Button
-          variant="ghost"
-          onClick={handleBack}
-          className="gap-2 text-[#6B5D4F] dark:text-[#888888] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222] rounded-xl"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back
-        </Button>
-      )}
+        {step !== "courses" && (
+          <Button
+            variant="ghost"
+            onClick={handleBack}
+            className="gap-2 text-[#6B5D4F] dark:text-[#888888] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222] rounded-xl"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </Button>
+        )}
 
-      {step === "courses" && (
-        <CoursesList courses={courses} onSelectCourse={handleSelectCourse} />
-      )}
-      {step === "levels" && selectedCourse && (
-        <LevelSelection
-          levels={LEVELS}
-          onSelectLevel={handleSelectLevel}
-          selectedLevel={selectedLevel}
-        />
-      )}
-      {step === "groups" && selectedLevel && (
-        <GroupsList
-          groups={groups}
-          level={selectedLevel}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          selectedStatus={selectedStatus}
-          setSelectedStatus={setSelectedStatus}
-          onEnroll={handleEnrollInGroup}
+        {step === "courses" && (
+          <CoursesList courses={courses} onSelectCourse={handleSelectCourse} />
+        )}
+        {step === "levels" && selectedCourse && (
+          <LevelSelection
+            levels={LEVELS}
+            onSelectLevel={handleSelectLevel}
+            selectedLevel={selectedLevel}
+          />
+        )}
+        {step === "groups" && selectedLevel && (
+          <GroupsList
+            groups={groups}
+            level={selectedLevel}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            selectedStatus={selectedStatus}
+            setSelectedStatus={setSelectedStatus}
+            onEnroll={handleEnrollInGroup}
+            isEnrolling={enrollMutation.isPending}
+            isLoading={groupsLoading}
+          />
+        )}
+
+        <PricingModal
+          isOpen={isPricingModalOpen}
+          onClose={() => {
+            setIsPricingModalOpen(false);
+            setSelectedGroupForEnrollment(null);
+          }}
+          onConfirm={confirmEnrollment}
+          courseId={selectedCourse?.course_id || null}
+          courseName={selectedCourse?.course_name || ""}
+          groupName={
+            groups.find((g: Group) => g.group_id === selectedGroupForEnrollment)
+              ?.name || ""
+          }
           isEnrolling={enrollMutation.isPending}
-          isLoading={groupsLoading}
         />
-      )}
-
-      <PricingModal
-        isOpen={isPricingModalOpen}
-        onClose={() => {
-          setIsPricingModalOpen(false);
-          setSelectedGroupForEnrollment(null);
-        }}
-        onConfirm={confirmEnrollment}
-        courseId={selectedCourse?.course_id || null}
-        courseName={selectedCourse?.course_name || ""}
-        groupName={
-          groups.find((g: Group) => g.group_id === selectedGroupForEnrollment)
-            ?.name || ""
-        }
-        isEnrolling={enrollMutation.isPending}
-      />
-    </div>
-  );
+      </div>
+    );
+  }
 };
 
 /* ==================== COURSES LIST ==================== */
