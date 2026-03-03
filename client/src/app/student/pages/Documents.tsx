@@ -3,7 +3,7 @@ import PageLoader from "../../../components/PageLoader";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { AlertDialog, useAlert } from "../components/Alertdialog";
-import type { Document } from "../../../types/Types";
+import type { Document, UploadMutation } from "../../../types/Types";
 import {
   FileText,
   Search,
@@ -66,17 +66,12 @@ const DOCUMENT_TYPES_BY_CATEGORY: Record<
   ],
   EMPLOYEE: [
     {
-      value: "PROFESSIONAL_CARD",
-      label: "Professional Card",
-      label_ar: "بطاقة مهنية",
-    },
-    {
       value: "WORK_CERTIFICATE",
-      label: "Work Certificate",
-      label_ar: "شهادة عمل",
+      label: "Work Certificate / Professional Card",
+      label_ar: "شهادة عمل / بطاقة مهنية",
     },
     {
-      value: "ADMIN_CERTIFICATE", // ✅ Added
+      value: "ADMIN_CERTIFICATE",
       label: "Administrative Certificate",
       label_ar: "شهادة إدارية",
     },
@@ -118,7 +113,7 @@ const CATEGORY_INFO: Record<
     label_ar: "موظف / أستاذ",
     icon: Briefcase,
     color: "text-orange-600 dark:text-orange-400",
-    description: "يجب رفع بطاقة مهنية أو شهادة عمل أو شهادة إدارية.",
+    description: "يجب رفع شهادة عمل أو بطاقة مهنية أو شهادة إدارية.",
   },
 };
 
@@ -132,6 +127,7 @@ export default function Documents() {
     isDocumentsComplete,
     missingDocuments,
     isLoading,
+    uploadDocuments,
     uploadWithCategory,
     deleteDocument,
     reuploadDocument,
@@ -1298,10 +1294,11 @@ function formatDocumentType(type: string): string {
     SCHOOL_CERTIFICATE: "School Certificate — شهادة مدرسية",
     REGISTRATION_CERTIFICATE: "Registration Certificate — شهادة تسجيل",
     ID_CARD: "National ID Card — بطاقة التعريف",
-    WORK_CERTIFICATE: "Work Certificate — شهادة عمل",
-    ADMIN_CERTIFICATE: "Administrative Certificate — شهادة إدارية", // ✅ Added
-    PROFESSIONAL_CARD: "Professional Card — بطاقة مهنية",
+    WORK_CERTIFICATE:
+      "Work Certificate / Professional Card — شهادة عمل / بطاقة مهنية",
+    ADMIN_CERTIFICATE: "Administrative Certificate — شهادة إدارية",
     PHOTO: "Personal Photo — صورة شمسية",
+    PAYMENT_RECEIPT: "Payment Receipt — وصل الدفع",
   };
   return (
     labels[type] ||
