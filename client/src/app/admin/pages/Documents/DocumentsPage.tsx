@@ -16,6 +16,7 @@ import {
   ChevronRight,
   File,
   User,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
@@ -91,6 +92,11 @@ const AdminDocuments = () => {
   const [documentToReject, setDocumentToReject] =
     useState<AdminDocument | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [documentToView, setDocumentToView] = useState<AdminDocument | null>(
+    null,
+  );
 
   // Get file type icon
   const getFileIcon = (fileType: AdminDocument["fileType"]) => {
@@ -213,7 +219,8 @@ const AdminDocuments = () => {
 
   // Handle view document
   const handleView = (document: AdminDocument) => {
-    window.open(document.fileUrl, "_blank");
+    setDocumentToView(document);
+    setViewDialogOpen(true);
   };
 
   // Handle download document
@@ -830,6 +837,76 @@ const AdminDocuments = () => {
                 t("admin.documents.deleteDialog.deleteBtn")
               )}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Document Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {documentToView && getFileIcon(documentToView.fileType)}
+              {documentToView?.fileName}
+            </DialogTitle>
+            <DialogDescription>
+              {documentToView?.student.name} —{" "}
+              {formatDate(documentToView?.uploadDate || "")}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-auto max-h-[70vh] bg-muted/30 rounded-lg p-2">
+            {documentToView?.fileType === "image" &&
+              documentToView?.fileUrl && (
+                <img
+                  src={documentToView.fileUrl}
+                  alt={documentToView.fileName}
+                  className="max-w-full max-h-full object-contain mx-auto rounded-lg"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                    (e.target as HTMLImageElement).parentElement!.innerHTML = `
+              <div class="flex flex-col items-center justify-center py-16 text-center">
+                <p class="text-sm text-muted-foreground">Failed to load image</p>
+                <p class="text-xs text-muted-foreground mt-1">The file may require authentication</p>
+              </div>
+            `;
+                  }}
+                />
+              )}
+            {documentToView?.fileType === "pdf" && documentToView?.fileUrl && (
+              <iframe
+                src={documentToView.fileUrl}
+                className="w-full h-[65vh] rounded-lg border"
+                title={documentToView.fileName}
+              />
+            )}
+            {documentToView?.fileType === "doc" && (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <FileIcon className="h-16 w-16 text-muted-foreground mb-4" />
+                <p className="text-sm text-muted-foreground">
+                  Preview not available for this file type
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => documentToView && handleDownload(documentToView)}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />{" "}
+              {t("admin.documents.actions.download")}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => window.open(documentToView?.fileUrl, "_blank")}
+              className="gap-2"
+            >
+              <ExternalLink className="h-4 w-4" /> Open in New Tab
+            </Button>
+            <Button onClick={() => setViewDialogOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
