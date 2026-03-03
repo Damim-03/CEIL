@@ -65,19 +65,14 @@ const DOCUMENT_TYPES_BY_CATEGORY: Record<
   ],
   EMPLOYEE: [
     {
-      value: "ID_CARD",
-      label: "National ID Card",
-      label_ar: "بطاقة التعريف الوطنية",
+      value: "PROFESSIONAL_CARD",
+      label: "Professional Card",
+      label_ar: "بطاقة مهنية",
     },
     {
       value: "WORK_CERTIFICATE",
       label: "Work Certificate",
       label_ar: "شهادة عمل",
-    },
-    {
-      value: "ADMIN_CERTIFICATE",
-      label: "Administrative Certificate",
-      label_ar: "شهادة إدارية",
     },
   ],
 };
@@ -85,7 +80,6 @@ const DOCUMENT_TYPES_BY_CATEGORY: Record<
 // Optional documents available for all categories
 const OPTIONAL_DOCUMENTS: DocumentTypeOption[] = [
   { value: "PHOTO", label: "Personal Photo", label_ar: "صورة شمسية" },
-  { value: "PAYMENT_RECEIPT", label: "Payment Receipt", label_ar: "وصل الدفع" },
 ];
 
 const CATEGORY_INFO: Record<
@@ -95,6 +89,7 @@ const CATEGORY_INFO: Record<
     label_ar: string;
     icon: React.ComponentType<{ className?: string }>;
     color: string;
+    description: string;
   }
 > = {
   STUDENT: {
@@ -102,18 +97,22 @@ const CATEGORY_INFO: Record<
     label_ar: "طالب",
     icon: GraduationCap,
     color: "text-blue-600 dark:text-blue-400",
+    description:
+      "يجب على الطالب رفع ملف واحد فقط من الملفات التالية: بطاقة الطالب أو شهادة مدرسية أو شهادة تسجيل.",
   },
   EXTERNAL: {
     label: "External",
     label_ar: "شخص خارجي",
     icon: User,
     color: "text-purple-600 dark:text-purple-400",
+    description: "يجب رفع بطاقة التعريف الوطنية.",
   },
   EMPLOYEE: {
     label: "Employee",
-    label_ar: "موظف",
+    label_ar: "موظف / أستاذ",
     icon: Briefcase,
     color: "text-orange-600 dark:text-orange-400",
+    description: "يجب رفع بطاقة مهنية أو شهادة عمل.",
   },
 };
 
@@ -450,34 +449,9 @@ function CategoryBanner({
                 <p className="text-sm text-[#6B5D4F] dark:text-[#888888] mb-2">
                   Required documents for your category:
                 </p>
-                <div className="space-y-1.5">
-                  {requiredDocuments.map((req: any, i: number) => {
-                    const isMissing = missingDocuments.includes(req.label);
-                    return (
-                      <div key={i} className="flex items-center gap-2 text-sm">
-                        {isMissing ? (
-                          <XCircle className="w-3.5 h-3.5 text-red-500 dark:text-red-400 shrink-0" />
-                        ) : (
-                          <CheckCircle className="w-3.5 h-3.5 text-[#2B6F5E] dark:text-[#4ADE80] shrink-0" />
-                        )}
-                        <span
-                          className={
-                            isMissing
-                              ? "text-red-600 dark:text-red-400"
-                              : "text-[#2B6F5E] dark:text-[#4ADE80]"
-                          }
-                        >
-                          {req.label} — {req.label_ar}
-                        </span>
-                        {req.alternatives?.length > 1 && (
-                          <span className="text-xs text-[#BEB29E] dark:text-[#666666]">
-                            (one of: {req.alternatives.join(" / ")})
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                <p className="text-sm text-[#6B5D4F] dark:text-[#888888] mt-2">
+                  {info.description}
+                </p>
               </>
             )}
           </div>
@@ -1180,7 +1154,7 @@ function formatDocumentType(type: string): string {
     REGISTRATION_CERTIFICATE: "Registration Certificate — شهادة تسجيل",
     ID_CARD: "National ID Card — بطاقة التعريف",
     WORK_CERTIFICATE: "Work Certificate — شهادة عمل",
-    ADMIN_CERTIFICATE: "Administrative Certificate — شهادة إدارية",
+    PROFESSIONAL_CARD: "Professional Card — بطاقة مهنية",
     PHOTO: "Personal Photo — صورة شمسية",
   };
   return (

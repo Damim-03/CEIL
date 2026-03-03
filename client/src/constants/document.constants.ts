@@ -13,8 +13,8 @@ export const DOCUMENT_TYPES = [
   "ID_CARD", // بطاقة التعريف الوطنية
   "WORK_CERTIFICATE", // شهادة عمل
   "ADMIN_CERTIFICATE", // شهادة إدارية (بديل عن شهادة العمل)
+  "PROFESSIONAL_CARD", // ✅ بطاقة مهنية (جديد)
   "PHOTO", // صورة شمسية (اختياري)
-  "PAYMENT_RECEIPT", // وصل الدفع (بعد التسجيل)
 ] as const;
 
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];
@@ -36,16 +36,14 @@ export const REQUIRED_DOCUMENTS_BY_CATEGORY: Record<
   // 🎓 طالب: بطاقة طالب + (شهادة مدرسية أو شهادة تسجيل)
   STUDENT: [
     {
-      label: "Student Card",
-      label_ar: "بطاقة طالب",
-      label_fr: "Carte d'étudiant",
-      alternatives: ["STUDENT_CARD"],
-    },
-    {
-      label: "School or Registration Certificate",
-      label_ar: "شهادة مدرسية أو شهادة تسجيل",
-      label_fr: "Certificat de scolarité ou d'inscription",
-      alternatives: ["SCHOOL_CERTIFICATE", "REGISTRATION_CERTIFICATE"],
+      label: "Student Card or School/Registration Certificate",
+      label_ar: "بطاقة طالب أو شهادة مدرسية أو شهادة تسجيل",
+      label_fr: "Carte d'étudiant ou certificat de scolarité ou d'inscription",
+      alternatives: [
+        "STUDENT_CARD",
+        "SCHOOL_CERTIFICATE",
+        "REGISTRATION_CERTIFICATE",
+      ],
     },
   ],
 
@@ -62,16 +60,10 @@ export const REQUIRED_DOCUMENTS_BY_CATEGORY: Record<
   // 💼 موظف: بطاقة تعريف + (شهادة عمل أو شهادة إدارية)
   EMPLOYEE: [
     {
-      label: "National ID Card",
-      label_ar: "بطاقة التعريف الوطنية",
-      label_fr: "Carte d'identité nationale",
-      alternatives: ["ID_CARD"],
-    },
-    {
-      label: "Work or Administrative Certificate",
-      label_ar: "شهادة عمل أو شهادة إدارية",
-      label_fr: "Attestation de travail ou certificat administratif",
-      alternatives: ["WORK_CERTIFICATE", "ADMIN_CERTIFICATE"],
+      label: "Professional Card or Work Certificate",
+      label_ar: "بطاقة مهنية أو شهادة عمل",
+      label_fr: "Carte professionnelle ou attestation de travail",
+      alternatives: ["PROFESSIONAL_CARD", "WORK_CERTIFICATE"],
     },
   ],
 };
@@ -130,6 +122,11 @@ export const DOCUMENT_TYPE_LABELS: Record<
     ar: "شهادة مدرسية",
     fr: "Certificat de scolarité",
   },
+  PROFESSIONAL_CARD: {
+    en: "Professional Card",
+    ar: "بطاقة مهنية",
+    fr: "Carte professionnelle",
+  },
   REGISTRATION_CERTIFICATE: {
     en: "Registration Certificate",
     ar: "شهادة تسجيل",
@@ -154,10 +151,5 @@ export const DOCUMENT_TYPE_LABELS: Record<
     en: "Photo",
     ar: "صورة شمسية",
     fr: "Photo d'identité",
-  },
-  PAYMENT_RECEIPT: {
-    en: "Payment Receipt",
-    ar: "وصل الدفع",
-    fr: "Reçu de paiement",
   },
 };
