@@ -39,6 +39,7 @@ interface DocumentTypeOption {
   label_ar: string;
 }
 
+// ✅ Fixed: Added ADMIN_CERTIFICATE for EMPLOYEE
 const DOCUMENT_TYPES_BY_CATEGORY: Record<
   RegistrantCategory,
   DocumentTypeOption[]
@@ -73,6 +74,11 @@ const DOCUMENT_TYPES_BY_CATEGORY: Record<
       value: "WORK_CERTIFICATE",
       label: "Work Certificate",
       label_ar: "شهادة عمل",
+    },
+    {
+      value: "ADMIN_CERTIFICATE", // ✅ Added
+      label: "Administrative Certificate",
+      label_ar: "شهادة إدارية",
     },
   ],
 };
@@ -112,7 +118,7 @@ const CATEGORY_INFO: Record<
     label_ar: "موظف / أستاذ",
     icon: Briefcase,
     color: "text-orange-600 dark:text-orange-400",
-    description: "يجب رفع بطاقة مهنية أو شهادة عمل.",
+    description: "يجب رفع بطاقة مهنية أو شهادة عمل أو شهادة إدارية.",
   },
 };
 
@@ -144,6 +150,11 @@ export default function Documents() {
   if (isLoading) return <PageLoader />;
 
   const category = (registrantCategory || "STUDENT") as RegistrantCategory;
+
+  // ✅ Only filter out APPROVED documents from upload options
+  const approvedTypes = documents
+    .filter((d: Document) => d.status === "APPROVED")
+    .map((d: Document) => d.type);
 
   const filteredDocuments = documents.filter((doc: Document) => {
     const matchesSearch =
@@ -330,7 +341,7 @@ export default function Documents() {
       {uploadModalOpen && (
         <UploadModal
           category={category}
-          existingTypes={documents.map((d: Document) => d.type)}
+          approvedTypes={approvedTypes} // ✅ Pass approved types only
           onClose={() => setUploadModalOpen(false)}
           uploadDocuments={uploadDocuments}
           onSuccess={() => {
@@ -709,12 +720,13 @@ function ViewDocumentModal({ document, onClose }: ViewDocumentModalProps) {
               />
             </div>
           )}
+          {/* ✅ Fixed: Render PDF using <iframe> instead of broken .jpg replacement */}
           {isPDF && document.file_path && (
-            <div className="flex items-center justify-center">
-              <img
-                src={document.file_path.replace(".pdf", ".jpg")}
-                alt={formatDocumentType(document.type)}
-                className="max-w-full rounded-xl shadow-lg dark:shadow-black/40"
+            <div className="w-full h-[600px]">
+              <iframe
+                src={document.file_path}
+                title={formatDocumentType(document.type)}
+                className="w-full h-full rounded-xl border border-[#D8CDC0]/30 dark:border-[#2A2A2A]"
               />
             </div>
           )}
@@ -805,7 +817,7 @@ function EmptyState({
 
 interface UploadModalProps {
   category: RegistrantCategory;
-  existingTypes: string[];
+  approvedTypes: string[]; // ✅ Changed: only approved types are blocked
   onClose: () => void;
   uploadDocuments: UploadMutation;
   onSuccess: () => void;
@@ -814,7 +826,7 @@ interface UploadModalProps {
 
 function UploadModal({
   category,
-  existingTypes,
+  approvedTypes, // ✅ Changed
   onClose,
   uploadDocuments,
   onSuccess,
@@ -823,13 +835,12 @@ function UploadModal({
   const [file, setFile] = useState<File | null>(null);
   const [type, setType] = useState("");
 
-  // ✅ Build available types: category-specific + optional
   const categoryTypes = DOCUMENT_TYPES_BY_CATEGORY[category] || [];
   const allTypes = [...categoryTypes, ...OPTIONAL_DOCUMENTS];
 
-  // ✅ Filter out already-uploaded types
+  // ✅ Fixed: Only hide APPROVED documents, allow re-selecting PENDING/REJECTED
   const availableTypes = allTypes.filter(
-    (t) => !existingTypes.includes(t.value),
+    (t) => !approvedTypes.includes(t.value),
   );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -857,6 +868,14 @@ function UploadModal({
   };
 
   const isUploading = uploadDocuments.isPending;
+
+  // ✅ Separate optional from category types for grouping
+  const availableCategoryTypes = categoryTypes.filter(
+    (t) => !approvedTypes.includes(t.value),
+  );
+  const availableOptionalTypes = OPTIONAL_DOCUMENTS.filter(
+    (t) => !approvedTypes.includes(t.value),
+  );
 
   return (
     <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4">
@@ -907,25 +926,18 @@ function UploadModal({
                 className="w-full px-3 py-2.5 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/10 focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/30"
               >
                 <option value="">Select document type</option>
-                {categoryTypes.filter((t) => !existingTypes.includes(t.value))
-                  .length > 0 && (
+                {availableCategoryTypes.length > 0 && (
                   <optgroup label="Required Documents">
-                    {categoryTypes
-                      .filter((t) => !existingTypes.includes(t.value))
-                      .map((t) => (
-                        <option key={t.value} value={t.value}>
-                          {t.label} — {t.label_ar}
-                        </option>
-                      ))}
+                    {availableCategoryTypes.map((t) => (
+                      <option key={t.value} value={t.value}>
+                        {t.label} — {t.label_ar}
+                      </option>
+                    ))}
                   </optgroup>
                 )}
-                {OPTIONAL_DOCUMENTS.filter(
-                  (t) => !existingTypes.includes(t.value),
-                ).length > 0 && (
+                {availableOptionalTypes.length > 0 && (
                   <optgroup label="Optional Documents">
-                    {OPTIONAL_DOCUMENTS.filter(
-                      (t) => !existingTypes.includes(t.value),
-                    ).map((t) => (
+                    {availableOptionalTypes.map((t) => (
                       <option key={t.value} value={t.value}>
                         {t.label} — {t.label_ar}
                       </option>
@@ -937,7 +949,7 @@ function UploadModal({
               <div className="px-3 py-4 bg-[#8DB896]/8 dark:bg-[#4ADE80]/5 rounded-xl text-center">
                 <CheckCircle className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80] mx-auto mb-1" />
                 <p className="text-sm text-[#2B6F5E] dark:text-[#4ADE80] font-medium">
-                  All document types have been uploaded!
+                  All document types have been approved!
                 </p>
               </div>
             )}
@@ -954,7 +966,7 @@ function UploadModal({
                 className="hidden"
                 id="file-upload"
                 disabled={isUploading}
-                accept=".jpg,.jpeg,.png"
+                accept=".jpg,.jpeg,.png,.pdf" // ✅ Fixed: added .pdf
               />
               <label
                 htmlFor="file-upload"
@@ -1092,7 +1104,7 @@ function ReuploadModal({
               className="hidden"
               id="reupload-file"
               disabled={isUploading}
-              accept=".jpg,.jpeg,.png"
+              accept=".jpg,.jpeg,.png,.pdf" // ✅ Fixed: added .pdf
             />
             <label
               htmlFor="reupload-file"
@@ -1114,7 +1126,7 @@ function ReuploadModal({
                     Select a new file to replace the rejected one
                   </p>
                   <p className="text-xs text-[#BEB29E] dark:text-[#666666] mt-1">
-                    JPG, PNG (max 10MB)
+                    PDF, JPG, PNG (max 10MB)
                   </p>
                 </div>
               )}
@@ -1137,7 +1149,7 @@ function ReuploadModal({
             className="gap-2 bg-[#C4A035] hover:bg-[#C4A035]/90 text-white rounded-xl"
           >
             <RefreshCw className="w-4 h-4" />{" "}
-            {isUploading ? "Re-uploading...." : "Re-upload"}
+            {isUploading ? "Re-uploading..." : "Re-upload"}
           </Button>
         </div>
       </div>
@@ -1154,6 +1166,7 @@ function formatDocumentType(type: string): string {
     REGISTRATION_CERTIFICATE: "Registration Certificate — شهادة تسجيل",
     ID_CARD: "National ID Card — بطاقة التعريف",
     WORK_CERTIFICATE: "Work Certificate — شهادة عمل",
+    ADMIN_CERTIFICATE: "Administrative Certificate — شهادة إدارية", // ✅ Added
     PROFESSIONAL_CARD: "Professional Card — بطاقة مهنية",
     PHOTO: "Personal Photo — صورة شمسية",
   };
