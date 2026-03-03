@@ -980,7 +980,7 @@ function UploadModal({
                 className="hidden"
                 id="file-upload"
                 disabled={isUploading}
-                accept=".pdf,.jpg,.jpeg,.png"
+                accept=".jpg,.jpeg,.png"
               />
               <label
                 htmlFor="file-upload"
@@ -1118,7 +1118,7 @@ function ReuploadModal({
               className="hidden"
               id="reupload-file"
               disabled={isUploading}
-              accept=".pdf,.jpg,.jpeg,.png"
+              accept=".jpg,.jpeg,.png"
             />
             <label
               htmlFor="reupload-file"
