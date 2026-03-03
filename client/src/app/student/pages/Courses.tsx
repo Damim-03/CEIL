@@ -31,7 +31,10 @@ import PageLoader from "../../../components/PageLoader";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PricingModal } from "../components/Pricingmodal";
-
+import {
+  areDocumentsComplete,
+  type RegistrantCategory,
+} from "../../../constants/document.constants";
 type Level = (typeof LEVELS)[number];
 type Status = (typeof STATUSES)[number];
 type Step = "courses" | "levels" | "groups";
@@ -101,22 +104,6 @@ const Courses = () => {
   const enrollMutation = useEnrollInCourse();
   const { data: courses = [], isLoading: coursesLoading } = useCourses();
 
-  const { data: documents = [], isLoading: documentsLoading } =
-    useMyDocuments();
-
-  const REQUIRED_DOCUMENTS = [
-    "PHOTO",
-    "ID_CARD",
-    "STUDENT_CARD",
-    "SCHOOL_CERTIFICATE",
-  ];
-
-  const uploadedTypes = documents.map((d: any) => d.type);
-  const missingDocuments = REQUIRED_DOCUMENTS.filter(
-    (t) => !uploadedTypes.includes(t),
-  );
-  const isDocumentsComplete = missingDocuments.length === 0;
-
   const { data: profile, isLoading: profileLoading } = useMyProfile();
   const isProfileComplete =
     profile &&
@@ -126,6 +113,15 @@ const Courses = () => {
     profile.date_of_birth &&
     profile.nationality &&
     profile.education_level;
+
+  const { data: documents = [], isLoading: documentsLoading } =
+    useMyDocuments();
+
+  const uploadedTypes = documents.map((d: any) => d.type);
+  const registrantCategory: RegistrantCategory =
+    profile?.registrant_category || "STUDENT";
+  const docCheck = areDocumentsComplete(registrantCategory, uploadedTypes);
+  const isDocumentsComplete = docCheck.complete;
 
   const { data: enrollments = [], isLoading: enrollmentsLoading } =
     useStudentEnrollments();
