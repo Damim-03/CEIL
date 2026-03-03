@@ -3,7 +3,7 @@ import PageLoader from "../../../components/PageLoader";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { AlertDialog, useAlert } from "../components/Alertdialog";
-import type { Document, UploadMutation } from "../../../types/Types";
+import type { Document } from "../../../types/Types";
 import {
   FileText,
   Search,
@@ -132,7 +132,7 @@ export default function Documents() {
     isDocumentsComplete,
     missingDocuments,
     isLoading,
-    uploadDocuments,
+    uploadWithCategory,
     deleteDocument,
     reuploadDocument,
   } = useStudentDocuments();
@@ -342,12 +342,14 @@ export default function Documents() {
         <UploadModal
           category={category}
           onClose={() => setUploadModalOpen(false)}
-          uploadDocuments={uploadDocuments}
-          onSuccess={() => {
+          uploadWithCategory={uploadWithCategory}
+          onSuccess={(newCat) => {
             setUploadModalOpen(false);
             showSuccess(
               "Upload Successful",
-              "Your document has been uploaded successfully and is pending review.",
+              newCat !== category
+                ? `Category updated to ${newCat} and document uploaded. Pending review.`
+                : "Document uploaded successfully and is pending review.",
             );
           }}
           onError={(message: string) => {
@@ -817,22 +819,86 @@ function EmptyState({
 interface UploadModalProps {
   category: RegistrantCategory;
   onClose: () => void;
-  uploadDocuments: UploadMutation;
-  onSuccess: () => void;
+  uploadWithCategory: any;
+  onSuccess: (newCategory: RegistrantCategory) => void;
   onError: (message: string) => void;
 }
 
+const CATEGORY_CARDS: {
+  value: RegistrantCategory;
+  label: string;
+  label_ar: string;
+  label_fr: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  bg: string;
+  border: string;
+  activeBg: string;
+  activeBorder: string;
+  description_ar: string;
+}[] = [
+  {
+    value: "STUDENT",
+    label: "Student",
+    label_ar: "طالب",
+    label_fr: "Étudiant",
+    icon: GraduationCap,
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-50 dark:bg-blue-950/20",
+    border: "border-blue-200/60 dark:border-blue-800/20",
+    activeBg: "bg-blue-50 dark:bg-blue-950/30",
+    activeBorder: "border-blue-500 dark:border-blue-400",
+    description_ar: "بطاقة طالب أو شهادة مدرسية",
+  },
+  {
+    value: "EMPLOYEE",
+    label: "Employee",
+    label_ar: "موظف / أستاذ",
+    label_fr: "Employé",
+    icon: Briefcase,
+    color: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-50 dark:bg-orange-950/20",
+    border: "border-orange-200/60 dark:border-orange-800/20",
+    activeBg: "bg-orange-50 dark:bg-orange-950/30",
+    activeBorder: "border-orange-500 dark:border-orange-400",
+    description_ar: "بطاقة مهنية أو شهادة عمل",
+  },
+  {
+    value: "EXTERNAL",
+    label: "External",
+    label_ar: "شخص خارجي",
+    label_fr: "Externe",
+    icon: User,
+    color: "text-purple-600 dark:text-purple-400",
+    bg: "bg-purple-50 dark:bg-purple-950/20",
+    border: "border-purple-200/60 dark:border-purple-800/20",
+    activeBg: "bg-purple-50 dark:bg-purple-950/30",
+    activeBorder: "border-purple-500 dark:border-purple-400",
+    description_ar: "بطاقة التعريف الوطنية",
+  },
+];
+
 function UploadModal({
-  category,
+  category: initialCategory,
   onClose,
-  uploadDocuments,
+  uploadWithCategory,
   onSuccess,
   onError,
 }: UploadModalProps) {
+  const [selectedCategory, setSelectedCategory] =
+    useState<RegistrantCategory>(initialCategory);
   const [file, setFile] = useState<File | null>(null);
   const [type, setType] = useState("");
 
-  const categoryTypes = DOCUMENT_TYPES_BY_CATEGORY[category] || [];
+  const handleCategoryChange = (cat: RegistrantCategory) => {
+    setSelectedCategory(cat);
+    setType("");
+    setFile(null);
+  };
+
+  const categoryTypes = DOCUMENT_TYPES_BY_CATEGORY[selectedCategory] || [];
+  const availableCategoryTypes = categoryTypes;
+  const availableOptionalTypes = OPTIONAL_DOCUMENTS;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
@@ -847,31 +913,40 @@ function UploadModal({
     const formData = new FormData();
     formData.append(type, file);
 
-    uploadDocuments.mutate(formData, {
-      onSuccess: () => onSuccess(),
-      onError: (err: Error) => {
-        const errorMessage =
-          (err as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message || "Upload failed. Please try again.";
-        onError(errorMessage);
+    // ✅ Single mutation: category update (if changed) then upload — in sequence
+    uploadWithCategory.mutate(
+      {
+        formData,
+        newCategory: selectedCategory,
+        currentCategory: initialCategory,
       },
-    });
+      {
+        onSuccess: () => onSuccess(selectedCategory),
+        onError: (err: Error) => {
+          const errorMessage =
+            (err as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message || "Upload failed. Please try again.";
+          onError(errorMessage);
+        },
+      },
+    );
   };
 
-  const isUploading = uploadDocuments.isPending;
-
-  // ✅ Always show all category types + optional, no filtering
-  const availableCategoryTypes = categoryTypes;
-  const availableOptionalTypes = OPTIONAL_DOCUMENTS;
-  const availableTypes = [...categoryTypes, ...OPTIONAL_DOCUMENTS];
+  const isUploading = uploadWithCategory.isPending;
 
   return (
     <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-xl dark:shadow-black/50 max-w-md w-full border border-[#D8CDC0]/60 dark:border-[#2A2A2A]">
-        <div className="flex items-center justify-between p-6 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
-          <h2 className="text-xl font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-            Upload Document
-          </h2>
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-xl dark:shadow-black/50 max-w-lg w-full border border-[#D8CDC0]/60 dark:border-[#2A2A2A] max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A] sticky top-0 bg-white dark:bg-[#1A1A1A] z-10">
+          <div>
+            <h2 className="text-xl font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
+              Upload Document
+            </h2>
+            <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
+              اختر فئتك ثم نوع الوثيقة
+            </p>
+          </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-[#D8CDC0]/15 dark:hover:bg-[#222222] rounded-xl transition-colors"
@@ -882,110 +957,180 @@ function UploadModal({
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
-          {/* Category indicator */}
-          <div className="flex items-center gap-2 px-3 py-2 bg-[#D8CDC0]/10 dark:bg-[#222222] rounded-xl">
-            {(() => {
-              const info = CATEGORY_INFO[category];
-              const Icon = info.icon;
-              return (
-                <>
-                  <Icon className={`w-4 h-4 ${info.color}`} />
-                  <span className="text-sm text-[#6B5D4F] dark:text-[#888888]">
-                    Category:{" "}
-                    <span className={`font-medium ${info.color}`}>
-                      {info.label} — {info.label_ar}
-                    </span>
-                  </span>
-                </>
-              );
-            })()}
-          </div>
-
+        <div className="p-6 space-y-5">
+          {/* ── Step 1: Category Selector ── */}
           <div>
-            <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
-              Document Type <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-3">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-full bg-[#2B6F5E] text-white text-xs flex items-center justify-center font-bold">
+                  1
+                </span>
+                Who are you?
+              </span>
             </label>
-            {availableTypes.length > 0 ? (
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-                disabled={isUploading}
-                className="w-full px-3 py-2.5 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/10 focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/30"
+            <div className="grid grid-cols-3 gap-3">
+              {CATEGORY_CARDS.map((card) => {
+                const Icon = card.icon;
+                const isActive = selectedCategory === card.value;
+                return (
+                  <button
+                    key={card.value}
+                    onClick={() => handleCategoryChange(card.value)}
+                    disabled={isUploading}
+                    className={`
+                      relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all text-center
+                      ${
+                        isActive
+                          ? `${card.activeBg} ${card.activeBorder} shadow-sm`
+                          : `${card.bg} ${card.border} hover:border-opacity-60`
+                      }
+                      ${isUploading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                    `}
+                  >
+                    {/* Active checkmark */}
+                    {isActive && (
+                      <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#2B6F5E] dark:bg-[#4ADE80] flex items-center justify-center">
+                        <CheckCircle className="w-3 h-3 text-white dark:text-[#1A1A1A]" />
+                      </span>
+                    )}
+                    <div
+                      className={`w-9 h-9 rounded-xl ${isActive ? card.activeBg : card.bg} flex items-center justify-center`}
+                    >
+                      <Icon className={`w-5 h-5 ${card.color}`} />
+                    </div>
+                    <div>
+                      <p
+                        className={`text-xs font-semibold ${isActive ? card.color : "text-[#1B1B1B] dark:text-[#E5E5E5]"}`}
+                      >
+                        {card.label}
+                      </p>
+                      <p className="text-[10px] text-[#BEB29E] dark:text-[#666666] mt-0.5 leading-tight">
+                        {card.label_ar}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Required docs hint */}
+            <div
+              className={`mt-3 px-3 py-2 rounded-xl text-xs text-right flex items-center gap-2 justify-end
+              ${CATEGORY_CARDS.find((c) => c.value === selectedCategory)?.bg}
+              border ${CATEGORY_CARDS.find((c) => c.value === selectedCategory)?.border}
+            `}
+            >
+              <span
+                className={`font-medium ${CATEGORY_CARDS.find((c) => c.value === selectedCategory)?.color}`}
               >
-                <option value="">Select document type</option>
-                {availableCategoryTypes.length > 0 && (
-                  <optgroup label="Required Documents">
-                    {availableCategoryTypes.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label} — {t.label_ar}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-                {availableOptionalTypes.length > 0 && (
-                  <optgroup label="Optional Documents">
-                    {availableOptionalTypes.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label} — {t.label_ar}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
-            ) : (
-              <div className="px-3 py-4 bg-[#8DB896]/8 dark:bg-[#4ADE80]/5 rounded-xl text-center">
-                <CheckCircle className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80] mx-auto mb-1" />
-                <p className="text-sm text-[#2B6F5E] dark:text-[#4ADE80] font-medium">
-                  All document types have been approved!
-                </p>
-              </div>
-            )}
+                {CATEGORY_INFO[selectedCategory].description}
+              </span>
+              <AlertCircle
+                className={`w-3.5 h-3.5 shrink-0 ${CATEGORY_CARDS.find((c) => c.value === selectedCategory)?.color}`}
+              />
+            </div>
           </div>
 
+          {/* ── Step 2: Document Type ── */}
           <div>
             <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
-              Select File <span className="text-red-500">*</span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-full bg-[#2B6F5E] text-white text-xs flex items-center justify-center font-bold">
+                  2
+                </span>
+                Document Type <span className="text-red-500 ml-0.5">*</span>
+              </span>
             </label>
-            <div className="border-2 border-dashed border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-xl p-6 text-center hover:border-[#2B6F5E]/40 dark:hover:border-[#4ADE80]/20 transition-colors bg-[#D8CDC0]/5 dark:bg-[#151515]">
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              disabled={isUploading}
+              className="w-full px-3 py-2.5 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/10 focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/30"
+            >
+              <option value="">Select document type — اختر نوع الوثيقة</option>
+              {availableCategoryTypes.length > 0 && (
+                <optgroup label="📋 Required Documents — الوثائق المطلوبة">
+                  {availableCategoryTypes.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label} — {t.label_ar}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {availableOptionalTypes.length > 0 && (
+                <optgroup label="📎 Optional Documents — الوثائق الاختيارية">
+                  {availableOptionalTypes.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label} — {t.label_ar}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+          </div>
+
+          {/* ── Step 3: File Upload ── */}
+          <div>
+            <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-full bg-[#2B6F5E] text-white text-xs flex items-center justify-center font-bold">
+                  3
+                </span>
+                Select File <span className="text-red-500 ml-0.5">*</span>
+              </span>
+            </label>
+            <div
+              className={`
+              border-2 border-dashed rounded-xl p-6 text-center transition-colors
+              ${
+                file
+                  ? "border-[#2B6F5E]/60 dark:border-[#4ADE80]/30 bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5"
+                  : "border-[#D8CDC0]/60 dark:border-[#2A2A2A] hover:border-[#2B6F5E]/40 dark:hover:border-[#4ADE80]/20 bg-[#D8CDC0]/5 dark:bg-[#151515]"
+              }
+            `}
+            >
               <input
                 type="file"
                 onChange={handleFileChange}
                 className="hidden"
                 id="file-upload"
                 disabled={isUploading}
-                accept=".jpg,.jpeg,.png,.pdf" // ✅ Fixed: added .pdf
+                accept=".jpg,.jpeg,.png,.pdf"
               />
               <label
                 htmlFor="file-upload"
                 className={`cursor-pointer flex flex-col items-center ${isUploading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                <Upload className="w-8 h-8 text-[#BEB29E] dark:text-[#555555] mb-2" />
                 {file ? (
-                  <div>
+                  <>
+                    <div className="w-10 h-10 rounded-xl bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 flex items-center justify-center mb-2">
+                      <CheckCircle className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
+                    </div>
                     <p className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                       {file.name}
                     </p>
                     <p className="text-xs text-[#BEB29E] dark:text-[#666666] mt-1">
-                      {formatFileSize(file.size)}
+                      {formatFileSize(file.size)} — click to change
                     </p>
-                  </div>
+                  </>
                 ) : (
-                  <div>
+                  <>
+                    <Upload className="w-8 h-8 text-[#BEB29E] dark:text-[#555555] mb-2" />
                     <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
                       Click to upload or drag and drop
                     </p>
                     <p className="text-xs text-[#BEB29E] dark:text-[#666666] mt-1">
                       PDF, JPG, PNG (max 10MB)
                     </p>
-                  </div>
+                  </>
                 )}
               </label>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A] bg-[#D8CDC0]/5 dark:bg-[#151515] rounded-b-2xl">
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A] bg-[#D8CDC0]/5 dark:bg-[#151515] rounded-b-2xl sticky bottom-0">
           <Button
             onClick={onClose}
             variant="outline"
@@ -997,9 +1142,9 @@ function UploadModal({
           <Button
             onClick={handleUpload}
             disabled={isUploading || !file || !type}
-            className="gap-2 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white rounded-xl"
+            className="gap-2 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white rounded-xl min-w-[100px]"
           >
-            <Upload className="w-4 h-4" />{" "}
+            <Upload className="w-4 h-4" />
             {isUploading ? "Uploading..." : "Upload"}
           </Button>
         </div>

@@ -1,13 +1,10 @@
 /* ===============================================================
    STUDENT HOOKS - CONSOLIDATED FILE
    
-   All student-related React Query hooks in one place.
-   Organized by domain for easy navigation.
-   
    ✅ UPDATED: useStudentDocuments now returns category-aware data
-   ✅ UPDATED: BASICS level support
-   
-   Last updated: February 2026
+   ✅ UPDATED: updateCategory — updates registrant_category in DB
+               then uploads document in correct sequence
+   Last updated: March 2026
 =============================================================== */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -82,6 +79,8 @@ interface CourseProfile {
   };
 }
 
+export type RegistrantCategory = "STUDENT" | "EXTERNAL" | "EMPLOYEE";
+
 /* ===============================================================
    PROFILE — 🟢 30s
 =============================================================== */
@@ -150,7 +149,11 @@ export const useStudentDashboard = () => {
 };
 
 /* ===============================================================
-   DOCUMENTS — 🟢 30s ✅ UPDATED for category-based documents
+   DOCUMENTS — 🟢 30s
+   ✅ updateCategory + uploadDocuments run in correct sequence:
+      1. If category changed → update it first (await)
+      2. Then upload the document
+      This prevents category changing without a file being saved.
 =============================================================== */
 
 export const useStudentDocuments = () => {
@@ -163,13 +166,10 @@ export const useStudentDocuments = () => {
     refetchOnWindowFocus: true,
     placeholderData: (prev: any) => prev,
     select: (data: any) => {
-      // ✅ Normalize response: backend returns
-      // { documents, registrant_category, required_documents, is_complete, missing }
-      // Older format: just an array
       if (Array.isArray(data)) {
         return {
           documents: data,
-          registrant_category: "STUDENT" as const,
+          registrant_category: "STUDENT" as RegistrantCategory,
           required_documents: [],
           is_complete: false,
           missing: [],
@@ -177,7 +177,8 @@ export const useStudentDocuments = () => {
       }
       return {
         documents: data.documents || [],
-        registrant_category: data.registrant_category || "STUDENT",
+        registrant_category: (data.registrant_category ||
+          "STUDENT") as RegistrantCategory,
         required_documents: data.required_documents || [],
         is_complete: data.is_complete || false,
         missing: data.missing || [],
@@ -185,6 +186,7 @@ export const useStudentDocuments = () => {
     },
   });
 
+  // ── Standard upload (no category change) ──────────────────
   const uploadDocuments = useMutation({
     mutationFn: studentApi.uploadDocuments,
     onSuccess: (data) => {
@@ -199,6 +201,47 @@ export const useStudentDocuments = () => {
       toast.error("Upload failed", {
         description:
           error.response?.data?.message || "Failed to upload documents.",
+      });
+    },
+  });
+
+  // ── Upload with optional category update ──────────────────
+  // ✅ Sequence: update category first (if changed), THEN upload file
+  // If category update fails → upload is aborted
+  const uploadWithCategory = useMutation({
+    mutationFn: async ({
+      formData,
+      newCategory,
+      currentCategory,
+    }: {
+      formData: FormData;
+      newCategory: RegistrantCategory;
+      currentCategory: RegistrantCategory;
+    }) => {
+      // Step 1: update category only if it changed
+      if (newCategory !== currentCategory) {
+        await studentApi.updateProfile({ registrant_category: newCategory });
+      }
+      // Step 2: upload document
+      return studentApi.uploadDocuments(formData);
+    },
+    onSuccess: (data, variables) => {
+      qc.invalidateQueries({ queryKey: DOCUMENTS_KEY });
+      qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
+      qc.invalidateQueries({ queryKey: PROFILE_KEY });
+
+      const categoryChanged =
+        variables.newCategory !== variables.currentCategory;
+      toast.success("Upload successful", {
+        description: categoryChanged
+          ? `Category updated to ${variables.newCategory} and document uploaded.`
+          : `${data.documents?.length || 0} document(s) uploaded.`,
+      });
+    },
+    onError: (error: any) => {
+      toast.error("Upload failed", {
+        description:
+          error.response?.data?.message || "Failed to complete upload.",
       });
     },
   });
@@ -239,13 +282,15 @@ export const useStudentDocuments = () => {
 
   return {
     ...documentsQuery,
-    // ✅ Convenience getters
     documents: documentsQuery.data?.documents || [],
     registrantCategory: documentsQuery.data?.registrant_category || "STUDENT",
     requiredDocuments: documentsQuery.data?.required_documents || [],
     isDocumentsComplete: documentsQuery.data?.is_complete || false,
     missingDocuments: documentsQuery.data?.missing || [],
+    // Standard upload (when category doesn't change)
     uploadDocuments,
+    // ✅ Upload with category change in correct sequence
+    uploadWithCategory,
     deleteDocument,
     reuploadDocument,
   };
@@ -330,12 +375,10 @@ export const useEnrollInCourse = () => {
     },
     onSuccess: (data) => {
       console.log("✅ ENROLLMENT SUCCESS:", data);
-
       qc.invalidateQueries({ queryKey: STUDENT_ENROLLMENTS_KEY });
       qc.invalidateQueries({ queryKey: COURSE_GROUPS_KEY });
       qc.invalidateQueries({ queryKey: PROFILE_KEY });
       qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
-
       toast.success("Enrollment successful!", {
         description: data.group_id
           ? "You have been enrolled in the course and joined the group."
@@ -350,11 +393,7 @@ export const useEnrollInCourse = () => {
         error.response?.data?.error ||
         error.message ||
         "Failed to enroll. Please try again.";
-
-      toast.error("Enrollment Failed", {
-        description: msg,
-        duration: 7000,
-      });
+      toast.error("Enrollment Failed", { description: msg, duration: 7000 });
     },
   });
 };
@@ -363,15 +402,13 @@ export const useCancelEnrollment = () => {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (enrollmentId: string) => {
-      return studentApi.cancelEnrollment(enrollmentId);
-    },
+    mutationFn: (enrollmentId: string) =>
+      studentApi.cancelEnrollment(enrollmentId),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: STUDENT_ENROLLMENTS_KEY });
       qc.invalidateQueries({ queryKey: COURSE_GROUPS_KEY });
       qc.invalidateQueries({ queryKey: PROFILE_KEY });
       qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
-
       toast.success("Enrollment cancelled", {
         description: data.had_paid_fees
           ? "Please contact administration for fee refund."
@@ -380,12 +417,10 @@ export const useCancelEnrollment = () => {
       });
     },
     onError: (error: any) => {
-      const msg =
-        error.response?.data?.message ||
-        "Failed to cancel enrollment. Please try again.";
-
       toast.error("Cancellation Failed", {
-        description: msg,
+        description:
+          error.response?.data?.message ||
+          "Failed to cancel enrollment. Please try again.",
         duration: 7000,
       });
     },
@@ -406,12 +441,10 @@ export const useJoinGroup = () => {
     },
     onSuccess: (data) => {
       console.log("✅ JOIN GROUP SUCCESS:", data);
-
       qc.invalidateQueries({ queryKey: COURSE_GROUPS_KEY });
       qc.invalidateQueries({ queryKey: STUDENT_ENROLLMENTS_KEY });
       qc.invalidateQueries({ queryKey: PROFILE_KEY });
       qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
-
       toast.success("Joined group successfully!", {
         description: `You are now in ${data.group_name ? `group "${data.group_name}"` : "the group"}${data.level ? ` (Level ${data.level})` : ""}.`,
         duration: 5000,
@@ -419,13 +452,11 @@ export const useJoinGroup = () => {
     },
     onError: (error: any) => {
       console.error("❌ JOIN GROUP FAILED:", error);
-      const msg =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        "Failed to join the group. Please try again.";
-
       toast.error("Join Group Failed", {
-        description: msg,
+        description:
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          "Failed to join the group. Please try again.",
         duration: 7000,
       });
     },
@@ -436,27 +467,22 @@ export const useLeaveGroup = () => {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: () => {
-      return studentApi.leaveGroup();
-    },
+    mutationFn: () => studentApi.leaveGroup(),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: COURSE_GROUPS_KEY });
       qc.invalidateQueries({ queryKey: STUDENT_ENROLLMENTS_KEY });
       qc.invalidateQueries({ queryKey: PROFILE_KEY });
       qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
-
       toast.success("Left group successfully", {
         description: "You can now join another group.",
         duration: 5000,
       });
     },
     onError: (error: any) => {
-      const msg =
-        error.response?.data?.message ||
-        "Failed to leave the group. Please try again.";
-
       toast.error("Leave Group Failed", {
-        description: msg,
+        description:
+          error.response?.data?.message ||
+          "Failed to leave the group. Please try again.",
         duration: 7000,
       });
     },
@@ -526,7 +552,6 @@ export const useMyDocuments = () =>
 
 export function useEnroll() {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: (courseId: string) =>
       studentApi.enroll({ course_id: courseId }),
