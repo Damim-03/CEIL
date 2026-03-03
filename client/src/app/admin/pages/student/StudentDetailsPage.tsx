@@ -222,7 +222,7 @@ const StudentDetailsPage = () => {
                     email: student.email || "",
                     google_avatar: student.user?.google_avatar,
                     role: "STUDENT",
-                    is_active: student.status === "Active",
+                    is_active: student.status === "ACTIVE",
                   }}
                 />
               </div>
