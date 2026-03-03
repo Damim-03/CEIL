@@ -873,13 +873,36 @@ const AdminDocuments = () => {
                   }}
                 />
               )}
-            {documentToView?.fileType === "pdf" && documentToView?.fileUrl && (
-              <iframe
-                src={documentToView.fileUrl}
-                className="w-full h-[65vh] rounded-lg border"
-                title={documentToView.fileName}
-              />
-            )}
+            {documentToView?.fileType === "pdf" &&
+              documentToView?.fileUrl &&
+              (() => {
+                // Cloudinary: convert PDF to image by changing extension
+                const imageUrl = documentToView.fileUrl.replace(
+                  /\.pdf$/i,
+                  ".jpg",
+                );
+                return (
+                  <div className="w-full max-h-[65vh] overflow-auto rounded-lg border bg-white p-2">
+                    <img
+                      src={imageUrl}
+                      alt={documentToView.fileName}
+                      className="w-full object-contain mx-auto"
+                      onError={(e) => {
+                        // Fallback: try Google Docs viewer
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                        const container = target.parentElement!;
+                        const iframe = document.createElement("iframe");
+                        iframe.src = `https://docs.google.com/gview?url=${encodeURIComponent(documentToView.fileUrl)}&embedded=true`;
+                        iframe.className = "w-full rounded-lg";
+                        iframe.style.height = "65vh";
+                        iframe.title = documentToView.fileName;
+                        container.appendChild(iframe);
+                      }}
+                    />
+                  </div>
+                );
+              })()}
             {documentToView?.fileType === "doc" && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <FileIcon className="h-16 w-16 text-muted-foreground mb-4" />
