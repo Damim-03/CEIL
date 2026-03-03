@@ -246,7 +246,6 @@ const Courses = () => {
   if (!isProfileComplete) {
     return (
       <div className="space-y-6">
-        {/* Header */}
         <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
           <div className="flex items-center gap-4">
@@ -255,75 +254,114 @@ const Courses = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                {step === "courses"
-                  ? "Browse Courses"
-                  : step === "levels"
-                    ? `Select Level — ${selectedCourse?.course_name}`
-                    : `Select Group — Level ${selectedLevel}`}
+                Browse Courses
               </h1>
-              <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
-                {step === "courses"
-                  ? "Choose a course to start your learning journey"
-                  : step === "levels"
-                    ? "Pick your proficiency level"
-                    : "Join a group that fits your schedule"}
-              </p>
             </div>
           </div>
         </div>
 
-        {step !== "courses" && (
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#C4A035]/30 dark:border-[#D4A843]/20 p-12 text-center">
+          <div className="w-16 h-16 rounded-full bg-[#C4A035]/10 dark:bg-[#D4A843]/10 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-[#C4A035] dark:text-[#D4A843]" />
+          </div>
+          <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
+            Complete Your Profile First
+          </h3>
+          <p className="text-[#6B5D4F] dark:text-[#888888] mb-6 max-w-md mx-auto">
+            You need to complete your personal information before browsing and
+            enrolling in courses.
+          </p>
           <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="gap-2 text-[#6B5D4F] dark:text-[#888888] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222] rounded-xl"
+            onClick={() => navigate("/student/profile")}
+            className="bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white rounded-xl px-8 gap-2 shadow-lg shadow-[#2B6F5E]/20"
           >
-            <ArrowLeft className="w-4 h-4" /> Back
+            <User className="w-4 h-4" />
+            Complete Profile
           </Button>
-        )}
-
-        {step === "courses" && (
-          <CoursesList courses={courses} onSelectCourse={handleSelectCourse} />
-        )}
-        {step === "levels" && selectedCourse && (
-          <LevelSelection
-            levels={LEVELS}
-            onSelectLevel={handleSelectLevel}
-            selectedLevel={selectedLevel}
-          />
-        )}
-        {step === "groups" && selectedLevel && (
-          <GroupsList
-            groups={groups}
-            level={selectedLevel}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            selectedStatus={selectedStatus}
-            setSelectedStatus={setSelectedStatus}
-            onEnroll={handleEnrollInGroup}
-            isEnrolling={enrollMutation.isPending}
-            isLoading={groupsLoading}
-          />
-        )}
-
-        <PricingModal
-          isOpen={isPricingModalOpen}
-          onClose={() => {
-            setIsPricingModalOpen(false);
-            setSelectedGroupForEnrollment(null);
-          }}
-          onConfirm={confirmEnrollment}
-          courseId={selectedCourse?.course_id || null}
-          courseName={selectedCourse?.course_name || ""}
-          groupName={
-            groups.find((g: Group) => g.group_id === selectedGroupForEnrollment)
-              ?.name || ""
-          }
-          isEnrolling={enrollMutation.isPending}
-        />
+        </div>
       </div>
     );
   }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
+        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20 dark:shadow-black/30">
+            <GraduationCap className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+              {step === "courses"
+                ? "Browse Courses"
+                : step === "levels"
+                  ? `Select Level — ${selectedCourse?.course_name}`
+                  : `Select Group — Level ${selectedLevel}`}
+            </h1>
+            <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
+              {step === "courses"
+                ? "Choose a course to start your learning journey"
+                : step === "levels"
+                  ? "Pick your proficiency level"
+                  : "Join a group that fits your schedule"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {step !== "courses" && (
+        <Button
+          variant="ghost"
+          onClick={handleBack}
+          className="gap-2 text-[#6B5D4F] dark:text-[#888888] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222] rounded-xl"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back
+        </Button>
+      )}
+
+      {step === "courses" && (
+        <CoursesList courses={courses} onSelectCourse={handleSelectCourse} />
+      )}
+      {step === "levels" && selectedCourse && (
+        <LevelSelection
+          levels={LEVELS}
+          onSelectLevel={handleSelectLevel}
+          selectedLevel={selectedLevel}
+        />
+      )}
+      {step === "groups" && selectedLevel && (
+        <GroupsList
+          groups={groups}
+          level={selectedLevel}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          selectedStatus={selectedStatus}
+          setSelectedStatus={setSelectedStatus}
+          onEnroll={handleEnrollInGroup}
+          isEnrolling={enrollMutation.isPending}
+          isLoading={groupsLoading}
+        />
+      )}
+
+      <PricingModal
+        isOpen={isPricingModalOpen}
+        onClose={() => {
+          setIsPricingModalOpen(false);
+          setSelectedGroupForEnrollment(null);
+        }}
+        onConfirm={confirmEnrollment}
+        courseId={selectedCourse?.course_id || null}
+        courseName={selectedCourse?.course_name || ""}
+        groupName={
+          groups.find((g: Group) => g.group_id === selectedGroupForEnrollment)
+            ?.name || ""
+        }
+        isEnrolling={enrollMutation.isPending}
+      />
+    </div>
+  );
 };
 
 /* ==================== COURSES LIST ==================== */
