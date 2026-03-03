@@ -95,12 +95,8 @@ const REQUIRED_DOCUMENTS_BY_CATEGORY: Record<
       alternatives: ["ID_CARD"],
     },
   ],
+  // ✅ FIXED: Removed ID_CARD — EMPLOYEE only needs WORK or ADMIN certificate
   EMPLOYEE: [
-    {
-      label: "National ID Card",
-      label_ar: "بطاقة التعريف الوطنية",
-      alternatives: ["ID_CARD"],
-    },
     {
       label: "Work or Administrative Certificate",
       label_ar: "شهادة عمل أو شهادة إدارية",
