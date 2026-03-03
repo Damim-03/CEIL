@@ -21,7 +21,7 @@ import {
   getCourseProfileWithPricing,
 } from "../../controllers/student/student.controller";
 import { authMiddleware } from "../../middlewares/auth.middleware";
-import { upload } from "../../middlewares/upload.middleware";
+import { upload, uploadDocument } from "../../middlewares/upload.middleware";
 import { requireApprovedDocuments } from "../../middlewares/requireApprovedDocuments.middleware";
 import { requireCompletedProfile } from "../../middlewares/requireCompletedProfile.middleware";
 import {
@@ -71,7 +71,7 @@ studentRoutes.get("/documents", authMiddleware, getMyDocumentsController);
 studentRoutes.put(
   "/documents/:document_id/reupload",
   authMiddleware,
-  upload.single("file"),
+  uploadDocument.single("file"),
   reuploadDocumentController,
 );
 
