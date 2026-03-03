@@ -27,7 +27,7 @@ import {
 
 // ─── Constants ───────────────────────────────────────────
 const LEVEL_ORDER: Record<Level, number> = {
-  BASICS: 0, // ← جديد: المستوى القاعدي
+  PRE_A1: 0, // ← جديد: المستوى القاعدي
   A1: 1,
   A2: 2,
   B1: 3,
