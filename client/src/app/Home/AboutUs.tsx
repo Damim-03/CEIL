@@ -1,6 +1,7 @@
 import { Award, Heart, Target, GraduationCap } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useLanguage } from "../../hooks/useLanguage";
+import Nacer from "../../assets/photo_5855032674022526200_y.jpg";
 
 // ── Team member photos — place images in src/assets/team/
 // If no photo provided, falls back to initials with gradient
@@ -13,13 +14,13 @@ const TEAM = [
     roleEn: "Center Director",
     roleFr: "Directeur du centre",
     initials: "ن.د",
-    photo: null as string | null, // e.g. "/src/assets/team/director.jpg"
+    photo: {Nacer}, // e.g. "/src/assets/team/director.jpg"
     gradient: "from-[#2B6F5E] to-[#1a3528]",
     accentColor: "#C4A035",
     badge: "director",
   },
   {
-    name: "أ. بدر الدين عكيشي",
+    name: "بدر الدين عكيشي",
     nameEn: "Mr. Badreddine Akichi",
     nameFr: "M. Badreddine Akichi",
     role: "مسؤول إداري",
@@ -32,7 +33,7 @@ const TEAM = [
     badge: "admin",
   },
   {
-    name: "أ. كرشو زكريا",
+    name: "كرشو زكريا",
     nameEn: "Mr. Karchou Zakaria",
     nameFr: "M. Karchou Zakaria",
     role: "مسؤول إداري",
@@ -45,7 +46,7 @@ const TEAM = [
     badge: "admin",
   },
   {
-    name: "أ. مصباحي حسن",
+    name: "مصباحي حسن",
     nameEn: "Mr. Mesbahi Hassan",
     nameFr: "M. Mesbahi Hassan",
     role: "مسؤول تسيير حالات الطلبة",
@@ -58,12 +59,12 @@ const TEAM = [
     badge: "student-affairs",
   },
   {
-    name: "أ. قادي سليمان",
+    name: "قادي سليمان",
     nameEn: "Mr. Gadi Slimane",
     nameFr: "M. Gadi Slimane",
-    role: "أستاذ",
-    roleEn: "Teacher",
-    roleFr: "Enseignant",
+    role: "مسؤول إداري",
+    roleEn: "Administrative Officer",
+    roleFr: "Responsable administratif",
     initials: "ق.س",
     photo: null as string | null,
     gradient: "from-[#1a3528] to-[#3A8C75]",
@@ -71,7 +72,7 @@ const TEAM = [
     badge: "teacher",
   },
   {
-    name: "أ. عياطي معتز بالله",
+    name: "عياطي معتز بالله",
     nameEn: "Mr. Ayati Mouatez Billah",
     nameFr: "M. Ayati Mouatez Billah",
     role: "أستاذ اللغة الإنجليزية",
