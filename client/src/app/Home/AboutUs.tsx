@@ -124,19 +124,11 @@ function TeamCard({
   const badgeLabel =
     lang === "en" ? badge.en : lang === "fr" ? badge.fr : badge.ar;
 
-  // Scroll reveal
+  // Always visible in marquee context
   useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setVisible(true);
-      },
-      { threshold: 0.15 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+    const timer = setTimeout(() => setVisible(true), index * 80);
+    return () => clearTimeout(timer);
+  }, [index]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -460,16 +452,28 @@ const AboutUs = () => {
             <div className="w-12 h-1 rounded-full bg-brand-mustard" />
           </div>
 
-          {/* Grid layout — responsive */}
-          <div className="flex flex-wrap gap-6 justify-center lg:justify-start">
-            {TEAM.map((member, i) => (
-              <TeamCard
-                key={member.name}
-                member={member}
-                index={i}
-                lang={currentLang}
-              />
-            ))}
+          {/* ── Infinite scroll carousel ── */}
+          <div
+            className="relative overflow-hidden"
+            style={{
+              maskImage:
+                "linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%)",
+            }}
+          >
+            {/* Track — doubled for seamless loop */}
+            <div
+              className="flex gap-6 team-marquee hover:[animation-play-state:paused]"
+              style={{ width: "max-content" }}
+            >
+              {[...TEAM, ...TEAM, ...TEAM].map((member, i) => (
+                <TeamCard
+                  key={`${member.name}-${i}`}
+                  member={member}
+                  index={i % TEAM.length}
+                  lang={currentLang}
+                />
+              ))}
+            </div>
           </div>
 
           {/* Photo upload note */}
@@ -497,6 +501,13 @@ const AboutUs = () => {
         @keyframes card-in {
           from { opacity: 0; transform: translateY(30px) scale(0.97); }
           to   { opacity: 1; transform: translateY(0)    scale(1);    }
+        }
+        @keyframes team-scroll {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-1344px); }
+        }
+        .team-marquee {
+          animation: team-scroll 28s linear infinite;
         }
       `}</style>
     </div>
