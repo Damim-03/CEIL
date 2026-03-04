@@ -465,7 +465,7 @@ const AboutUs = () => {
               className="flex gap-6 team-marquee hover:[animation-play-state:paused]"
               style={{ width: "max-content" }}
             >
-              {[...TEAM, ...TEAM, ...TEAM].map((member, i) => (
+              {[...TEAM, ...TEAM].map((member, i) => (
                 <TeamCard
                   key={`${member.name}-${i}`}
                   member={member}
@@ -508,6 +508,10 @@ const AboutUs = () => {
         }
         .team-marquee {
           animation: team-scroll 28s linear infinite;
+          animation-fill-mode: none;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .team-marquee { animation: none; }
         }
       `}</style>
     </div>
