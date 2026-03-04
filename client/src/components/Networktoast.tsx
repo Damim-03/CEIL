@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Wifi, WifiOff } from "lucide-react";
-import { useNetworkStatus } from "../hooks/useNetworkStatus";
-import type { NetworkQuality } from "../hooks/useNetworkStatus";
+import { useNetworkStatus } from "../hooks/Usenetworkstatus";
+import type { NetworkQuality } from "../hooks/Usenetworkstatus";
 
 // WifiZero doesn't exist in lucide — use a custom weak-wifi icon
 function WifiWeak({ className }: { className?: string }) {
