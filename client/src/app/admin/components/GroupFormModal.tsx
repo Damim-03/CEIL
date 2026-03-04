@@ -45,7 +45,7 @@ interface GroupFormModalProps {
 
 const EMPTY_FORM: GroupFormState = {
   name: "",
-  level: "A1",
+  level: "PRE_A1",
   course_id: "",
   max_students: 20,
   teacher_id: undefined,
@@ -53,10 +53,10 @@ const EMPTY_FORM: GroupFormState = {
   current_capacity: 0,
 };
 
-const LEVELS = ["BASICS", "A1", "A2", "B1", "B2", "C1"];
+const LEVELS = ["PRE_A1", "A1", "A2", "B1", "B2", "C1"];
 
 const LEVEL_COLORS = {
-  BASICS: "from-slate-500 to-slate-700",
+  PRE_A1: "from-slate-500 to-slate-700",
   A1: "from-green-500 to-emerald-600",
   A2: "from-blue-500 to-cyan-600",
   B1: "from-purple-500 to-indigo-600",
@@ -65,7 +65,7 @@ const LEVEL_COLORS = {
 };
 
 const LEVEL_RING_COLORS = {
-  BASICS: "ring-slate-500/20",
+  PRE_A1: "ring-slate-500/20",
   A1: "ring-green-500/20",
   A2: "ring-blue-500/20",
   B1: "ring-purple-500/20",
