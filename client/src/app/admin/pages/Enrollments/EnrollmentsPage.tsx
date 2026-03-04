@@ -1,6 +1,6 @@
 /* ===============================================================
    ADMIN ENROLLMENTS MANAGEMENT PAGE - Dark Mode Applied
-   ✅ FIXED: Category-based document requirements
+   ✅ FIXED: Category-based document requirements (mirrors backend)
 =============================================================== */
 
 import { useState } from "react";
@@ -61,7 +61,7 @@ import { useTranslation } from "react-i18next";
 
 /* ===============================================================
    ✅ CATEGORY-BASED DOCUMENT REQUIREMENTS
-   (mirrors backend document.constants.ts)
+   Mirrors backend document.constants.ts exactly
 =============================================================== */
 
 type RegistrantCategory = "STUDENT" | "EXTERNAL" | "EMPLOYEE";
@@ -76,18 +76,20 @@ const REQUIRED_DOCUMENTS_BY_CATEGORY: Record<
   RegistrantCategory,
   DocRequirement[]
 > = {
+  // 🎓 STUDENT: any ONE of these satisfies the requirement
   STUDENT: [
     {
-      label: "Student Card",
-      label_ar: "بطاقة طالب",
-      alternatives: ["STUDENT_CARD"],
-    },
-    {
-      label: "School or Registration Certificate",
-      label_ar: "شهادة مدرسية أو شهادة تسجيل",
-      alternatives: ["SCHOOL_CERTIFICATE", "REGISTRATION_CERTIFICATE"],
+      label: "Student Card or Certificate",
+      label_ar: "بطاقة طالب أو شهادة مدرسية أو شهادة تسجيل",
+      alternatives: [
+        "STUDENT_CARD",
+        "SCHOOL_CERTIFICATE",
+        "REGISTRATION_CERTIFICATE",
+      ],
     },
   ],
+
+  // 🧑 EXTERNAL: ID card only
   EXTERNAL: [
     {
       label: "National ID Card",
@@ -95,12 +97,13 @@ const REQUIRED_DOCUMENTS_BY_CATEGORY: Record<
       alternatives: ["ID_CARD"],
     },
   ],
-  // ✅ FIXED: Removed ID_CARD — EMPLOYEE only needs WORK or ADMIN certificate
+
+  // 💼 EMPLOYEE: professional card or work certificate
   EMPLOYEE: [
     {
-      label: "Work or Administrative Certificate",
-      label_ar: "شهادة عمل أو شهادة إدارية",
-      alternatives: ["WORK_CERTIFICATE", "ADMIN_CERTIFICATE"],
+      label: "Professional Card or Work Certificate",
+      label_ar: "بطاقة مهنية أو شهادة عمل",
+      alternatives: ["PROFESSIONAL_CARD", "WORK_CERTIFICATE"],
     },
   ],
 };
@@ -824,7 +827,7 @@ function EnrollmentCard({
       })
     : "N/A";
 
-  // ✅ Category-based document check (replaces old hardcoded list)
+  // ✅ Category-based document check
   const docStatus = checkDocumentStatus(enrollment.student);
 
   return (
@@ -846,6 +849,7 @@ function EnrollmentCard({
       </div>
 
       <div className="p-5 space-y-4">
+        {/* Student info */}
         <div>
           <p className="text-xs font-medium text-[#6B5D4F] dark:text-[#888888] mb-1">
             {t("admin.enrollments.card.student")}
@@ -860,6 +864,7 @@ function EnrollmentCard({
           )}
         </div>
 
+        {/* Course info */}
         <div className="p-3 bg-[#D8CDC0]/10 dark:bg-[#222222] rounded-xl">
           <p className="text-xs font-medium text-[#6B5D4F] dark:text-[#888888] mb-1">
             {t("admin.enrollments.card.course")}
@@ -879,6 +884,7 @@ function EnrollmentCard({
           )}
         </div>
 
+        {/* Pricing */}
         {pricing && (
           <div className="p-3 bg-[#C4A035]/5 dark:bg-[#C4A035]/8 rounded-xl border border-[#C4A035]/15 dark:border-[#C4A035]/15">
             <div className="flex items-center gap-2 mb-1">
@@ -921,6 +927,7 @@ function EnrollmentCard({
           </div>
         )}
 
+        {/* Unpaid fee */}
         {showGoToFees && unpaidFee && (
           <div className="p-3 bg-[#C4A035]/5 dark:bg-[#C4A035]/8 rounded-xl border border-[#C4A035]/15 dark:border-[#C4A035]/15">
             <div className="flex items-center gap-2 mb-1">
@@ -949,6 +956,7 @@ function EnrollmentCard({
           </div>
         )}
 
+        {/* Group assigned */}
         {groupName && (
           <div className="p-3 bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 rounded-xl border border-[#2B6F5E]/15 dark:border-[#4ADE80]/15">
             <div className="flex items-center gap-2 mb-1">
@@ -963,7 +971,7 @@ function EnrollmentCard({
           </div>
         )}
 
-        {/* ✅ Category-based document status */}
+        {/* ✅ Document status — only shown for PENDING */}
         {enrollment.registration_status === "PENDING" &&
           !docStatus.allApproved && (
             <div className="p-3 bg-[#C4A035]/5 dark:bg-[#C4A035]/8 rounded-xl border border-[#C4A035]/15 dark:border-[#C4A035]/15">
@@ -1006,6 +1014,7 @@ function EnrollmentCard({
             </div>
           )}
 
+        {/* Date */}
         <div className="grid grid-cols-1 gap-3 pt-2 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
           <div className="flex items-center gap-2 text-sm text-[#6B5D4F] dark:text-[#888888]">
             <Calendar className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
@@ -1015,6 +1024,7 @@ function EnrollmentCard({
           </div>
         </div>
 
+        {/* Actions */}
         <div className="flex flex-col gap-2 pt-2">
           {onValidate && (
             <Button
