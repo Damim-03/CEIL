@@ -455,15 +455,19 @@ const AboutUs = () => {
           {/* ── Infinite scroll carousel ── */}
           <div
             className="relative overflow-hidden"
+            dir="ltr"
             style={{
               maskImage:
-                "linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%)",
+                "linear-gradient(90deg, transparent 0%, black 6%, black 94%, transparent 100%)",
+              WebkitMaskImage:
+                "linear-gradient(90deg, transparent 0%, black 6%, black 94%, transparent 100%)",
+              paddingBottom: "8px",
             }}
           >
-            {/* Track — doubled for seamless loop */}
+            {/* Track — 2 copies for seamless loop */}
             <div
               className="flex gap-6 team-marquee hover:[animation-play-state:paused]"
-              style={{ width: "max-content" }}
+              style={{ width: "max-content", willChange: "transform" }}
             >
               {[...TEAM, ...TEAM].map((member, i) => (
                 <TeamCard
