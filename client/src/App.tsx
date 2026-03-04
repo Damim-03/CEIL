@@ -84,12 +84,16 @@ import ActivityDashboardPage from "./app/owner/pages/activity/Activitydashboardp
 import OwnerNotificationsPage from "./app/owner/pages/Notifications/OwnerNotificationsPage";
 import { useScreenSaver } from "./hooks/Usescreensaver";
 import ScreenSaver from "./components/Screensaver";
+import NetworkToast from "./components/Networktoast";
 
 const App = () => {
   const { isIdle, resetTimer } = useScreenSaver();
 
   return (
     <>
+      {/* ✅ Network status toast — top center */}
+      <NetworkToast />
+
       {isIdle && <ScreenSaver onDismiss={resetTimer} />}
 
       <Routes>
