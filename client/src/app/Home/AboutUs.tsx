@@ -1,7 +1,7 @@
 import { Award, Heart, Target, GraduationCap } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useLanguage } from "../../hooks/useLanguage";
-import Nacer from "../../assets/photo_5855032674022526200_y.jpg";
+import Nacer from "../../assets/nacer.jpg";
 
 // ── Team member photos — place images in src/assets/team/
 // If no photo provided, falls back to initials with gradient
@@ -14,7 +14,7 @@ const TEAM = [
     roleEn: "Center Director",
     roleFr: "Directeur du centre",
     initials: "ن.د",
-    photo: {Nacer}, // e.g. "/src/assets/team/director.jpg"
+    photo: "../../assets/Nacer.jpg", // e.g. "/src/assets/team/director.jpg"
     gradient: "from-[#2B6F5E] to-[#1a3528]",
     accentColor: "#C4A035",
     badge: "director",
