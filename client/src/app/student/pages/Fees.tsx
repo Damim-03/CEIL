@@ -275,19 +275,6 @@ export default function Fees() {
                     </div>
                   </div>
                 )}
-                {fee.status === "UNPAID" && (
-                  <div className="flex gap-2">
-                    <Button className="flex-1 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white rounded-xl">
-                      <CreditCard className="w-4 h-4 mr-2" /> Pay Now
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#888888] rounded-xl"
-                    >
-                      <Download className="w-4 h-4 mr-2" /> Invoice
-                    </Button>
-                  </div>
-                )}
                 {fee.status === "PAID" && (
                   <Button
                     variant="outline"
