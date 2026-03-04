@@ -111,8 +111,12 @@ function Toast() {
         zIndex: 2147483647, // max z-index — above everything
         transform: show
           ? "translateX(-50%) translateY(0px)"
-          : "translateX(-50%) translateY(-130%)",
-        transition: "transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          : "translateX(-50%) translateY(-16px)",
+        opacity: show ? 1 : 0,
+        visibility: show ? "visible" : "hidden",
+        transition: show
+          ? "transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease"
+          : "transform 0.25s ease, opacity 0.22s ease, visibility 0s linear 0.22s",
         pointerEvents: show ? "auto" : "none",
       }}
     >
