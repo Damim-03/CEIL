@@ -14,7 +14,7 @@ const TEAM = [
     roleEn: "Center Director",
     roleFr: "Directeur du centre",
     initials: "ن.د",
-    photo: "../../assets/Nacer.jpg", // e.g. "/src/assets/team/director.jpg"
+    photo: Nacer, // e.g. "/src/assets/team/director.jpg"
     gradient: "from-[#2B6F5E] to-[#1a3528]",
     accentColor: "#C4A035",
     badge: "director",
