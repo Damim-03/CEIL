@@ -82,222 +82,236 @@ import RoomsTimetablePage from "./app/admin/pages/RoomsTimetablePage";
 import OwnerFeeAnalytics from "./app/owner/pages/OwnerFeeAnalytics";
 import ActivityDashboardPage from "./app/owner/pages/activity/Activitydashboardpage";
 import OwnerNotificationsPage from "./app/owner/pages/Notifications/OwnerNotificationsPage";
+import { useScreenSaver } from "./hooks/Usescreensaver";
+import ScreenSaver from "./components/Screensaver";
 
 const App = () => {
+  const { isIdle, resetTimer } = useScreenSaver();
+
   return (
-    <Routes>
-      {/* ═══════════════════════════════════════════
+    <>
+      {isIdle && <ScreenSaver onDismiss={resetTimer} />}
+
+      <Routes>
+        {/* ═══════════════════════════════════════════
           PUBLIC ROUTES — with language prefix /:lang/
           /ar, /en, /fr → Arabic, English, French
       ═══════════════════════════════════════════ */}
-      <Route path="/:lang" element={<LanguageLayout />}>
-        <Route element={<PublicLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="languages" element={<LanguagesSection />} />
-          <Route path="announcements" element={<AnnouncementsPreview />} />
+        <Route path="/:lang" element={<LanguageLayout />}>
+          <Route element={<PublicLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="languages" element={<LanguagesSection />} />
+            <Route path="announcements" element={<AnnouncementsPreview />} />
+            <Route
+              path="announcements/:id"
+              element={<AnnouncementDetailPage />}
+            />
+            <Route path="pricing" element={<PricingCoursesPage />} />
+            <Route path="courses" element={<CoursesHomePage />} />
+            <Route path="courses/:id" element={<CourseInfoMorePage />} />
+            <Route path="about-us" element={<AboutUs />} />
+            <Route path="OurPlatform" element={<OurPlatform />} />
+          </Route>
+
+          {/* ═══ Auth pages under lang prefix too ═══ */}
           <Route
-            path="announcements/:id"
-            element={<AnnouncementDetailPage />}
+            path="login"
+            element={
+              <GuestRoute>
+                <AuthPage />
+              </GuestRoute>
+            }
           />
-          <Route path="pricing" element={<PricingCoursesPage />} />
-          <Route path="courses" element={<CoursesHomePage />} />
-          <Route path="courses/:id" element={<CourseInfoMorePage />} />
-          <Route path="about-us" element={<AboutUs />} />
-          <Route path="OurPlatform" element={<OurPlatform />} />
+          <Route
+            path="register"
+            element={
+              <GuestRoute>
+                <AuthPage />
+              </GuestRoute>
+            }
+          />
         </Route>
 
-        {/* ═══ Auth pages under lang prefix too ═══ */}
-        <Route
-          path="login"
-          element={
-            <GuestRoute>
-              <AuthPage />
-            </GuestRoute>
-          }
-        />
-        <Route
-          path="register"
-          element={
-            <GuestRoute>
-              <AuthPage />
-            </GuestRoute>
-          }
-        />
-      </Route>
-
-      {/* ═══════════════════════════════════════════
+        {/* ═══════════════════════════════════════════
           REDIRECT: bare "/" → default language
       ═══════════════════════════════════════════ */}
-      <Route path="/" element={<Navigate to={`/${DEFAULT_LANG}`} replace />} />
+        <Route
+          path="/"
+          element={<Navigate to={`/${DEFAULT_LANG}`} replace />}
+        />
 
-      {/* ═══════════════════════════════════════════
+        {/* ═══════════════════════════════════════════
           LEGACY REDIRECTS — old paths without lang prefix
           /courses → /ar/courses, /about-us → /ar/about-us, etc.
       ═══════════════════════════════════════════ */}
-      <Route
-        path="/languages"
-        element={<Navigate to={`/${DEFAULT_LANG}/languages`} replace />}
-      />
-      <Route
-        path="/announcements"
-        element={<Navigate to={`/${DEFAULT_LANG}/announcements`} replace />}
-      />
-      <Route
-        path="/announcements/:id"
-        element={<RedirectWithLang base="announcements" />}
-      />
-      <Route
-        path="/courses"
-        element={<Navigate to={`/${DEFAULT_LANG}/courses`} replace />}
-      />
-      <Route
-        path="/courses/:id"
-        element={<RedirectWithLang base="courses" />}
-      />
-      <Route
-        path="/about-us"
-        element={<Navigate to={`/${DEFAULT_LANG}/about-us`} replace />}
-      />
-      <Route
-        path="/pricing"
-        element={<Navigate to={`/${DEFAULT_LANG}/pricing`} replace />}
-      />
-      <Route
-        path="/login"
-        element={<Navigate to={`/${DEFAULT_LANG}/login`} replace />}
-      />
-      <Route
-        path="/register"
-        element={<Navigate to={`/${DEFAULT_LANG}/register`} replace />}
-      />
+        <Route
+          path="/languages"
+          element={<Navigate to={`/${DEFAULT_LANG}/languages`} replace />}
+        />
+        <Route
+          path="/announcements"
+          element={<Navigate to={`/${DEFAULT_LANG}/announcements`} replace />}
+        />
+        <Route
+          path="/announcements/:id"
+          element={<RedirectWithLang base="announcements" />}
+        />
+        <Route
+          path="/courses"
+          element={<Navigate to={`/${DEFAULT_LANG}/courses`} replace />}
+        />
+        <Route
+          path="/courses/:id"
+          element={<RedirectWithLang base="courses" />}
+        />
+        <Route
+          path="/about-us"
+          element={<Navigate to={`/${DEFAULT_LANG}/about-us`} replace />}
+        />
+        <Route
+          path="/pricing"
+          element={<Navigate to={`/${DEFAULT_LANG}/pricing`} replace />}
+        />
+        <Route
+          path="/login"
+          element={<Navigate to={`/${DEFAULT_LANG}/login`} replace />}
+        />
+        <Route
+          path="/register"
+          element={<Navigate to={`/${DEFAULT_LANG}/register`} replace />}
+        />
 
-      {/* ═══════════════════════════════════════════
+        {/* ═══════════════════════════════════════════
           AUTH CALLBACKS — no lang prefix needed
       ═══════════════════════════════════════════ */}
-      <Route path="/unauthorized" element={<Unauthorized />} />
-      <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
 
-      {/* ═══════════════════════════════════════════
+        {/* ═══════════════════════════════════════════
           STUDENT ROUTES — no lang prefix (dashboard is internal)
       ═══════════════════════════════════════════ */}
-      <Route
-        path="/student"
-        element={
-          <ProtectedRoute allowedRoles={["STUDENT"]}>
-            <StudentLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Dashboard />} />
-        <Route path="documents" element={<Documents />} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="courses" element={<Courses />} />
-        <Route path="enrollments" element={<Enrollements />} />
-        <Route path="group/:groupId" element={<Group />} />
-        <Route path="fees" element={<Fees />} />
-        <Route path="attendance" element={<Attendance />} />
-        <Route path="results" element={<Results />} />
-        <Route path="notifications" element={<StudentNotificationsPage />} />
-      </Route>
+        <Route
+          path="/student"
+          element={
+            <ProtectedRoute allowedRoles={["STUDENT"]}>
+              <StudentLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="documents" element={<Documents />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="courses" element={<Courses />} />
+          <Route path="enrollments" element={<Enrollements />} />
+          <Route path="group/:groupId" element={<Group />} />
+          <Route path="fees" element={<Fees />} />
+          <Route path="attendance" element={<Attendance />} />
+          <Route path="results" element={<Results />} />
+          <Route path="notifications" element={<StudentNotificationsPage />} />
+        </Route>
 
-      {/* ═══════════════════════════════════════════
+        {/* ═══════════════════════════════════════════
           TEACHER ROUTES — no lang prefix
       ═══════════════════════════════════════════ */}
-      <Route
-        path="/teacher"
-        element={
-          <ProtectedRoute allowedRoles={["TEACHER"]}>
-            <TeacherLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<TeacherDashboard />} />
-        <Route path="groups" element={<TeacherGroups />} />
-        <Route path="groups/:groupId" element={<TeacherGroupDetails />} />
-        <Route path="groups/:groupId/stats" element={<TeacherGroupStats />} />
-        <Route path="sessions" element={<TeacherSessions />} />
-        <Route path="attendance" element={<TeacherAttendance />} />
-        <Route path="exams" element={<TeacherExams />} />
-        <Route path="results" element={<TeacherResults />} />
-        <Route path="students" element={<TeacherStudents />} />
-        <Route path="students/:studentId" element={<TeacherStudentDetails />} />
-        <Route path="schedule" element={<TeacherSchedule />} />
-        <Route path="announcements" element={<TeacherAnnouncements />} />
         <Route
-          path="announcements/:announcementId"
-          element={<TeacherAnnouncementDetail />}
-        />
-        <Route path="profile" element={<TeacherProfile />} />
-      </Route>
+          path="/teacher"
+          element={
+            <ProtectedRoute allowedRoles={["TEACHER"]}>
+              <TeacherLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<TeacherDashboard />} />
+          <Route path="groups" element={<TeacherGroups />} />
+          <Route path="groups/:groupId" element={<TeacherGroupDetails />} />
+          <Route path="groups/:groupId/stats" element={<TeacherGroupStats />} />
+          <Route path="sessions" element={<TeacherSessions />} />
+          <Route path="attendance" element={<TeacherAttendance />} />
+          <Route path="exams" element={<TeacherExams />} />
+          <Route path="results" element={<TeacherResults />} />
+          <Route path="students" element={<TeacherStudents />} />
+          <Route
+            path="students/:studentId"
+            element={<TeacherStudentDetails />}
+          />
+          <Route path="schedule" element={<TeacherSchedule />} />
+          <Route path="announcements" element={<TeacherAnnouncements />} />
+          <Route
+            path="announcements/:announcementId"
+            element={<TeacherAnnouncementDetail />}
+          />
+          <Route path="profile" element={<TeacherProfile />} />
+        </Route>
 
-      {/* ═══════════════════════════════════════════
+        {/* ═══════════════════════════════════════════
           OWNER ROUTES — no lang prefix
       ═══════════════════════════════════════════ */}
-      <Route
-        path="/owner"
-        element={
-          <ProtectedRoute allowedRoles={["OWNER"]}>
-            <OwnerLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<OwnerDashboard />} />
-        <Route path="dashboard" element={<OwnerDashboard />} />
-        <Route path="admins" element={<AdminsPage />} />
-        <Route path="users" element={<OwnerUsersPage />} />
-        <Route path="fee-analytics" element={<OwnerFeeAnalytics />} />
-        <Route path="activity" element={<ActivityDashboardPage />} />
-        <Route path="teachers" element={<OwnerTeacherspage />} />
-        <Route path="notifications" element={<OwnerNotificationsPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="system" element={<SystemPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-      </Route>
+        <Route
+          path="/owner"
+          element={
+            <ProtectedRoute allowedRoles={["OWNER"]}>
+              <OwnerLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<OwnerDashboard />} />
+          <Route path="dashboard" element={<OwnerDashboard />} />
+          <Route path="admins" element={<AdminsPage />} />
+          <Route path="users" element={<OwnerUsersPage />} />
+          <Route path="fee-analytics" element={<OwnerFeeAnalytics />} />
+          <Route path="activity" element={<ActivityDashboardPage />} />
+          <Route path="teachers" element={<OwnerTeacherspage />} />
+          <Route path="notifications" element={<OwnerNotificationsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="system" element={<SystemPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+        </Route>
 
-      {/* ═══════════════════════════════════════════
+        {/* ═══════════════════════════════════════════
           ADMIN ROUTES — no lang prefix
       ═══════════════════════════════════════════ */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute allowedRoles={["ADMIN", "OWNER"]}>
-            <AdminLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<AdminDashboard />} />
-        <Route path="dashboard" element={<AdminDashboard />} />
-        <Route path="users" element={<UsersPage />} />
-        <Route path="students" element={<StudentsPage />} />
-        <Route path="students/:studentId" element={<StudentDetailsPage />} />
-        <Route path="teachers" element={<TeacherPage />} />
-        <Route path="teachers/:teacherId" element={<TeacherDetailsPage />} />
-        <Route path="courses" element={<CoursesPage />} />
-        <Route path="courses/:courseId" element={<CourseDetailsPage />} />
         <Route
-          path="courses/:courseId/profile"
-          element={<CourseProfileManager />}
-        />
-        <Route path="departments" element={<DepartmentsPage />} />
-        <Route path="groups/:groupId" element={<GroupDetailsPage />} />
-        <Route path="sessions" element={<SessionsPage />} />
-        <Route path="fees" element={<FeesPage />} />
-        <Route path="enrollments" element={<EnrollmentsPage />} />
-        <Route path="Documents" element={<DocumentsPage />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="notifications" element={<AdminNotificationsPage />} />
-        <Route path="Announcements" element={<AnnouncementsPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="users/:userId" element={<UserDetailsPage />} />
-        <Route path="formations" element={<FormationsPage />} />
-        <Route
-          path="formations/:courseId/edit"
-          element={<CourseProfileManager />}
-        />
-        <Route path="rooms" element={<RoomsPage />} />
-        <Route path="rooms/timetable" element={<RoomsTimetablePage />} />
-      </Route>
-    </Routes>
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN", "OWNER"]}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="users" element={<UsersPage />} />
+          <Route path="students" element={<StudentsPage />} />
+          <Route path="students/:studentId" element={<StudentDetailsPage />} />
+          <Route path="teachers" element={<TeacherPage />} />
+          <Route path="teachers/:teacherId" element={<TeacherDetailsPage />} />
+          <Route path="courses" element={<CoursesPage />} />
+          <Route path="courses/:courseId" element={<CourseDetailsPage />} />
+          <Route
+            path="courses/:courseId/profile"
+            element={<CourseProfileManager />}
+          />
+          <Route path="departments" element={<DepartmentsPage />} />
+          <Route path="groups/:groupId" element={<GroupDetailsPage />} />
+          <Route path="sessions" element={<SessionsPage />} />
+          <Route path="fees" element={<FeesPage />} />
+          <Route path="enrollments" element={<EnrollmentsPage />} />
+          <Route path="Documents" element={<DocumentsPage />} />
+          <Route path="reports" element={<ReportsPage />} />
+          <Route path="notifications" element={<AdminNotificationsPage />} />
+          <Route path="Announcements" element={<AnnouncementsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="users/:userId" element={<UserDetailsPage />} />
+          <Route path="formations" element={<FormationsPage />} />
+          <Route
+            path="formations/:courseId/edit"
+            element={<CourseProfileManager />}
+          />
+          <Route path="rooms" element={<RoomsPage />} />
+          <Route path="rooms/timetable" element={<RoomsTimetablePage />} />
+        </Route>
+      </Routes>
+    </>
   );
 };
 
