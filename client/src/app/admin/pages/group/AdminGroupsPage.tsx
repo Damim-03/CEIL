@@ -9,6 +9,7 @@ import { useState, useMemo } from "react";
 import {
   Users,
   Search,
+  Filter,
   CheckCircle2,
   Clock,
   XCircle,
@@ -248,6 +249,8 @@ function StatusModal({
     );
   };
 
+  const isGroupFinished = group.status === "FINISHED";
+
   return (
     <Overlay onClose={onClose}>
       <div
@@ -290,9 +293,26 @@ function StatusModal({
             </div>
           </div>
 
+          {/* Locked banner for FINISHED groups */}
+          {isGroupFinished && (
+            <div className="mb-4 px-3 py-2.5 rounded-xl bg-[#F5F0EB] dark:bg-[#1A1A1A] border border-[#E8E0D5] dark:border-[#2A2A2A] flex items-center gap-2">
+              <span className="text-base">🔒</span>
+              <div>
+                <p className="text-[11px] font-semibold text-[#3D3530] dark:text-[#CCC]">
+                  الفوج منتهي
+                </p>
+                <p className="text-[10px] text-[#9B8E82]">
+                  لا يمكن تغيير حالة فوج منتهي
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* 3-segment pill control */}
-          <div className="relative flex p-1 rounded-2xl bg-[#F5F0EB] dark:bg-[#1A1A1A] mb-4">
-            {statuses.map((s, i) => {
+          <div
+            className={`relative flex p-1 rounded-2xl bg-[#F5F0EB] dark:bg-[#1A1A1A] mb-4 ${isGroupFinished ? "opacity-40 pointer-events-none select-none" : ""}`}
+          >
+            {statuses.map((s) => {
               const cfg = STATUS_CFG[s];
               const Icon = cfg.icon;
               const isActive = group.status === s;
@@ -301,9 +321,9 @@ function StatusModal({
                 <button
                   key={s}
                   onClick={() => handle(s)}
-                  onMouseEnter={() => setHovered(s)}
+                  onMouseEnter={() => !isGroupFinished && setHovered(s)}
                   onMouseLeave={() => setHovered(null)}
-                  disabled={isPending}
+                  disabled={isPending || isGroupFinished}
                   className="relative flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl transition-all duration-200"
                   style={{
                     background: isActive
@@ -337,13 +357,13 @@ function StatusModal({
             })}
           </div>
 
-          {/* FINISHED warning */}
-          {(hovered === "FINISHED" ||
-            (group.status !== "FINISHED" && preview === "FINISHED")) && (
-            <div className="mb-3 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 text-[11px] text-amber-600 dark:text-amber-400 text-center">
-              ⚠️ سيتم إغلاق جميع التسجيلات النشطة
-            </div>
-          )}
+          {/* FINISHED warning — only when active group is not already finished */}
+          {!isGroupFinished &&
+            (hovered === "FINISHED" || preview === "FINISHED") && (
+              <div className="mb-3 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 text-[11px] text-amber-600 dark:text-amber-400 text-center">
+                ⚠️ سيتم إغلاق جميع التسجيلات النشطة
+              </div>
+            )}
 
           {isPending ? (
             <div className="flex justify-center py-2">
