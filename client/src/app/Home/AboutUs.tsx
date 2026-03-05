@@ -480,15 +480,6 @@ const AboutUs = () => {
               ))}
             </div>
           </div>
-
-          {/* Photo upload note */}
-          <div className="mt-10 p-4 rounded-2xl border border-dashed border-brand-beige dark:border-[#2A2A2A] bg-white/50 dark:bg-[#161616]/50 flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-brand-teal-dark/8 dark:bg-[#4ADE80]/[0.08] flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-brand-teal-dark dark:text-[#4ADE80] text-xs font-bold">
-                i
-              </span>
-            </div>
-          </div>
         </section>
       </div>
 
