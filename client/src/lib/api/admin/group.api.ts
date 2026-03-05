@@ -60,20 +60,37 @@ export const groupApi = {
     return res.data;
   },
 
-  getGroupStudents: async (
-    groupId: string,
-    params: { status?: RegistrationStatus; page?: number; limit?: number } = {},
-  ) => {
-    const clean = Object.fromEntries(
-      Object.entries(params).filter(([, v]) => v !== undefined),
-    );
-    const qs = new URLSearchParams(clean as any).toString();
-    const res = await axiosInstance.get(
-      `/admin/groups/${groupId}/students?${qs}`,
-    );
-    return res.data as { data: GroupStudent[]; meta: any };
+  getGroupStudents: async (groupId: RegistrationStatus, params = {}) => {
+    try {
+      const clean = Object.fromEntries(
+        Object.entries(params).filter(([, v]) => v !== undefined),
+      );
+      const qs = new URLSearchParams(clean as any).toString();
+      const res = await axiosInstance.get(
+        `/admin/groups/${groupId}/students?${qs}`,
+      );
+      return res.data as { data: GroupStudent[]; meta: any };
+    } catch {
+      // ✅ fallback: استخدم الـ endpoint القديم
+      const res = await axiosInstance.get(`/admin/groups/${groupId}`);
+      const group = res.data;
+      const enrollments = group.enrollments ?? [];
+      return {
+        data: enrollments.map((e: any) => ({
+          enrollment_id: e.enrollment_id,
+          registration_status: e.registration_status,
+          enrollment_date: e.enrollment_date,
+          student: e.student,
+        })),
+        meta: {
+          total: enrollments.length,
+          page: 1,
+          limit: enrollments.length,
+          total_pages: 1,
+        },
+      };
+    }
   },
-
   changeStatus: async (groupId: string, status: GroupStatus) => {
     const res = await axiosInstance.patch(`/admin/groups/${groupId}/status`, {
       status,
