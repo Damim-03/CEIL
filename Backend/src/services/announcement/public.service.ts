@@ -2,6 +2,7 @@
 // 📦 src/services/public.service.ts
 // ✅ Public-facing read-only data — Home, Announcements, Courses
 // ✅ 📌 Pinned announcements appear first
+// ✅ 📎 Attachment fields included
 // ================================================================
 
 import { prisma } from "../../prisma/client";
@@ -35,6 +36,7 @@ export async function getHomeStats() {
 // ══════════════════════════════════════════════
 // PUBLIC ANNOUNCEMENTS (published only)
 // ✅ Pinned first, then by published_at
+// ✅ 📎 Attachment fields included
 // ══════════════════════════════════════════════
 
 export async function listPublicAnnouncements(params: {
@@ -65,11 +67,15 @@ export async function listPublicAnnouncements(params: {
         is_pinned: true,
         published_at: true,
         created_at: true,
+        // ✅ Attachment fields
+        attachment_url: true,
+        attachment_name: true,
+        attachment_type: true,
       },
       orderBy: [
-        { is_pinned: "desc" }, // 📌 Pinned first
-        { pinned_at: "desc" }, // Most recently pinned on top
-        { published_at: "desc" }, // Then newest
+        { is_pinned: "desc" },
+        { pinned_at: "desc" },
+        { published_at: "desc" },
       ],
       skip,
       take: limit,
@@ -88,6 +94,10 @@ export async function listPublicAnnouncements(params: {
       image_url: a.image_url,
       is_pinned: a.is_pinned,
       date: a.published_at || a.created_at,
+      // ✅ Attachment
+      attachment_url: a.attachment_url,
+      attachment_name: a.attachment_name,
+      attachment_type: a.attachment_type,
     })),
     pagination: {
       page,
@@ -120,6 +130,10 @@ export async function getPublicAnnouncementById(announcementId: string) {
     image_url: announcement.image_url,
     is_pinned: announcement.is_pinned,
     date: announcement.published_at || announcement.created_at,
+    // ✅ Attachment
+    attachment_url: announcement.attachment_url,
+    attachment_name: announcement.attachment_name,
+    attachment_type: announcement.attachment_type,
   };
 }
 
@@ -212,21 +226,13 @@ export async function listPublicCourses(params: {
 
   return {
     data,
-    pagination: {
-      page,
-      limit,
-      total,
-      total_pages: Math.ceil(total / limit),
-    },
+    pagination: { page, limit, total, total_pages: Math.ceil(total / limit) },
   };
 }
 
 export async function getPublicCourseById(courseId: string) {
   const profile = await prisma.courseProfile.findFirst({
-    where: {
-      course_id: courseId,
-      is_published: true,
-    },
+    where: { course_id: courseId, is_published: true },
     include: {
       pricing: { orderBy: { sort_order: "asc" } },
       course: {
@@ -241,9 +247,7 @@ export async function getPublicCourseById(courseId: string) {
               name: true,
               level: true,
               max_students: true,
-              teacher: {
-                select: { first_name: true, last_name: true },
-              },
+              teacher: { select: { first_name: true, last_name: true } },
               _count: {
                 select: {
                   enrollments: {
