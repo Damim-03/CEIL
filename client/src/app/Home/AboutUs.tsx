@@ -488,16 +488,6 @@ const AboutUs = () => {
                 i
               </span>
             </div>
-            <div>
-              <p className="text-[12px] font-semibold text-brand-black/70 dark:text-[#AAAAAA]">
-                {currentLang === "ar"
-                  ? "كيفية إضافة صور الفريق"
-                  : "How to add team photos"}
-              </p>
-              <p className="text-[11px] text-brand-brown/60 dark:text-[#666666] mt-0.5 font-mono">
-                {`TEAM[0].photo = "/src/assets/team/director.jpg"  // ← مثال`}
-              </p>
-            </div>
           </div>
         </section>
       </div>
