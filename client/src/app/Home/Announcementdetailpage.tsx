@@ -122,6 +122,7 @@ function AttachmentViewerModal({
 
   // نفس نهجة AdminDocuments: Cloudinary يحوّل PDF → JPG
   const pdfAsImageUrl = url.replace("/upload/", "/upload/pg_1,f_jpg,q_auto/");
+  const openUrl = isPdf ? pdfAsImageUrl : url;
 
   // Microsoft Office Viewer للـ Word/PPT
   const msViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
@@ -157,7 +158,7 @@ function AttachmentViewerModal({
 
           <div className="flex items-center gap-1.5 shrink-0 ml-3">
             <a
-              href={url}
+              href={openUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all"
@@ -168,7 +169,7 @@ function AttachmentViewerModal({
               </span>
             </a>
             <a
-              href={url}
+              href={openUrl}
               download={name}
               className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-semibold bg-brand-mustard hover:bg-brand-mustard/90 text-white transition-all"
             >
