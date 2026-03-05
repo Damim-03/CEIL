@@ -103,6 +103,7 @@ async function uploadAttachment(file: Express.Multer.File) {
           resource_type: "image", // ✅ مش "raw" — يخلّي .pdf→.jpg يشتغل
           public_id: safeId,
           format: "pdf", // يحفظه كـ PDF لكن بـ resource_type=image
+          access_mode: "public",
         },
         (error, result) => {
           if (error || !result)
