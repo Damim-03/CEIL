@@ -409,7 +409,7 @@ adminRoutes.get(
   "/groups",
   authMiddleware,
   roleGuard([Permissions.MANAGE_CLASSES]),
-  getAllGroupsController,
+  getGroupsWithStatsController,
 );
 
 adminRoutes.get(
