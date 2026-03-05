@@ -9,7 +9,6 @@ import { useState, useMemo } from "react";
 import {
   Users,
   Search,
-  Filter,
   CheckCircle2,
   Clock,
   XCircle,
@@ -26,6 +25,7 @@ import {
   BookOpen,
   BarChart3,
   Check,
+  Wifi,
 } from "lucide-react";
 import { useLanguage } from "../../../../hooks/useLanguage";
 import { toast } from "sonner";
@@ -40,6 +40,7 @@ import {
   type GroupStudent,
   type GroupStatus,
 } from "../../../../hooks/admin/useAdminGroups";
+import { useGroupsSocket } from "../../../../hooks/admin/useGroupsSocket";
 
 // ─── Config ───────────────────────────────────────────────────
 
@@ -1170,6 +1171,16 @@ export default function AdminGroupsPage() {
   const groups = data?.data ?? [];
   const selected = groups.find((g) => g.group_id === selectedId) ?? null;
 
+  // ✅ Realtime — auto-refresh on socket events
+  const [realtimeFlash, setRealtimeFlash] = useState(false);
+  useGroupsSocket({
+    watchGroupIds: selectedId ? [selectedId] : [],
+    onEvent: () => {
+      setRealtimeFlash(true);
+      setTimeout(() => setRealtimeFlash(false), 1500);
+    },
+  });
+
   const stats = useMemo(
     () => ({
       total: groups.length,
@@ -1189,9 +1200,22 @@ export default function AdminGroupsPage() {
       <div className="px-5 py-4 bg-white dark:bg-[#0D0D0D] border-b border-[#E8E0D5] dark:border-[#1E1E1E] shrink-0">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-[18px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-              إدارة الأفواج
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-[18px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                إدارة الأفواج
+              </h1>
+              <span
+                title="مباشر"
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold transition-all duration-500 ${
+                  realtimeFlash
+                    ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 scale-110"
+                    : "bg-[#F0EBE5] dark:bg-[#1A1A1A] text-[#9B8E82]"
+                }`}
+              >
+                <Wifi className="w-2.5 h-2.5" />
+                مباشر
+              </span>
+            </div>
             <p className="text-[12px] text-[#9B8E82]">
               {stats.total} فوج — {stats.open} مفتوح · {stats.full} ممتلئ ·{" "}
               {stats.finished} منتهي
