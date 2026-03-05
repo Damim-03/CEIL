@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { authApi } from "../../../../lib/api/auth.api";
+import PageLoader from "../../../../components/PageLoader";
 
 export default function GoogleCallbackPage() {
   const navigate = useNavigate();
@@ -21,9 +22,9 @@ export default function GoogleCallbackPage() {
           user.role === "ADMIN"
             ? "/admin"
             : user.role === "TEACHER"
-            ? "/teacher"
-            : "/dashboard",
-          { replace: true }
+              ? "/teacher"
+              : "/dashboard",
+          { replace: true },
         );
       } catch {
         navigate("/login", { replace: true });
@@ -33,11 +34,5 @@ export default function GoogleCallbackPage() {
     finishGoogleLogin();
   }, [navigate, queryClient]);
 
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <p className="text-sm text-muted-foreground">
-        Signing you in with Google...
-      </p>
-    </div>
-  );
+  return <PageLoader />;
 }
