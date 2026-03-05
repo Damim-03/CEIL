@@ -121,7 +121,7 @@ function AttachmentViewerModal({
   const [pdfImgFailed, setPdfImgFailed] = useState(false);
 
   // نفس نهجة AdminDocuments: Cloudinary يحوّل PDF → JPG
-  const pdfAsImageUrl = url.replace(/\.pdf(\?.*)?$/i, ".jpg");
+  const pdfAsImageUrl = url.replace("/upload/", "/upload/pg_1,f_jpg,q_auto/");
 
   // Microsoft Office Viewer للـ Word/PPT
   const msViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
