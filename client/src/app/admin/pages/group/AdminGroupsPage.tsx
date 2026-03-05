@@ -195,7 +195,7 @@ function GroupRow({
               {group.course.course_name}
             </span>
             <span className="text-[11px] text-[#9B8E82] dark:text-[#555] ms-auto">
-              {group.enrolled_count}/{group.max_students}
+              {group.enrolled_count + group.pending_count}/{group.max_students}
             </span>
           </div>
 
@@ -974,7 +974,7 @@ function GroupDetails({
             {
               icon: Users,
               label: "الطلبة",
-              value: `${group.enrolled_count}/${group.max_students}`,
+              value: `${group.enrolled_count + group.pending_count}/${group.max_students}`,
             },
             { icon: Layers, label: "الحصص", value: group._count.sessions },
             {
@@ -998,7 +998,7 @@ function GroupDetails({
 
         <CapacityBar
           pct={group.capacity_pct}
-          count={group.enrolled_count}
+          count={group.enrolled_count + group.pending_count}
           max={group.max_students}
         />
 
@@ -1052,6 +1052,11 @@ function GroupDetails({
           <span className="text-[13px] font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
             الطلبة ({students.length})
           </span>
+          {group.pending_count > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
+              {group.pending_count} معلق
+            </span>
+          )}
           <div className="ms-auto flex gap-1">
             {["ALL", "VALIDATED", "PAID", "PENDING"].map((s) => (
               <button
