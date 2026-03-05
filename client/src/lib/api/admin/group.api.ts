@@ -1,9 +1,10 @@
 // ================================================================
-// 📦 src/api/admin/group.api.ts
+// 📦 src/lib/api/admin/group.api.ts
 // ✅ Raw API calls for Group management
+// ✅ Fixed: correct axiosInstance import path
 // ================================================================
 
-import axiosInstance from "../../../lib/api/axios"; // adjust path to your axiosInstance
+import axiosInstance from "../axios"; // ✅ src/lib/api/axios.ts
 import type {
   GroupStatus,
   RegistrationStatus,
@@ -11,13 +12,13 @@ import type {
 } from "../../../hooks/admin/useAdminGroups";
 
 export interface GroupsParams {
-  status?: GroupStatus;
-  level?: string;
-  course_id?: string;
+  status?:     GroupStatus;
+  level?:      string;
+  course_id?:  string;
   teacher_id?: string;
-  search?: string;
-  page?: number;
-  limit?: number;
+  search?:     string;
+  page?:       number;
+  limit?:      number;
 }
 
 // ─── GET GROUPS ───────────────────────────────────────────────
@@ -46,8 +47,8 @@ export const groupApi = {
           capacity_pct: Math.round(
             ((g.current_capacity ?? 0) / g.max_students) * 100,
           ),
-          is_full: (g.current_capacity ?? 0) >= g.max_students,
-          _count: g._count ?? { enrollments: 0, sessions: 0 },
+          is_full:  (g.current_capacity ?? 0) >= g.max_students,
+          _count:   g._count ?? { enrollments: 0, sessions: 0 },
         })),
         meta: { total: raw.length, page: 1, limit: raw.length, total_pages: 1 },
       };
@@ -60,7 +61,10 @@ export const groupApi = {
     return res.data;
   },
 
-  getGroupStudents: async (groupId: RegistrationStatus, params = {}) => {
+  getGroupStudents: async (
+    groupId: string,
+    params: { status?: RegistrationStatus; page?: number; limit?: number } = {},
+  ) => {
     try {
       const clean = Object.fromEntries(
         Object.entries(params).filter(([, v]) => v !== undefined),
@@ -77,20 +81,21 @@ export const groupApi = {
       const enrollments = group.enrollments ?? [];
       return {
         data: enrollments.map((e: any) => ({
-          enrollment_id: e.enrollment_id,
+          enrollment_id:       e.enrollment_id,
           registration_status: e.registration_status,
-          enrollment_date: e.enrollment_date,
-          student: e.student,
+          enrollment_date:     e.enrollment_date,
+          student:             e.student,
         })),
         meta: {
-          total: enrollments.length,
-          page: 1,
-          limit: enrollments.length,
+          total:       enrollments.length,
+          page:        1,
+          limit:       enrollments.length,
           total_pages: 1,
         },
       };
     }
   },
+
   changeStatus: async (groupId: string, status: GroupStatus) => {
     const res = await axiosInstance.patch(`/admin/groups/${groupId}/status`, {
       status,
@@ -107,13 +112,13 @@ export const groupApi = {
 
   transferStudent: async (
     fromGroupId: string,
-    studentId: string,
-    toGroupId: string,
+    studentId:   string,
+    toGroupId:   string,
   ) => {
     const res = await axiosInstance.post(
       `/admin/groups/${fromGroupId}/transfer`,
       {
-        student_id: studentId,
+        student_id:  studentId,
         to_group_id: toGroupId,
       },
     );
