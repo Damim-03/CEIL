@@ -1278,65 +1278,154 @@ export default function AdminGroupsPage() {
       dir="rtl"
     >
       {/* ── Top bar ── */}
-      <div className="px-5 py-4 bg-white dark:bg-[#0D0D0D] border-b border-[#E8E0D5] dark:border-[#1E1E1E] shrink-0">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-[18px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                إدارة الأفواج
-              </h1>
-              <span
-                title="مباشر"
-                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold transition-all duration-500 ${
-                  realtimeFlash
-                    ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 scale-110"
-                    : "bg-[#F0EBE5] dark:bg-[#1A1A1A] text-[#9B8E82]"
-                }`}
-              >
-                <Wifi className="w-2.5 h-2.5" />
-                مباشر
-              </span>
-            </div>
-            <p className="text-[12px] text-[#9B8E82]">
-              {stats.total} فوج — {stats.open} مفتوح · {stats.full} ممتلئ ·{" "}
-              {stats.finished} منتهي
-            </p>
+      <div className="px-5 pt-4 pb-3 bg-white dark:bg-[#0D0D0D] border-b border-[#E8E0D5] dark:border-[#1E1E1E] shrink-0 space-y-3">
+        {/* Row 1 — Title + live badge + stats pills */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-[18px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+              إدارة الأفواج
+            </h1>
+            <span
+              title="مباشر"
+              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold transition-all duration-500 ${
+                realtimeFlash
+                  ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 scale-110"
+                  : "bg-[#F0EBE5] dark:bg-[#1A1A1A] text-[#9B8E82]"
+              }`}
+            >
+              <Wifi className="w-2.5 h-2.5" />
+              مباشر
+            </span>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9B8E82]" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="بحث..."
-                className="h-9 pr-9 pl-3 w-48 rounded-xl border border-[#E8E0D5] dark:border-[#2A2A2A] bg-[#F5F0EB] dark:bg-[#111] text-[13px] text-[#1B1B1B] dark:text-[#E5E5E5] outline-none"
-              />
+          {/* Stats pills */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#F0EBE5] dark:bg-[#1A1A1A] text-[#9B8E82]">
+              {stats.total} فوج
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#EDF6F3] dark:bg-[#0F2420] text-[#2B6F5E] dark:text-[#4ADE80]">
+              {stats.open} مفتوح
+            </span>
+            {stats.full > 0 && (
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-50 dark:bg-red-900/10 text-red-500">
+                {stats.full} ممتلئ
+              </span>
+            )}
+            {stats.finished > 0 && (
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#F5F0EB] dark:bg-[#1A1A1A] text-[#9B8E82]">
+                {stats.finished} منتهي
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Row 2 — Search + Filters */}
+        <div className="flex items-center gap-3">
+          {/* ── Search bar — larger, prominent ── */}
+          <div className="relative flex-1 min-w-0 group/search">
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9B8E82] group-focus-within/search:text-[#2B6F5E] dark:group-focus-within/search:text-[#4ADE80] transition-colors pointer-events-none">
+              <Search className="w-4 h-4" />
             </div>
-            {/* Status filter */}
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="h-9 px-3 rounded-xl border border-[#E8E0D5] dark:border-[#2A2A2A] bg-[#F5F0EB] dark:bg-[#111] text-[12px] text-[#3D3530] dark:text-[#CCCCCC] outline-none"
-            >
-              <option value="ALL">كل الحالات</option>
-              <option value="OPEN">مفتوح</option>
-              <option value="FULL">ممتلئ</option>
-              <option value="FINISHED">منتهي</option>
-            </select>
-            {/* Level filter */}
-            <select
-              value={filterLevel}
-              onChange={(e) => setFilterLevel(e.target.value)}
-              className="h-9 px-3 rounded-xl border border-[#E8E0D5] dark:border-[#2A2A2A] bg-[#F5F0EB] dark:bg-[#111] text-[12px] text-[#3D3530] dark:text-[#CCCCCC] outline-none"
-            >
-              <option value="ALL">كل المستويات</option>
-              {["PRE_A1", "A1", "A2", "B1", "B2", "C1"].map((l) => (
-                <option key={l} value={l}>
-                  {l.replace("_", "-")}
-                </option>
-              ))}
-            </select>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="ابحث عن فوج، مادة، أستاذ..."
+              className="w-full h-10 pr-10 pl-4 rounded-2xl border-2 border-[#E8E0D5] dark:border-[#2A2A2A] bg-[#F5F0EB] dark:bg-[#111] text-[13px] text-[#1B1B1B] dark:text-[#E5E5E5] placeholder-[#C8BFB5] dark:placeholder-[#444] outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:bg-white dark:focus:bg-[#0D0D0D] transition-all duration-200"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#C8BFB5] dark:bg-[#333] flex items-center justify-center hover:bg-[#9B8E82] dark:hover:bg-[#444] transition-colors"
+              >
+                <X className="w-3 h-3 text-white" />
+              </button>
+            )}
+          </div>
+
+          {/* ── Status filter — icon + label pills ── */}
+          <div className="flex items-center gap-1 shrink-0 p-1 rounded-2xl bg-[#F5F0EB] dark:bg-[#1A1A1A] border border-[#E8E0D5] dark:border-[#2A2A2A]">
+            {(
+              [
+                { value: "ALL", label: "الكل", Icon: Layers, color: null },
+                {
+                  value: "OPEN",
+                  label: "مفتوح",
+                  Icon: CheckCircle2,
+                  color: "#2B6F5E",
+                },
+                {
+                  value: "FULL",
+                  label: "ممتلئ",
+                  Icon: XCircle,
+                  color: "#ef4444",
+                },
+                {
+                  value: "FINISHED",
+                  label: "منتهي",
+                  Icon: Clock,
+                  color: "#94a3b8",
+                },
+              ] as const
+            ).map(({ value, label, Icon, color }) => {
+              const isActive = filterStatus === value;
+              return (
+                <button
+                  key={value}
+                  onClick={() => setFilterStatus(value)}
+                  className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-[11px] font-semibold transition-all duration-200"
+                  style={
+                    isActive
+                      ? {
+                          background: color ? color + "15" : "#2B6F5E",
+                          color: color ?? "#fff",
+                          boxShadow: color
+                            ? `inset 0 0 0 1.5px ${color}50`
+                            : "none",
+                        }
+                      : { color: "#9B8E82" }
+                  }
+                >
+                  <Icon className="w-3 h-3 shrink-0" />
+                  <span>{label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ── Level filter — colored pill buttons ── */}
+          <div className="flex items-center gap-1 shrink-0 p-1 rounded-2xl bg-[#F5F0EB] dark:bg-[#1A1A1A] border border-[#E8E0D5] dark:border-[#2A2A2A]">
+            {(
+              [
+                { value: "ALL", label: "الكل", color: null },
+                { value: "PRE_A1", label: "PRE-A1", color: "#94a3b8" },
+                { value: "A1", label: "A1", color: "#22c55e" },
+                { value: "A2", label: "A2", color: "#3b82f6" },
+                { value: "B1", label: "B1", color: "#f59e0b" },
+                { value: "B2", label: "B2", color: "#f97316" },
+                { value: "C1", label: "C1", color: "#a855f7" },
+              ] as const
+            ).map(({ value, label, color }) => {
+              const isActive = filterLevel === value;
+              return (
+                <button
+                  key={value}
+                  onClick={() => setFilterLevel(value)}
+                  className="h-8 px-2.5 rounded-xl text-[11px] font-bold transition-all duration-200"
+                  style={
+                    isActive
+                      ? {
+                          background: color ? color + "18" : "#2B6F5E",
+                          color: color ?? "#fff",
+                          boxShadow: color
+                            ? `inset 0 0 0 1.5px ${color}50`
+                            : "none",
+                        }
+                      : { color: "#9B8E82" }
+                  }
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
