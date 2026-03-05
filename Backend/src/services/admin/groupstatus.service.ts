@@ -314,8 +314,6 @@ export async function changeGroupStatus(
 
   if (!group) return { error: "not_found" as const };
   if (group.status === status) return { error: "same_status" as const };
-  if (group.status === "FINISHED" && status !== "FINISHED")
-    return { error: "already_finished" as const };
 
   const updated = await prisma.$transaction(async (tx) => {
     const result = await tx.group.update({
