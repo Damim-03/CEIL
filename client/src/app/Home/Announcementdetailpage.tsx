@@ -114,15 +114,17 @@ function AttachmentViewerModal({
   const meta = getAttachmentMeta(type);
   const Icon = meta.icon;
   const isImage = type === "image";
-  const isViewable =
-    type === "pdf" ||
-    type === "docx" ||
-    type === "doc" ||
-    type === "pptx" ||
-    type === "ppt";
+  const isPdf = type === "pdf";
+  const isDocument =
+    type === "docx" || type === "doc" || type === "pptx" || type === "ppt";
 
-  // Google Docs Viewer للـ PDF / Word / PPT
-  const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+  const [pdfImgFailed, setPdfImgFailed] = useState(false);
+
+  // نفس نهجة AdminDocuments: Cloudinary يحوّل PDF → JPG
+  const pdfAsImageUrl = url.replace(/\.pdf(\?.*)?$/i, ".jpg");
+
+  // Microsoft Office Viewer للـ Word/PPT
+  const msViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
@@ -186,46 +188,77 @@ function AttachmentViewerModal({
 
         {/* ── Content ── */}
         <div
-          className="flex-1 overflow-hidden bg-black/30"
-          style={{ minHeight: 0 }}
+          className="flex-1 overflow-auto bg-white rounded-b-2xl"
+          style={{ maxHeight: "calc(92vh - 76px)" }}
         >
-          {isImage ? (
-            <div
-              className="w-full h-full flex items-center justify-center p-4 overflow-auto"
-              style={{ maxHeight: "calc(92vh - 76px)" }}
-            >
+          {/* صورة عادية */}
+          {isImage && (
+            <div className="flex items-center justify-center min-h-full p-4 bg-black/30">
               <img
                 src={url}
                 alt={name}
-                className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
-                style={{ maxHeight: "calc(92vh - 96px)" }}
+                className="max-w-full object-contain rounded-xl shadow-2xl"
+                style={{ maxHeight: "calc(92vh - 100px)" }}
               />
             </div>
-          ) : isViewable ? (
+          )}
+
+          {/* PDF — نفس نهجة AdminDocuments: Cloudinary PDF→JPG */}
+          {isPdf && !pdfImgFailed && (
+            <div className="w-full p-2">
+              <img
+                src={pdfAsImageUrl}
+                alt={name}
+                className="w-full object-contain mx-auto"
+                onError={() => setPdfImgFailed(true)}
+              />
+            </div>
+          )}
+
+          {/* PDF fallback إذا فشل التحويل */}
+          {isPdf && pdfImgFailed && (
+            <div className="flex flex-col items-center justify-center gap-5 py-20 bg-[#1C1C1E]">
+              <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center">
+                <FileText className="w-8 h-8 text-red-400" />
+              </div>
+              <div className="text-center px-4">
+                <p className="text-white/80 font-medium mb-1">{name}</p>
+                <p className="text-white/40 text-sm">
+                  {t("common.previewUnavailable", {
+                    defaultValue: "لا يمكن عرض هذا الملف في المتصفح",
+                  })}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-sm font-medium transition-all"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  {t("common.openTab", { defaultValue: "Open in New Tab" })}
+                </a>
+                <a
+                  href={url}
+                  download={name}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-mustard hover:bg-brand-mustard/90 text-white text-sm font-medium transition-all"
+                >
+                  <Download className="w-4 h-4" />
+                  {t("common.download", { defaultValue: "تحميل" })}
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Word / PowerPoint — Microsoft Office Viewer */}
+          {isDocument && (
             <iframe
-              src={googleViewerUrl}
+              src={msViewerUrl}
               className="w-full"
               style={{ height: "calc(92vh - 76px)", border: "none" }}
               title={name}
             />
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <Paperclip className="w-12 h-12 text-white/20" />
-              <p className="text-white/40 text-sm">
-                {t("common.previewUnavailable", {
-                  defaultValue: "Preview not available",
-                })}
-              </p>
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-sm transition-all"
-              >
-                <ExternalLink className="w-4 h-4" />
-                {t("common.openTab", { defaultValue: "Open in New Tab" })}
-              </a>
-            </div>
           )}
         </div>
       </div>
