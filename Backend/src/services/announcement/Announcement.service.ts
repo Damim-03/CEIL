@@ -68,19 +68,58 @@ function getMimeLabel(mimetype: string): string {
 /** Upload attachment to Cloudinary — raw resource type for non-images */
 async function uploadAttachment(file: Express.Multer.File) {
   const isImage = file.mimetype.startsWith("image/");
+  const isPdf = file.mimetype === "application/pdf";
+
+  // الاسم الأصلي للملف — يُحفظ في DB فقط، لا يُرسل لـ Cloudinary
+  const originalName = Buffer.from(file.originalname, "latin1").toString(
+    "utf8",
+  );
+
+  // public_id نظيف بدون أحرف عربية
+  const safeId = `attachment_${Date.now()}`;
 
   if (isImage) {
-    // Use existing helper for images
+    // صور — uploadToCloudinary العادي
     const result = await uploadToCloudinary(file, "announcement_attachments");
     return {
       url: result.secure_url,
       public_id: result.public_id,
-      name: file.originalname,
+      name: originalName,
       type: getMimeLabel(file.mimetype),
     };
   }
 
-  // For PDF / Word — upload as raw resource
+  if (isPdf) {
+    // ✅ PDF كـ "image" resource_type — يتيح Cloudinary تحويله لصورة
+    return new Promise<{
+      url: string;
+      public_id: string;
+      name: string;
+      type: string;
+    }>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: "announcement_attachments",
+          resource_type: "image", // ✅ مش "raw" — يخلّي .pdf→.jpg يشتغل
+          public_id: safeId,
+          format: "pdf", // يحفظه كـ PDF لكن بـ resource_type=image
+        },
+        (error, result) => {
+          if (error || !result)
+            return reject(error ?? new Error("Upload failed"));
+          resolve({
+            url: result.secure_url,
+            public_id: result.public_id,
+            name: originalName, // ✅ الاسم العربي الصحيح من DB
+            type: "pdf",
+          });
+        },
+      );
+      stream.end(file.buffer);
+    });
+  }
+
+  // Word / PPT — raw لا يزال مناسب لها
   return new Promise<{
     url: string;
     public_id: string;
@@ -91,7 +130,7 @@ async function uploadAttachment(file: Express.Multer.File) {
       {
         folder: "announcement_attachments",
         resource_type: "raw",
-        public_id: `${Date.now()}_${file.originalname.replace(/\s+/g, "_")}`,
+        public_id: safeId,
       },
       (error, result) => {
         if (error || !result)
@@ -99,7 +138,7 @@ async function uploadAttachment(file: Express.Multer.File) {
         resolve({
           url: result.secure_url,
           public_id: result.public_id,
-          name: file.originalname,
+          name: originalName, // ✅ الاسم الصحيح
           type: getMimeLabel(file.mimetype),
         });
       },
@@ -108,9 +147,10 @@ async function uploadAttachment(file: Express.Multer.File) {
   });
 }
 
-/** Delete a Cloudinary asset — handles both image and raw */
+/** Delete a Cloudinary asset */
 async function deleteCloudinaryAsset(public_id: string, type: string | null) {
-  const resource_type = type && type !== "image" ? "raw" : "image";
+  // PDF الآن resource_type=image، Word/PPT لا تزال raw
+  const resource_type = type === "pdf" || type === "image" ? "image" : "raw";
   await cloudinary.uploader
     .destroy(public_id, { resource_type })
     .catch((err: any) => console.error("Cloudinary delete error:", err));
