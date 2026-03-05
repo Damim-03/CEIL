@@ -1,0 +1,172 @@
+// ================================================================
+// 📦 src/hooks/admin/useAdminGroups.ts
+// ✅ React Query hooks — uses groupApi
+// ================================================================
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { groupApi, type GroupsParams } from "../../lib/api/admin/group.api";
+
+// ─── Types (re-exported for use in components) ────────────────
+
+export type GroupStatus        = "OPEN" | "FULL" | "FINISHED";
+export type RegistrationStatus = "PENDING" | "VALIDATED" | "REJECTED" | "PAID" | "FINISHED";
+
+export interface GroupTeacher {
+  teacher_id:   string;
+  first_name:   string;
+  last_name:    string;
+  email:        string;
+  phone_number?: string;
+}
+
+export interface GroupCourse {
+  course_id:   string;
+  course_name: string;
+  course_code: string;
+  profile?:    { flag_emoji?: string; image_url?: string } | null;
+}
+
+export interface Group {
+  group_id:      string;
+  name:          string;
+  level:         string;
+  status:        GroupStatus;
+  max_students:  number;
+  enrolled_count: number;
+  pending_count:  number;
+  capacity_pct:   number;
+  is_full:        boolean;
+  course:         GroupCourse;
+  teacher:        GroupTeacher | null;
+  department?:    { department_id: string; name: string } | null;
+  _count:         { enrollments: number; sessions: number };
+}
+
+export interface GroupStudent {
+  enrollment_id:       string;
+  registration_status: RegistrationStatus;
+  enrollment_date:     string;
+  level?:              string;
+  student: {
+    student_id:          string;
+    first_name:          string;
+    last_name:           string;
+    email:               string;
+    phone_number?:       string;
+    gender?:             string;
+    avatar_url?:         string;
+    status?:             string;
+    registrant_category?: string;
+  };
+  fees?:    { fee_id: string; status: string; amount: number }[];
+  pricing?: { status_fr: string; price: number; currency: string } | null;
+}
+
+// ─── Query Keys ───────────────────────────────────────────────
+
+export const groupKeys = {
+  all:       ()                  => ["admin", "groups"] as const,
+  list:      (p: GroupsParams)   => ["admin", "groups", "list", p] as const,
+  detail:    (id: string)        => ["admin", "groups", id, "details"] as const,
+  students:  (id: string, p?: any) => ["admin", "groups", id, "students", p] as const,
+  teacher:   (id: string)        => ["admin", "groups", id, "teacher"] as const,
+  transfers: ()                  => ["admin", "groups", "transfer-requests"] as const,
+};
+
+// ─── GET GROUPS ───────────────────────────────────────────────
+
+export function useAdminGroups(params: GroupsParams = {}) {
+  return useQuery({
+    queryKey: groupKeys.list(params),
+    queryFn:  () => groupApi.getGroups(params),
+  });
+}
+
+// ─── GET GROUP DETAILS ────────────────────────────────────────
+
+export function useAdminGroupDetails(groupId: string | null) {
+  return useQuery({
+    queryKey: groupKeys.detail(groupId!),
+    queryFn:  () => groupApi.getGroupDetails(groupId!),
+    enabled:  !!groupId,
+  });
+}
+
+// ─── GET GROUP STUDENTS ───────────────────────────────────────
+
+export function useAdminGroupStudents(
+  groupId: string | null,
+  params:  { status?: RegistrationStatus; page?: number; limit?: number } = {}
+) {
+  return useQuery({
+    queryKey: groupKeys.students(groupId!, params),
+    queryFn:  () => groupApi.getGroupStudents(groupId!, params),
+    enabled:  !!groupId,
+  });
+}
+
+// ─── GET TRANSFER REQUESTS ────────────────────────────────────
+
+export function useTransferRequests() {
+  return useQuery({
+    queryKey: groupKeys.transfers(),
+    queryFn:  groupApi.getTransferRequests,
+  });
+}
+
+// ─── CHANGE GROUP STATUS ──────────────────────────────────────
+
+export function useChangeGroupStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ groupId, status }: { groupId: string; status: GroupStatus }) =>
+      groupApi.changeStatus(groupId, status),
+    onSuccess: (_, { groupId }) => {
+      qc.invalidateQueries({ queryKey: groupKeys.all() });
+      qc.invalidateQueries({ queryKey: groupKeys.detail(groupId) });
+    },
+  });
+}
+
+// ─── ASSIGN TEACHER ───────────────────────────────────────────
+
+export function useAssignGroupTeacher() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ groupId, teacher_id }: { groupId: string; teacher_id: string | null }) =>
+      groupApi.assignTeacher(groupId, teacher_id),
+    onSuccess: (_, { groupId }) => {
+      qc.invalidateQueries({ queryKey: groupKeys.all() });
+      qc.invalidateQueries({ queryKey: groupKeys.detail(groupId) });
+    },
+  });
+}
+
+// ─── TRANSFER STUDENT ─────────────────────────────────────────
+
+export function useTransferStudent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      fromGroupId,
+      studentId,
+      toGroupId,
+    }: {
+      fromGroupId: string;
+      studentId:   string;
+      toGroupId:   string;
+    }) => groupApi.transferStudent(fromGroupId, studentId, toGroupId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: groupKeys.all() });
+    },
+  });
+}
+
+// ─── GET ALL TEACHERS (for assign modal) ──────────────────────
+
+export function useAllTeachers() {
+  return useQuery({
+    queryKey: ["admin", "teachers", "all"],
+    queryFn:  groupApi.getAllTeachers,
+  });
+}

@@ -157,6 +157,17 @@ import {
   checkRoomAvailabilityController,
 } from "../../controllers/admin/Room.controller";
 
+import {
+  getGroups            as getGroupsWithStatsController,
+  getGroupById         as getGroupDetailsController,
+  getGroupStudents     as getGroupStudentsController,
+  getGroupTeacher      as getGroupTeacherController,
+  changeGroupStatus    as changeGroupStatusController,
+  assignTeacher        as assignGroupTeacherController,
+  transferStudent      as transferStudentController,
+  getTransferRequests  as getTransferRequestsController,
+} from "../../controllers/admin/group.controller";
+
 const adminRoutes = Router();
 
 /* ======================================================
@@ -1051,6 +1062,61 @@ adminRoutes.get(
   authMiddleware,
   roleGuard([Permissions.MANAGE_SESSIONS]),
   checkRoomAvailabilityController,
+);
+
+// ================================================================
+// STEP 2 — أضف هذه الـ routes في قسم GROUPS
+//          بعد السطر: adminRoutes.delete("/groups/:groupId/students/:studentId"...)
+// ================================================================
+
+// ⚠️ Static route أولاً قبل /:groupId
+adminRoutes.get(
+  "/groups/transfer-requests",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_CLASSES]),
+  getTransferRequestsController,
+);
+
+adminRoutes.get(
+  "/groups/:groupId/details",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_CLASSES]),
+  getGroupDetailsController,
+);
+
+adminRoutes.get(
+  "/groups/:groupId/students",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_CLASSES]),
+  getGroupStudentsController,
+);
+
+adminRoutes.get(
+  "/groups/:groupId/teacher",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_CLASSES]),
+  getGroupTeacherController,
+);
+
+adminRoutes.patch(
+  "/groups/:groupId/status",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_CLASSES]),
+  changeGroupStatusController,
+);
+
+adminRoutes.patch(
+  "/groups/:groupId/teacher",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_CLASSES]),
+  assignGroupTeacherController,
+);
+
+adminRoutes.post(
+  "/groups/:groupId/transfer",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_CLASSES]),
+  transferStudentController,
 );
 
 export default adminRoutes;

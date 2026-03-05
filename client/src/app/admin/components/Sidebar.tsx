@@ -27,6 +27,7 @@ import {
   Globe,
   BellRing,
   DoorOpen,
+  Layers,
 } from "lucide-react";
 
 interface NavItem {
@@ -68,6 +69,7 @@ const navItems: NavItem[] = [
     labelKey: "admin.nav.notifications",
     href: "/admin/notifications",
   },
+  { icon: Layers, labelKey: "admin.nav.groups", href: "/admin/groups" },
 ];
 
 const publicNavItems: NavItem[] = [

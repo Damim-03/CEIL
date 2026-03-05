@@ -85,6 +85,7 @@ import OwnerNotificationsPage from "./app/owner/pages/Notifications/OwnerNotific
 import { useScreenSaver } from "./hooks/Usescreensaver";
 import ScreenSaver from "./components/Screensaver";
 import NetworkToast from "./components/Networktoast";
+import AdminGroupsPage from "./app/admin/pages/group/AdminGroupsPage";
 
 const App = () => {
   const { isIdle, resetTimer } = useScreenSaver();
@@ -297,6 +298,7 @@ const App = () => {
           />
           <Route path="departments" element={<DepartmentsPage />} />
           <Route path="groups/:groupId" element={<GroupDetailsPage />} />
+          <Route path="groups" element={<AdminGroupsPage />} />
           <Route path="sessions" element={<SessionsPage />} />
           <Route path="fees" element={<FeesPage />} />
           <Route path="enrollments" element={<EnrollmentsPage />} />
