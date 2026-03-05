@@ -12,11 +12,16 @@ export interface PublicAnnouncement {
   image_url: string | null;
   is_pinned: boolean;
   date: string;
+  // ✅ Attachment fields
+  attachment_url: string | null;
+  attachment_name: string | null;
+  attachment_type: string | null;
 }
 
 export interface PublicAnnouncementDetail extends PublicAnnouncement {
   content: string;
   content_ar: string | null;
+  // ✅ inherited from PublicAnnouncement: attachment_url, attachment_name, attachment_type
 }
 
 export interface PublicCourse {
@@ -70,7 +75,7 @@ export interface Paginated<T> {
   };
 }
 
-// ─── API Calls (using axiosInstance, baseURL already = VITE_API_URL) ───
+// ─── API Calls ───
 
 export const publicApis = {
   getHomeStats: () =>

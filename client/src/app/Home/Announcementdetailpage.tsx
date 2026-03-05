@@ -7,7 +7,13 @@ import {
   ChevronRight,
   Share2,
   Printer,
+  FileText,
+  Download,
+  ExternalLink,
+  FileImage,
+  Paperclip,
 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "../../components/ui/button";
 import {
   usePublicAnnouncement,
@@ -28,6 +34,219 @@ const CATEGORY_COLORS: Record<string, string> = {
     "bg-rose-500/10 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/40",
 };
 
+// ─── Attachment helpers ────────────────────────────────────
+function getAttachmentMeta(type: string | null | undefined) {
+  switch (type) {
+    case "pdf":
+      return {
+        icon: FileText,
+        label: "PDF",
+        color: "text-red-500 dark:text-red-400",
+        bg: "bg-red-50 dark:bg-red-500/10",
+        border: "border-red-100 dark:border-red-500/20",
+        badge: "bg-red-500/10 text-red-600 dark:text-red-400",
+      };
+    case "docx":
+    case "doc":
+      return {
+        icon: FileText,
+        label: "Word",
+        color: "text-blue-500 dark:text-blue-400",
+        bg: "bg-blue-50 dark:bg-blue-500/10",
+        border: "border-blue-100 dark:border-blue-500/20",
+        badge: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+      };
+    case "pptx":
+    case "ppt":
+      return {
+        icon: FileText,
+        label: "PowerPoint",
+        color: "text-orange-500 dark:text-orange-400",
+        bg: "bg-orange-50 dark:bg-orange-500/10",
+        border: "border-orange-100 dark:border-orange-500/20",
+        badge: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+      };
+    case "image":
+      return {
+        icon: FileImage,
+        label: "Image",
+        color: "text-emerald-500 dark:text-emerald-400",
+        bg: "bg-emerald-50 dark:bg-emerald-500/10",
+        border: "border-emerald-100 dark:border-emerald-500/20",
+        badge: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+      };
+    default:
+      return {
+        icon: Paperclip,
+        label: "File",
+        color: "text-brand-teal-dark dark:text-[#4ADE80]",
+        bg: "bg-brand-teal-dark/5 dark:bg-[#4ADE80]/10",
+        border: "border-brand-teal-dark/10 dark:border-[#4ADE80]/20",
+        badge: "bg-brand-teal-dark/10 text-brand-teal-dark dark:text-[#4ADE80]",
+      };
+  }
+}
+
+// ─── PDF Viewer Modal ──────────────────────────────────────
+function PdfViewerModal({
+  url,
+  name,
+  onClose,
+}: {
+  url: string;
+  name: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative w-full max-w-5xl h-[90vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col bg-white dark:bg-[#1A1A1A]">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-beige dark:border-[#2A2A2A] shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center">
+              <FileText className="w-4 h-4 text-red-500" />
+            </div>
+            <span className="text-sm font-semibold text-brand-black dark:text-[#E5E5E5] truncate max-w-[300px]">
+              {name}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              href={url}
+              download
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-teal-dark dark:text-[#4ADE80] hover:bg-brand-teal-dark/8 dark:hover:bg-[#4ADE80]/10 transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Download
+            </a>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-brown dark:text-[#AAAAAA] hover:bg-brand-beige dark:hover:bg-[#2A2A2A] transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Open tab
+            </a>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-brand-brown dark:text-[#AAAAAA] hover:bg-brand-beige dark:hover:bg-[#2A2A2A] transition-colors text-lg leading-none"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        {/* PDF iframe */}
+        <iframe
+          src={`${url}#toolbar=1&navpanes=0&scrollbar=1`}
+          className="flex-1 w-full"
+          title={name}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Attachment Card ───────────────────────────────────────
+function AttachmentCard({
+  url,
+  name,
+  type,
+  t,
+}: {
+  url: string;
+  name: string | null | undefined;
+  type: string | null | undefined;
+  t: (k: string, opts?: any) => string;
+}) {
+  const [pdfOpen, setPdfOpen] = useState(false);
+  const meta = getAttachmentMeta(type);
+  const Icon = meta.icon;
+  const displayName =
+    name || t("announcements.attachment", { defaultValue: "Attachment" });
+  const isPdf = type === "pdf";
+  const isImage = type === "image";
+
+  return (
+    <>
+      <div
+        className={`rounded-2xl border ${meta.border} ${meta.bg} overflow-hidden`}
+      >
+        {/* Image preview */}
+        {isImage && (
+          <div className="w-full h-48 overflow-hidden">
+            <img
+              src={url}
+              alt={displayName}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
+        <div className="p-5 flex items-center gap-4">
+          {/* Icon */}
+          <div
+            className={`w-12 h-12 rounded-xl ${meta.bg} border ${meta.border} flex items-center justify-center shrink-0`}
+          >
+            <Icon className={`w-6 h-6 ${meta.color}`} />
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-brand-black dark:text-[#E5E5E5] truncate">
+              {displayName}
+            </p>
+            <span
+              className={`inline-block mt-1 px-2 py-0.5 rounded-md text-[11px] font-medium ${meta.badge}`}
+            >
+              {meta.label}
+            </span>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            {isPdf && (
+              <button
+                onClick={() => setPdfOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-[#1A1A1A] border border-brand-beige dark:border-[#2A2A2A] text-xs font-semibold text-brand-teal-dark dark:text-[#4ADE80] hover:bg-brand-teal-dark dark:hover:bg-[#4ADE80] hover:text-white dark:hover:text-[#0F0F0F] hover:border-brand-teal-dark dark:hover:border-[#4ADE80] transition-all duration-200 shadow-sm"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                {t("common.view", { defaultValue: "View" })}
+              </button>
+            )}
+            <a
+              href={url}
+              download={displayName}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-[#1A1A1A] border border-brand-beige dark:border-[#2A2A2A] text-xs font-semibold text-brand-brown dark:text-[#AAAAAA] hover:bg-brand-beige dark:hover:bg-[#2A2A2A] transition-all duration-200 shadow-sm"
+            >
+              <Download className="w-3.5 h-3.5" />
+              {t("common.download", { defaultValue: "Download" })}
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* PDF Modal */}
+      {isPdf && pdfOpen && (
+        <PdfViewerModal
+          url={url}
+          name={displayName}
+          onClose={() => setPdfOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
+// ─── Main Page ─────────────────────────────────────────────
 export default function AnnouncementDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: announcement, isLoading, isError } = usePublicAnnouncement(id!);
@@ -36,6 +255,7 @@ export default function AnnouncementDetailPage() {
 
   const locale =
     currentLang === "ar" ? "ar-DZ" : currentLang === "fr" ? "fr-FR" : "en-GB";
+
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString(locale, {
       weekday: "long",
@@ -43,6 +263,7 @@ export default function AnnouncementDetailPage() {
       month: "long",
       day: "numeric",
     });
+
   const formatDateShort = (date: string) =>
     new Date(date).toLocaleDateString(locale, {
       month: "short",
@@ -115,7 +336,7 @@ export default function AnnouncementDetailPage() {
 
   return (
     <main className="min-h-screen bg-white dark:bg-[#121212]" dir={dir}>
-      {/* Hero Image */}
+      {/* ── Hero Image ── */}
       {announcement.image_url && (
         <div className="relative w-full h-[320px] sm:h-[420px] lg:h-[480px] overflow-hidden">
           <img
@@ -154,7 +375,7 @@ export default function AnnouncementDetailPage() {
       )}
 
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
+        {/* ── Breadcrumb ── */}
         <nav className="flex items-center gap-2 text-sm text-brand-brown dark:text-[#888888] py-6 border-b border-brand-beige dark:border-[#2A2A2A]">
           <LocaleLink
             to="/"
@@ -179,7 +400,7 @@ export default function AnnouncementDetailPage() {
           </span>
         </nav>
 
-        {/* Title (when no image) */}
+        {/* ── Title (no image) ── */}
         {!announcement.image_url && (
           <div className="pt-10 pb-6">
             {announcement.category && (
@@ -205,7 +426,7 @@ export default function AnnouncementDetailPage() {
           </div>
         )}
 
-        {/* Actions */}
+        {/* ── Actions bar ── */}
         <div className="flex items-center gap-3 py-4 border-b border-brand-beige dark:border-[#2A2A2A]">
           <Button
             variant="outline"
@@ -227,7 +448,7 @@ export default function AnnouncementDetailPage() {
           </Button>
         </div>
 
-        {/* Content */}
+        {/* ── Article ── */}
         <article className="py-10">
           {excerpt && (
             <p
@@ -237,6 +458,7 @@ export default function AnnouncementDetailPage() {
               {excerpt}
             </p>
           )}
+
           {content && content.includes("<") ? (
             <div
               className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-brand-black dark:prose-headings:text-[#E5E5E5] prose-headings:font-bold prose-p:text-brand-black/70 dark:prose-p:text-[#CCCCCC] prose-p:leading-relaxed prose-a:text-brand-teal-dark dark:prose-a:text-[#4ADE80] prose-a:no-underline hover:prose-a:underline prose-strong:text-brand-black dark:prose-strong:text-[#E5E5E5] prose-img:rounded-2xl prose-img:shadow-md"
@@ -250,7 +472,36 @@ export default function AnnouncementDetailPage() {
           )}
         </article>
 
-        {/* Related */}
+        {/* ════════════════════════════════════════
+            📎 ATTACHMENT SECTION
+        ════════════════════════════════════════ */}
+        {announcement.attachment_url && (
+          <section className="py-8 border-t border-brand-beige dark:border-[#2A2A2A]">
+            {/* Section header */}
+            <div className="flex items-center gap-2.5 mb-5">
+              <div className="w-8 h-8 rounded-lg bg-brand-teal-dark/8 dark:bg-[#4ADE80]/10 flex items-center justify-center">
+                <Paperclip className="w-4 h-4 text-brand-teal-dark dark:text-[#4ADE80]" />
+              </div>
+              <h2
+                className="text-base font-bold text-brand-black dark:text-[#E5E5E5]"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                {t("announcements.attachedDocument", {
+                  defaultValue: "Attached Document",
+                })}
+              </h2>
+            </div>
+
+            <AttachmentCard
+              url={announcement.attachment_url}
+              name={announcement.attachment_name}
+              type={announcement.attachment_type}
+              t={t}
+            />
+          </section>
+        )}
+
+        {/* ── Related ── */}
         {relatedAnnouncements.length > 0 && (
           <section className="py-10 border-t border-brand-beige dark:border-[#2A2A2A]">
             <h2
@@ -303,6 +554,7 @@ export default function AnnouncementDetailPage() {
             </div>
           </section>
         )}
+
         <div className="h-10" />
       </div>
     </main>
