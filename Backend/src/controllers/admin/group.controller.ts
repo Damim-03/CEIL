@@ -111,7 +111,7 @@ export async function getGroupById(
   next: NextFunction,
 ) {
   try {
-    const group = await GroupService.getGroupById(req.params.id);
+    const group = await GroupService.getGroupById(req.params.groupId);
     if (!group) return res.status(404).json({ message: "Group not found" });
     res.json(group);
   } catch (err) {
@@ -145,7 +145,7 @@ export async function getGroupStudents(
         ? (status as RegistrationStatus)
         : undefined;
 
-    const result = await GroupService.getGroupStudents(req.params.id, {
+    const result = await GroupService.getGroupStudents(req.params.groupId, {
       status: resolvedStatus,
       page: parseInt(page ?? "1"),
       limit: parseInt(limit ?? "25"),
@@ -178,7 +178,7 @@ export async function changeGroupStatus(
         .json({ message: `status must be one of: ${VALID.join(", ")}` });
 
     const result = await GroupService.changeGroupStatus(
-      req.params.id,
+      req.params.groupId,
       status,
       changed_by,
     );
@@ -211,7 +211,7 @@ export async function transferStudent(
 
     const result = await GroupService.transferStudent({
       student_id,
-      from_group_id: req.params.id,
+      from_group_id: req.params.groupId,
       to_group_id,
       changed_by,
     });
@@ -231,7 +231,7 @@ export async function getGroupTeacher(
   next: NextFunction,
 ) {
   try {
-    const result = await GroupService.getGroupTeacher(req.params.id);
+    const result = await GroupService.getGroupTeacher(req.params.groupId);
     if (hasError(result)) return handleError(res, result.error);
     res.json(result.data);
   } catch (err) {
@@ -260,7 +260,10 @@ export async function assignTeacher(
 
     const resolvedId: string | null =
       typeof teacher_id === "string" ? teacher_id : null;
-    const result = await GroupService.assignTeacher(req.params.id, resolvedId);
+    const result = await GroupService.assignTeacher(
+      req.params.groupId,
+      resolvedId,
+    );
     if (hasError(result)) return handleError(res, result.error);
 
     res.json({
