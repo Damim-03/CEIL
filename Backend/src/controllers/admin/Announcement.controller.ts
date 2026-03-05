@@ -2,23 +2,38 @@
 // 📌 src/controllers/admin/Announcement.controller.ts
 // ✅ Refactored: Uses AnnouncementService (Socket.IO inside service)
 // ✅ 📌 Pin/Unpin support
+// ✅ 📎 Attachment support (PDF, Word, images)
 // ================================================================
 
 import { Request, Response } from "express";
 import * as AnnouncementService from "../../services/announcement/Announcement.service";
 
+// Helper: extract named files from upload.fields()
+function getFiles(req: Request) {
+  const files = req.files as Record<string, Express.Multer.File[]> | undefined;
+  return {
+    imageFile: files?.["image"]?.[0],
+    attachmentFile: files?.["attachment"]?.[0],
+  };
+}
+
 /* ══════════════════════════════════════════════════════════
    CREATE ANNOUNCEMENT
    POST /api/admin/announcements
+   Content-Type: multipart/form-data
+   Fields: image (optional), attachment (optional)
 ══════════════════════════════════════════════════════════ */
 export const createAnnouncementController = async (
   req: Request,
   res: Response,
 ) => {
   try {
+    const { imageFile, attachmentFile } = getFiles(req);
+
     const announcement = await AnnouncementService.createAnnouncement({
       ...req.body,
-      file: req.file,
+      file: imageFile,
+      attachmentFile: attachmentFile,
     });
 
     return res.status(201).json({
@@ -85,15 +100,25 @@ export const getAnnouncementByIdController = async (
 /* ══════════════════════════════════════════════════════════
    UPDATE ANNOUNCEMENT
    PUT /api/admin/announcements/:announcementId
+   Content-Type: multipart/form-data
+   Fields: image (optional), attachment (optional)
+   Body:   remove_attachment=true  → deletes existing attachment
 ══════════════════════════════════════════════════════════ */
 export const updateAnnouncementController = async (
   req: Request,
   res: Response,
 ) => {
   try {
+    const { imageFile, attachmentFile } = getFiles(req);
+
     const announcement = await AnnouncementService.updateAnnouncement(
       req.params.announcementId,
-      { ...req.body, file: req.file },
+      {
+        ...req.body,
+        file: imageFile,
+        attachmentFile: attachmentFile,
+        remove_attachment: req.body.remove_attachment,
+      },
     );
 
     if (!announcement) {
@@ -135,9 +160,10 @@ export const deleteAnnouncementController = async (
 };
 
 /* ══════════════════════════════════════════════════════════
-   PUBLISH ANNOUNCEMENT
-   PATCH /api/admin/announcements/:announcementId/publish
+   PUBLISH / UNPUBLISH / PIN / UNPIN
+   (unchanged — no file handling needed)
 ══════════════════════════════════════════════════════════ */
+
 export const publishAnnouncementController = async (
   req: Request,
   res: Response,
@@ -146,7 +172,6 @@ export const publishAnnouncementController = async (
     const result = await AnnouncementService.publishAnnouncement(
       req.params.announcementId,
     );
-
     if ("error" in result) {
       if (result.error === "not_found")
         return res.status(404).json({ message: "Announcement not found" });
@@ -155,7 +180,6 @@ export const publishAnnouncementController = async (
           .status(400)
           .json({ message: "Announcement is already published" });
     }
-
     return res.json({
       message: "Announcement published successfully",
       data: result.data,
@@ -166,10 +190,6 @@ export const publishAnnouncementController = async (
   }
 };
 
-/* ══════════════════════════════════════════════════════════
-   UNPUBLISH ANNOUNCEMENT
-   PATCH /api/admin/announcements/:announcementId/unpublish
-══════════════════════════════════════════════════════════ */
 export const unpublishAnnouncementController = async (
   req: Request,
   res: Response,
@@ -178,7 +198,6 @@ export const unpublishAnnouncementController = async (
     const result = await AnnouncementService.unpublishAnnouncement(
       req.params.announcementId,
     );
-
     if ("error" in result) {
       if (result.error === "not_found")
         return res.status(404).json({ message: "Announcement not found" });
@@ -187,7 +206,6 @@ export const unpublishAnnouncementController = async (
           .status(400)
           .json({ message: "Announcement is already unpublished" });
     }
-
     return res.json({
       message: "Announcement unpublished successfully",
       data: result.data,
@@ -198,10 +216,6 @@ export const unpublishAnnouncementController = async (
   }
 };
 
-/* ══════════════════════════════════════════════════════════
-   📌 PIN ANNOUNCEMENT
-   PATCH /api/admin/announcements/:announcementId/pin
-══════════════════════════════════════════════════════════ */
 export const pinAnnouncementController = async (
   req: Request,
   res: Response,
@@ -210,7 +224,6 @@ export const pinAnnouncementController = async (
     const result = await AnnouncementService.pinAnnouncement(
       req.params.announcementId,
     );
-
     if ("error" in result) {
       if (result.error === "not_found")
         return res.status(404).json({ message: "Announcement not found" });
@@ -219,7 +232,6 @@ export const pinAnnouncementController = async (
           .status(400)
           .json({ message: "Announcement is already pinned" });
     }
-
     return res.json({
       message: "Announcement pinned successfully",
       data: result.data,
@@ -230,10 +242,6 @@ export const pinAnnouncementController = async (
   }
 };
 
-/* ══════════════════════════════════════════════════════════
-   📌 UNPIN ANNOUNCEMENT
-   PATCH /api/admin/announcements/:announcementId/unpin
-══════════════════════════════════════════════════════════ */
 export const unpinAnnouncementController = async (
   req: Request,
   res: Response,
@@ -242,14 +250,12 @@ export const unpinAnnouncementController = async (
     const result = await AnnouncementService.unpinAnnouncement(
       req.params.announcementId,
     );
-
     if ("error" in result) {
       if (result.error === "not_found")
         return res.status(404).json({ message: "Announcement not found" });
       if (result.error === "not_pinned")
         return res.status(400).json({ message: "Announcement is not pinned" });
     }
-
     return res.json({
       message: "Announcement unpinned successfully",
       data: result.data,

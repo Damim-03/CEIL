@@ -819,7 +819,10 @@ adminRoutes.post(
   "/announcements",
   authMiddleware,
   roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
-  upload.single("image"),
+  upload.fields([
+    { name: "image", maxCount: 1 }, // صورة الغلاف (اختياري)
+    { name: "attachment", maxCount: 1 }, // PDF / Word / صورة (اختياري)
+  ]),
   createAnnouncementController,
 );
 
@@ -841,7 +844,10 @@ adminRoutes.put(
   "/announcements/:announcementId",
   authMiddleware,
   roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
-  upload.single("image"),
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "attachment", maxCount: 1 },
+  ]),
   updateAnnouncementController,
 );
 

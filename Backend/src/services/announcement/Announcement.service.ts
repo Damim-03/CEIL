@@ -1,7 +1,8 @@
 // ================================================================
 // 📦 src/services/announcement/Announcement.service.ts
 // ✅ Announcement CRUD — shared between Admin & Owner
-// ✅ 📌 Pin/Unpin support — pinned announcements appear first
+// ✅ 📌 Pin/Unpin support
+// ✅ 📎 Attachment support (PDF, Word, images) via Cloudinary
 // 🔌 Socket.IO events: published, unpublished, pinned, unpinned, deleted
 // ================================================================
 
@@ -21,15 +22,8 @@ interface CreateAnnouncementInput {
   excerpt_ar?: string;
   category?: string;
   is_published?: boolean | string;
-  file?: Express.Multer.File;
-}
-
-interface ListAnnouncementsParams {
-  page?: number;
-  limit?: number;
-  category?: string;
-  is_published?: boolean;
-  search?: string;
+  file?: Express.Multer.File; // cover image
+  attachmentFile?: Express.Multer.File; // PDF / Word / any file
 }
 
 interface UpdateAnnouncementInput {
@@ -40,7 +34,86 @@ interface UpdateAnnouncementInput {
   excerpt?: string;
   excerpt_ar?: string;
   category?: string;
-  file?: Express.Multer.File;
+  file?: Express.Multer.File; // replace cover image
+  attachmentFile?: Express.Multer.File; // replace attachment
+  remove_attachment?: boolean | string; // set true to delete existing attachment
+}
+
+interface ListAnnouncementsParams {
+  page?: number;
+  limit?: number;
+  category?: string;
+  is_published?: boolean;
+  search?: string;
+}
+
+// ─── Helpers ─────────────────────────────────────────────
+
+/** Derive a short type label from MIME type */
+function getMimeLabel(mimetype: string): string {
+  const map: Record<string, string> = {
+    "application/pdf": "pdf",
+    "application/msword": "doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+      "docx",
+    "image/jpeg": "image",
+    "image/jpg": "image",
+    "image/png": "image",
+    "image/webp": "image",
+    "image/gif": "image",
+  };
+  return map[mimetype] ?? mimetype.split("/")[1] ?? "file";
+}
+
+/** Upload attachment to Cloudinary — raw resource type for non-images */
+async function uploadAttachment(file: Express.Multer.File) {
+  const isImage = file.mimetype.startsWith("image/");
+
+  if (isImage) {
+    // Use existing helper for images
+    const result = await uploadToCloudinary(file, "announcement_attachments");
+    return {
+      url: result.secure_url,
+      public_id: result.public_id,
+      name: file.originalname,
+      type: getMimeLabel(file.mimetype),
+    };
+  }
+
+  // For PDF / Word — upload as raw resource
+  return new Promise<{
+    url: string;
+    public_id: string;
+    name: string;
+    type: string;
+  }>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "announcement_attachments",
+        resource_type: "raw",
+        public_id: `${Date.now()}_${file.originalname.replace(/\s+/g, "_")}`,
+      },
+      (error, result) => {
+        if (error || !result)
+          return reject(error ?? new Error("Upload failed"));
+        resolve({
+          url: result.secure_url,
+          public_id: result.public_id,
+          name: file.originalname,
+          type: getMimeLabel(file.mimetype),
+        });
+      },
+    );
+    stream.end(file.buffer);
+  });
+}
+
+/** Delete a Cloudinary asset — handles both image and raw */
+async function deleteCloudinaryAsset(public_id: string, type: string | null) {
+  const resource_type = type && type !== "image" ? "raw" : "image";
+  await cloudinary.uploader
+    .destroy(public_id, { resource_type })
+    .catch((err: any) => console.error("Cloudinary delete error:", err));
 }
 
 // ─── CREATE ──────────────────────────────────────────────
@@ -56,15 +129,29 @@ export async function createAnnouncement(input: CreateAnnouncementInput) {
     category,
     is_published,
     file,
+    attachmentFile,
   } = input;
 
+  // Cover image
   let image_url: string | null = null;
   let image_public_id: string | null = null;
-
   if (file) {
     const uploaded = await uploadToCloudinary(file, "announcements");
     image_url = uploaded.secure_url;
     image_public_id = uploaded.public_id;
+  }
+
+  // Attachment
+  let attachment_url: string | null = null;
+  let attachment_public_id: string | null = null;
+  let attachment_name: string | null = null;
+  let attachment_type: string | null = null;
+  if (attachmentFile) {
+    const uploaded = await uploadAttachment(attachmentFile);
+    attachment_url = uploaded.url;
+    attachment_public_id = uploaded.public_id;
+    attachment_name = uploaded.name;
+    attachment_type = uploaded.type;
   }
 
   const shouldPublish = is_published === true || is_published === "true";
@@ -80,12 +167,15 @@ export async function createAnnouncement(input: CreateAnnouncementInput) {
       category,
       image_url,
       image_public_id,
+      attachment_url,
+      attachment_public_id,
+      attachment_name,
+      attachment_type,
       is_published: shouldPublish,
       published_at: shouldPublish ? new Date() : null,
     },
   });
 
-  // 🔌 Socket — notify if published on creation
   if (shouldPublish) {
     emitToAll("announcement:published", {
       announcement_id: announcement.announcement_id,
@@ -104,15 +194,9 @@ export async function listAnnouncements(params: ListAnnouncementsParams = {}) {
   const skip = (page - 1) * limit;
 
   const where: any = {};
-
-  if (params.category) {
-    where.category = params.category.toUpperCase();
-  }
-
-  if (params.is_published !== undefined) {
+  if (params.category) where.category = params.category.toUpperCase();
+  if (params.is_published !== undefined)
     where.is_published = params.is_published;
-  }
-
   if (params.search) {
     where.OR = [
       { title: { contains: params.search, mode: "insensitive" } },
@@ -124,9 +208,9 @@ export async function listAnnouncements(params: ListAnnouncementsParams = {}) {
     prisma.announcement.findMany({
       where,
       orderBy: [
-        { is_pinned: "desc" }, // 📌 Pinned first
-        { pinned_at: "desc" }, // Most recently pinned on top
-        { created_at: "desc" }, // Then newest
+        { is_pinned: "desc" },
+        { pinned_at: "desc" },
+        { created_at: "desc" },
       ],
       skip,
       take: limit,
@@ -136,12 +220,7 @@ export async function listAnnouncements(params: ListAnnouncementsParams = {}) {
 
   return {
     data: announcements,
-    pagination: {
-      page,
-      limit,
-      total,
-      total_pages: Math.ceil(total / limit),
-    },
+    pagination: { page, limit, total, total_pages: Math.ceil(total / limit) },
   };
 }
 
@@ -162,7 +241,6 @@ export async function updateAnnouncement(
   const existing = await prisma.announcement.findUnique({
     where: { announcement_id: announcementId },
   });
-
   if (!existing) return null;
 
   const data: any = {
@@ -175,16 +253,47 @@ export async function updateAnnouncement(
     category: input.category,
   };
 
+  // Replace cover image
   if (input.file) {
     if (existing.image_public_id) {
       await cloudinary.uploader
         .destroy(existing.image_public_id)
         .catch((err: any) => console.error("Error deleting old image:", err));
     }
-
     const uploaded = await uploadToCloudinary(input.file, "announcements");
     data.image_url = uploaded.secure_url;
     data.image_public_id = uploaded.public_id;
+  }
+
+  // Remove attachment explicitly
+  const shouldRemoveAttachment =
+    input.remove_attachment === true || input.remove_attachment === "true";
+
+  if (shouldRemoveAttachment && existing.attachment_public_id) {
+    await deleteCloudinaryAsset(
+      existing.attachment_public_id,
+      existing.attachment_type,
+    );
+    data.attachment_url = null;
+    data.attachment_public_id = null;
+    data.attachment_name = null;
+    data.attachment_type = null;
+  }
+
+  // Replace attachment
+  if (input.attachmentFile) {
+    // Delete old attachment first
+    if (existing.attachment_public_id) {
+      await deleteCloudinaryAsset(
+        existing.attachment_public_id,
+        existing.attachment_type,
+      );
+    }
+    const uploaded = await uploadAttachment(input.attachmentFile);
+    data.attachment_url = uploaded.url;
+    data.attachment_public_id = uploaded.public_id;
+    data.attachment_name = uploaded.name;
+    data.attachment_type = uploaded.type;
   }
 
   return prisma.announcement.update({
@@ -199,26 +308,28 @@ export async function deleteAnnouncement(announcementId: string) {
   const existing = await prisma.announcement.findUnique({
     where: { announcement_id: announcementId },
   });
-
   if (!existing) return null;
 
+  // Delete cover image
   if (existing.image_public_id) {
     await cloudinary.uploader
       .destroy(existing.image_public_id)
-      .catch((err: any) =>
-        console.error("Error deleting image from Cloudinary:", err),
-      );
+      .catch((err: any) => console.error("Error deleting image:", err));
+  }
+
+  // Delete attachment
+  if (existing.attachment_public_id) {
+    await deleteCloudinaryAsset(
+      existing.attachment_public_id,
+      existing.attachment_type,
+    );
   }
 
   await prisma.announcement.delete({
     where: { announcement_id: announcementId },
   });
 
-  // 🔌 Socket — notify public pages
-  emitToAll("announcement:deleted", {
-    announcement_id: announcementId,
-  });
-
+  emitToAll("announcement:deleted", { announcement_id: announcementId });
   return true;
 }
 
@@ -228,19 +339,14 @@ export async function publishAnnouncement(announcementId: string) {
   const existing = await prisma.announcement.findUnique({
     where: { announcement_id: announcementId },
   });
-
   if (!existing) return { error: "not_found" as const };
   if (existing.is_published) return { error: "already_published" as const };
 
   const announcement = await prisma.announcement.update({
     where: { announcement_id: announcementId },
-    data: {
-      is_published: true,
-      published_at: new Date(),
-    },
+    data: { is_published: true, published_at: new Date() },
   });
 
-  // 🔌 Socket
   emitToAll("announcement:published", {
     announcement_id: announcementId,
     title: announcement.title,
@@ -255,7 +361,6 @@ export async function unpublishAnnouncement(announcementId: string) {
   const existing = await prisma.announcement.findUnique({
     where: { announcement_id: announcementId },
   });
-
   if (!existing) return { error: "not_found" as const };
   if (!existing.is_published) return { error: "already_unpublished" as const };
 
@@ -264,11 +369,7 @@ export async function unpublishAnnouncement(announcementId: string) {
     data: { is_published: false },
   });
 
-  // 🔌 Socket
-  emitToAll("announcement:unpublished", {
-    announcement_id: announcementId,
-  });
-
+  emitToAll("announcement:unpublished", { announcement_id: announcementId });
   return { data: announcement };
 }
 
@@ -278,19 +379,14 @@ export async function pinAnnouncement(announcementId: string) {
   const existing = await prisma.announcement.findUnique({
     where: { announcement_id: announcementId },
   });
-
   if (!existing) return { error: "not_found" as const };
   if (existing.is_pinned) return { error: "already_pinned" as const };
 
   const announcement = await prisma.announcement.update({
     where: { announcement_id: announcementId },
-    data: {
-      is_pinned: true,
-      pinned_at: new Date(),
-    },
+    data: { is_pinned: true, pinned_at: new Date() },
   });
 
-  // 🔌 Socket — notify public pages
   emitToAll("announcement:pinned", {
     announcement_id: announcementId,
     title: announcement.title,
@@ -305,22 +401,14 @@ export async function unpinAnnouncement(announcementId: string) {
   const existing = await prisma.announcement.findUnique({
     where: { announcement_id: announcementId },
   });
-
   if (!existing) return { error: "not_found" as const };
   if (!existing.is_pinned) return { error: "not_pinned" as const };
 
   const announcement = await prisma.announcement.update({
     where: { announcement_id: announcementId },
-    data: {
-      is_pinned: false,
-      pinned_at: null,
-    },
+    data: { is_pinned: false, pinned_at: null },
   });
 
-  // 🔌 Socket — notify public pages
-  emitToAll("announcement:unpinned", {
-    announcement_id: announcementId,
-  });
-
+  emitToAll("announcement:unpinned", { announcement_id: announcementId });
   return { data: announcement };
 }

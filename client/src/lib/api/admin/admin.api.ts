@@ -62,10 +62,15 @@ export interface Announcement {
   category: string | null;
   image_url: string | null;
   image_public_id: string | null;
+  // ✅ Attachment fields
+  attachment_url: string | null;
+  attachment_public_id: string | null;
+  attachment_name: string | null;
+  attachment_type: string | null;
   is_published: boolean;
   published_at: string | null;
-  is_pinned: boolean; // 📌
-  pinned_at: string | null; // 📌
+  is_pinned: boolean;
+  pinned_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -87,7 +92,8 @@ export interface CreateAnnouncementData {
   excerpt_ar?: string;
   category?: string;
   is_published?: boolean;
-  image?: File;
+  image?: File; // صورة الغلاف
+  attachment?: File; // ✅ الملف المرفق
 }
 
 export interface UpdateAnnouncementData {
@@ -98,7 +104,9 @@ export interface UpdateAnnouncementData {
   excerpt?: string;
   excerpt_ar?: string;
   category?: string;
-  image?: File;
+  image?: File; // استبدال صورة الغلاف
+  attachment?: File; // ✅ استبدال الملف المرفق
+  remove_attachment?: boolean; // ✅ حذف المرفق الموجود
 }
 
 export interface CreateStudentPayload {
@@ -1056,7 +1064,8 @@ export const announcementApi = {
     if (data.category) formData.append("category", data.category);
     if (data.is_published !== undefined)
       formData.append("is_published", String(data.is_published));
-    if (data.image) formData.append("image", data.image);
+    if (data.image) formData.append("image", data.image); // صورة الغلاف
+    if (data.attachment) formData.append("attachment", data.attachment); // ✅ المرفق
 
     const res = await axiosInstance.post<{
       message: string;
@@ -1074,7 +1083,11 @@ export const announcementApi = {
     if (data.excerpt) formData.append("excerpt", data.excerpt);
     if (data.excerpt_ar) formData.append("excerpt_ar", data.excerpt_ar);
     if (data.category) formData.append("category", data.category);
-    if (data.image) formData.append("image", data.image);
+    if (data.image) formData.append("image", data.image); // استبدال الصورة
+    if (data.attachment) formData.append("attachment", data.attachment); // ✅ استبدال المرفق
+    if (data.remove_attachment)
+      // ✅ حذف المرفق
+      formData.append("remove_attachment", "true");
 
     const res = await axiosInstance.put<{
       message: string;

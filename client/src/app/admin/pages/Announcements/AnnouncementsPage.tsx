@@ -2,6 +2,7 @@
 // 📌 src/app/admin/pages/announcements/Announcements.tsx
 // ✅ Full Dark / Light mode
 // ✅ 📌 Pin/Unpin — pinned announcements appear first with visual indicator
+// ✅ 📎 Attachment support (PDF, Word, PPT, images — max 20MB)
 // ✅ Matches Layout: bg-[#FAFAF8] light / bg-[#0F0F0F] dark
 // ✅ i18n via useTranslation
 // ================================================================
@@ -27,6 +28,9 @@ import {
   FileText,
   Pin,
   PinOff,
+  Paperclip,
+  FileDown,
+  File,
 } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import {
@@ -89,12 +93,148 @@ const CATEGORY_LABEL_KEYS: Record<string, string> = {
   EVENTS: "admin.announcements.catEvents",
 };
 
+// ─── Attachment helpers ───────────────────────────────────
+const ATTACHMENT_ACCEPT = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+].join(",");
+
+function getAttachmentIcon(type: string | null | undefined) {
+  if (!type) return <File className="w-4 h-4" />;
+  if (type === "pdf") return <FileText className="w-4 h-4 text-red-500" />;
+  if (type === "docx" || type === "doc")
+    return <FileText className="w-4 h-4 text-blue-500" />;
+  if (type === "pptx" || type === "ppt")
+    return <FileText className="w-4 h-4 text-orange-500" />;
+  if (type === "image") return <ImageIcon className="w-4 h-4 text-[#2B6F5E]" />;
+  return <File className="w-4 h-4" />;
+}
+
+function getAttachmentLabel(type: string | null | undefined) {
+  const labels: Record<string, string> = {
+    pdf: "PDF",
+    doc: "Word",
+    docx: "Word",
+    ppt: "PowerPoint",
+    pptx: "PowerPoint",
+    image: "Image",
+  };
+  return labels[type ?? ""] ?? (type ?? "File").toUpperCase();
+}
+
 const formatDate = (date: string) =>
   new Date(date).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
   });
+
+// ─── Attachment Upload Zone ───────────────────────────────
+function AttachmentZone({
+  file,
+  existingUrl,
+  existingName,
+  existingType,
+  onFileChange,
+  onRemoveExisting,
+  onRemoveNew,
+}: {
+  file: File | null;
+  existingUrl: string | null | undefined;
+  existingName: string | null | undefined;
+  existingType: string | null | undefined;
+  onFileChange: (f: File) => void;
+  onRemoveExisting: () => void;
+  onRemoveNew: () => void;
+}) {
+  const { t } = useTranslation();
+
+  if (file) {
+    return (
+      <div className="flex items-center gap-3 p-3 rounded-xl border border-[#2B6F5E]/30 bg-[#2B6F5E]/5 dark:bg-[#2B6F5E]/10">
+        <div className="w-9 h-9 rounded-lg bg-[#2B6F5E]/10 dark:bg-[#2B6F5E]/20 flex items-center justify-center shrink-0">
+          <Paperclip className="w-4 h-4 text-[#2B6F5E] dark:text-[#5EAA8D]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className={`text-sm font-medium ${T1} truncate`}>{file.name}</p>
+          <p className={`text-xs ${T3}`}>
+            {(file.size / 1024 / 1024).toFixed(2)} MB
+          </p>
+        </div>
+        <button
+          onClick={onRemoveNew}
+          className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-red-400 transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }
+
+  if (existingUrl) {
+    return (
+      <div className="flex items-center gap-3 p-3 rounded-xl border border-[#E8E5DE] dark:border-[#2A2A2A] bg-[#F3F1EC]/50 dark:bg-[#161616]">
+        <div className="w-9 h-9 rounded-lg bg-[#E8E5DE] dark:bg-[#2A2A2A] flex items-center justify-center shrink-0">
+          {getAttachmentIcon(existingType)}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className={`text-sm font-medium ${T1} truncate`}>
+            {existingName || t("admin.announcements.attachment")}
+          </p>
+          <p className={`text-xs ${T3}`}>{getAttachmentLabel(existingType)}</p>
+        </div>
+        <a
+          href={existingUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`p-1.5 rounded-lg hover:bg-[#2B6F5E]/10 ${BRAND_GREEN} transition-colors`}
+          title="Download"
+        >
+          <FileDown className="w-4 h-4" />
+        </a>
+        <button
+          onClick={onRemoveExisting}
+          className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-red-400 transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <label className="flex items-center gap-3 p-3 rounded-xl border-2 border-dashed border-[#E8E5DE] dark:border-[#2A2A2A] hover:border-[#2B6F5E]/40 cursor-pointer transition-colors bg-[#F3F1EC]/30 dark:bg-[#161616]">
+      <div className="w-9 h-9 rounded-lg bg-[#E8E5DE] dark:bg-[#2A2A2A] flex items-center justify-center shrink-0">
+        <Paperclip className={`w-4 h-4 ${T3}`} />
+      </div>
+      <div>
+        <p className={`text-sm font-medium ${T2}`}>
+          {t("admin.announcements.uploadAttachment")}
+        </p>
+        <p className={`text-xs ${T3}`}>
+          PDF, Word, PowerPoint, images — max 20MB
+        </p>
+      </div>
+      <input
+        type="file"
+        accept={ATTACHMENT_ACCEPT}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onFileChange(f);
+        }}
+        className="hidden"
+      />
+    </label>
+  );
+}
 
 // ─── Dialog ───
 function Dialog({
@@ -147,6 +287,11 @@ function AnnouncementForm({
   const [imagePreview, setImagePreview] = useState<string | null>(
     announcement?.image_url || null,
   );
+  // ─── Attachment state ────────────────────────────────────
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [removeAttachment, setRemoveAttachment] = useState(false);
+  const showExistingAttachment =
+    !removeAttachment && !attachmentFile && !!announcement?.attachment_url;
 
   const createMutation = useCreateAnnouncement();
   const updateMutation = useUpdateAnnouncement();
@@ -177,6 +322,8 @@ function AnnouncementForm({
         category: category || undefined,
       };
       if (imageFile) data.image = imageFile;
+      if (attachmentFile) data.attachment = attachmentFile;
+      if (removeAttachment) data.remove_attachment = true;
       updateMutation.mutate(
         { id: announcement.announcement_id, data },
         { onSuccess: () => onClose() },
@@ -193,6 +340,7 @@ function AnnouncementForm({
         is_published: isPublished,
       };
       if (imageFile) data.image = imageFile;
+      if (attachmentFile) data.attachment = attachmentFile;
       createMutation.mutate(data, { onSuccess: () => onClose() });
     }
   };
@@ -217,7 +365,7 @@ function AnnouncementForm({
       </div>
 
       <div className="p-6 space-y-5">
-        {/* Image */}
+        {/* Cover Image */}
         <div>
           <label className={`block text-sm font-medium ${T1} mb-2`}>
             {t("admin.announcements.image")}
@@ -250,6 +398,37 @@ function AnnouncementForm({
               />
             </label>
           )}
+        </div>
+
+        {/* 📎 Attachment */}
+        <div>
+          <label
+            className={`flex items-center gap-1.5 text-sm font-medium ${T1} mb-2`}
+          >
+            <Paperclip className="w-3.5 h-3.5" />
+            {t("admin.announcements.attachment")}
+            <span className={`text-xs font-normal ${T3}`}>
+              ({t("admin.announcements.optional")})
+            </span>
+          </label>
+          <AttachmentZone
+            file={attachmentFile}
+            existingUrl={
+              showExistingAttachment ? announcement?.attachment_url : null
+            }
+            existingName={
+              showExistingAttachment ? announcement?.attachment_name : null
+            }
+            existingType={
+              showExistingAttachment ? announcement?.attachment_type : null
+            }
+            onFileChange={(f) => {
+              setAttachmentFile(f);
+              setRemoveAttachment(false);
+            }}
+            onRemoveExisting={() => setRemoveAttachment(true)}
+            onRemoveNew={() => setAttachmentFile(null)}
+          />
         </div>
 
         {/* Title */}
@@ -493,7 +672,6 @@ function AnnouncementRow({
   };
 
   const isPinned = announcement.is_pinned;
-
   const catClass =
     CATEGORY_COLORS[announcement.category || ""] ||
     "bg-[#F3F1EC] dark:bg-[#222] text-[#6B5D4F] dark:text-[#999] border-[#E8E5DE] dark:border-[#2A2A2A]";
@@ -506,7 +684,6 @@ function AnnouncementRow({
           : `${S_BORDER} ${S_HOVER_ROW} hover:border-[#2B6F5E]/20 dark:hover:border-[#5EAA8D]/20`
       }`}
     >
-      {/* 📌 Pin accent stripe */}
       {isPinned && (
         <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl bg-gradient-to-b from-amber-400 to-amber-500" />
       )}
@@ -532,15 +709,12 @@ function AnnouncementRow({
           <div
             className={`w-2 h-2 rounded-full shrink-0 ${announcement.is_published ? "bg-[#8DB896]" : "bg-[#D8CDC0] dark:bg-[#444]"}`}
           />
-
-          {/* 📌 Pinned badge */}
           {isPinned && (
             <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/10 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20">
               <Pin className="w-2.5 h-2.5" />
               {t("admin.announcements.pinned")}
             </span>
           )}
-
           <h3 className={`text-sm font-semibold ${T1} truncate`}>
             {announcement.title}
           </h3>
@@ -557,6 +731,25 @@ function AnnouncementRow({
             <Calendar className="w-3 h-3" />
             {formatDate(announcement.created_at)}
           </span>
+          {/* 📎 Attachment badge */}
+          {announcement.attachment_url && (
+            <a
+              href={announcement.attachment_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center gap-1 text-xs ${BRAND_GREEN} hover:underline`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {getAttachmentIcon(announcement.attachment_type)}
+              {announcement.attachment_name ? (
+                <span className="truncate max-w-[100px]">
+                  {announcement.attachment_name}
+                </span>
+              ) : (
+                <span>{getAttachmentLabel(announcement.attachment_type)}</span>
+              )}
+            </a>
+          )}
           {announcement.is_published ? (
             <span className={`text-xs ${BRAND_GREEN} flex items-center gap-1`}>
               <Globe className="w-3 h-3" /> {t("admin.announcements.published")}
@@ -571,7 +764,6 @@ function AnnouncementRow({
 
       {/* Actions */}
       <div className="flex items-center gap-1 shrink-0">
-        {/* 📌 Pin toggle */}
         <button
           onClick={togglePin}
           disabled={pinMutation.isPending || unpinMutation.isPending}
@@ -592,7 +784,6 @@ function AnnouncementRow({
             <Pin className="w-4 h-4" />
           )}
         </button>
-
         <button
           onClick={togglePublish}
           disabled={publishMutation.isPending || unpublishMutation.isPending}
@@ -737,9 +928,9 @@ const Announcements = () => {
             color: "amber" as const,
           },
           {
-            labelKey: "admin.announcements.withImages",
-            value: announcements.filter((a) => a.image_url).length,
-            icon: ImageIcon,
+            labelKey: "admin.announcements.withAttachments",
+            value: announcements.filter((a) => a.attachment_url).length,
+            icon: Paperclip,
             color: "mustard" as const,
           },
         ].map((stat) => {

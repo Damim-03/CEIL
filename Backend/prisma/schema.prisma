@@ -344,6 +344,11 @@ model Announcement {
   is_pinned       Boolean   @default(false)
   pinned_at       DateTime?
 
+  attachment_url       String?
+  attachment_public_id String?
+  attachment_name      String? // اسم الملف الأصلي
+  attachment_type      String? // "pdf" | "docx" | "image"
+
   @@map("announcements")
 }
 
