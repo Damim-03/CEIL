@@ -45,6 +45,8 @@ function getAttachmentMeta(type: string | null | undefined) {
         bg: "bg-red-50 dark:bg-red-500/10",
         border: "border-red-100 dark:border-red-500/20",
         badge: "bg-red-500/10 text-red-600 dark:text-red-400",
+        iconBg: "bg-red-500/15",
+        iconColor: "text-red-400",
       };
     case "docx":
     case "doc":
@@ -55,6 +57,8 @@ function getAttachmentMeta(type: string | null | undefined) {
         bg: "bg-blue-50 dark:bg-blue-500/10",
         border: "border-blue-100 dark:border-blue-500/20",
         badge: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+        iconBg: "bg-blue-500/15",
+        iconColor: "text-blue-400",
       };
     case "pptx":
     case "ppt":
@@ -65,6 +69,8 @@ function getAttachmentMeta(type: string | null | undefined) {
         bg: "bg-orange-50 dark:bg-orange-500/10",
         border: "border-orange-100 dark:border-orange-500/20",
         badge: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+        iconBg: "bg-orange-500/15",
+        iconColor: "text-orange-400",
       };
     case "image":
       return {
@@ -74,6 +80,8 @@ function getAttachmentMeta(type: string | null | undefined) {
         bg: "bg-emerald-50 dark:bg-emerald-500/10",
         border: "border-emerald-100 dark:border-emerald-500/20",
         badge: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+        iconBg: "bg-emerald-500/15",
+        iconColor: "text-emerald-400",
       };
     default:
       return {
@@ -83,73 +91,143 @@ function getAttachmentMeta(type: string | null | undefined) {
         bg: "bg-brand-teal-dark/5 dark:bg-[#4ADE80]/10",
         border: "border-brand-teal-dark/10 dark:border-[#4ADE80]/20",
         badge: "bg-brand-teal-dark/10 text-brand-teal-dark dark:text-[#4ADE80]",
+        iconBg: "bg-white/10",
+        iconColor: "text-white/60",
       };
   }
 }
 
-// ─── PDF Viewer Modal ──────────────────────────────────────
-function PdfViewerModal({
+// ─── Attachment Viewer Modal ───────────────────────────────
+function AttachmentViewerModal({
   url,
   name,
+  type,
   onClose,
+  t,
 }: {
   url: string;
   name: string;
+  type: string | null | undefined;
   onClose: () => void;
+  t: (k: string, opts?: any) => string;
 }) {
+  const meta = getAttachmentMeta(type);
+  const Icon = meta.icon;
+  const isImage = type === "image";
+  const isViewable =
+    type === "pdf" ||
+    type === "docx" ||
+    type === "doc" ||
+    type === "pptx" ||
+    type === "ppt";
+
+  // Google Docs Viewer للـ PDF / Word / PPT
+  const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/80 backdrop-blur-md"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-5xl h-[90vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col bg-white dark:bg-[#1A1A1A]">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-beige dark:border-[#2A2A2A] shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center">
-              <FileText className="w-4 h-4 text-red-500" />
-            </div>
-            <span className="text-sm font-semibold text-brand-black dark:text-[#E5E5E5] truncate max-w-[300px]">
-              {name}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <a
-              href={url}
-              download
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-teal-dark dark:text-[#4ADE80] hover:bg-brand-teal-dark/8 dark:hover:bg-[#4ADE80]/10 transition-colors"
+      <div
+        className="relative w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl flex flex-col bg-[#1C1C1E]"
+        style={{ maxHeight: "92vh" }}
+      >
+        {/* ── Header ── */}
+        <div className="flex items-center justify-between px-4 sm:px-5 py-4 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${meta.iconBg}`}
             >
-              <Download className="w-3.5 h-3.5" />
-              Download
-            </a>
+              <Icon className={`w-4 h-4 ${meta.iconColor}`} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-white leading-tight truncate max-w-[180px] sm:max-w-[360px]">
+                {name}
+              </p>
+              <p className="text-[11px] text-white/40 mt-0.5">{meta.label}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0 ml-3">
             <a
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-brown dark:text-[#AAAAAA] hover:bg-brand-beige dark:hover:bg-[#2A2A2A] transition-colors"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all"
             >
               <ExternalLink className="w-3.5 h-3.5" />
-              Open tab
+              <span className="hidden sm:inline">
+                {t("common.openTab", { defaultValue: "Open in New Tab" })}
+              </span>
+            </a>
+            <a
+              href={url}
+              download={name}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-semibold bg-brand-mustard hover:bg-brand-mustard/90 text-white transition-all"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">
+                {t("common.download", { defaultValue: "تحميل الوثيقة" })}
+              </span>
             </a>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-brand-brown dark:text-[#AAAAAA] hover:bg-brand-beige dark:hover:bg-[#2A2A2A] transition-colors text-lg leading-none"
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all text-xl leading-none"
             >
               ×
             </button>
           </div>
         </div>
 
-        {/* PDF iframe */}
-        <iframe
-          src={`${url}#toolbar=1&navpanes=0&scrollbar=1`}
-          className="flex-1 w-full"
-          title={name}
-        />
+        {/* ── Content ── */}
+        <div
+          className="flex-1 overflow-hidden bg-black/30"
+          style={{ minHeight: 0 }}
+        >
+          {isImage ? (
+            <div
+              className="w-full h-full flex items-center justify-center p-4 overflow-auto"
+              style={{ maxHeight: "calc(92vh - 76px)" }}
+            >
+              <img
+                src={url}
+                alt={name}
+                className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+                style={{ maxHeight: "calc(92vh - 96px)" }}
+              />
+            </div>
+          ) : isViewable ? (
+            <iframe
+              src={googleViewerUrl}
+              className="w-full"
+              style={{ height: "calc(92vh - 76px)", border: "none" }}
+              title={name}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <Paperclip className="w-12 h-12 text-white/20" />
+              <p className="text-white/40 text-sm">
+                {t("common.previewUnavailable", {
+                  defaultValue: "Preview not available",
+                })}
+              </p>
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-sm transition-all"
+              >
+                <ExternalLink className="w-4 h-4" />
+                {t("common.openTab", { defaultValue: "Open in New Tab" })}
+              </a>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -167,12 +245,11 @@ function AttachmentCard({
   type: string | null | undefined;
   t: (k: string, opts?: any) => string;
 }) {
-  const [pdfOpen, setPdfOpen] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const meta = getAttachmentMeta(type);
   const Icon = meta.icon;
   const displayName =
     name || t("announcements.attachment", { defaultValue: "Attachment" });
-  const isPdf = type === "pdf";
   const isImage = type === "image";
 
   return (
@@ -180,26 +257,27 @@ function AttachmentCard({
       <div
         className={`rounded-2xl border ${meta.border} ${meta.bg} overflow-hidden`}
       >
-        {/* Image preview */}
+        {/* Image inline preview */}
         {isImage && (
-          <div className="w-full h-48 overflow-hidden">
+          <div
+            className="w-full h-52 overflow-hidden cursor-pointer"
+            onClick={() => setViewerOpen(true)}
+          >
             <img
               src={url}
               alt={displayName}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
             />
           </div>
         )}
 
         <div className="p-5 flex items-center gap-4">
-          {/* Icon */}
           <div
             className={`w-12 h-12 rounded-xl ${meta.bg} border ${meta.border} flex items-center justify-center shrink-0`}
           >
             <Icon className={`w-6 h-6 ${meta.color}`} />
           </div>
 
-          {/* Info */}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-brand-black dark:text-[#E5E5E5] truncate">
               {displayName}
@@ -211,17 +289,14 @@ function AttachmentCard({
             </span>
           </div>
 
-          {/* Actions */}
           <div className="flex items-center gap-2 shrink-0">
-            {isPdf && (
-              <button
-                onClick={() => setPdfOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-[#1A1A1A] border border-brand-beige dark:border-[#2A2A2A] text-xs font-semibold text-brand-teal-dark dark:text-[#4ADE80] hover:bg-brand-teal-dark dark:hover:bg-[#4ADE80] hover:text-white dark:hover:text-[#0F0F0F] hover:border-brand-teal-dark dark:hover:border-[#4ADE80] transition-all duration-200 shadow-sm"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                {t("common.view", { defaultValue: "View" })}
-              </button>
-            )}
+            <button
+              onClick={() => setViewerOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-[#1A1A1A] border border-brand-beige dark:border-[#2A2A2A] text-xs font-semibold text-brand-teal-dark dark:text-[#4ADE80] hover:bg-brand-teal-dark dark:hover:bg-[#4ADE80] hover:text-white dark:hover:text-[#0F0F0F] hover:border-brand-teal-dark dark:hover:border-[#4ADE80] transition-all duration-200 shadow-sm"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              {t("common.view", { defaultValue: "View" })}
+            </button>
             <a
               href={url}
               download={displayName}
@@ -234,12 +309,13 @@ function AttachmentCard({
         </div>
       </div>
 
-      {/* PDF Modal */}
-      {isPdf && pdfOpen && (
-        <PdfViewerModal
+      {viewerOpen && (
+        <AttachmentViewerModal
           url={url}
           name={displayName}
-          onClose={() => setPdfOpen(false)}
+          type={type}
+          onClose={() => setViewerOpen(false)}
+          t={t}
         />
       )}
     </>
@@ -458,7 +534,6 @@ export default function AnnouncementDetailPage() {
               {excerpt}
             </p>
           )}
-
           {content && content.includes("<") ? (
             <div
               className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-brand-black dark:prose-headings:text-[#E5E5E5] prose-headings:font-bold prose-p:text-brand-black/70 dark:prose-p:text-[#CCCCCC] prose-p:leading-relaxed prose-a:text-brand-teal-dark dark:prose-a:text-[#4ADE80] prose-a:no-underline hover:prose-a:underline prose-strong:text-brand-black dark:prose-strong:text-[#E5E5E5] prose-img:rounded-2xl prose-img:shadow-md"
@@ -472,12 +547,9 @@ export default function AnnouncementDetailPage() {
           )}
         </article>
 
-        {/* ════════════════════════════════════════
-            📎 ATTACHMENT SECTION
-        ════════════════════════════════════════ */}
+        {/* ── Attachment ── */}
         {announcement.attachment_url && (
           <section className="py-8 border-t border-brand-beige dark:border-[#2A2A2A]">
-            {/* Section header */}
             <div className="flex items-center gap-2.5 mb-5">
               <div className="w-8 h-8 rounded-lg bg-brand-teal-dark/8 dark:bg-[#4ADE80]/10 flex items-center justify-center">
                 <Paperclip className="w-4 h-4 text-brand-teal-dark dark:text-[#4ADE80]" />
@@ -491,7 +563,6 @@ export default function AnnouncementDetailPage() {
                 })}
               </h2>
             </div>
-
             <AttachmentCard
               url={announcement.attachment_url}
               name={announcement.attachment_name}
@@ -554,7 +625,6 @@ export default function AnnouncementDetailPage() {
             </div>
           </section>
         )}
-
         <div className="h-10" />
       </div>
     </main>
