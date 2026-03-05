@@ -148,39 +148,6 @@ export function HeroSection() {
                 </LocaleLink>
               </Button>
             </div>
-
-            {/* Stats */}
-            <div
-              className={`flex items-center justify-center gap-8 sm:gap-12 pt-10 transition-all duration-1000 ${
-                loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-              }`}
-              style={{ transitionDelay: "600ms" }}
-            >
-              <StatItem
-                value={
-                  stats?.languages_count ? `${stats.languages_count}+` : "6+"
-                }
-                label={t("hero.languages")}
-                loaded={loaded}
-                delay={700}
-              />
-              <div className="w-px h-12 bg-white/10" />
-              <StatItem
-                value="4"
-                label={t("hero.levels")}
-                loaded={loaded}
-                delay={800}
-              />
-              <div className="w-px h-12 bg-white/10" />
-              <StatItem
-                value={
-                  stats?.students_count ? `${stats.students_count}+` : "500+"
-                }
-                label={t("hero.students")}
-                loaded={loaded}
-                delay={900}
-              />
-            </div>
           </div>
         </div>
       </div>
