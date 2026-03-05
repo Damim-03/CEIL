@@ -229,9 +229,13 @@ function StatusModal({
   onClose: () => void;
 }) {
   const { mutate, isPending } = useChangeGroupStatus();
+  const [hovered, setHovered] = useState<GroupStatus | null>(null);
   const statuses: GroupStatus[] = ["OPEN", "FULL", "FINISHED"];
+  const preview = hovered ?? group.status;
+  const previewCfg = STATUS_CFG[preview];
 
   const handle = (status: GroupStatus) => {
+    if (status === group.status || isPending) return;
     mutate(
       { groupId: group.group_id, status },
       {
@@ -246,42 +250,114 @@ function StatusModal({
 
   return (
     <Overlay onClose={onClose}>
-      <div className="bg-white dark:bg-[#161616] rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-        <h3 className="text-base font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-1">
-          تغيير حالة الفوج
-        </h3>
-        <p className="text-[12px] text-[#9B8E82] mb-5">{group.name}</p>
-        <div className="space-y-2">
-          {statuses.map((s) => {
-            const cfg = STATUS_CFG[s];
-            const Icon = cfg.icon;
-            const isActive = group.status === s;
-            return (
-              <button
-                key={s}
-                onClick={() => !isActive && handle(s)}
-                disabled={isPending || isActive}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
-                  isActive
-                    ? "border-[#2B6F5E] bg-[#EDF6F3] dark:bg-[#0F2420] cursor-default"
-                    : "border-[#E8E0D5] dark:border-[#2A2A2A] hover:border-[#2B6F5E] hover:bg-[#FDFAF7] dark:hover:bg-[#111]"
-                }`}
-              >
-                <Icon className="w-4 h-4" style={{ color: cfg.color }} />
-                <span className="text-[13px] font-medium text-[#1B1B1B] dark:text-[#E5E5E5] flex-1 text-start">
-                  {cfg.ar}
-                </span>
-                {isActive && <Check className="w-4 h-4 text-[#2B6F5E]" />}
-              </button>
-            );
-          })}
+      <div
+        className="bg-white dark:bg-[#0E0E0E] rounded-2xl w-full max-w-xs shadow-2xl overflow-hidden"
+        style={{
+          border: `1.5px solid ${previewCfg.color}30`,
+          transition: "border-color 0.3s",
+        }}
+      >
+        {/* animated top bar */}
+        <div
+          className="h-[3px] w-full transition-all duration-300"
+          style={{ background: previewCfg.color }}
+        />
+
+        <div className="p-5">
+          {/* header row */}
+          <div className="flex items-start justify-between mb-5">
+            <div>
+              <p className="text-[10px] font-semibold text-[#9B8E82] uppercase tracking-[0.12em] mb-1">
+                حالة الفوج
+              </p>
+              <h3 className="text-[14px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5] leading-tight max-w-[140px] truncate">
+                {group.name}
+              </h3>
+            </div>
+            {/* live preview pill */}
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition-all duration-300"
+              style={{
+                background: previewCfg.color + "18",
+                color: previewCfg.color,
+              }}
+            >
+              {(() => {
+                const Icon = previewCfg.icon;
+                return <Icon className="w-3 h-3" />;
+              })()}
+              {previewCfg.ar}
+            </div>
+          </div>
+
+          {/* 3-segment pill control */}
+          <div className="relative flex p-1 rounded-2xl bg-[#F5F0EB] dark:bg-[#1A1A1A] mb-4">
+            {statuses.map((s, i) => {
+              const cfg = STATUS_CFG[s];
+              const Icon = cfg.icon;
+              const isActive = group.status === s;
+              const isHov = hovered === s;
+              return (
+                <button
+                  key={s}
+                  onClick={() => handle(s)}
+                  onMouseEnter={() => setHovered(s)}
+                  onMouseLeave={() => setHovered(null)}
+                  disabled={isPending}
+                  className="relative flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl transition-all duration-200"
+                  style={{
+                    background: isActive
+                      ? cfg.color + "18"
+                      : isHov
+                        ? cfg.color + "0C"
+                        : "transparent",
+                    boxShadow: isActive
+                      ? `inset 0 0 0 1px ${cfg.color}40`
+                      : "none",
+                  }}
+                >
+                  <Icon
+                    className="w-4 h-4 transition-all duration-200"
+                    style={{ color: isActive || isHov ? cfg.color : "#9B8E82" }}
+                  />
+                  <span
+                    className="text-[10px] font-semibold transition-all duration-200"
+                    style={{ color: isActive || isHov ? cfg.color : "#9B8E82" }}
+                  >
+                    {cfg.ar}
+                  </span>
+                  {isActive && (
+                    <span
+                      className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full transition-all duration-300"
+                      style={{ background: cfg.color }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* FINISHED warning */}
+          {(hovered === "FINISHED" ||
+            (group.status !== "FINISHED" && preview === "FINISHED")) && (
+            <div className="mb-3 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 text-[11px] text-amber-600 dark:text-amber-400 text-center">
+              ⚠️ سيتم إغلاق جميع التسجيلات النشطة
+            </div>
+          )}
+
+          {isPending ? (
+            <div className="flex justify-center py-2">
+              <Loader2 className="w-4 h-4 animate-spin text-[#9B8E82]" />
+            </div>
+          ) : (
+            <button
+              onClick={onClose}
+              className="w-full py-2 rounded-xl text-[12px] text-[#9B8E82] hover:bg-[#F5F0EB] dark:hover:bg-[#1A1A1A] hover:text-[#3D3530] dark:hover:text-[#CCC] transition-colors"
+            >
+              إغلاق
+            </button>
+          )}
         </div>
-        <button
-          onClick={onClose}
-          className="mt-4 w-full py-2 rounded-xl border border-[#E8E0D5] dark:border-[#2A2A2A] text-[13px] text-[#9B8E82] hover:bg-[#F5F0EB] dark:hover:bg-[#1A1A1A] transition-colors"
-        >
-          إلغاء
-        </button>
       </div>
     </Overlay>
   );
