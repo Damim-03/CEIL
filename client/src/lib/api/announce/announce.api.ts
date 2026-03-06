@@ -56,6 +56,7 @@ export interface PublicCourseGroup {
 }
 
 export interface PublicCourseDetail extends PublicCourse {
+  pricing: any;
   groups: PublicCourseGroup[];
 }
 

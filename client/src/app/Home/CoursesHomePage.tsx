@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import {
   Calendar,
-  Users,
   UserPlus,
   Loader2,
   Globe,
@@ -168,17 +167,6 @@ function CourseCard({ course }: { course: PublicCourse }) {
               {formatDate(course.end_date)}
             </span>
           </div>
-        </div>
-        <div className="flex items-center gap-2.5 text-sm">
-          <Users className="w-3.5 h-3.5 text-brand-teal-dark dark:text-[#4ADE80] shrink-0" />
-          <span className="text-brand-brown dark:text-[#888888]">
-            {t("courses.enrolled")}:
-          </span>
-          <span
-            className={`${currentLang === "ar" ? "mr-auto" : "ml-auto"} font-semibold text-brand-black dark:text-[#E5E5E5]`}
-          >
-            {course.enrolled} / {course.capacity || "∞"} {t("common.student")}
-          </span>
         </div>
       </div>
 

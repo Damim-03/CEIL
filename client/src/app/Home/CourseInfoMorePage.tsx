@@ -84,10 +84,6 @@ export default function CourseInfoMorePage() {
   const isOpen =
     course.registration_open &&
     (course.capacity === 0 || course.enrolled < course.capacity);
-  const fillPercent =
-    course.capacity > 0
-      ? Math.min((course.enrolled / course.capacity) * 100, 100)
-      : 0;
   const title =
     currentLang === "ar"
       ? course.title_ar || course.course_name
@@ -405,10 +401,6 @@ export default function CourseInfoMorePage() {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {course.groups.map((g: any) => {
-                    const gFill =
-                      g.max_students > 0
-                        ? Math.min((g.enrolled / g.max_students) * 100, 100)
-                        : 0;
                     return (
                       <div
                         key={g.id}
@@ -428,22 +420,6 @@ export default function CourseInfoMorePage() {
                           <span className="inline-flex px-2.5 py-1 rounded-lg bg-brand-teal-dark/8 dark:bg-[#4ADE80]/[0.1] text-brand-teal-dark dark:text-[#4ADE80] text-xs font-bold">
                             {g.level}
                           </span>
-                        </div>
-                        <div className="mt-4">
-                          <div className="flex items-center justify-between text-xs mb-1.5">
-                            <span className="text-brand-brown dark:text-[#888888]">
-                              {t("courses.enrolled")}
-                            </span>
-                            <span className="font-semibold text-brand-black dark:text-[#E5E5E5]">
-                              {g.enrolled} / {g.max_students}
-                            </span>
-                          </div>
-                          <div className="h-2 bg-brand-beige/80 dark:bg-[#2A2A2A] rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-500 ${gFill >= 90 ? "bg-red-400" : gFill >= 60 ? "bg-brand-mustard" : "bg-brand-teal-dark dark:bg-[#4ADE80]"}`}
-                              style={{ width: `${gFill}%` }}
-                            />
-                          </div>
                         </div>
                       </div>
                     );
@@ -479,19 +455,6 @@ export default function CourseInfoMorePage() {
                       <p className="text-brand-brown dark:text-[#888888] text-sm mt-0.5">
                         {formatDate(course.start_date)} —{" "}
                         {formatDate(course.end_date)}
-                      </p>
-                    </div>
-                    <div
-                      className={`${isRTL ? "text-left" : "text-right"} shrink-0`}
-                    >
-                      <p className="font-bold text-brand-black dark:text-[#E5E5E5] text-lg">
-                        {course.enrolled}
-                        <span className="text-brand-brown dark:text-[#888888] font-normal text-sm">
-                          /{course.capacity || "∞"}
-                        </span>
-                      </p>
-                      <p className="text-brand-brown dark:text-[#888888] text-xs">
-                        {t("courses.enrolled")}
                       </p>
                     </div>
                   </div>
@@ -532,24 +495,6 @@ export default function CourseInfoMorePage() {
                         label={t("courses.period")}
                         value={`${formatDate(course.start_date)} — ${formatDate(course.end_date)}`}
                       />
-                    )}
-                    <SidebarRow
-                      icon={<Users className="w-4 h-4" />}
-                      label={t("courses.enrolled")}
-                      value={`${course.enrolled} / ${course.capacity || "∞"}`}
-                    />
-                    {course.capacity > 0 && (
-                      <div>
-                        <div className="h-2 bg-brand-beige dark:bg-[#2A2A2A] rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${fillPercent >= 90 ? "bg-red-400" : fillPercent >= 60 ? "bg-brand-mustard" : "bg-brand-teal-dark dark:bg-[#4ADE80]"}`}
-                            style={{ width: `${fillPercent}%` }}
-                          />
-                        </div>
-                        <p className="text-[11px] text-brand-brown dark:text-[#888888] mt-1">
-                          {Math.round(fillPercent)}% {t("courses.filled")}
-                        </p>
-                      </div>
                     )}
                   </div>
                 ) : (
