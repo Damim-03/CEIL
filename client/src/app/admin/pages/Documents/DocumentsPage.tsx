@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   FileText,
   Image,
@@ -7,26 +7,23 @@ import {
   Trash2,
   Eye,
   Download,
-  Filter,
   FolderOpen,
   Loader2,
   AlertCircle,
   CheckCircle,
   XCircle,
-  ChevronRight,
   File,
   User,
   ExternalLink,
+  ShieldCheck,
+  Star,
+  ChevronRight,
+  Clock,
+  CheckCircle2,
+  FileCheck,
 } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../../components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -40,7 +37,6 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "../../../../components/ui/avatar";
-import { Badge } from "../../../../components/ui/badge";
 import { cn } from "../../../../lib/utils/utils";
 import {
   useAdminDocuments,
@@ -52,7 +48,6 @@ import type { AdminDocument } from "../../../../types/Types";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
-// Type for grouped documents
 type GroupedDocuments = {
   [studentId: string]: {
     student: {
@@ -62,6 +57,7 @@ type GroupedDocuments = {
       avatar?: string | null;
     };
     documents: AdminDocument[];
+    isComplete: boolean;
   };
 };
 
@@ -80,8 +76,9 @@ const AdminDocuments = () => {
     useRejectDocument();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | "complete" | "pending">("all");
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
@@ -92,183 +89,125 @@ const AdminDocuments = () => {
   const [documentToReject, setDocumentToReject] =
     useState<AdminDocument | null>(null);
   const [rejectReason, setRejectReason] = useState("");
-
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [documentToView, setDocumentToView] = useState<AdminDocument | null>(
     null,
   );
 
-  // Get file type icon
   const getFileIcon = (fileType: AdminDocument["fileType"]) => {
     switch (fileType) {
       case "pdf":
-        return <FileText className="h-5 w-5 text-red-500" />;
+        return <FileText className="h-4 w-4 text-rose-400" />;
       case "image":
-        return <Image className="h-5 w-5 text-blue-500" />;
-      case "doc":
-        return <FileIcon className="h-5 w-5 text-blue-600" />;
+        return <Image className="h-4 w-4 text-sky-400" />;
       default:
-        return <FileIcon className="h-5 w-5 text-gray-500" />;
+        return <FileIcon className="h-4 w-4 text-violet-400" />;
     }
   };
 
-  // Get file type badge
-  const getFileTypeBadge = (fileType: AdminDocument["fileType"]) => {
-    const variants = {
-      pdf: "bg-red-50 text-red-700 border-red-200",
-      image: "bg-blue-50 text-blue-700 border-blue-200",
-      doc: "bg-indigo-50 text-indigo-700 border-indigo-200",
-    };
-
-    return (
-      <Badge
-        variant="outline"
-        className={cn("text-xs font-medium", variants[fileType])}
-      >
-        {fileType.toUpperCase()}
-      </Badge>
-    );
-  };
-
-  // Get status badge
-  const getStatusBadge = (status?: "APPROVED" | "PENDING" | "REJECTED") => {
-    const variants = {
-      APPROVED: "bg-green-50 text-green-700 border-green-200",
-      PENDING: "bg-yellow-50 text-yellow-700 border-yellow-200",
-      REJECTED: "bg-red-50 text-red-700 border-red-200",
-    };
-
-    const displayStatus = status || "PENDING";
-
-    return (
-      <Badge
-        variant="outline"
-        className={cn("text-xs font-medium", variants[displayStatus])}
-      >
-        {t(`admin.documents.status.${displayStatus.toLowerCase()}`)}
-      </Badge>
-    );
-  };
-
-  // Format date
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
+    return new Date(dateString).toLocaleDateString("fr-DZ", {
+      day: "2-digit",
       month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      year: "numeric",
     });
   };
 
-  // Get student initials
-  const getInitials = (name: string) => {
-    return name
+  const getInitials = (name: string) =>
+    name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase()
       .slice(0, 2);
-  };
 
-  // Group documents by student
-  const groupDocumentsByStudent = (docs: AdminDocument[]): GroupedDocuments => {
-    return docs.reduce((acc, doc) => {
-      const studentId = doc.student.id || doc.student.email;
-      if (!acc[studentId]) {
-        acc[studentId] = {
-          student: doc.student,
-          documents: [],
-        };
-      }
-      acc[studentId].documents.push(doc);
+  // Group + compute completeness
+  const groupedDocuments = useMemo((): GroupedDocuments => {
+    const filtered = documents.filter((doc) => {
+      const sl = searchQuery.toLowerCase();
+      return (
+        doc.student.name.toLowerCase().includes(sl) ||
+        doc.student.email.toLowerCase().includes(sl) ||
+        doc.fileName.toLowerCase().includes(sl)
+      );
+    });
+
+    const groups = filtered.reduce((acc, doc) => {
+      const sid = doc.student.id || doc.student.email;
+      if (!acc[sid])
+        acc[sid] = { student: doc.student, documents: [], isComplete: false };
+      acc[sid].documents.push(doc);
       return acc;
     }, {} as GroupedDocuments);
-  };
 
-  // Filter documents
-  const filteredDocuments = documents.filter((doc) => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      doc.student.name.toLowerCase().includes(searchLower) ||
-      doc.student.email.toLowerCase().includes(searchLower) ||
-      doc.fileName.toLowerCase().includes(searchLower)
-    );
-  });
+    // Compute completeness: all docs approved
+    Object.values(groups).forEach((g) => {
+      g.isComplete =
+        g.documents.length > 0 &&
+        g.documents.every((d) => d.status === "APPROVED");
+    });
 
-  // Group filtered documents by student
-  const groupedDocuments = groupDocumentsByStudent(filteredDocuments);
+    return groups;
+  }, [documents, searchQuery]);
 
-  // Sort students by latest document upload date
-  const sortedStudentIds = Object.keys(groupedDocuments).sort((a, b) => {
-    const latestDateA = Math.max(
-      ...groupedDocuments[a].documents.map((doc) =>
-        new Date(doc.uploadDate).getTime(),
-      ),
-    );
-    const latestDateB = Math.max(
-      ...groupedDocuments[b].documents.map((doc) =>
-        new Date(doc.uploadDate).getTime(),
-      ),
-    );
-    return sortOrder === "newest"
-      ? latestDateB - latestDateA
-      : latestDateA - latestDateB;
-  });
+  const sortedStudentIds = useMemo(() => {
+    return Object.keys(groupedDocuments)
+      .filter((sid) => {
+        if (filter === "complete") return groupedDocuments[sid].isComplete;
+        if (filter === "pending") return !groupedDocuments[sid].isComplete;
+        return true;
+      })
+      .sort((a, b) => {
+        // Complete accounts go last (unless filter=complete)
+        const aComplete = groupedDocuments[a].isComplete;
+        const bComplete = groupedDocuments[b].isComplete;
+        if (aComplete !== bComplete) return aComplete ? 1 : -1;
+        const latestA = Math.max(
+          ...groupedDocuments[a].documents.map((d) =>
+            new Date(d.uploadDate).getTime(),
+          ),
+        );
+        const latestB = Math.max(
+          ...groupedDocuments[b].documents.map((d) =>
+            new Date(d.uploadDate).getTime(),
+          ),
+        );
+        return latestB - latestA;
+      });
+  }, [groupedDocuments, filter]);
 
-  // Handle view document
-  const handleView = (document: AdminDocument) => {
-    setDocumentToView(document);
-    setViewDialogOpen(true);
-  };
+  const stats = useMemo(
+    () => ({
+      total: Object.keys(groupedDocuments).length,
+      complete: Object.values(groupedDocuments).filter((g) => g.isComplete)
+        .length,
+      pending: Object.values(groupedDocuments).filter((g) => !g.isComplete)
+        .length,
+      totalDocs: documents.length,
+      pendingDocs: documents.filter((d) => !d.status || d.status === "PENDING")
+        .length,
+    }),
+    [groupedDocuments, documents],
+  );
 
-  // Handle download document
-  const handleDownload = (document: AdminDocument) => {
-    const link = window.document.createElement("a");
-    link.href = document.fileUrl;
-    link.download = document.fileName;
-    window.document.body.appendChild(link);
-    link.click();
-    window.document.body.removeChild(link);
-  };
-
-  // Handle approve click
-  const handleApproveClick = (document: AdminDocument) => {
-    setDocumentToApprove(document);
-    setApproveDialogOpen(true);
-  };
-
-  // Handle approve confirm
   const handleApproveConfirm = () => {
     if (!documentToApprove) return;
-
     approveDocument(documentToApprove.id, {
       onSuccess: () => {
         toast.success(t("admin.documents.toast.approveSuccess"));
         setApproveDialogOpen(false);
         setDocumentToApprove(null);
       },
-      onError: (error: any) => {
-        console.error("Error approving document:", error);
-        toast.error(error?.message || t("admin.documents.toast.approveFailed"));
-      },
+      onError: (e: any) =>
+        toast.error(e?.message || t("admin.documents.toast.approveFailed")),
     });
   };
 
-  // Handle reject click
-  const handleRejectClick = (document: AdminDocument) => {
-    setDocumentToReject(document);
-    setRejectDialogOpen(true);
-  };
-
-  // Handle reject confirm
   const handleRejectConfirm = () => {
     if (!documentToReject || !rejectReason.trim()) {
       toast.error(t("admin.documents.toast.provideReason"));
       return;
     }
-
     rejectDocument(
       { documentId: documentToReject.id, reason: rejectReason },
       {
@@ -278,433 +217,517 @@ const AdminDocuments = () => {
           setDocumentToReject(null);
           setRejectReason("");
         },
-        onError: (error: any) => {
-          console.error("Error rejecting document:", error);
-          toast.error(
-            error?.message || t("admin.documents.toast.rejectFailed"),
-          );
-        },
+        onError: (e: any) =>
+          toast.error(e?.message || t("admin.documents.toast.rejectFailed")),
       },
     );
   };
 
-  // Handle delete click
-  const handleDeleteClick = (document: AdminDocument) => {
-    setDocumentToDelete(document);
-    setDeleteDialogOpen(true);
-  };
-
-  // Handle delete confirm
   const handleDeleteConfirm = () => {
     if (!documentToDelete) return;
-
     deleteDocument(documentToDelete.id, {
       onSuccess: () => {
         toast.success(t("admin.documents.toast.deleteSuccess"));
         setDeleteDialogOpen(false);
         setDocumentToDelete(null);
       },
-      onError: (error: any) => {
-        console.error("Error deleting document:", error);
-        toast.error(error?.message || t("admin.documents.toast.deleteFailed"));
-      },
+      onError: (e: any) =>
+        toast.error(e?.message || t("admin.documents.toast.deleteFailed")),
     });
   };
 
-  // Get document stats for a student
-  const getDocumentStats = (docs: AdminDocument[]) => {
-    return {
-      total: docs.length,
-      approved: docs.filter((d) => d.status === "APPROVED").length,
-      pending: docs.filter((d) => d.status === "PENDING" || !d.status).length,
-      rejected: docs.filter((d) => d.status === "REJECTED").length,
-    };
+  const handleDownload = (doc: AdminDocument) => {
+    const link = window.document.createElement("a");
+    link.href = doc.fileUrl;
+    link.download = doc.fileName;
+    window.document.body.appendChild(link);
+    link.click();
+    window.document.body.removeChild(link);
   };
 
-  // Loading state
-  if (isLoading) {
+  if (isLoading)
     return (
-      <div className="flex-1 flex flex-col min-h-screen bg-background">
-        <main className="flex-1 p-6 space-y-6">
-          <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              {t("admin.documents.loading")}
-            </p>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // Error state
-  if (isError) {
-    return (
-      <div className="flex-1 flex flex-col min-h-screen bg-background">
-        <main className="flex-1 p-6 space-y-6">
-          <div className="flex flex-col items-center justify-center py-16 px-4">
-            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mb-4">
-              <AlertCircle className="h-8 w-8 text-red-500" />
-            </div>
-            <h3 className="text-lg font-semibold mb-1 text-red-600">
-              {t("admin.documents.errorTitle")}
-            </h3>
-            <p className="text-sm text-muted-foreground text-center max-w-sm mb-4">
-              {error instanceof Error
-                ? error.message
-                : t("admin.documents.errorDesc")}
-            </p>
-            <Button
-              onClick={() => window.location.reload()}
-              variant="outline"
-              size="sm"
-            >
-              {t("admin.documents.retry")}
-            </Button>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex-1 flex flex-col min-h-screen bg-background">
-      <main className="flex-1 p-6 space-y-6">
-        {/* Page Header */}
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold tracking-tight">
-            {t("admin.documents.title")}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {t("admin.documents.subtitle")}
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 rounded-full border-2 border-[#2B6F5E]/30 border-t-[#2B6F5E] animate-spin" />
+          <p className="text-sm text-[#6B5D4F] dark:text-[#888]">
+            {t("admin.documents.loading")}
           </p>
         </div>
+      </div>
+    );
 
-        {/* Filters & Search */}
-        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-card border rounded-lg">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+  if (isError)
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-3">
+          <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
+          <p className="text-[#1B1B1B] dark:text-[#E5E5E5] font-semibold">
+            {t("admin.documents.errorTitle")}
+          </p>
+          <Button
+            onClick={() => window.location.reload()}
+            variant="outline"
+            size="sm"
+          >
+            {t("admin.documents.retry")}
+          </Button>
+        </div>
+      </div>
+    );
+
+  const selectedGroup = selectedStudent
+    ? groupedDocuments[selectedStudent]
+    : null;
+
+  return (
+    <div className="space-y-6">
+      {/* ── Header ── */}
+      <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
+        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]" />
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20">
+              <FileCheck className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                {t("admin.documents.title")}
+              </h1>
+              <p className="text-sm text-[#BEB29E] dark:text-[#666] mt-0.5">
+                {t("admin.documents.subtitle")}
+              </p>
+            </div>
+          </div>
+
+          {/* Stats chips */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F0EBE5] dark:bg-[#1E1E1E] text-xs font-semibold text-[#6B5D4F] dark:text-[#888]">
+              <User className="w-3 h-3" />
+              {stats.total} {t("admin.documents.students")}
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-xs font-semibold text-amber-600 dark:text-amber-400">
+              <Clock className="w-3 h-3" />
+              {stats.pendingDocs} {t("admin.documents.statsPending")}
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+              <ShieldCheck className="w-3 h-3" />
+              {stats.complete} {t("admin.documents.statsComplete", "حساب كامل")}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Search + Filter ── */}
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] dark:text-[#555]" />
             <Input
               placeholder={t("admin.documents.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222] dark:text-[#E5E5E5] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]"
             />
           </div>
-
-          <Select
-            value={sortOrder}
-            onValueChange={(value: "newest" | "oldest") => setSortOrder(value)}
-          >
-            <SelectTrigger className="w-full sm:w-45">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">
-                {t("admin.documents.newestFirst")}
-              </SelectItem>
-              <SelectItem value="oldest">
-                {t("admin.documents.oldestFirst")}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            {(["all", "pending", "complete"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-semibold transition-all",
+                  filter === f
+                    ? f === "complete"
+                      ? "bg-emerald-500 text-white shadow-sm"
+                      : f === "pending"
+                        ? "bg-amber-500 text-white shadow-sm"
+                        : "bg-[#2B6F5E] text-white shadow-sm"
+                    : "bg-[#F0EBE5] dark:bg-[#1E1E1E] text-[#6B5D4F] dark:text-[#888] hover:bg-[#E8E0D8] dark:hover:bg-[#252525]",
+                )}
+              >
+                {f === "all"
+                  ? t("admin.documents.filterAll", "الكل")
+                  : f === "pending"
+                    ? t("admin.documents.filterPending", "قيد الانتظار")
+                    : t("admin.documents.filterComplete", "مكتمل")}
+                <span className="ml-1.5 opacity-70">
+                  {f === "all"
+                    ? stats.total
+                    : f === "complete"
+                      ? stats.complete
+                      : stats.pending}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
+      </div>
 
-        {/* Two Column Layout */}
-        {sortedStudentIds.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Students List */}
-            <div className="lg:col-span-1 space-y-2">
-              <div className="bg-card border rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-muted-foreground mb-4 flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  {t("admin.documents.students")} ({sortedStudentIds.length})
-                </h3>
-                <div className="space-y-2 max-h-150 overflow-y-auto">
-                  {sortedStudentIds.map((studentId) => {
-                    const { student, documents: studentDocs } =
-                      groupedDocuments[studentId];
-                    const stats = getDocumentStats(studentDocs);
-                    const isSelected = selectedStudent === studentId;
+      {/* ── Two-column layout ── */}
+      {sortedStudentIds.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          {/* Left — Student list */}
+          <div className="lg:col-span-2 bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden">
+            <div className="px-4 py-3 border-b border-[#D8CDC0]/40 dark:border-[#2A2A2A] flex items-center justify-between">
+              <span className="text-xs font-semibold text-[#6B5D4F] dark:text-[#888] uppercase tracking-wide flex items-center gap-2">
+                <User className="w-3.5 h-3.5" />
+                {t("admin.documents.students")} ({sortedStudentIds.length})
+              </span>
+            </div>
+
+            <div className="divide-y divide-[#D8CDC0]/30 dark:divide-[#2A2A2A] max-h-[65vh] overflow-y-auto">
+              {sortedStudentIds.map((sid) => {
+                const {
+                  student,
+                  documents: sDocs,
+                  isComplete,
+                } = groupedDocuments[sid];
+                const pending = sDocs.filter(
+                  (d) => !d.status || d.status === "PENDING",
+                ).length;
+                const isSelected = selectedStudent === sid;
+
+                return (
+                  <button
+                    key={sid}
+                    onClick={() => setSelectedStudent(sid)}
+                    className={cn(
+                      "w-full px-4 py-3.5 text-left transition-all flex items-center gap-3",
+                      isSelected
+                        ? "bg-[#2B6F5E]/8 dark:bg-[#2B6F5E]/15 border-r-2 border-[#2B6F5E]"
+                        : "hover:bg-[#F8F5F2] dark:hover:bg-[#1E1E1E]",
+                    )}
+                  >
+                    <div className="relative shrink-0">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={student.avatar || undefined} />
+                        <AvatarFallback
+                          className={cn(
+                            "text-xs font-bold text-white",
+                            isComplete ? "bg-emerald-500" : "bg-[#2B6F5E]",
+                          )}
+                        >
+                          {getInitials(student.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      {isComplete && (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-[#1A1A1A] flex items-center justify-center">
+                          <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
+                          {student.name}
+                        </p>
+                        {isComplete && (
+                          <span className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+                            <Star className="w-2.5 h-2.5" />
+                            {t("admin.documents.complete", "مكتمل")}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-[#BEB29E] dark:text-[#555] truncate mt-0.5">
+                        {student.email}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="text-[11px] text-[#6B5D4F] dark:text-[#888]">
+                          {sDocs.length} {t("admin.documents.files")}
+                        </span>
+                        {pending > 0 && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                            <Clock className="w-2.5 h-2.5" />
+                            {pending} {t("admin.documents.statsPending")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <ChevronRight
+                      className={cn(
+                        "w-4 h-4 shrink-0 transition-colors",
+                        isSelected
+                          ? "text-[#2B6F5E]"
+                          : "text-[#D8CDC0] dark:text-[#333]",
+                      )}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right — Document panel */}
+          <div className="lg:col-span-3">
+            {selectedGroup ? (
+              <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden">
+                {/* Student header */}
+                <div
+                  className={cn(
+                    "px-6 py-5 border-b border-[#D8CDC0]/40 dark:border-[#2A2A2A]",
+                    selectedGroup.isComplete
+                      ? "bg-gradient-to-r from-emerald-50/80 dark:from-emerald-900/10 to-transparent"
+                      : "bg-gradient-to-r from-[#2B6F5E]/5 dark:from-[#2B6F5E]/8 to-transparent",
+                  )}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <Avatar className="h-14 w-14 border-2 border-white dark:border-[#1A1A1A] shadow-md">
+                        <AvatarImage
+                          src={selectedGroup.student.avatar || undefined}
+                        />
+                        <AvatarFallback
+                          className={cn(
+                            "text-base font-bold text-white",
+                            selectedGroup.isComplete
+                              ? "bg-emerald-500"
+                              : "bg-[#2B6F5E]",
+                          )}
+                        >
+                          {getInitials(selectedGroup.student.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      {selectedGroup.isComplete && (
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white dark:border-[#1A1A1A] flex items-center justify-center shadow-sm">
+                          <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                          {selectedGroup.student.name}
+                        </h3>
+                        {selectedGroup.isComplete && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500 text-white shadow-sm shadow-emerald-500/30">
+                            <ShieldCheck className="w-3 h-3" />
+                            {t("admin.documents.completeAccount", "حساب كامل")}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-[#6B5D4F] dark:text-[#888] mt-0.5">
+                        {selectedGroup.student.email}
+                      </p>
+
+                      {/* Doc stats */}
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        {(() => {
+                          const approved = selectedGroup.documents.filter(
+                            (d) => d.status === "APPROVED",
+                          ).length;
+                          const pending = selectedGroup.documents.filter(
+                            (d) => !d.status || d.status === "PENDING",
+                          ).length;
+                          const rejected = selectedGroup.documents.filter(
+                            (d) => d.status === "REJECTED",
+                          ).length;
+                          return (
+                            <>
+                              <span className="text-xs px-2 py-0.5 rounded-md bg-[#F0EBE5] dark:bg-[#222] text-[#6B5D4F] dark:text-[#888] font-medium">
+                                {selectedGroup.documents.length}{" "}
+                                {t("admin.documents.statsTotal")}
+                              </span>
+                              {approved > 0 && (
+                                <span className="text-xs px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-medium">
+                                  ✓ {approved}{" "}
+                                  {t("admin.documents.statsApproved")}
+                                </span>
+                              )}
+                              {pending > 0 && (
+                                <span className="text-xs px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-medium">
+                                  ⏳ {pending}{" "}
+                                  {t("admin.documents.statsPending")}
+                                </span>
+                              )}
+                              {rejected > 0 && (
+                                <span className="text-xs px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-medium">
+                                  ✕ {rejected}{" "}
+                                  {t("admin.documents.statsRejected")}
+                                </span>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Document rows */}
+                <div className="divide-y divide-[#D8CDC0]/30 dark:divide-[#2A2A2A] max-h-[50vh] overflow-y-auto">
+                  {selectedGroup.documents.map((doc) => {
+                    const statusColor = {
+                      APPROVED:
+                        "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20",
+                      REJECTED:
+                        "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20",
+                      PENDING:
+                        "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20",
+                    }[doc.status || "PENDING"];
 
                     return (
-                      <button
-                        key={studentId}
-                        onClick={() => setSelectedStudent(studentId)}
-                        className={cn(
-                          "w-full p-3 rounded-lg text-left transition-all hover:bg-muted/50",
-                          isSelected
-                            ? "bg-primary/10 border-2 border-primary"
-                            : "bg-muted/30 border border-transparent",
-                        )}
+                      <div
+                        key={doc.id}
+                        className="px-5 py-4 hover:bg-[#F8F5F2] dark:hover:bg-[#1E1E1E] transition-colors"
                       >
                         <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10 border-2">
-                            <AvatarImage
-                              src={student.avatar || undefined}
-                              alt={student.name}
-                            />
-                            <AvatarFallback className="text-xs font-semibold">
-                              {getInitials(student.name)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <div className="w-9 h-9 rounded-xl bg-[#F0EBE5] dark:bg-[#222] flex items-center justify-center shrink-0">
+                            {getFileIcon(doc.fileType)}
+                          </div>
+
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold truncate">
-                              {student.name}
+                            <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
+                              {doc.fileName}
                             </p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {student.email}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge
-                                variant="outline"
-                                className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <span
+                                className={cn(
+                                  "text-[10px] font-bold px-1.5 py-0.5 rounded uppercase",
+                                  statusColor,
+                                )}
                               >
-                                {stats.total}{" "}
-                                {stats.total === 1
-                                  ? t("admin.documents.file")
-                                  : t("admin.documents.files")}
-                              </Badge>
+                                {t(
+                                  `admin.documents.status.${(doc.status || "PENDING").toLowerCase()}`,
+                                )}
+                              </span>
+                              <span className="text-xs text-[#BEB29E] dark:text-[#555]">
+                                {formatDate(doc.uploadDate)}
+                              </span>
                             </div>
                           </div>
-                          <ChevronRight
-                            className={cn(
-                              "h-5 w-5 text-muted-foreground transition-transform",
-                              isSelected && "text-primary",
-                            )}
-                          />
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => {
+                                setDocumentToView(doc);
+                                setViewDialogOpen(true);
+                              }}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B5D4F] dark:text-[#888] hover:bg-[#2B6F5E]/10 hover:text-[#2B6F5E] dark:hover:text-[#4ADE80] transition-colors"
+                              title={t("admin.documents.actions.view")}
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDownload(doc)}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B5D4F] dark:text-[#888] hover:bg-[#2B6F5E]/10 hover:text-[#2B6F5E] dark:hover:text-[#4ADE80] transition-colors"
+                              title={t("admin.documents.actions.download")}
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setDocumentToApprove(doc);
+                                setApproveDialogOpen(true);
+                              }}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B5D4F] dark:text-[#888] hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                              title={t("admin.documents.actions.approve")}
+                            >
+                              <CheckCircle className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setDocumentToReject(doc);
+                                setRejectDialogOpen(true);
+                              }}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B5D4F] dark:text-[#888] hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+                              title={t("admin.documents.actions.reject")}
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setDocumentToDelete(doc);
+                                setDeleteDialogOpen(true);
+                              }}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B5D4F] dark:text-[#888] hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                              title={t("admin.documents.actions.delete")}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
               </div>
-            </div>
-
-            {/* Right Column - Documents List */}
-            <div className="lg:col-span-2">
-              {selectedStudent ? (
-                <div className="bg-card border rounded-lg">
-                  {/* Student Header */}
-                  <div className="p-6 border-b bg-muted/30">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-16 w-16 border-2">
-                        <AvatarImage
-                          src={
-                            groupedDocuments[selectedStudent].student.avatar ||
-                            undefined
-                          }
-                          alt={groupedDocuments[selectedStudent].student.name}
-                        />
-                        <AvatarFallback className="text-lg font-bold">
-                          {getInitials(
-                            groupedDocuments[selectedStudent].student.name,
-                          )}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold">
-                          {groupedDocuments[selectedStudent].student.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {groupedDocuments[selectedStudent].student.email}
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          {(() => {
-                            const stats = getDocumentStats(
-                              groupedDocuments[selectedStudent].documents,
-                            );
-                            return (
-                              <>
-                                <Badge className="bg-blue-50 text-blue-700 border-blue-200">
-                                  {stats.total}{" "}
-                                  {t("admin.documents.statsTotal")}
-                                </Badge>
-                                {stats.approved > 0 && (
-                                  <Badge className="bg-green-50 text-green-700 border-green-200">
-                                    {stats.approved}{" "}
-                                    {t("admin.documents.statsApproved")}
-                                  </Badge>
-                                )}
-                                {stats.pending > 0 && (
-                                  <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                                    {stats.pending}{" "}
-                                    {t("admin.documents.statsPending")}
-                                  </Badge>
-                                )}
-                                {stats.rejected > 0 && (
-                                  <Badge className="bg-red-50 text-red-700 border-red-200">
-                                    {stats.rejected}{" "}
-                                    {t("admin.documents.statsRejected")}
-                                  </Badge>
-                                )}
-                              </>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    </div>
+            ) : (
+              <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] h-full min-h-[300px] flex items-center justify-center">
+                <div className="text-center px-8 py-12">
+                  <div className="w-16 h-16 rounded-2xl bg-[#F0EBE5] dark:bg-[#1E1E1E] flex items-center justify-center mx-auto mb-4">
+                    <File className="w-7 h-7 text-[#BEB29E] dark:text-[#444]" />
                   </div>
-
-                  {/* Documents List */}
-                  <div className="divide-y max-h-150 overflow-y-auto">
-                    {groupedDocuments[selectedStudent].documents.map(
-                      (document) => (
-                        <div
-                          key={document.id}
-                          className="p-4 hover:bg-muted/30 transition-colors"
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            {/* Document Info */}
-                            <div className="flex items-start gap-3 flex-1 min-w-0">
-                              <div className="mt-1">
-                                {getFileIcon(document.fileType)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold truncate mb-1">
-                                  {document.fileName}
-                                </p>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  {getFileTypeBadge(document.fileType)}
-                                  {getStatusBadge(document.status)}
-                                  <span className="text-xs text-muted-foreground">
-                                    {formatDate(document.uploadDate)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Actions */}
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleView(document)}
-                                className="h-8 w-8"
-                                title={t("admin.documents.actions.view")}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDownload(document)}
-                                className="h-8 w-8"
-                                title={t("admin.documents.actions.download")}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleApproveClick(document)}
-                                className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-                                title={t("admin.documents.actions.approve")}
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleRejectClick(document)}
-                                className="h-8 w-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                                title={t("admin.documents.actions.reject")}
-                              >
-                                <XCircle className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDeleteClick(document)}
-                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                title={t("admin.documents.actions.delete")}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ),
-                    )}
-                  </div>
+                  <h3 className="text-base font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-1">
+                    {t("admin.documents.selectStudent")}
+                  </h3>
+                  <p className="text-sm text-[#BEB29E] dark:text-[#555] max-w-xs">
+                    {t("admin.documents.selectStudentDesc")}
+                  </p>
                 </div>
-              ) : (
-                // No Student Selected
-                <div className="bg-card border rounded-lg h-full flex items-center justify-center p-16">
-                  <div className="text-center">
-                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4 mx-auto">
-                      <File className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">
-                      {t("admin.documents.selectStudent")}
-                    </h3>
-                    <p className="text-sm text-muted-foreground max-w-sm">
-                      {t("admin.documents.selectStudentDesc")}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
-        ) : (
-          // Empty State
-          <div className="flex flex-col items-center justify-center py-16 px-4 border rounded-lg bg-card">
-            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-              <FolderOpen className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold mb-1">
-              {t("admin.documents.noDocuments")}
-            </h3>
-            <p className="text-sm text-muted-foreground text-center max-w-sm">
-              {searchQuery
-                ? t("admin.documents.tryAdjustSearch")
-                : t("admin.documents.docsWillAppear")}
-            </p>
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] flex flex-col items-center justify-center py-20">
+          <div className="w-16 h-16 rounded-2xl bg-[#F0EBE5] dark:bg-[#1E1E1E] flex items-center justify-center mb-4">
+            <FolderOpen className="w-7 h-7 text-[#BEB29E] dark:text-[#444]" />
           </div>
-        )}
-      </main>
+          <h3 className="text-base font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-1">
+            {t("admin.documents.noDocuments")}
+          </h3>
+          <p className="text-sm text-[#BEB29E] dark:text-[#555]">
+            {searchQuery
+              ? t("admin.documents.tryAdjustSearch")
+              : t("admin.documents.docsWillAppear")}
+          </p>
+        </div>
+      )}
 
-      {/* Approve Confirmation Dialog */}
+      {/* ── Approve Dialog ── */}
       <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
-        <DialogContent>
+        <DialogContent className="dark:bg-[#1A1A1A] dark:border-[#2A2A2A]">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="dark:text-[#E5E5E5]">
               {t("admin.documents.approveDialog.title")}
             </DialogTitle>
             <DialogDescription>
               {t("admin.documents.approveDialog.description")}
             </DialogDescription>
           </DialogHeader>
-
           {documentToApprove && (
-            <div className="py-4">
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+            <div className="py-3">
+              <div className="flex items-center gap-3 p-3 bg-[#F0EBE5] dark:bg-[#222] rounded-xl">
                 {getFileIcon(documentToApprove.fileType)}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
+                <div>
+                  <p className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                     {documentToApprove.fileName}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-[#BEB29E] dark:text-[#666]">
                     {documentToApprove.student.name}
                   </p>
                 </div>
               </div>
             </div>
           )}
-
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setApproveDialogOpen(false)}
               disabled={isApproving}
+              className="dark:border-[#2A2A2A] dark:text-[#E5E5E5]"
             >
               {t("admin.documents.cancel")}
             </Button>
             <Button
               onClick={handleApproveConfirm}
               disabled={isApproving}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
               {isApproving ? (
                 <>
@@ -719,32 +742,32 @@ const AdminDocuments = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Reject Confirmation Dialog */}
+      {/* ── Reject Dialog ── */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent>
+        <DialogContent className="dark:bg-[#1A1A1A] dark:border-[#2A2A2A]">
           <DialogHeader>
-            <DialogTitle>{t("admin.documents.rejectDialog.title")}</DialogTitle>
+            <DialogTitle className="dark:text-[#E5E5E5]">
+              {t("admin.documents.rejectDialog.title")}
+            </DialogTitle>
             <DialogDescription>
               {t("admin.documents.rejectDialog.description")}
             </DialogDescription>
           </DialogHeader>
-
           {documentToReject && (
-            <div className="space-y-4 py-4">
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+            <div className="space-y-4 py-3">
+              <div className="flex items-center gap-3 p-3 bg-[#F0EBE5] dark:bg-[#222] rounded-xl">
                 {getFileIcon(documentToReject.fileType)}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
+                <div>
+                  <p className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                     {documentToReject.fileName}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-[#BEB29E] dark:text-[#666]">
                     {documentToReject.student.name}
                   </p>
                 </div>
               </div>
-
               <div>
-                <label className="text-sm font-medium mb-2 block">
+                <label className="text-sm font-medium mb-2 block text-[#1B1B1B] dark:text-[#E5E5E5]">
                   {t("admin.documents.rejectDialog.reasonLabel")}
                 </label>
                 <textarea
@@ -753,13 +776,12 @@ const AdminDocuments = () => {
                   placeholder={t(
                     "admin.documents.rejectDialog.reasonPlaceholder",
                   )}
-                  className="w-full p-3 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                  rows={4}
+                  className="w-full p-3 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] bg-white dark:bg-[#222] text-[#1B1B1B] dark:text-[#E5E5E5] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2B6F5E]/20 resize-none"
+                  rows={3}
                 />
               </div>
             </div>
           )}
-
           <DialogFooter>
             <Button
               variant="outline"
@@ -768,6 +790,7 @@ const AdminDocuments = () => {
                 setRejectReason("");
               }}
               disabled={isRejecting}
+              className="dark:border-[#2A2A2A] dark:text-[#E5E5E5]"
             >
               {t("admin.documents.cancel")}
             </Button>
@@ -789,37 +812,38 @@ const AdminDocuments = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* ── Delete Dialog ── */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent className="dark:bg-[#1A1A1A] dark:border-[#2A2A2A]">
           <DialogHeader>
-            <DialogTitle>{t("admin.documents.deleteDialog.title")}</DialogTitle>
+            <DialogTitle className="dark:text-[#E5E5E5]">
+              {t("admin.documents.deleteDialog.title")}
+            </DialogTitle>
             <DialogDescription>
               {t("admin.documents.deleteDialog.description")}
             </DialogDescription>
           </DialogHeader>
-
           {documentToDelete && (
-            <div className="py-4">
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+            <div className="py-3">
+              <div className="flex items-center gap-3 p-3 bg-[#F0EBE5] dark:bg-[#222] rounded-xl">
                 {getFileIcon(documentToDelete.fileType)}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
+                <div>
+                  <p className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                     {documentToDelete.fileName}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-[#BEB29E] dark:text-[#666]">
                     {documentToDelete.student.name}
                   </p>
                 </div>
               </div>
             </div>
           )}
-
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
               disabled={isDeleting}
+              className="dark:border-[#2A2A2A] dark:text-[#E5E5E5]"
             >
               {t("admin.documents.cancel")}
             </Button>
@@ -841,11 +865,11 @@ const AdminDocuments = () => {
         </DialogContent>
       </Dialog>
 
-      {/* View Document Dialog */}
+      {/* ── View Dialog ── */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogContent className="max-w-4xl max-h-[90vh] dark:bg-[#1A1A1A] dark:border-[#2A2A2A]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 dark:text-[#E5E5E5]">
               {documentToView && getFileIcon(documentToView.fileType)}
               {documentToView?.fileName}
             </DialogTitle>
@@ -854,70 +878,55 @@ const AdminDocuments = () => {
               {formatDate(documentToView?.uploadDate || "")}
             </DialogDescription>
           </DialogHeader>
-
-          <div className="flex-1 overflow-auto max-h-[70vh] bg-muted/30 rounded-lg p-2">
+          <div className="flex-1 overflow-auto max-h-[65vh] bg-[#F0EBE5] dark:bg-[#111] rounded-xl p-2">
             {documentToView?.fileType === "image" &&
               documentToView?.fileUrl && (
                 <img
                   src={documentToView.fileUrl}
                   alt={documentToView.fileName}
                   className="max-w-full max-h-full object-contain mx-auto rounded-lg"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = "none";
-                    (e.target as HTMLImageElement).parentElement!.innerHTML = `
-              <div class="flex flex-col items-center justify-center py-16 text-center">
-                <p class="text-sm text-muted-foreground">Failed to load image</p>
-                <p class="text-xs text-muted-foreground mt-1">The file may require authentication</p>
-              </div>
-            `;
-                  }}
                 />
               )}
             {documentToView?.fileType === "pdf" &&
               documentToView?.fileUrl &&
               (() => {
-                // Cloudinary: convert PDF to image by changing extension
                 const imageUrl = documentToView.fileUrl.replace(
                   /\.pdf$/i,
                   ".jpg",
                 );
                 return (
-                  <div className="w-full max-h-[65vh] overflow-auto rounded-lg border bg-white p-2">
+                  <div className="w-full max-h-[60vh] overflow-auto rounded-lg bg-white p-2">
                     <img
                       src={imageUrl}
                       alt={documentToView.fileName}
                       className="w-full object-contain mx-auto"
                       onError={(e) => {
-                        // Fallback: try Google Docs viewer
                         const target = e.target as HTMLImageElement;
                         target.style.display = "none";
-                        const container = target.parentElement!;
                         const iframe = document.createElement("iframe");
                         iframe.src = `https://docs.google.com/gview?url=${encodeURIComponent(documentToView.fileUrl)}&embedded=true`;
                         iframe.className = "w-full rounded-lg";
-                        iframe.style.height = "65vh";
-                        iframe.title = documentToView.fileName;
-                        container.appendChild(iframe);
+                        iframe.style.height = "60vh";
+                        target.parentElement!.appendChild(iframe);
                       }}
                     />
                   </div>
                 );
               })()}
             {documentToView?.fileType === "doc" && (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <FileIcon className="h-16 w-16 text-muted-foreground mb-4" />
-                <p className="text-sm text-muted-foreground">
-                  Preview not available for this file type
+              <div className="flex flex-col items-center justify-center py-16">
+                <FileIcon className="h-16 w-16 text-[#BEB29E] dark:text-[#444] mb-4" />
+                <p className="text-sm text-[#6B5D4F] dark:text-[#888]">
+                  Preview not available
                 </p>
               </div>
             )}
           </div>
-
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => documentToView && handleDownload(documentToView)}
-              className="gap-2"
+              className="gap-2 dark:border-[#2A2A2A] dark:text-[#E5E5E5]"
             >
               <Download className="h-4 w-4" />{" "}
               {t("admin.documents.actions.download")}
@@ -925,11 +934,16 @@ const AdminDocuments = () => {
             <Button
               variant="outline"
               onClick={() => window.open(documentToView?.fileUrl, "_blank")}
-              className="gap-2"
+              className="gap-2 dark:border-[#2A2A2A] dark:text-[#E5E5E5]"
             >
               <ExternalLink className="h-4 w-4" /> Open in New Tab
             </Button>
-            <Button onClick={() => setViewDialogOpen(false)}>Close</Button>
+            <Button
+              onClick={() => setViewDialogOpen(false)}
+              className="bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white"
+            >
+              {t("common.close", "إغلاق")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
