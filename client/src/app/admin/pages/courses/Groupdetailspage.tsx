@@ -1,5 +1,5 @@
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import PageLoader from "../../../../components/PageLoader";
 import { Button } from "../../../../components/ui/button";
@@ -129,6 +129,14 @@ const GroupDetailsPage = () => {
     }
   };
 
+  // Pre-compute teacher lookup before early returns (uses hook state only, not group data)
+  const resolvedTeacherId = localTeacherId === "sync" ? null : localTeacherId;
+  const preloadedTeacher = resolvedTeacherId
+    ? ((allTeachers as any[]).find(
+        (t: any) => t.teacher_id === resolvedTeacherId,
+      ) ?? null)
+    : null;
+
   if (isLoading) return <PageLoader />;
 
   if (isError) {
@@ -199,20 +207,16 @@ const GroupDetailsPage = () => {
   const capacityPercent =
     maxCapacity > 0 ? (currentCapacity / maxCapacity) * 100 : 0;
 
-  // Resolve effective teacher_id: "sync" = use server data, null = removed, string = local override
+  // Resolve effective teacher_id
   const effectiveTeacherId =
     localTeacherId === "sync" ? (group.teacher_id ?? null) : localTeacherId;
 
-  // Find teacher data from the full teachers list
-  const effectiveTeacher = useMemo(
-    () =>
-      effectiveTeacherId
-        ? ((allTeachers as any[]).find(
-            (t: any) => t.teacher_id === effectiveTeacherId,
-          ) ?? null)
-        : null,
-    [effectiveTeacherId, allTeachers],
-  );
+  // Find teacher from teachers list
+  const effectiveTeacher = effectiveTeacherId
+    ? ((allTeachers as any[]).find(
+        (t: any) => t.teacher_id === effectiveTeacherId,
+      ) ?? null)
+    : null;
 
   const hasInstructor = !!effectiveTeacherId;
 
