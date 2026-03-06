@@ -23,7 +23,6 @@ import {
   X,
   GraduationCap,
   BookOpen,
-  BarChart3,
   Check,
   Wifi,
 } from "lucide-react";
@@ -997,6 +996,8 @@ function GroupDetails({
     null,
   );
   const [enrollFilter, setEnrollFilter] = useState<string>("ALL");
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const [studentSearch, setStudentSearch] = useState("");
 
   const {
     data: studentsData,
@@ -1006,204 +1007,372 @@ function GroupDetails({
 
   const students = studentsData?.data ?? [];
 
-  const filtered = useMemo(
-    () =>
+  const filtered = useMemo(() => {
+    let list =
       enrollFilter === "ALL"
         ? students
-        : students.filter((s) => s.registration_status === enrollFilter),
-    [students, enrollFilter],
-  );
+        : students.filter((s) => s.registration_status === enrollFilter);
+    if (studentSearch.trim()) {
+      const q = studentSearch.toLowerCase();
+      list = list.filter(
+        (s) =>
+          `${s.student.first_name} ${s.student.last_name}`
+            .toLowerCase()
+            .includes(q) || s.student.email?.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [students, enrollFilter, studentSearch]);
 
   const flag = COURSE_FLAG[group.course.course_code] ?? COURSE_FLAG.default;
   const lvl = LEVEL_COLORS[group.level] ?? LEVEL_COLORS.A1;
+  const capacityColor =
+    group.capacity_pct >= 90
+      ? "#ef4444"
+      : group.capacity_pct >= 70
+        ? "#f59e0b"
+        : "#2B6F5E";
+  const totalStudents = group.enrolled_count + group.pending_count;
 
   return (
-    <div className="flex flex-col h-full">
-      {/* ── Group header ── */}
-      <div className="p-5 border-b border-[#F0EBE5] dark:border-[#1E1E1E] shrink-0">
-        <div className="flex items-start gap-3 mb-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#F5F0EB] dark:bg-[#1A1A1A] flex items-center justify-center text-2xl shrink-0">
+    <div className="flex flex-col h-full bg-[#FDFAF7] dark:bg-[#0A0A0A]">
+      {/* ══ COMPACT HEADER (always visible) ══════════════════════ */}
+      <div className="shrink-0 bg-white dark:bg-[#0D0D0D] border-b border-[#E8E0D5] dark:border-[#1E1E1E]">
+        {/* Top strip — group identity + actions */}
+        <div className="px-4 py-3 flex items-center gap-3">
+          {/* Flag + name */}
+          <div className="w-9 h-9 rounded-xl bg-[#F5F0EB] dark:bg-[#1A1A1A] flex items-center justify-center text-xl shrink-0">
             {flag}
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-[16px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5] leading-tight">
-              {group.name}
-            </h2>
-            <p className="text-[12px] text-[#9B8E82]">
-              {group.course.course_name}
-            </p>
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-[14px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5] truncate leading-tight">
+                {group.name}
+              </h2>
               <span
-                className="px-2 py-0.5 rounded text-[10px] font-bold"
+                className="px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0"
                 style={{ background: lvl.bg, color: lvl.color }}
               >
                 {group.level.replace("_", "-")}
               </span>
               <StatusBadge status={group.status} />
             </div>
+            <p className="text-[11px] text-[#9B8E82] truncate mt-0.5">
+              {group.course.course_name}
+            </p>
+          </div>
+
+          {/* Quick action buttons */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => setStatusModal(true)}
+              title="تغيير الحالة"
+              className="w-8 h-8 rounded-xl bg-[#F5F0EB] dark:bg-[#1A1A1A] hover:bg-[#E8E0D5] dark:hover:bg-[#222] flex items-center justify-center transition-colors"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-[#9B8E82]" />
+            </button>
+            <button
+              onClick={() => setTeacherModal(true)}
+              title="تعيين أستاذ"
+              className="w-8 h-8 rounded-xl bg-[#F5F0EB] dark:bg-[#1A1A1A] hover:bg-[#E8E0D5] dark:hover:bg-[#222] flex items-center justify-center transition-colors"
+            >
+              <UserCog className="w-3.5 h-3.5 text-[#9B8E82]" />
+            </button>
+            <button
+              onClick={() => refetch()}
+              title="تحديث"
+              className="w-8 h-8 rounded-xl bg-[#F5F0EB] dark:bg-[#1A1A1A] hover:bg-[#E8E0D5] dark:hover:bg-[#222] flex items-center justify-center transition-colors"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-[#C8BFB5]" />
+            </button>
+            {/* Collapse toggle */}
+            <button
+              onClick={() => setHeaderCollapsed((p) => !p)}
+              title="تصغير/تكبير"
+              className="w-8 h-8 rounded-xl bg-[#F5F0EB] dark:bg-[#1A1A1A] hover:bg-[#E8E0D5] dark:hover:bg-[#222] flex items-center justify-center transition-all"
+              style={{ transform: headerCollapsed ? "rotate(180deg)" : "none" }}
+            >
+              <ChevronRight className="w-3.5 h-3.5 text-[#9B8E82] rotate-90" />
+            </button>
           </div>
         </div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          {[
-            {
-              icon: Users,
-              label: "الطلبة",
-              value: `${group.enrolled_count + group.pending_count}/${group.max_students}`,
-            },
-            { icon: Layers, label: "الحصص", value: group._count.sessions },
-            {
-              icon: BarChart3,
-              label: "الإشغال",
-              value: `${group.capacity_pct}%`,
-            },
-          ].map(({ icon: Icon, label, value }) => (
-            <div
-              key={label}
-              className="bg-[#F5F0EB] dark:bg-[#111] rounded-xl p-3 text-center"
-            >
-              <Icon className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80] mx-auto mb-1" />
-              <p className="text-[14px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                {value}
-              </p>
-              <p className="text-[10px] text-[#9B8E82]">{label}</p>
+        {/* Expandable stats area */}
+        {!headerCollapsed && (
+          <div className="px-4 pb-3 space-y-2.5">
+            {/* Stats row — inline compact */}
+            <div className="grid grid-cols-4 gap-2">
+              {/* Capacity */}
+              <div
+                className="col-span-2 rounded-xl p-2.5 flex items-center gap-2.5"
+                style={{
+                  background: capacityColor + "10",
+                  border: `1px solid ${capacityColor}25`,
+                }}
+              >
+                <div className="shrink-0">
+                  <p
+                    className="text-[18px] font-black leading-none"
+                    style={{ color: capacityColor }}
+                  >
+                    {totalStudents}
+                    <span className="text-[12px] font-semibold text-[#9B8E82]">
+                      /{group.max_students}
+                    </span>
+                  </p>
+                  <p className="text-[9px] text-[#9B8E82] mt-0.5">طالب</p>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="h-2 rounded-full bg-[#F0EBE5] dark:bg-[#2A2A2A] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{
+                        width: `${group.capacity_pct}%`,
+                        background: capacityColor,
+                      }}
+                    />
+                  </div>
+                  <p
+                    className="text-[9px] font-semibold mt-0.5"
+                    style={{ color: capacityColor }}
+                  >
+                    {group.capacity_pct}% إشغال
+                  </p>
+                </div>
+              </div>
+
+              {/* Sessions */}
+              <div className="rounded-xl p-2.5 bg-[#F5F0EB] dark:bg-[#111] text-center">
+                <Layers className="w-3.5 h-3.5 text-[#2B6F5E] dark:text-[#4ADE80] mx-auto mb-0.5" />
+                <p className="text-[16px] font-black text-[#1B1B1B] dark:text-[#E5E5E5] leading-none">
+                  {group._count.sessions}
+                </p>
+                <p className="text-[9px] text-[#9B8E82] mt-0.5">حصة</p>
+              </div>
+
+              {/* Pending */}
+              <div
+                className="rounded-xl p-2.5 text-center"
+                style={{
+                  background:
+                    group.pending_count > 0
+                      ? "rgba(245,158,11,0.08)"
+                      : "#F5F0EB",
+                  border:
+                    group.pending_count > 0
+                      ? "1px solid rgba(245,158,11,0.25)"
+                      : "none",
+                }}
+              >
+                <Clock
+                  className="w-3.5 h-3.5 mx-auto mb-0.5"
+                  style={{
+                    color: group.pending_count > 0 ? "#f59e0b" : "#C8BFB5",
+                  }}
+                />
+                <p
+                  className="text-[16px] font-black leading-none"
+                  style={{
+                    color: group.pending_count > 0 ? "#f59e0b" : "#9B8E82",
+                  }}
+                >
+                  {group.pending_count}
+                </p>
+                <p className="text-[9px] text-[#9B8E82] mt-0.5">معلق</p>
+              </div>
             </div>
-          ))}
-        </div>
 
-        <CapacityBar
-          pct={group.capacity_pct}
-          count={group.enrolled_count + group.pending_count}
-          max={group.max_students}
-        />
-
-        {/* Teacher */}
-        <div className="flex items-center gap-2 mt-3 p-3 rounded-xl bg-[#F5F0EB] dark:bg-[#111]">
-          <div className="w-8 h-8 rounded-full bg-[#2B6F5E]/10 flex items-center justify-center shrink-0">
-            <GraduationCap className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
+            {/* Teacher row — ultra compact */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#F5F0EB] dark:bg-[#111]">
+              <div className="w-6 h-6 rounded-full bg-[#2B6F5E]/15 flex items-center justify-center shrink-0">
+                <GraduationCap className="w-3.5 h-3.5 text-[#2B6F5E] dark:text-[#4ADE80]" />
+              </div>
+              <p
+                className={`flex-1 text-[12px] font-medium truncate min-w-0 ${group.teacher ? "text-[#1B1B1B] dark:text-[#E5E5E5]" : "text-[#9B8E82] italic"}`}
+              >
+                {group.teacher
+                  ? `${group.teacher.first_name} ${group.teacher.last_name}`
+                  : "لا يوجد أستاذ"}
+              </p>
+              <button
+                onClick={() => setTeacherModal(true)}
+                className="shrink-0 text-[10px] font-semibold text-[#2B6F5E] dark:text-[#4ADE80] hover:underline"
+              >
+                تعديل
+              </button>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] text-[#9B8E82] uppercase tracking-wide">
-              الأستاذ
-            </p>
-            <p
-              className={`text-[13px] font-medium truncate ${group.teacher ? "text-[#1B1B1B] dark:text-[#E5E5E5]" : "text-[#9B8E82] italic"}`}
-            >
-              {group.teacher
-                ? `${group.teacher.first_name} ${group.teacher.last_name}`
-                : "غير محدد"}
-            </p>
-          </div>
-          <button
-            onClick={() => setTeacherModal(true)}
-            className="shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-medium text-[#2B6F5E] dark:text-[#4ADE80] hover:bg-[#2B6F5E]/10 transition-colors"
-          >
-            <UserCog className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex gap-2 mt-3">
-          <button
-            onClick={() => setStatusModal(true)}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#F5F0EB] dark:bg-[#111] hover:bg-[#E8E0D5] dark:hover:bg-[#1A1A1A] text-[12px] font-medium text-[#3D3530] dark:text-[#CCCCCC] transition-colors"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            تغيير الحالة
-          </button>
-          <button
-            onClick={() => refetch()}
-            className="w-9 flex items-center justify-center rounded-xl bg-[#F5F0EB] dark:bg-[#111] hover:bg-[#E8E0D5] dark:hover:bg-[#1A1A1A] transition-colors"
-          >
-            <RefreshCw className="w-3.5 h-3.5 text-[#9B8E82]" />
-          </button>
-        </div>
+        )}
       </div>
 
-      {/* ── Students list ── */}
+      {/* ══ STUDENTS SECTION ══════════════════════════════════════ */}
       <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="px-4 py-3 flex items-center gap-2 border-b border-[#F0EBE5] dark:border-[#1E1E1E] shrink-0">
-          <Users className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
-          <span className="text-[13px] font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-            الطلبة ({students.length})
-          </span>
-          {group.pending_count > 0 && (
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
-              {group.pending_count} معلق
+        {/* Students toolbar */}
+        <div className="px-4 py-2.5 bg-white dark:bg-[#0D0D0D] border-b border-[#F0EBE5] dark:border-[#1A1A1A] shrink-0">
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="w-3.5 h-3.5 text-[#2B6F5E] dark:text-[#4ADE80]" />
+            <span className="text-[12px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+              الطلبة ({filtered.length}
+              {filtered.length !== students.length ? `/${students.length}` : ""}
+              )
             </span>
-          )}
-          <div className="ms-auto flex gap-1">
-            {["ALL", "VALIDATED", "PAID", "PENDING"].map((s) => (
+            {group.pending_count > 0 && enrollFilter !== "PENDING" && (
               <button
-                key={s}
-                onClick={() => setEnrollFilter(s)}
-                className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold transition-colors ${
-                  enrollFilter === s
-                    ? "bg-[#2B6F5E] text-white"
-                    : "bg-[#F5F0EB] dark:bg-[#1A1A1A] text-[#9B8E82] hover:text-[#3D3530] dark:hover:text-[#CCCCCC]"
-                }`}
+                onClick={() => setEnrollFilter("PENDING")}
+                className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 hover:bg-amber-200 transition-colors"
               >
-                {s === "ALL" ? "الكل" : (ENROLL_STATUS_CFG[s]?.ar ?? s)}
+                {group.pending_count} معلق
               </button>
-            ))}
+            )}
+            {/* Filter pills */}
+            <div className="ms-auto flex gap-1">
+              {(["ALL", "VALIDATED", "PAID", "PENDING"] as const).map((s) => {
+                const count =
+                  s === "ALL"
+                    ? students.length
+                    : students.filter((st) => st.registration_status === s)
+                        .length;
+                const cfg = ENROLL_STATUS_CFG[s];
+                const isActive = enrollFilter === s;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setEnrollFilter(s)}
+                    className="px-2 py-0.5 rounded-lg text-[10px] font-semibold transition-all duration-150"
+                    style={
+                      isActive
+                        ? {
+                            background: s === "ALL" ? "#2B6F5E" : cfg?.color,
+                            color: "#fff",
+                          }
+                        : { background: "transparent", color: "#9B8E82" }
+                    }
+                  >
+                    {s === "ALL" ? "الكل" : cfg?.ar}
+                    {count > 0 && (
+                      <span className="ms-1 opacity-70">{count}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Student search */}
+          <div className="relative">
+            <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#C8BFB5]" />
+            <input
+              value={studentSearch}
+              onChange={(e) => setStudentSearch(e.target.value)}
+              placeholder="ابحث في طلبة الفوج..."
+              className="w-full h-7 pr-8 pl-3 rounded-lg border border-[#E8E0D5] dark:border-[#2A2A2A] bg-[#F5F0EB] dark:bg-[#111] text-[11px] text-[#1B1B1B] dark:text-[#E5E5E5] placeholder-[#C8BFB5] outline-none focus:border-[#2B6F5E] transition-colors"
+            />
+            {studentSearch && (
+              <button
+                onClick={() => setStudentSearch("")}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[#C8BFB5] flex items-center justify-center hover:bg-[#9B8E82] transition-colors"
+              >
+                <X className="w-2.5 h-2.5 text-white" />
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        {/* Students grid */}
+        <div className="flex-1 overflow-y-auto p-3">
           {loadingStudents ? (
             <div className="py-16 flex justify-center">
               <Loader2 className="w-6 h-6 animate-spin text-[#2B6F5E]" />
             </div>
           ) : filtered.length === 0 ? (
             <div className="py-16 text-center">
-              <Users className="w-10 h-10 text-[#E8E0D5] dark:text-[#2A2A2A] mx-auto mb-3" />
-              <p className="text-[13px] text-[#9B8E82]">لا يوجد طلبة</p>
+              <div className="w-14 h-14 rounded-2xl bg-[#F5F0EB] dark:bg-[#1A1A1A] flex items-center justify-center mx-auto mb-3">
+                <Users className="w-6 h-6 text-[#C8BFB5] dark:text-[#333]" />
+              </div>
+              <p className="text-[13px] font-semibold text-[#9B8E82]">
+                {studentSearch ? "لا توجد نتائج" : "لا يوجد طلبة"}
+              </p>
+              {studentSearch && (
+                <button
+                  onClick={() => setStudentSearch("")}
+                  className="mt-2 text-[11px] text-[#2B6F5E] dark:text-[#4ADE80] hover:underline"
+                >
+                  مسح البحث
+                </button>
+              )}
             </div>
           ) : (
-            <div className="divide-y divide-[#F5F0EB] dark:divide-[#1A1A1A]">
-              {filtered.map((s) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {filtered.map((s, idx) => {
                 const cfg =
                   ENROLL_STATUS_CFG[s.registration_status] ??
                   ENROLL_STATUS_CFG.PENDING;
-                const canTransfer =
-                  s.registration_status === "VALIDATED" ||
-                  s.registration_status === "PAID" ||
-                  s.registration_status === "PENDING";
+                const canTransfer = ["VALIDATED", "PAID", "PENDING"].includes(
+                  s.registration_status,
+                );
+                // Avatar color based on status
+                const avatarBg = cfg.color + "18";
+                const initials = `${s.student.first_name[0] ?? ""}${s.student.last_name[0] ?? ""}`;
+
                 return (
                   <div
                     key={s.enrollment_id}
                     onClick={() => setSelectedStudent(s)}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-[#FDFAF7] dark:hover:bg-[#0D0D0D] group/row transition-colors cursor-pointer"
+                    className="group/card relative bg-white dark:bg-[#111] rounded-xl border border-[#E8E0D5] dark:border-[#1E1E1E] p-3 cursor-pointer hover:border-[#2B6F5E]/40 hover:shadow-md dark:hover:shadow-black/30 transition-all duration-200 overflow-hidden"
                   >
-                    <div className="w-8 h-8 rounded-full bg-[#2B6F5E]/10 flex items-center justify-center text-[12px] font-bold text-[#2B6F5E] dark:text-[#4ADE80] shrink-0">
-                      {s.student.first_name[0]}
-                      {s.student.last_name[0]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
-                        {s.student.first_name} {s.student.last_name}
-                      </p>
-                      <p className="text-[11px] text-[#9B8E82] truncate">
-                        {s.student.email}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span
-                        className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                        style={{ background: cfg.bg, color: cfg.color }}
+                    {/* Status top stripe */}
+                    <div
+                      className="absolute top-0 left-0 right-0 h-[2px] rounded-t-xl transition-all duration-200 group-hover/card:h-[3px]"
+                      style={{ background: cfg.color }}
+                    />
+
+                    <div className="flex items-start gap-2.5 mt-1">
+                      {/* Avatar */}
+                      <div
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-black shrink-0 relative"
+                        style={{ background: avatarBg, color: cfg.color }}
                       >
-                        {cfg.ar}
-                      </span>
+                        {initials}
+                        {/* Pulse for pending */}
+                        {s.registration_status === "PENDING" && (
+                          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[#111] bg-[#f59e0b]" />
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5] truncate leading-tight">
+                          {s.student.first_name} {s.student.last_name}
+                        </p>
+                        <p className="text-[10px] text-[#9B8E82] truncate mt-0.5">
+                          {s.student.email}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <span
+                            className="px-1.5 py-0.5 rounded-full text-[9px] font-bold"
+                            style={{ background: cfg.bg, color: cfg.color }}
+                          >
+                            {cfg.ar}
+                          </span>
+                          <span className="text-[9px] text-[#C8BFB5]">
+                            {new Date(s.enrollment_date).toLocaleDateString(
+                              "ar-DZ",
+                            )}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Transfer btn — on hover */}
                       {canTransfer && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedStudent(s);
                           }}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-[#9B8E82] hover:text-[#2B6F5E] hover:bg-[#EDF6F3] dark:hover:bg-[#0F2420] opacity-0 group-hover/row:opacity-100 transition-all"
+                          title="نقل الطالب"
+                          className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[#9B8E82] hover:text-[#2B6F5E] hover:bg-[#EDF6F3] dark:hover:bg-[#0F2420] opacity-0 group-hover/card:opacity-100 transition-all duration-150 mt-0.5"
                         >
-                          <ArrowLeftRight className="w-3.5 h-3.5" />
+                          <ArrowLeftRight className="w-3 h-3" />
                         </button>
                       )}
                     </div>
