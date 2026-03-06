@@ -97,6 +97,19 @@ const GroupDetailsPage = () => {
     message: string;
     type: "success" | "error";
   } | null>(null);
+  // Local overrides — updated immediately after mutations without waiting for refetch
+  const [localTeacher, setLocalTeacher] = useState<
+    | {
+        teacher_id: string;
+        first_name: string;
+        last_name: string;
+        email?: string;
+        phone_number?: string;
+      }
+    | null
+    | "removed"
+  >("removed"); // "removed" = sentinel meaning "use group.teacher"
+  const [localCourseName, setLocalCourseName] = useState<string | null>(null);
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -187,14 +200,21 @@ const GroupDetailsPage = () => {
   const maxCapacity = group.max_students ?? 25;
   const capacityPercent =
     maxCapacity > 0 ? (currentCapacity / maxCapacity) * 100 : 0;
-  // teacher can come as nested object OR just teacher_id
-  const teacherObj = group.teacher ?? null;
-  const hasInstructor = !!(teacherObj || group.teacher_id);
-  const teacherName = teacherObj
-    ? `${teacherObj.first_name ?? ""} ${teacherObj.last_name ?? ""}`.trim()
-    : group.teacher_id
-      ? "أستاذ معيّن"
-      : null;
+  // Resolve effective teacher: localTeacher overrides group data
+  // localTeacher === "removed" means use server data (initial state)
+  const effectiveTeacher =
+    localTeacher === "removed" ? (group.teacher ?? null) : localTeacher;
+  const hasInstructor = !!(
+    effectiveTeacher ||
+    (localTeacher === "removed" && group.teacher_id)
+  );
+
+  // Resolve effective course name
+  const effectiveCourseName =
+    localCourseName ||
+    group.course?.course_name ||
+    (group as any).course_name ||
+    null;
 
   const students = Array.isArray(group.students) ? group.students : [];
   const filteredStudents = students.filter((student: any) => {
@@ -224,22 +244,57 @@ const GroupDetailsPage = () => {
     }
   };
 
-  const handleUpdate = async (payload: UpdateGroupPayload) => {
+  const handleUpdate = async (
+    payload: UpdateGroupPayload & { course_name?: string },
+  ) => {
     try {
       await updateGroup.mutateAsync({ groupId: group.group_id, payload });
+      // If course name was passed from the form, update local state immediately
+      if (payload.course_name) {
+        setLocalCourseName(payload.course_name);
+      }
       showToast(t("admin.groupDetails.groupUpdated"), "success");
       setEditOpen(false);
+      refetch(); // also refetch to sync all data
     } catch {
       showToast(t("admin.groupDetails.updateFailed"), "error");
     }
   };
 
-  const handleAssignInstructor = async (instructorId: string) => {
+  const handleAssignInstructor = async (
+    instructorId: string,
+    instructorData?: {
+      first_name: string;
+      last_name: string;
+      email?: string;
+      phone_number?: string;
+    },
+  ) => {
     try {
-      await assignInstructor.mutateAsync({
+      const result = await assignInstructor.mutateAsync({
         groupId: group.group_id,
         instructorId,
       });
+      // If AssignInstructorModal passes teacher data (enhanced version), use it immediately
+      if (instructorData) {
+        setLocalTeacher({ teacher_id: instructorId, ...instructorData });
+      } else if (result && (result as any).teacher) {
+        // Some APIs return updated group with teacher nested
+        const t_ = (result as any).teacher;
+        setLocalTeacher({
+          teacher_id: instructorId,
+          first_name: t_.first_name ?? "",
+          last_name: t_.last_name ?? "",
+          email: t_.email,
+          phone_number: t_.phone_number,
+        });
+      } else {
+        // Last resort: refetch from server
+        const refetched = await refetch();
+        if (refetched.data?.teacher) {
+          setLocalTeacher("removed"); // signal to use server data
+        }
+      }
       showToast(t("admin.groupDetails.teacherAssigned"), "success");
       setAssignInstructorOpen(false);
     } catch {
@@ -254,6 +309,7 @@ const GroupDetailsPage = () => {
         groupId: group.group_id,
         instructorId: null,
       });
+      setLocalTeacher(null); // null = no teacher
       showToast(t("admin.groupDetails.teacherRemoved"), "success");
     } catch {
       showToast(t("admin.groupDetails.removeFailed"), "error");
@@ -385,30 +441,30 @@ const GroupDetailsPage = () => {
               <div className="bg-white dark:bg-[#1A1A1A] border border-[#8DB896]/30 dark:border-[#4ADE80]/15 rounded-xl p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 flex items-center justify-center">
-                      <User className="w-6 h-6 text-[#2B6F5E] dark:text-[#4ADE80]" />
+                    {/* Avatar with initials */}
+                    <div className="w-12 h-12 rounded-full bg-[#2B6F5E] flex items-center justify-center text-white font-bold text-[15px] shrink-0">
+                      {effectiveTeacher ? (
+                        `${effectiveTeacher.first_name?.[0] ?? ""}${effectiveTeacher.last_name?.[0] ?? ""}`.toUpperCase()
+                      ) : (
+                        <User className="w-6 h-6" />
+                      )}
                     </div>
                     <div>
                       <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                        {teacherObj
-                          ? `${teacherObj.first_name ?? ""} ${teacherObj.last_name ?? ""}`.trim()
+                        {effectiveTeacher
+                          ? `${effectiveTeacher.first_name ?? ""} ${effectiveTeacher.last_name ?? ""}`.trim()
                           : t("admin.groupDetails.teacherAssigned")}
                       </p>
-                      {!teacherObj && group.teacher_id && (
-                        <p className="text-xs text-[#9B8E82] mt-0.5 italic">
-                          ID: {group.teacher_id.slice(0, 8)}
-                        </p>
-                      )}
-                      {teacherObj?.email && (
+                      {effectiveTeacher?.email && (
                         <p className="text-sm text-[#6B5D4F] dark:text-[#888888] flex items-center gap-1 mt-0.5">
                           <Mail className="w-3 h-3 text-[#BEB29E] dark:text-[#666666]" />
-                          {teacherObj!.email}
+                          {effectiveTeacher.email}
                         </p>
                       )}
-                      {teacherObj?.phone_number && (
+                      {effectiveTeacher?.phone_number && (
                         <p className="text-sm text-[#6B5D4F] dark:text-[#888888] flex items-center gap-1 mt-0.5">
                           <Phone className="w-3 h-3 text-[#BEB29E] dark:text-[#666666]" />
-                          {teacherObj!.phone_number}
+                          {effectiveTeacher.phone_number}
                         </p>
                       )}
                     </div>
@@ -605,9 +661,7 @@ const GroupDetailsPage = () => {
               color="teal"
               label={t("admin.groupDetails.course")}
               value={
-                group.course?.course_name ||
-                (group as any).course_name ||
-                t("admin.groupDetails.notSpecified")
+                effectiveCourseName ?? t("admin.groupDetails.notSpecified")
               }
             />
             <InfoItem
@@ -687,6 +741,8 @@ const GroupDetailsPage = () => {
         open={assignInstructorOpen}
         onClose={() => setAssignInstructorOpen(false)}
         onSubmit={handleAssignInstructor}
+        // If AssignInstructorModal supports onSubmitWithData, pass it to get full teacher info
+        // onSubmitWithData={(id, data) => handleAssignInstructor(id, data)}
         isSubmitting={assignInstructor.isPending}
         currentInstructorId={group.teacher_id}
       />
