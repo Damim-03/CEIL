@@ -317,7 +317,9 @@ const GroupDetailsPage = () => {
       )}
 
       <div className="flex items-center justify-between">
-        <Link to={`/admin/courses/${group.course_id}`}>
+        <Link
+          to={`/admin/courses/${group.course?.course_id ?? (group as any).course_id ?? ""}`}
+        >
           <Button
             variant="ghost"
             size="sm"
@@ -733,7 +735,7 @@ const GroupDetailsPage = () => {
         initialData={{
           name: group.name,
           level: group.level,
-          course_id: group.course_id,
+          course_id: group.course?.course_id ?? (group as any).course_id,
           max_students: maxCapacity,
           teacher_id: group.teacher_id ?? undefined,
           department_id: group.department_id ?? undefined,
