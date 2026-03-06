@@ -4,12 +4,14 @@ import { useTranslation } from "react-i18next";
 import PageLoader from "../../../../components/PageLoader";
 import { Button } from "../../../../components/ui/button";
 import {
-  useAdminGroup,
   useUpdateGroup,
   useDeleteGroup,
   useAssignInstructor,
 } from "../../../../hooks/admin/useAdmin";
-import { useAllTeachers } from "../../../../hooks/admin/useAdminGroups";
+import {
+  useAdminGroupDetails,
+  useAllTeachers,
+} from "../../../../hooks/admin/useAdminGroups";
 import {
   ArrowLeft,
   Users,
@@ -81,7 +83,7 @@ const GroupDetailsPage = () => {
     isError,
     error,
     refetch,
-  } = useAdminGroup(groupId);
+  } = useAdminGroupDetails(groupId ?? null);
   const updateGroup = useUpdateGroup();
   const deleteGroup = useDeleteGroup();
   const assignInstructor = useAssignInstructor();
@@ -202,7 +204,14 @@ const GroupDetailsPage = () => {
     );
   }
 
-  const currentCapacity = group.current_capacity ?? 0;
+  // current_capacity OR enrolled_count (from new API) OR enrollments count
+  const currentCapacity =
+    (group as any).current_capacity ??
+    (group as any).enrolled_count ??
+    (group as any).enrollments?.filter((e: any) =>
+      ["VALIDATED", "PAID"].includes(e.registration_status),
+    ).length ??
+    0;
   const maxCapacity = group.max_students ?? 25;
   const capacityPercent =
     maxCapacity > 0 ? (currentCapacity / maxCapacity) * 100 : 0;
@@ -224,7 +233,14 @@ const GroupDetailsPage = () => {
   const effectiveCourseName =
     group.course?.course_name ?? (group as any).course_name ?? null;
 
-  const students = Array.isArray(group.students) ? group.students : [];
+  // /details endpoint returns enrollments with student nested; old endpoint returns students array
+  const rawEnrollments: any[] = (group as any).enrollments ?? [];
+  const students: any[] = Array.isArray((group as any).students)
+    ? (group as any).students
+    : rawEnrollments.map((e: any) => ({
+        ...(e.student ?? {}),
+        created_at: e.enrollment_date ?? e.student?.created_at,
+      }));
   const filteredStudents = students.filter((student: any) => {
     if (!student) return false;
     const sl = searchTerm.toLowerCase();
