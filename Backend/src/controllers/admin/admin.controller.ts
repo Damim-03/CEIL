@@ -22,6 +22,7 @@ import * as EnrollmentService from "../../services/admin/enrollment.service";
 import * as SessionService from "../../services/admin/session.service";
 import * as AttendanceService from "../../services/admin/attendance.service";
 import * as ExamService from "../../services/admin/exam.service";
+import * as SocketService from "../../services/socket.service";
 import { emitToAdminLevel, emitToUser } from "../../services/socket.service";
 
 /* ═══ STUDENTS — Using StudentService ✅ ═══ */
@@ -173,8 +174,15 @@ export const disableUserController = async (req: Request, res: Response) => {
 
 /* ═══ COURSES — Using CourseService ✅ ═══ */
 
+// ================================================================
+// 📌 PATCH — استبدل دوال الـ courses في admin_controller.ts بهذه
+// أضف هذا الـ import في أعلى الملف إن لم يكن موجوداً:
+//   import * as SocketService from "../../services/socket.service";
+// ================================================================
+
 export const createCourseController = async (req: Request, res: Response) => {
   const result = await CourseService.createCourse(req.body);
+
   if ("error" in result) {
     if (result.error === "validation")
       return res.status(400).json({ message: "course_name is required" });
@@ -183,6 +191,12 @@ export const createCourseController = async (req: Request, res: Response) => {
         .status(409)
         .json({ message: "Course with this code already exists" });
   }
+
+  // ✅ Realtime — إشعار لكل الأدمن بإنشاء دورة جديدة
+  SocketService.emitToAdminLevel("course:created", {
+    course: result.data,
+  });
+
   return res.status(201).json(result.data);
 };
 
@@ -206,17 +220,32 @@ export const updateCourseController = async (req: Request, res: Response) => {
     req.params.courseId,
     req.body,
   );
+
   if ("error" in result) {
     if (result.error === "empty_body")
       return res.status(400).json({ message: "Request body is empty" });
     if (result.error === "not_found")
       return res.status(404).json({ message: "Course not found" });
   }
+
+  // ✅ Realtime — إشعار بتحديث الدورة
+  SocketService.emitToAdminLevel("course:updated", {
+    course_id: req.params.courseId,
+    changes: req.body,
+    course: result.data,
+  });
+
   return res.json(result.data);
 };
 
 export const deleteCourseController = async (req: Request, res: Response) => {
   await CourseService.deleteCourse(req.params.courseId);
+
+  // ✅ Realtime — إشعار بحذف الدورة
+  SocketService.emitToAdminLevel("course:deleted", {
+    course_id: req.params.courseId,
+  });
+
   return res.json({ message: "Course deleted successfully" });
 };
 

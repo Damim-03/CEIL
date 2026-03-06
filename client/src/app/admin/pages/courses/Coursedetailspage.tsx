@@ -1,6 +1,7 @@
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useCoursesSocket } from "../../../../hooks/admin/useCoursesSocket";
 import PageLoader from "../../../../components/PageLoader";
 import { Button } from "../../../../components/ui/button";
 import {
@@ -26,6 +27,7 @@ import {
   UserCheck,
   UserX,
   ExternalLink,
+  Wifi,
 } from "lucide-react";
 import CourseFormModal from "../../components/CourseFormModal";
 import GroupFormModal from "../../components/GroupFormModal";
@@ -74,6 +76,22 @@ const CourseDetailsPage = () => {
   const { data: course, isLoading } = useAdminCourse(courseId!);
   const updateCourse = useUpdateCourse();
   const deleteCourse = useDeleteCourse();
+
+  const [realtimeFlash, setRealtimeFlash] = useState(false);
+
+  // ✅ Realtime — تحديث تلقائي عند تعديل أو حذف هذه الدورة
+  useCoursesSocket({
+    watchCourseId: courseId ?? null,
+    onEvent: (event) => {
+      if (event === "course:deleted") {
+        // الدورة حُذفت من طرف آخر — العودة للقائمة
+        navigate("/admin/courses");
+        return;
+      }
+      setRealtimeFlash(true);
+      setTimeout(() => setRealtimeFlash(false), 1500);
+    },
+  });
   const createGroup = useCreateGroup();
 
   const getStudentCount = (group: {
@@ -237,9 +255,24 @@ const CourseDetailsPage = () => {
                 <BookOpen className="w-8 h-8" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                  {course.course_name}
-                </h1>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                    {course.course_name}
+                  </h1>
+                  {/* ✅ Realtime badge */}
+                  <div
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all duration-300 ${
+                      realtimeFlash
+                        ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 scale-105"
+                        : "bg-[#F0EBE5] dark:bg-[#1E1E1E] text-[#9B8E82] dark:text-[#666]"
+                    }`}
+                  >
+                    <Wifi
+                      className={`w-3 h-3 ${realtimeFlash ? "animate-pulse" : ""}`}
+                    />
+                    مباشر
+                  </div>
+                </div>
                 <p className="text-sm text-[#6B5D4F] dark:text-[#888888] mt-1">
                   {t("admin.courseDetails.courseId", {
                     id: course.course_id.slice(0, 8),
