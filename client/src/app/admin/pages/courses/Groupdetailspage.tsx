@@ -116,29 +116,6 @@ const GroupDetailsPage = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const getNestedValue = (
-    obj: Record<string, any>,
-    path: string,
-    defaultValue: any = null,
-  ): any => {
-    try {
-      const value = path
-        .split(".")
-        .reduce((acc: any, part: string) => acc?.[part], obj);
-      return value !== undefined && value !== null ? value : defaultValue;
-    } catch {
-      return defaultValue;
-    }
-  };
-
-  // Pre-compute teacher lookup before early returns (uses hook state only, not group data)
-  const resolvedTeacherId = localTeacherId === "sync" ? null : localTeacherId;
-  const preloadedTeacher = resolvedTeacherId
-    ? ((allTeachers as any[]).find(
-        (t: any) => t.teacher_id === resolvedTeacherId,
-      ) ?? null)
-    : null;
-
   if (isLoading) return <PageLoader />;
 
   if (isError) {
@@ -262,7 +239,8 @@ const GroupDetailsPage = () => {
     try {
       await deleteGroup.mutateAsync(group.group_id);
       showToast(t("admin.groupDetails.groupDeleted"), "success");
-      navigate("/admin/groups");
+      const courseId = group.course?.course_id ?? (group as any).course_id;
+      navigate(courseId ? `/admin/courses/${courseId}` : "/admin/courses");
     } catch {
       showToast(t("admin.groupDetails.deleteFailed"), "error");
     }
