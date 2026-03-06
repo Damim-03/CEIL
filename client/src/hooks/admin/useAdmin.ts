@@ -620,6 +620,11 @@ export const useCreateGroup = () => {
       qc.invalidateQueries({ queryKey: GROUPS_KEY });
       qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
       qc.setQueryData(groupKey(newGroup.group_id), newGroup);
+      // ✅ أضف هذا — يُبطل كل الدورات المُحملة (الدورة التي ينتمي إليها الفوج)
+      qc.invalidateQueries({ queryKey: COURSES_KEY });
+      if (newGroup.course_id) {
+        qc.invalidateQueries({ queryKey: courseKey(newGroup.course_id) });
+      }
     },
   });
 };
@@ -649,6 +654,8 @@ export const useDeleteGroup = () => {
       qc.removeQueries({ queryKey: groupKey(groupId) });
       qc.invalidateQueries({ queryKey: GROUPS_KEY });
       qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
+      // ✅ أضف هذا — يُبطل كل الدورات (لأننا لا نعرف course_id عند الحذف)
+      qc.invalidateQueries({ queryKey: COURSES_KEY });
     },
   });
 };
