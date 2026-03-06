@@ -1,7 +1,8 @@
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useGroupsSocket } from "../../../../hooks/admin/useGroupsSocket";
 import { useTranslation } from "react-i18next";
-import { useCoursesSocket } from "../../../../hooks/admin/useCoursesSocket";
 import PageLoader from "../../../../components/PageLoader";
 import { Button } from "../../../../components/ui/button";
 import {
@@ -76,23 +77,23 @@ const CourseDetailsPage = () => {
   const { data: course, isLoading } = useAdminCourse(courseId!);
   const updateCourse = useUpdateCourse();
   const deleteCourse = useDeleteCourse();
-
+  const createGroup = useCreateGroup();
+  const qc = useQueryClient();
   const [realtimeFlash, setRealtimeFlash] = useState(false);
 
-  // ✅ Realtime — تحديث تلقائي عند تعديل أو حذف هذه الدورة
-  useCoursesSocket({
-    watchCourseId: courseId ?? null,
-    onEvent: (event) => {
-      if (event === "course:deleted") {
-        // الدورة حُذفت من طرف آخر — العودة للقائمة
-        navigate("/admin/courses");
-        return;
-      }
+  // ✅ Realtime — عند أي تغيير في فوج تابع لهذه الدورة يُحدَّث تلقائياً:
+  // عدد الطلاب، اسم الأستاذ، إضافة/حذف مجموعة
+  // groupIds مثبتة بـ JSON.stringify داخل useGroupsSocket لتجنب reconnect loop
+  const groupIds = (course?.groups ?? []).map((g: any) => g.group_id);
+  useGroupsSocket({
+    watchGroupIds: groupIds,
+    onEvent: () => {
+      // أعد جلب بيانات الدورة كاملة (تشمل الأفواج + عدد الطلاب + الأساتذة)
+      qc.invalidateQueries({ queryKey: ["adminCourse", courseId] });
       setRealtimeFlash(true);
       setTimeout(() => setRealtimeFlash(false), 1500);
     },
   });
-  const createGroup = useCreateGroup();
 
   const getStudentCount = (group: {
     current_capacity?: number;
@@ -255,7 +256,7 @@ const CourseDetailsPage = () => {
                 <BookOpen className="w-8 h-8" />
               </div>
               <div>
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-3 flex-wrap">
                   <h1 className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
                     {course.course_name}
                   </h1>
@@ -263,8 +264,8 @@ const CourseDetailsPage = () => {
                   <div
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all duration-300 ${
                       realtimeFlash
-                        ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 scale-105"
-                        : "bg-[#F0EBE5] dark:bg-[#1E1E1E] text-[#9B8E82] dark:text-[#666]"
+                        ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 scale-110"
+                        : "bg-[#F0EBE5] dark:bg-[#1E1E1E] text-[#9B8E82] dark:text-[#555]"
                     }`}
                   >
                     <Wifi
@@ -334,7 +335,7 @@ const CourseDetailsPage = () => {
               return (
                 <div
                   key={level}
-                  className={`rounded-xl border-2 overflow-hidden transition-all ${LEVEL_BORDER_COLORS[level]} ${LEVEL_BG_COLORS[level]}`}
+                  className={`rounded-xl border-2 overflow-hidden transition-all ${LEVEL_BORDER_COLORS[level]} ${LEVEL_BG_COLORS[level]} ${realtimeFlash ? "ring-1 ring-emerald-400/40 dark:ring-emerald-500/20" : ""}`}
                 >
                   <div
                     className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/50 dark:hover:bg-white/5 transition-colors"
