@@ -904,23 +904,49 @@ export const useApproveDocument = () => {
 export const useRejectDocument = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       documentId,
       reason,
+      studentUserId, // ← user_id للطالب (ليس student_id)
+      fileName, // ← اسم الملف للعرض في الإشعار
     }: {
       documentId: string;
       reason: string;
-    }) => adminDocumentsApi.reject(documentId, reason),
+      studentUserId?: string;
+      fileName?: string;
+    }) => {
+      // 1️⃣ رفض الوثيقة
+      const result = await adminDocumentsApi.reject(documentId, reason);
+
+      // 2️⃣ إرسال إشعار للطالب إذا توفر user_id
+      if (studentUserId) {
+        try {
+          await adminNotificationApi.send({
+            title: "تم رفض وثيقة",
+            title_ar: "تم رفض وثيقة",
+            message: `تم رفض الوثيقة${fileName ? ` "${fileName}"` : ""} للسبب التالي: ${reason}`,
+            message_ar: `تم رفض الوثيقة${fileName ? ` "${fileName}"` : ""} للسبب التالي: ${reason}`,
+            target_type: "SPECIFIC_STUDENTS",
+            priority: "HIGH",
+            user_ids: [studentUserId],
+          });
+        } catch (notifError) {
+          // الإشعار اختياري — لا نوقف العملية إذا فشل
+          console.warn("Failed to send rejection notification:", notifError);
+        }
+      }
+
+      return result;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: DOCUMENTS_KEY });
       qc.invalidateQueries({ queryKey: ENROLLMENTS_KEY });
       qc.invalidateQueries({ queryKey: STUDENTS_KEY });
-      toast.success("❌ Document rejected");
+      qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
+      toast.success("تم رفض الوثيقة وإرسال إشعار للطالب");
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || "Failed to reject document",
-      );
+      toast.error(error?.response?.data?.message || "فشل رفض الوثيقة");
     },
   });
 };

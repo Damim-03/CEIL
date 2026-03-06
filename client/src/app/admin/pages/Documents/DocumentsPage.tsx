@@ -208,8 +208,14 @@ const AdminDocuments = () => {
       toast.error(t("admin.documents.toast.provideReason"));
       return;
     }
+
     rejectDocument(
-      { documentId: documentToReject.id, reason: rejectReason },
+      {
+        documentId: documentToReject.id,
+        reason: rejectReason,
+        studentUserId: (documentToReject.student as any).userId, // user_id للطالب
+        fileName: documentToReject.fileName,
+      },
       {
         onSuccess: () => {
           toast.success(t("admin.documents.toast.rejectSuccess"));
@@ -217,8 +223,12 @@ const AdminDocuments = () => {
           setDocumentToReject(null);
           setRejectReason("");
         },
-        onError: (e: any) =>
-          toast.error(e?.message || t("admin.documents.toast.rejectFailed")),
+        onError: (error: any) => {
+          console.error("Error rejecting document:", error);
+          toast.error(
+            error?.message || t("admin.documents.toast.rejectFailed"),
+          );
+        },
       },
     );
   };
