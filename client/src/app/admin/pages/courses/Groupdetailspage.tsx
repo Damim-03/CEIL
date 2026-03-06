@@ -187,7 +187,14 @@ const GroupDetailsPage = () => {
   const maxCapacity = group.max_students ?? 25;
   const capacityPercent =
     maxCapacity > 0 ? (currentCapacity / maxCapacity) * 100 : 0;
-  const hasInstructor = !!group.teacher_id;
+  // teacher can come as nested object OR just teacher_id
+  const teacherObj = group.teacher ?? null;
+  const hasInstructor = !!(teacherObj || group.teacher_id);
+  const teacherName = teacherObj
+    ? `${teacherObj.first_name ?? ""} ${teacherObj.last_name ?? ""}`.trim()
+    : group.teacher_id
+      ? "أستاذ معيّن"
+      : null;
 
   const students = Array.isArray(group.students) ? group.students : [];
   const filteredStudents = students.filter((student: any) => {
@@ -374,7 +381,7 @@ const GroupDetailsPage = () => {
             <Unlock className="w-6 h-6 text-[#2B6F5E] dark:text-[#4ADE80]" />
           </div>
           <div className="mt-4">
-            {hasInstructor && group.teacher ? (
+            {hasInstructor ? (
               <div className="bg-white dark:bg-[#1A1A1A] border border-[#8DB896]/30 dark:border-[#4ADE80]/15 rounded-xl p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -383,19 +390,25 @@ const GroupDetailsPage = () => {
                     </div>
                     <div>
                       <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                        {getNestedValue(group, "teacher.first_name", "")}{" "}
-                        {getNestedValue(group, "teacher.last_name", "")}
+                        {teacherObj
+                          ? `${teacherObj.first_name ?? ""} ${teacherObj.last_name ?? ""}`.trim()
+                          : t("admin.groupDetails.teacherAssigned")}
                       </p>
-                      {group.teacher.email && (
-                        <p className="text-sm text-[#6B5D4F] dark:text-[#888888] flex items-center gap-1 mt-0.5">
-                          <Mail className="w-3 h-3 text-[#BEB29E] dark:text-[#666666]" />
-                          {group.teacher.email}
+                      {!teacherObj && group.teacher_id && (
+                        <p className="text-xs text-[#9B8E82] mt-0.5 italic">
+                          ID: {group.teacher_id.slice(0, 8)}
                         </p>
                       )}
-                      {group.teacher.phone_number && (
+                      {teacherObj?.email && (
+                        <p className="text-sm text-[#6B5D4F] dark:text-[#888888] flex items-center gap-1 mt-0.5">
+                          <Mail className="w-3 h-3 text-[#BEB29E] dark:text-[#666666]" />
+                          {teacherObj!.email}
+                        </p>
+                      )}
+                      {teacherObj?.phone_number && (
                         <p className="text-sm text-[#6B5D4F] dark:text-[#888888] flex items-center gap-1 mt-0.5">
                           <Phone className="w-3 h-3 text-[#BEB29E] dark:text-[#666666]" />
-                          {group.teacher.phone_number}
+                          {teacherObj!.phone_number}
                         </p>
                       )}
                     </div>
@@ -591,11 +604,11 @@ const GroupDetailsPage = () => {
               icon={GraduationCap}
               color="teal"
               label={t("admin.groupDetails.course")}
-              value={getNestedValue(
-                group,
-                "course.course_name",
-                t("admin.groupDetails.notSpecified"),
-              )}
+              value={
+                group.course?.course_name ||
+                (group as any).course_name ||
+                t("admin.groupDetails.notSpecified")
+              }
             />
             <InfoItem
               icon={Users}
