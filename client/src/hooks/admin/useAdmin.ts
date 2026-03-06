@@ -624,6 +624,9 @@ export const useCreateGroup = () => {
       qc.invalidateQueries({ queryKey: COURSES_KEY });
       if (newGroup.course_id) {
         qc.invalidateQueries({ queryKey: courseKey(newGroup.course_id) });
+        qc.invalidateQueries({
+          queryKey: ["admin-course", newGroup.course_id],
+        });
       }
     },
   });
@@ -654,8 +657,9 @@ export const useDeleteGroup = () => {
       qc.removeQueries({ queryKey: groupKey(groupId) });
       qc.invalidateQueries({ queryKey: GROUPS_KEY });
       qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
-      // ✅ أضف هذا — يُبطل كل الدورات (لأننا لا نعرف course_id عند الحذف)
       qc.invalidateQueries({ queryKey: COURSES_KEY });
+      // ✅ أضف هذا — يُبطل كل مفاتيح "admin-course" بغض النظر عن الـ id
+      qc.invalidateQueries({ queryKey: ["admin-course"] });
     },
   });
 };
