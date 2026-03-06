@@ -15,10 +15,11 @@ import { io, Socket } from "socket.io-client";
 // ─── Query Keys ──────────────────────────────────────────────
 // يجب أن تتطابق مع مفاتيح useAdminCourses و useAdminCourse في useAdmin.ts
 // عدّلها إن كانت مختلفة في مشروعك
+// ✅ Matches COURSES_KEY and courseKey in useAdmin.ts exactly
 export const courseKeys = {
-  all:    ()           => ["adminCourses"] as const,
-  list:   ()           => ["adminCourses", "list"] as const,
-  detail: (id: string) => ["adminCourse", id] as const,
+  all: () => ["admin-courses"] as const,
+  list: () => ["admin-courses"] as const,
+  detail: (id: string) => ["admin-course", id] as const,
 };
 
 // ─── Hook Options ─────────────────────────────────────────────
@@ -31,7 +32,7 @@ export interface CoursesSocketOptions {
 
 // ─── Main Hook ────────────────────────────────────────────────
 export function useCoursesSocket(options: CoursesSocketOptions = {}) {
-  const qc        = useQueryClient();
+  const qc = useQueryClient();
   const socketRef = useRef<Socket | null>(null);
   const { watchCourseId, onEvent } = options;
 
@@ -74,10 +75,13 @@ export function useCoursesSocket(options: CoursesSocketOptions = {}) {
     });
 
     // ── course:updated — دورة تحدّثت ────────────────────────
-    socket.on("course:updated", (payload: { course_id: string; course: any }) => {
-      invalidateCourse(payload.course_id);
-      onEvent?.("course:updated", payload);
-    });
+    socket.on(
+      "course:updated",
+      (payload: { course_id: string; course: any }) => {
+        invalidateCourse(payload.course_id);
+        onEvent?.("course:updated", payload);
+      },
+    );
 
     // ── course:deleted — دورة حُذفت ─────────────────────────
     socket.on("course:deleted", (payload: { course_id: string }) => {
@@ -95,7 +99,7 @@ export function useCoursesSocket(options: CoursesSocketOptions = {}) {
       socket.disconnect();
       socketRef.current = null;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchCourseId]);
 
   return socketRef;
