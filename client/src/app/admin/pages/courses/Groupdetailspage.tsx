@@ -629,7 +629,7 @@ const GroupDetailsPage = () => {
                   ? t("admin.groupDetails.noStudentsSearch")
                   : t("admin.groupDetails.noStudents")}
               </p>
-              <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-1">
+              <p className="text-sm text-brand-brown dark:text-[#666666] mt-1">
                 {searchTerm
                   ? t("admin.groupDetails.noStudentsSearchHint")
                   : t("admin.groupDetails.noStudentsHint")}
