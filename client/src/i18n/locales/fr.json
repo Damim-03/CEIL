@@ -221,15 +221,15 @@
     "ourTeam": "Notre équipe"
   },
   "director": {
-    "sectionTitle": "Mot du Directeur",
+    "sectionTitle": "Message du Directeur",
     "welcomeLabel": "Message de bienvenue du Directeur du Centre",
-    "name": "Pr. Dr. Ahmed Mohammedi",
-    "title": "Bienvenue au Centre d'Enseignement Intensif des Langues",
-    "message1": "J'ai le plaisir de vous accueillir au Centre d'Enseignement Intensif des Langues (CEIL) de l'Université d'El-Oued. Depuis sa création, le centre s'efforce de fournir un enseignement des langues de haute qualité répondant aux aspirations des étudiants, enseignants, personnels et de la communauté.",
-    "message2": "Nous nous engageons à offrir un environnement d'apprentissage moderne basé sur des méthodes pédagogiques efficaces et des standards internationalement reconnus, conformément au Cadre Européen Commun de Référence pour les Langues (CECRL). Notre équipe d'enseignants spécialisés et passionnés travaille sans relâche pour garantir une expérience d'apprentissage riche et enrichissante.",
-    "message3": "Nous vous invitons à découvrir nos programmes variés et à rejoindre notre communauté éducative. Ensemble, nous construisons des ponts vers le monde à travers les langues.",
-    "fullName": "Prof Nacer Dehda",
-    "role": "Directeur du Centre d'Enseignement Intensif des Langues",
+    "name": "Pr. Nacer Dehda",
+    "title": "Chers étudiants et visiteurs, Bienvenue au CEIL !",
+    "message1": "Pour accompagner nos étudiants dans leur parcours, nous proposons un large éventail de cours de langues obligatoires et optionnels, notamment l'anglais, le français, le russe, l'italien, l'espagnol, le chinois et bien d'autres.",
+    "message2": "Nos cours permettent aux étudiants de diverses disciplines d'acquérir les compétences linguistiques nécessaires pour réussir sur le plan académique, professionnel, ou simplement par amour de l'apprentissage. Nous nous engageons à offrir un enseignement des langues de haute qualité, une richesse culturelle et des ressources pédagogiques de premier plan.",
+    "message3": "Nous partageons les meilleures pratiques en matière d'enseignement moderne des langues afin d'aider les étudiants à améliorer leurs compétences et à renforcer leur confiance. Je suis fier de diriger le CEIL et me réjouis de partager le savoir et de bâtir des liens durables dans les années à venir.",
+    "fullName": "Dr. Nacer Dehda",
+    "role": "Directeur du Centre d'Enseignement Intensif des Langues (CEIL)",
     "initials": "ND",
     "highlightQuote": "Ensemble, nous construisons des ponts vers le monde à travers les langues"
   },
