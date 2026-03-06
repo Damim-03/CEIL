@@ -1,6 +1,7 @@
 /* ===============================================================
-   ADMIN ENROLLMENTS — Refined Luxury Redesign
+   ADMIN ENROLLMENTS — Refined Luxury Redesign + Full i18n
    ✅ All logic preserved
+   ✅ Full i18n — zero hardcoded strings
    ✅ New: deep visual hierarchy, gradient cards, micro-animations
 =============================================================== */
 
@@ -22,7 +23,6 @@ import {
   ChevronRight,
   Sparkles,
   ArrowRight,
-  CircleDot,
   X,
 } from "lucide-react";
 
@@ -128,68 +128,107 @@ function checkDocumentStatus(student: any) {
 }
 
 /* ===============================================================
-   STATUS CONFIG
+   STATUS CONFIG — uses i18n keys resolved at render time
 =============================================================== */
 
-const STATUS_META = {
+type StatusKey = "PENDING" | "VALIDATED" | "PAID" | "REJECTED" | "FINISHED";
+
+const STATUS_STYLE: Record<
+  StatusKey,
+  {
+    color: string;
+    bg: string;
+    border: string;
+    Icon: React.ElementType;
+  }
+> = {
   PENDING: {
-    label: "قيد المراجعة",
     color: "#C4A035",
     bg: "rgba(196,160,53,0.08)",
     border: "rgba(196,160,53,0.20)",
-    glow: "rgba(196,160,53,0.15)",
     Icon: Clock,
-    dot: "#C4A035",
   },
   VALIDATED: {
-    label: "موثق",
     color: "#2B6F5E",
     bg: "rgba(43,111,94,0.08)",
     border: "rgba(43,111,94,0.20)",
-    glow: "rgba(43,111,94,0.15)",
     Icon: CheckCircle,
-    dot: "#2B6F5E",
   },
   PAID: {
-    label: "مدفوع",
     color: "#3b82f6",
     bg: "rgba(59,130,246,0.08)",
     border: "rgba(59,130,246,0.20)",
-    glow: "rgba(59,130,246,0.15)",
     Icon: DollarSign,
-    dot: "#3b82f6",
   },
   REJECTED: {
-    label: "مرفوض",
     color: "#ef4444",
     bg: "rgba(239,68,68,0.08)",
     border: "rgba(239,68,68,0.20)",
-    glow: "rgba(239,68,68,0.15)",
     Icon: XCircle,
-    dot: "#ef4444",
   },
   FINISHED: {
-    label: "مكتمل",
     color: "#94a3b8",
     bg: "rgba(148,163,184,0.08)",
     border: "rgba(148,163,184,0.20)",
-    glow: "rgba(148,163,184,0.10)",
     Icon: GraduationCap,
-    dot: "#94a3b8",
   },
-} as const;
+};
+
+const STATUS_LABEL_KEYS: Record<StatusKey, string> = {
+  PENDING: "admin.enrollments.status.pendingReview",
+  VALIDATED: "admin.enrollments.status.validatedAwaiting",
+  PAID: "admin.enrollments.status.paidReady",
+  REJECTED: "admin.enrollments.status.rejected",
+  FINISHED: "admin.enrollments.status.finished",
+};
 
 /* ===============================================================
-   TAB CONFIG
+   TAB CONFIG — label keys resolved via t() at render time
 =============================================================== */
 
-const TABS = [
-  { key: "pending", label: "معلق", icon: Clock, accent: "#C4A035" },
-  { key: "validated", label: "موثق", icon: CheckCircle, accent: "#2B6F5E" },
-  { key: "paid", label: "مدفوع", icon: DollarSign, accent: "#3b82f6" },
-  { key: "finished", label: "مكتمل", icon: GraduationCap, accent: "#94a3b8" },
-  { key: "all", label: "الكل", icon: FileText, accent: "#6366f1" },
-] as const;
+const TABS: {
+  key: string;
+  labelKey: string;
+  statsKey: string;
+  icon: React.ElementType;
+  accent: string;
+}[] = [
+  {
+    key: "pending",
+    labelKey: "admin.enrollments.tabs.pending",
+    statsKey: "admin.enrollments.stats.pendingReview",
+    icon: Clock,
+    accent: "#C4A035",
+  },
+  {
+    key: "validated",
+    labelKey: "admin.enrollments.tabs.validated",
+    statsKey: "admin.enrollments.stats.validated",
+    icon: CheckCircle,
+    accent: "#2B6F5E",
+  },
+  {
+    key: "paid",
+    labelKey: "admin.enrollments.tabs.paid",
+    statsKey: "admin.enrollments.stats.paid",
+    icon: DollarSign,
+    accent: "#3b82f6",
+  },
+  {
+    key: "finished",
+    labelKey: "admin.enrollments.tabs.finished",
+    statsKey: "admin.enrollments.stats.finished",
+    icon: GraduationCap,
+    accent: "#94a3b8",
+  },
+  {
+    key: "all",
+    labelKey: "admin.enrollments.tabs.all",
+    statsKey: "admin.enrollments.stats.total",
+    icon: FileText,
+    accent: "#6366f1",
+  },
+];
 
 /* ===============================================================
    MAIN PAGE
@@ -204,84 +243,82 @@ export default function AdminEnrollmentsPage() {
   const addToGroup = useAddStudentToGroup();
 
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] =
-    useState<(typeof TABS)[number]["key"]>("pending");
+  const [activeTab, setActiveTab] = useState("pending");
   const [selectedEnrollment, setSelectedEnrollment] =
     useState<Enrollment | null>(null);
   const [rejectDialog, setRejectDialog] = useState(false);
   const [assignGroupDialog, setAssignGroupDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
-  const [selectedGroupId, setSelectedGroupId] = useState<string>("");
+  const [selectedGroupId, setSelectedGroupId] = useState("");
 
   if (isLoading) return <PageLoader />;
 
-  const filteredEnrollments = enrollments.filter((enrollment: any) => {
-    const studentName = enrollment.student
-      ? `${enrollment.student.first_name} ${enrollment.student.last_name}`.toLowerCase()
+  /* ── Filtering ── */
+  const filtered = enrollments.filter((e: any) => {
+    const name = e.student
+      ? `${e.student.first_name} ${e.student.last_name}`.toLowerCase()
       : "";
-    const courseName = enrollment.course?.course_name?.toLowerCase() || "";
+    const course = e.course?.course_name?.toLowerCase() || "";
     return (
-      studentName.includes(search.toLowerCase()) ||
-      courseName.includes(search.toLowerCase())
+      name.includes(search.toLowerCase()) ||
+      course.includes(search.toLowerCase())
     );
   });
 
-  const byStatus = (status: string) =>
-    filteredEnrollments.filter((e: any) => e.registration_status === status);
-  const pending = byStatus("PENDING");
-  const validated = byStatus("VALIDATED");
-  const paid = byStatus("PAID");
-  const finished = byStatus("FINISHED");
+  const byStatus = (s: string) =>
+    filtered.filter((e: any) => e.registration_status === s);
 
-  const tabItems = {
-    pending,
-    validated,
-    paid,
-    finished,
-    all: filteredEnrollments,
+  const tabItems: Record<string, any[]> = {
+    pending: byStatus("PENDING"),
+    validated: byStatus("VALIDATED"),
+    paid: byStatus("PAID"),
+    finished: byStatus("FINISHED"),
+    all: filtered,
   };
 
-  const stats = [
+  /* ── Stats ── */
+  const statsConfig = [
     {
-      label: "الكل",
+      labelKey: "admin.enrollments.stats.total",
       value: enrollments.length,
       color: "#6366f1",
       Icon: FileText,
     },
     {
-      label: "معلق",
+      labelKey: "admin.enrollments.stats.pendingReview",
       value: byStatus("PENDING").length,
       color: "#C4A035",
       Icon: Clock,
       badge: true,
     },
     {
-      label: "موثق",
+      labelKey: "admin.enrollments.stats.validated",
       value: byStatus("VALIDATED").length,
       color: "#2B6F5E",
       Icon: CheckCircle,
     },
     {
-      label: "مدفوع",
+      labelKey: "admin.enrollments.stats.paid",
       value: byStatus("PAID").length,
       color: "#3b82f6",
       Icon: DollarSign,
       badge: true,
     },
     {
-      label: "مرفوض",
+      labelKey: "admin.enrollments.stats.rejected",
       value: byStatus("REJECTED").length,
       color: "#ef4444",
       Icon: XCircle,
     },
     {
-      label: "مكتمل",
+      labelKey: "admin.enrollments.stats.finished",
       value: byStatus("FINISHED").length,
       color: "#94a3b8",
       Icon: GraduationCap,
     },
   ];
 
+  /* ── Handlers ── */
   const handleValidate = async (
     enrollmentId: string,
     pricingId?: string | null,
@@ -293,9 +330,9 @@ export default function AdminEnrollmentsPage() {
         pricing_id: pricingId || undefined,
       });
       toast.success(t("admin.enrollments.validateSuccess"));
-    } catch (error: any) {
+    } catch (err: any) {
       toast.error(
-        error?.response?.data?.message || t("admin.enrollments.validateFailed"),
+        err?.response?.data?.message || t("admin.enrollments.validateFailed"),
       );
     }
   };
@@ -314,9 +351,9 @@ export default function AdminEnrollmentsPage() {
       setRejectDialog(false);
       setRejectReason("");
       setSelectedEnrollment(null);
-    } catch (error: any) {
+    } catch (err: any) {
       toast.error(
-        error?.response?.data?.message || t("admin.enrollments.rejectFailed"),
+        err?.response?.data?.message || t("admin.enrollments.rejectFailed"),
       );
     }
   };
@@ -335,9 +372,9 @@ export default function AdminEnrollmentsPage() {
       setAssignGroupDialog(false);
       setSelectedGroupId("");
       setSelectedEnrollment(null);
-    } catch (error: any) {
+    } catch (err: any) {
       toast.error(
-        error?.response?.data?.message ||
+        err?.response?.data?.message ||
           t("admin.enrollments.assignGroupFailed"),
       );
     }
@@ -348,25 +385,30 @@ export default function AdminEnrollmentsPage() {
     try {
       await finishEnrollment.mutateAsync(enrollmentId);
       toast.success(t("admin.enrollments.finishSuccess"));
-    } catch (error: any) {
+    } catch (err: any) {
       toast.error(
-        error?.response?.data?.message || t("admin.enrollments.finishFailed"),
+        err?.response?.data?.message || t("admin.enrollments.finishFailed"),
       );
     }
   };
 
-  const currentList = tabItems[activeTab];
-  const currentTabMeta = TABS.find((t) => t.key === activeTab)!;
+  const currentList = tabItems[activeTab] ?? [];
+
+  /* ── Workflow steps from i18n ── */
+  const workflowSteps = [
+    t("admin.enrollments.workflow.pending"),
+    t("admin.enrollments.workflow.validated"),
+    t("admin.enrollments.workflow.paid"),
+    t("admin.enrollments.workflow.finished"),
+  ];
 
   return (
     <div className="min-h-screen bg-[#FDFAF7] dark:bg-[#080808]" dir="rtl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-        {/* ── Hero Header ── */}
+        {/* ══════════════ HERO HEADER ══════════════ */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F1F1A] via-[#1A2E28] to-[#0F1F1A] p-8 border border-[#2B6F5E]/30">
-          {/* Ambient glow */}
           <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-[#2B6F5E]/20 blur-3xl pointer-events-none" />
           <div className="absolute -bottom-16 left-10 w-48 h-48 rounded-full bg-[#C4A035]/10 blur-3xl pointer-events-none" />
-          {/* Dot grid */}
           <div
             className="absolute inset-0 opacity-[0.04]"
             style={{
@@ -388,7 +430,7 @@ export default function AdminEnrollmentsPage() {
                 <div className="flex items-center gap-2 mb-1">
                   <Sparkles className="w-4 h-4 text-[#C4A035]" />
                   <span className="text-[11px] font-bold text-[#C4A035] uppercase tracking-[0.2em]">
-                    لوحة التسجيلات
+                    {t("admin.enrollments.workflow.title")}
                   </span>
                 </div>
                 <h1 className="text-3xl font-black text-white leading-tight">
@@ -400,14 +442,14 @@ export default function AdminEnrollmentsPage() {
               </div>
             </div>
 
-            {/* Workflow steps */}
+            {/* Workflow pill */}
             <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl px-4 py-3">
-              {["معلق", "موثق", "مدفوع", "مكتمل"].map((step, i, arr) => (
+              {workflowSteps.map((step, i) => (
                 <div key={step} className="flex items-center gap-2">
                   <span className="text-[11px] font-semibold text-white/70">
                     {step}
                   </span>
-                  {i < arr.length - 1 && (
+                  {i < workflowSteps.length - 1 && (
                     <ArrowRight className="w-3 h-3 text-white/30" />
                   )}
                 </div>
@@ -416,14 +458,11 @@ export default function AdminEnrollmentsPage() {
           </div>
         </div>
 
-        {/* ── Stats Grid ── */}
+        {/* ══════════════ STATS GRID ══════════════ */}
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-          {stats.map(({ label, value, color, Icon, badge }) => (
-            <div key={label} className="relative group">
-              <div
-                className="bg-white dark:bg-[#111] rounded-2xl border border-[#E8E0D5] dark:border-[#1E1E1E] p-4 text-center hover:border-opacity-100 transition-all duration-300 hover:shadow-lg cursor-default overflow-hidden"
-                style={{ "--glow": color } as any}
-              >
+          {statsConfig.map(({ labelKey, value, color, Icon, badge }) => (
+            <div key={labelKey} className="relative group">
+              <div className="bg-white dark:bg-[#111] rounded-2xl border border-[#E8E0D5] dark:border-[#1E1E1E] p-4 text-center transition-all duration-300 hover:shadow-lg cursor-default overflow-hidden">
                 <div
                   className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"
                   style={{
@@ -441,7 +480,7 @@ export default function AdminEnrollmentsPage() {
                     {value}
                   </p>
                   <p className="text-[10px] font-semibold text-[#9B8E82] dark:text-[#555] mt-0.5 uppercase tracking-wide">
-                    {label}
+                    {t(labelKey)}
                   </p>
                 </div>
               </div>
@@ -457,7 +496,7 @@ export default function AdminEnrollmentsPage() {
           ))}
         </div>
 
-        {/* ── Search + Tabs Bar ── */}
+        {/* ══════════════ SEARCH + TABS BAR ══════════════ */}
         <div className="bg-white dark:bg-[#0D0D0D] rounded-2xl border border-[#E8E0D5] dark:border-[#1E1E1E] overflow-hidden">
           {/* Search */}
           <div className="px-4 pt-4 pb-3 border-b border-[#F0EBE5] dark:border-[#1A1A1A]">
@@ -466,7 +505,7 @@ export default function AdminEnrollmentsPage() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="ابحث بالاسم أو المادة..."
+                placeholder={t("admin.enrollments.searchPlaceholder")}
                 className="w-full h-10 pr-10 pl-4 rounded-xl border-2 border-[#E8E0D5] dark:border-[#2A2A2A] bg-[#F5F0EB] dark:bg-[#111] text-[13px] text-[#1B1B1B] dark:text-[#E5E5E5] placeholder-[#C8BFB5] dark:placeholder-[#444] outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:bg-white dark:focus:bg-[#0D0D0D] transition-all duration-200"
               />
               {search && (
@@ -481,9 +520,9 @@ export default function AdminEnrollmentsPage() {
           </div>
 
           {/* Tabs */}
-          <div className="flex overflow-x-auto">
+          <div className="flex overflow-x-auto scrollbar-none">
             {TABS.map((tab) => {
-              const count = tabItems[tab.key].length;
+              const count = tabItems[tab.key]?.length ?? 0;
               const isActive = activeTab === tab.key;
               const TabIcon = tab.icon;
               return (
@@ -498,7 +537,7 @@ export default function AdminEnrollmentsPage() {
                   }}
                 >
                   <TabIcon className="w-3.5 h-3.5" />
-                  {tab.label}
+                  {t(tab.labelKey)}
                   <span
                     className="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
                     style={{
@@ -516,7 +555,7 @@ export default function AdminEnrollmentsPage() {
           </div>
         </div>
 
-        {/* ── Content ── */}
+        {/* ══════════════ CARDS GRID ══════════════ */}
         {currentList.length === 0 ? (
           <EmptyState tabKey={activeTab} />
         ) : (
@@ -562,7 +601,7 @@ export default function AdminEnrollmentsPage() {
           </div>
         )}
 
-        {/* ── Reject Dialog ── */}
+        {/* ══════════════ REJECT DIALOG ══════════════ */}
         <Dialog open={rejectDialog} onOpenChange={setRejectDialog}>
           <DialogContent className="dark:bg-[#111] dark:border-[#2A2A2A]">
             <DialogHeader>
@@ -607,7 +646,7 @@ export default function AdminEnrollmentsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* ── Assign Group Dialog ── */}
+        {/* ══════════════ ASSIGN GROUP DIALOG ══════════════ */}
         <Dialog open={assignGroupDialog} onOpenChange={setAssignGroupDialog}>
           <DialogContent className="dark:bg-[#111] dark:border-[#2A2A2A]">
             <DialogHeader>
@@ -621,6 +660,9 @@ export default function AdminEnrollmentsPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="py-4">
+              <label className="block text-[12px] font-semibold text-[#6B5D4F] dark:text-[#888] mb-2">
+                {t("admin.enrollments.assignDialog.availableGroups")}
+              </label>
               <Select
                 value={selectedGroupId}
                 onValueChange={setSelectedGroupId}
@@ -679,7 +721,7 @@ export default function AdminEnrollmentsPage() {
 }
 
 /* ===============================================================
-   ENROLLMENT CARD — Refined luxury design
+   ENROLLMENT CARD
 =============================================================== */
 
 function EnrollmentCard({
@@ -698,9 +740,10 @@ function EnrollmentCard({
   onFinish?: () => void;
 }) {
   const { t } = useTranslation();
-  const status = enrollment.registration_status as keyof typeof STATUS_META;
-  const meta = STATUS_META[status] ?? STATUS_META.PENDING;
-  const { Icon } = meta;
+  const status = (enrollment.registration_status as StatusKey) ?? "PENDING";
+  const style = STATUS_STYLE[status] ?? STATUS_STYLE.PENDING;
+  const { Icon } = style;
+  const label = t(STATUS_LABEL_KEYS[status] ?? STATUS_LABEL_KEYS.PENDING);
 
   const studentName = enrollment.student
     ? `${enrollment.student.first_name} ${enrollment.student.last_name}`
@@ -713,24 +756,24 @@ function EnrollmentCard({
   const docStatus = checkDocumentStatus(enrollment.student);
   const groupName = enrollment.group?.name;
   const enrollmentDate = enrollment.enrollment_date
-    ? new Date(enrollment.enrollment_date).toLocaleDateString("ar-DZ")
+    ? new Date(enrollment.enrollment_date).toLocaleDateString()
     : "—";
 
   return (
-    <div className="group relative bg-white dark:bg-[#0D0D0D] rounded-2xl border border-[#E8E0D5] dark:border-[#1E1E1E] overflow-hidden hover:border-opacity-80 transition-all duration-300 hover:shadow-xl dark:hover:shadow-black/40 flex flex-col">
+    <div className="group relative bg-white dark:bg-[#0D0D0D] rounded-2xl border border-[#E8E0D5] dark:border-[#1E1E1E] overflow-hidden transition-all duration-300 hover:shadow-xl dark:hover:shadow-black/40 flex flex-col">
       {/* Top accent bar */}
       <div
         className="h-[3px] w-full transition-all duration-300 group-hover:h-[4px]"
         style={{
-          background: `linear-gradient(90deg, ${meta.color}, ${meta.color}60)`,
+          background: `linear-gradient(90deg, ${style.color}, ${style.color}55)`,
         }}
       />
 
-      {/* Ambient glow on hover */}
+      {/* Ambient hover glow */}
       <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
         style={{
-          background: `radial-gradient(circle at 50% 0%, ${meta.color}06, transparent 60%)`,
+          background: `radial-gradient(circle at 50% 0%, ${style.color}06, transparent 55%)`,
         }}
       />
 
@@ -738,47 +781,50 @@ function EnrollmentCard({
       <div
         className="relative px-5 pt-4 pb-3 flex items-center justify-between"
         style={{
-          background: meta.bg,
-          borderBottom: `1px solid ${meta.border}`,
+          background: style.bg,
+          borderBottom: `1px solid ${style.border}`,
         }}
       >
         <div className="flex items-center gap-2">
           <div
             className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: meta.color + "20" }}
+            style={{ background: style.color + "22" }}
           >
-            <Icon className="w-3.5 h-3.5" style={{ color: meta.color }} />
+            <Icon className="w-3.5 h-3.5" style={{ color: style.color }} />
           </div>
-          <span className="text-[12px] font-bold" style={{ color: meta.color }}>
-            {meta.label}
+          <span
+            className="text-[12px] font-bold"
+            style={{ color: style.color }}
+          >
+            {label}
           </span>
-          {/* Pulse dot for pending */}
+          {/* Live pulse for PENDING */}
           {status === "PENDING" && (
             <span className="relative flex h-2 w-2">
               <span
                 className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                style={{ background: meta.color }}
+                style={{ background: style.color }}
               />
               <span
                 className="relative inline-flex rounded-full h-2 w-2"
-                style={{ background: meta.color }}
+                style={{ background: style.color }}
               />
             </span>
           )}
         </div>
-        <span className="text-[10px] font-mono text-[#9B8E82] dark:text-[#555]">
+        <span className="text-[10px] font-mono text-[#9B8E82] dark:text-[#444]">
           #{enrollment.enrollment_id.slice(0, 8)}
         </span>
       </div>
 
       {/* ── Body ── */}
       <div className="relative p-5 flex flex-col gap-4 flex-1">
-        {/* Student */}
+        {/* Student row */}
         <div className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-black text-white shrink-0"
             style={{
-              background: `linear-gradient(135deg, ${meta.color}, ${meta.color}90)`,
+              background: `linear-gradient(135deg, ${style.color}, ${style.color}88)`,
             }}
           >
             {enrollment.student?.first_name?.[0]}
@@ -794,7 +840,7 @@ function EnrollmentCard({
               </p>
             )}
           </div>
-          <span className="text-[10px] text-[#9B8E82] dark:text-[#555] shrink-0">
+          <span className="text-[10px] text-[#9B8E82] dark:text-[#444] shrink-0">
             {enrollmentDate}
           </span>
         </div>
@@ -804,7 +850,7 @@ function EnrollmentCard({
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
               <p className="text-[10px] font-semibold text-[#9B8E82] uppercase tracking-wide mb-0.5">
-                المادة
+                {t("admin.enrollments.card.course")}
               </p>
               <p className="text-[13px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
                 {courseName}
@@ -822,7 +868,10 @@ function EnrollmentCard({
         {pricing && (
           <div
             className="rounded-xl p-3 flex items-center justify-between gap-2 border"
-            style={{ background: "#C4A03508", borderColor: "#C4A03525" }}
+            style={{
+              background: "rgba(196,160,53,0.05)",
+              borderColor: "rgba(196,160,53,0.22)",
+            }}
           >
             <div className="flex items-center gap-2">
               <Tag className="w-3.5 h-3.5 text-[#C4A035]" />
@@ -841,11 +890,16 @@ function EnrollmentCard({
         {showGoToFees && unpaidFee && (
           <div
             className="rounded-xl p-3 flex items-center justify-between border"
-            style={{ background: "#C4A03508", borderColor: "#C4A03525" }}
+            style={{
+              background: "rgba(196,160,53,0.05)",
+              borderColor: "rgba(196,160,53,0.22)",
+            }}
           >
             <div className="flex items-center gap-2">
               <DollarSign className="w-3.5 h-3.5 text-[#C4A035]" />
-              <span className="text-[11px] text-[#9B8E82]">رسوم غير مسددة</span>
+              <span className="text-[11px] text-[#9B8E82] dark:text-[#666]">
+                {t("admin.enrollments.card.unpaidFee")}
+              </span>
             </div>
             <span className="text-[13px] font-black text-[#C4A035]">
               {Number(unpaidFee.amount).toLocaleString()} DZD
@@ -863,13 +917,18 @@ function EnrollmentCard({
             }}
           >
             <Users className="w-3.5 h-3.5 text-[#2B6F5E] dark:text-[#4ADE80]" />
-            <span className="text-[12px] font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-              {groupName}
-            </span>
+            <div>
+              <p className="text-[10px] font-semibold text-[#9B8E82] uppercase tracking-wide">
+                {t("admin.enrollments.card.groupAssigned")}
+              </p>
+              <p className="text-[12px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                {groupName}
+              </p>
+            </div>
           </div>
         )}
 
-        {/* Document status (PENDING only) */}
+        {/* Document status — PENDING only */}
         {status === "PENDING" &&
           (docStatus.allApproved ? (
             <div
@@ -896,16 +955,18 @@ function EnrollmentCard({
                 <AlertCircle className="w-3.5 h-3.5 text-[#C4A035] mt-0.5 shrink-0" />
                 <div>
                   <p className="text-[11px] font-bold text-[#C4A035] mb-1">
-                    مستندات ناقصة
+                    {t("admin.enrollments.card.docIssues")}
                   </p>
                   {docStatus.missing.length > 0 && (
                     <p className="text-[11px] text-[#C4A035]/80">
-                      ناقص: {docStatus.missing.join("، ")}
+                      {t("admin.enrollments.card.missing")}:{" "}
+                      {docStatus.missing.join("، ")}
                     </p>
                   )}
                   {docStatus.pending.length > 0 && (
                     <p className="text-[11px] text-[#C4A035]/80">
-                      في الانتظار: {docStatus.pending.join("، ")}
+                      {t("admin.enrollments.card.pendingApproval")}:{" "}
+                      {docStatus.pending.join("، ")}
                     </p>
                   )}
                 </div>
@@ -922,20 +983,21 @@ function EnrollmentCard({
             disabled={!docStatus.allApproved}
             className="w-full flex items-center justify-center gap-2 h-10 rounded-xl text-[12px] font-bold text-white transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
             style={{
-              background: `linear-gradient(135deg, #2B6F5E, #1E5044)`,
-              boxShadow: "0 4px 12px rgba(43,111,94,0.25)",
+              background: "linear-gradient(135deg, #2B6F5E, #1E5044)",
+              boxShadow: "0 4px 14px rgba(43,111,94,0.28)",
             }}
           >
             <CheckCircle className="w-4 h-4" />
             {t("admin.enrollments.actions.validateCreateFee")}
           </button>
         )}
+
         {onReject && (
           <button
             onClick={onReject}
             className="w-full flex items-center justify-center gap-2 h-9 rounded-xl text-[12px] font-semibold border transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
             style={{
-              borderColor: "rgba(239,68,68,0.3)",
+              borderColor: "rgba(239,68,68,0.30)",
               color: "#ef4444",
               background: "rgba(239,68,68,0.04)",
             }}
@@ -944,13 +1006,14 @@ function EnrollmentCard({
             {t("admin.enrollments.actions.reject")}
           </button>
         )}
+
         {showGoToFees && (
           <Link
             to="/admin/fees"
             className="w-full flex items-center justify-center gap-2 h-10 rounded-xl text-[12px] font-bold text-white transition-all duration-200 hover:scale-[1.01]"
             style={{
               background: "linear-gradient(135deg, #C4A035, #A8862A)",
-              boxShadow: "0 4px 12px rgba(196,160,53,0.25)",
+              boxShadow: "0 4px 14px rgba(196,160,53,0.28)",
             }}
           >
             <DollarSign className="w-4 h-4" />
@@ -958,19 +1021,21 @@ function EnrollmentCard({
             <ExternalLink className="w-3 h-3 opacity-70" />
           </Link>
         )}
+
         {onAssignGroup && (
           <button
             onClick={onAssignGroup}
             className="w-full flex items-center justify-center gap-2 h-10 rounded-xl text-[12px] font-bold text-white transition-all duration-200 hover:scale-[1.01]"
             style={{
               background: "linear-gradient(135deg, #2B6F5E, #1E5044)",
-              boxShadow: "0 4px 12px rgba(43,111,94,0.25)",
+              boxShadow: "0 4px 14px rgba(43,111,94,0.28)",
             }}
           >
             <Users className="w-4 h-4" />
             {t("admin.enrollments.actions.assignGroup")}
           </button>
         )}
+
         {onFinish && (
           <button
             onClick={onFinish}
@@ -985,6 +1050,7 @@ function EnrollmentCard({
             {t("admin.enrollments.actions.markFinished")}
           </button>
         )}
+
         <Link
           to={`/admin/students/${enrollment.student_id}`}
           className="w-full flex items-center justify-center gap-2 h-9 rounded-xl text-[12px] font-semibold border transition-all duration-200 hover:scale-[1.01] text-[#9B8E82] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]"
@@ -1001,24 +1067,32 @@ function EnrollmentCard({
 
 /* ── Empty State ── */
 function EmptyState({ tabKey }: { tabKey: string }) {
-  const icons: Record<string, any> = {
+  const { t } = useTranslation();
+  const icons: Record<string, React.ElementType> = {
     pending: Clock,
     validated: CheckCircle,
     paid: DollarSign,
     finished: GraduationCap,
     all: FileText,
   };
-  const Icon = icons[tabKey] || FileText;
+  const emptyKeys: Record<string, string> = {
+    pending: "admin.enrollments.empty.pending",
+    validated: "admin.enrollments.empty.validated",
+    paid: "admin.enrollments.empty.paid",
+    finished: "admin.enrollments.empty.finished",
+    all: "admin.enrollments.empty.all",
+  };
+  const Icon = icons[tabKey] ?? FileText;
   return (
     <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-[#0D0D0D] rounded-2xl border border-[#E8E0D5] dark:border-[#1E1E1E]">
       <div className="w-16 h-16 rounded-2xl bg-[#F5F0EB] dark:bg-[#1A1A1A] flex items-center justify-center mb-4">
         <Icon className="w-7 h-7 text-[#C8BFB5] dark:text-[#333]" />
       </div>
       <p className="text-[15px] font-semibold text-[#9B8E82]">
-        لا توجد تسجيلات
+        {t(emptyKeys[tabKey] ?? "admin.enrollments.empty.all")}
       </p>
       <p className="text-[12px] text-[#C8BFB5] dark:text-[#444] mt-1">
-        جرّب تغيير الفلتر أو البحث
+        {t("admin.enrollments.emptyHint")}
       </p>
     </div>
   );
