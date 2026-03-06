@@ -162,19 +162,12 @@ const CourseDetailsPage = () => {
   };
 
   const handleDeleteGroup = async (groupId: string, groupName: string) => {
-    if (
-      !window.confirm(
-        t("admin.courseDetails.deleteGroupConfirm", { name: groupName }),
-      )
-    )
-      return;
+    if (!window.confirm(t("admin.courseDetails.deleteGroupConfirm", { name: groupName }))) return;
     try {
       await deleteGroup.mutateAsync(groupId);
       // ✅ إبطال cache الدورة لإزالة الفوج فوراً
       qc.invalidateQueries({ queryKey: ["admin-course", courseId] });
-      toast.success(
-        t("admin.courseDetails.groupDeleted", "تم حذف الفوج بنجاح"),
-      );
+      toast.success(t("admin.courseDetails.groupDeleted", "تم حذف الفوج بنجاح"));
     } catch {
       toast.error(t("admin.courseDetails.groupDeleteFailed", "فشل حذف الفوج"));
     }
@@ -450,21 +443,14 @@ const CourseDetailsPage = () => {
                                         variant="outline"
                                         className="gap-2 border-[#2B6F5E]/30 dark:border-[#4ADE80]/20 text-[#2B6F5E] dark:text-[#4ADE80] hover:bg-[#2B6F5E]/8 dark:hover:bg-[#4ADE80]/10"
                                       >
-                                        <Link
-                                          to={`/admin/groups/${group.group_id}`}
-                                        >
+                                        <Link to={`/admin/groups/${group.group_id}`}>
                                           {t("admin.courseDetails.viewDetails")}
                                         </Link>
                                       </Button>
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() =>
-                                          handleDeleteGroup(
-                                            group.group_id,
-                                            group.name,
-                                          )
-                                        }
+                                        onClick={() => handleDeleteGroup(group.group_id, group.name)}
                                         disabled={deleteGroup.isPending}
                                         className="gap-1.5 border-red-200 dark:border-red-800/40 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 dark:hover:border-red-700/50"
                                       >
