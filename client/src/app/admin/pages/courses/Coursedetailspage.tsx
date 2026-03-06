@@ -1,7 +1,5 @@
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useGroupsSocket } from "../../../../hooks/admin/useGroupsSocket";
 import { useTranslation } from "react-i18next";
 import PageLoader from "../../../../components/PageLoader";
 import { Button } from "../../../../components/ui/button";
@@ -10,6 +8,7 @@ import {
   useUpdateCourse,
   useDeleteCourse,
   useCreateGroup,
+  useDeleteGroup,
 } from "../../../../hooks/admin/useAdmin";
 import {
   ArrowLeft,
@@ -28,7 +27,6 @@ import {
   UserCheck,
   UserX,
   ExternalLink,
-  Wifi,
 } from "lucide-react";
 import CourseFormModal from "../../components/CourseFormModal";
 import GroupFormModal from "../../components/GroupFormModal";
@@ -78,22 +76,7 @@ const CourseDetailsPage = () => {
   const updateCourse = useUpdateCourse();
   const deleteCourse = useDeleteCourse();
   const createGroup = useCreateGroup();
-  const qc = useQueryClient();
-  const [realtimeFlash, setRealtimeFlash] = useState(false);
-
-  // ✅ Realtime — عند أي تغيير في فوج تابع لهذه الدورة يُحدَّث تلقائياً:
-  // عدد الطلاب، اسم الأستاذ، إضافة/حذف مجموعة
-  // groupIds مثبتة بـ JSON.stringify داخل useGroupsSocket لتجنب reconnect loop
-  const groupIds = (course?.groups ?? []).map((g: any) => g.group_id);
-  useGroupsSocket({
-    watchGroupIds: groupIds,
-    onEvent: () => {
-      // أعد جلب بيانات الدورة كاملة (تشمل الأفواج + عدد الطلاب + الأساتذة)
-      qc.invalidateQueries({ queryKey: ["admin-course", courseId] }); // matches courseKey() in useAdmin.ts
-      setRealtimeFlash(true);
-      setTimeout(() => setRealtimeFlash(false), 1500);
-    },
-  });
+  const deleteGroup = useDeleteGroup();
 
   const getStudentCount = (group: {
     current_capacity?: number;
@@ -173,6 +156,23 @@ const CourseDetailsPage = () => {
       toast.success(t("admin.courseDetails.groupCreated"));
     } catch {
       toast.error(t("admin.courseDetails.groupCreateFailed"));
+    }
+  };
+
+  const handleDeleteGroup = async (groupId: string, groupName: string) => {
+    if (
+      !window.confirm(
+        t("admin.courseDetails.deleteGroupConfirm", { name: groupName }),
+      )
+    )
+      return;
+    try {
+      await deleteGroup.mutateAsync(groupId);
+      toast.success(
+        t("admin.courseDetails.groupDeleted", "تم حذف الفوج بنجاح"),
+      );
+    } catch {
+      toast.error(t("admin.courseDetails.groupDeleteFailed", "فشل حذف الفوج"));
     }
   };
   const handleDelete = async () => {
@@ -256,24 +256,9 @@ const CourseDetailsPage = () => {
                 <BookOpen className="w-8 h-8" />
               </div>
               <div>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                    {course.course_name}
-                  </h1>
-                  {/* ✅ Realtime badge */}
-                  <div
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all duration-300 ${
-                      realtimeFlash
-                        ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 scale-110"
-                        : "bg-[#F0EBE5] dark:bg-[#1E1E1E] text-[#9B8E82] dark:text-[#555]"
-                    }`}
-                  >
-                    <Wifi
-                      className={`w-3 h-3 ${realtimeFlash ? "animate-pulse" : ""}`}
-                    />
-                    مباشر
-                  </div>
-                </div>
+                <h1 className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                  {course.course_name}
+                </h1>
                 <p className="text-sm text-[#6B5D4F] dark:text-[#888888] mt-1">
                   {t("admin.courseDetails.courseId", {
                     id: course.course_id.slice(0, 8),
@@ -335,7 +320,7 @@ const CourseDetailsPage = () => {
               return (
                 <div
                   key={level}
-                  className={`rounded-xl border-2 overflow-hidden transition-all ${LEVEL_BORDER_COLORS[level]} ${LEVEL_BG_COLORS[level]} ${realtimeFlash ? "ring-1 ring-emerald-400/40 dark:ring-emerald-500/20" : ""}`}
+                  className={`rounded-xl border-2 overflow-hidden transition-all ${LEVEL_BORDER_COLORS[level]} ${LEVEL_BG_COLORS[level]}`}
                 >
                   <div
                     className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/50 dark:hover:bg-white/5 transition-colors"
@@ -454,18 +439,34 @@ const CourseDetailsPage = () => {
                                         </div>
                                       </div>
                                     </div>
-                                    <Button
-                                      asChild
-                                      size="sm"
-                                      variant="outline"
-                                      className="gap-2 border-[#2B6F5E]/30 dark:border-[#4ADE80]/20 text-[#2B6F5E] dark:text-[#4ADE80] hover:bg-[#2B6F5E]/8 dark:hover:bg-[#4ADE80]/10"
-                                    >
-                                      <Link
-                                        to={`/admin/groups/${group.group_id}`}
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        asChild
+                                        size="sm"
+                                        variant="outline"
+                                        className="gap-2 border-[#2B6F5E]/30 dark:border-[#4ADE80]/20 text-[#2B6F5E] dark:text-[#4ADE80] hover:bg-[#2B6F5E]/8 dark:hover:bg-[#4ADE80]/10"
                                       >
-                                        {t("admin.courseDetails.viewDetails")}
-                                      </Link>
-                                    </Button>
+                                        <Link
+                                          to={`/admin/groups/${group.group_id}`}
+                                        >
+                                          {t("admin.courseDetails.viewDetails")}
+                                        </Link>
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() =>
+                                          handleDeleteGroup(
+                                            group.group_id,
+                                            group.name,
+                                          )
+                                        }
+                                        disabled={deleteGroup.isPending}
+                                        className="gap-1.5 border-red-200 dark:border-red-800/40 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 dark:hover:border-red-700/50"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </div>
                                   </div>
                                 </div>
                               );
