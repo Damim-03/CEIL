@@ -378,15 +378,15 @@ export async function searchStudentsForNotification(search: string) {
       OR: [
         {
           student: {
-            first_name: { contains: search, mode: "insensitive" },
+            first_name: { contains: search },
           },
         },
         {
           student: {
-            last_name: { contains: search, mode: "insensitive" },
+            last_name: { contains: search },
           },
         },
-        { email: { contains: search, mode: "insensitive" } },
+        { email: { contains: search } },
       ],
     },
     include: { student: true },
@@ -423,11 +423,11 @@ export async function searchUsersForNotification(
       ...roleFilter,
       is_active: true,
       OR: [
-        { email: { contains: search, mode: "insensitive" } },
-        { student: { first_name: { contains: search, mode: "insensitive" } } },
-        { student: { last_name: { contains: search, mode: "insensitive" } } },
-        { teacher: { first_name: { contains: search, mode: "insensitive" } } },
-        { teacher: { last_name: { contains: search, mode: "insensitive" } } },
+        { email: { contains: search } },
+        { student: { first_name: { contains: search } } },
+        { student: { last_name: { contains: search } } },
+        { teacher: { first_name: { contains: search } } },
+        { teacher: { last_name: { contains: search } } },
       ],
     },
     include: { student: true, teacher: true },
