@@ -64,8 +64,8 @@ export function Header() {
   const NAV_LINKS = [
     { to: "/", label: t("common.home") },
     { to: "/courses", label: t("common.courses") },
-    { to: "/about-us", label: t("common.features") },
     { to: "/announcements", label: t("common.announcements") },
+    { to: "/about-us", label: t("common.features") },
     { to: "/OurPlatform", label: t("common.OurPlatform") },
   ];
 
@@ -186,7 +186,7 @@ export function Header() {
                   }`}
                 />
                 <div className="absolute -inset-1 rounded-2xl border-2 border-brand-teal-dark/0 group-hover:border-brand-teal-dark/8 dark:group-hover:border-[#4ADE80]/8 transition-all duration-300 scale-90 group-hover:scale-100" />
-              </div>  
+              </div>
             </LocaleLink>
           </div>
         </div>
