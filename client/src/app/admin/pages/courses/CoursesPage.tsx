@@ -51,22 +51,15 @@ const CoursesPage = () => {
 
   const stats = {
     total: courses.length,
-    totalCredits: courses.reduce(
-      (sum, course) => sum + (course.credits || 0),
-      0,
-    ),
+    totalCredits: courses.reduce((sum, course) => sum + (course.credits || 0), 0),
     averageCredits:
       courses.length > 0
-        ? (
-            courses.reduce((sum, course) => sum + (course.credits || 0), 0) /
-            courses.length
-          ).toFixed(1)
+        ? (courses.reduce((sum, course) => sum + (course.credits || 0), 0) / courses.length).toFixed(1)
         : "0",
   };
 
   const handleDelete = async (courseId: string, courseName: string) => {
-    if (!window.confirm(t("admin.courses.deleteConfirm", { name: courseName })))
-      return;
+    if (!window.confirm(t("admin.courses.deleteConfirm", { name: courseName }))) return;
     setDeletingId(courseId);
     try {
       await deleteCourse.mutateAsync(courseId);
@@ -99,12 +92,8 @@ const CoursesPage = () => {
               <BookOpen className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                {t("admin.courses.title")}
-              </h1>
-              <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
-                {t("admin.courses.subtitle")}
-              </p>
+              <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">{t("admin.courses.title")}</h1>
+              <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">{t("admin.courses.subtitle")}</p>
             </div>
           </div>
           {/* ✅ Realtime badge */}
@@ -115,15 +104,10 @@ const CoursesPage = () => {
                 : "bg-[#F0EBE5] dark:bg-[#1E1E1E] text-[#9B8E82] dark:text-[#666]"
             }`}
           >
-            <Wifi
-              className={`w-3 h-3 ${realtimeFlash ? "animate-pulse" : ""}`}
-            />
+            <Wifi className={`w-3 h-3 ${realtimeFlash ? "animate-pulse" : ""}`} />
             مباشر
           </div>
-          <Button
-            onClick={() => setOpen(true)}
-            className="gap-2 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 dark:bg-[#2B6F5E] dark:hover:bg-[#2B6F5E]/80 text-white shadow-md shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10"
-          >
+          <Button onClick={() => setOpen(true)} className="gap-2 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 dark:bg-[#2B6F5E] dark:hover:bg-[#2B6F5E]/80 text-white shadow-md shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10">
             <Plus className="w-4 h-4" />
             {t("admin.courses.addCourse")}
           </Button>
@@ -136,12 +120,8 @@ const CoursesPage = () => {
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#2B6F5E] to-[#2B6F5E]/70 opacity-60 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wide">
-                {t("admin.courses.totalCourses")}
-              </p>
-              <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mt-1">
-                {stats.total}
-              </p>
+              <p className="text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wide">{t("admin.courses.totalCourses")}</p>
+              <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mt-1">{stats.total}</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
@@ -152,12 +132,8 @@ const CoursesPage = () => {
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#C4A035] to-[#C4A035]/70 opacity-60 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wide">
-                {t("admin.courses.totalCredits")}
-              </p>
-              <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mt-1">
-                {stats.totalCredits}
-              </p>
+              <p className="text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wide">{t("admin.courses.totalCredits")}</p>
+              <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mt-1">{stats.totalCredits}</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-[#C4A035]/8 dark:bg-[#D4A843]/10 flex items-center justify-center">
               <GraduationCap className="w-5 h-5 text-[#C4A035] dark:text-[#D4A843]" />
@@ -168,12 +144,8 @@ const CoursesPage = () => {
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#8DB896] to-[#8DB896]/70 opacity-60 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wide">
-                {t("admin.courses.avgCredits")}
-              </p>
-              <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mt-1">
-                {stats.averageCredits}
-              </p>
+              <p className="text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wide">{t("admin.courses.avgCredits")}</p>
+              <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mt-1">{stats.averageCredits}</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-[#8DB896]/12 dark:bg-[#8DB896]/10 flex items-center justify-center">
               <Award className="w-5 h-5 text-[#3D7A4A] dark:text-[#8DB896]" />
@@ -195,13 +167,9 @@ const CoursesPage = () => {
             />
           </div>
           <p className="text-sm text-[#6B5D4F] dark:text-[#888888] whitespace-nowrap">
-            <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-              {filteredCourses.length}
-            </span>{" "}
+            <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">{filteredCourses.length}</span>{" "}
             {t("admin.courses.of")}{" "}
-            <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-              {courses.length}
-            </span>{" "}
+            <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">{courses.length}</span>{" "}
             {t("admin.courses.courses_label")}
           </p>
         </div>
@@ -221,18 +189,12 @@ const CoursesPage = () => {
                     <Layers className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] text-base">
-                      {course.course_name}
-                    </p>
+                    <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] text-base">{course.course_name}</p>
                     <div className="flex flex-wrap items-center gap-2 mt-1.5">
                       {course.course_code && (
                         <span className="inline-flex items-center gap-1 bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] text-xs font-medium px-2.5 py-0.5 rounded-md">
-                          <span className="text-[#BEB29E] dark:text-[#666666]">
-                            Code
-                          </span>
-                          <span className="text-[#1B1B1B] dark:text-[#E5E5E5] font-semibold">
-                            {course.course_code}
-                          </span>
+                          <span className="text-[#BEB29E] dark:text-[#666666]">Code</span>
+                          <span className="text-[#1B1B1B] dark:text-[#E5E5E5] font-semibold">{course.course_code}</span>
                         </span>
                       )}
                       {course.credits != null && (
@@ -245,12 +207,7 @@ const CoursesPage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 lg:shrink-0 ml-auto lg:ml-0">
-                  <Button
-                    asChild
-                    size="sm"
-                    variant="outline"
-                    className="gap-1.5 border-[#2B6F5E]/30 dark:border-[#4ADE80]/20 text-[#2B6F5E] dark:text-[#4ADE80] hover:bg-[#2B6F5E]/8 dark:hover:bg-[#4ADE80]/10 hover:border-[#2B6F5E]/50 dark:hover:border-[#4ADE80]/30"
-                  >
+                  <Button asChild size="sm" variant="outline" className="gap-1.5 border-[#2B6F5E]/30 dark:border-[#4ADE80]/20 text-[#2B6F5E] dark:text-[#4ADE80] hover:bg-[#2B6F5E]/8 dark:hover:bg-[#4ADE80]/10 hover:border-[#2B6F5E]/50 dark:hover:border-[#4ADE80]/30">
                     <Link to={`/admin/courses/${course.course_id}`}>
                       <Eye className="h-3.5 w-3.5" />
                       {t("admin.courses.details")}
@@ -259,16 +216,12 @@ const CoursesPage = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() =>
-                      handleDelete(course.course_id, course.course_name)
-                    }
+                    onClick={() => handleDelete(course.course_id, course.course_name)}
                     disabled={deletingId === course.course_id}
                     className="gap-1.5 border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 dark:hover:border-red-700/50"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                    {deletingId === course.course_id
-                      ? t("admin.courses.deleting")
-                      : t("admin.courses.delete")}
+                    {deletingId === course.course_id ? t("admin.courses.deleting") : t("admin.courses.delete")}
                   </Button>
                 </div>
               </div>
@@ -280,20 +233,13 @@ const CoursesPage = () => {
               <BookOpen className="w-6 h-6 text-[#BEB29E] dark:text-[#666666]" />
             </div>
             <h3 className="text-base font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-              {search
-                ? t("admin.courses.noCoursesSearch")
-                : t("admin.courses.noCourses")}
+              {search ? t("admin.courses.noCoursesSearch") : t("admin.courses.noCourses")}
             </h3>
             <p className="text-[#6B5D4F] dark:text-[#888888] text-sm mt-1 max-w-xs">
-              {search
-                ? t("admin.courses.noCoursesSearchDesc")
-                : t("admin.courses.noCoursesDesc")}
+              {search ? t("admin.courses.noCoursesSearchDesc") : t("admin.courses.noCoursesDesc")}
             </p>
             {!search && (
-              <Button
-                onClick={() => setOpen(true)}
-                className="gap-2 mt-4 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white shadow-md"
-              >
+              <Button onClick={() => setOpen(true)} className="gap-2 mt-4 bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white shadow-md">
                 <Plus className="w-4 h-4" />
                 {t("admin.courses.createCourse")}
               </Button>
@@ -302,12 +248,7 @@ const CoursesPage = () => {
         )}
       </div>
 
-      <CourseFormModal
-        open={open}
-        onClose={() => setOpen(false)}
-        onSubmit={handleCreate}
-        isSubmitting={createCourse.isPending}
-      />
+      <CourseFormModal open={open} onClose={() => setOpen(false)} onSubmit={handleCreate} isSubmitting={createCourse.isPending} />
 
       <button
         onClick={() => setOpen(true)}

@@ -268,9 +268,7 @@ const CourseDetailsPage = () => {
                         : "bg-[#F0EBE5] dark:bg-[#1E1E1E] text-[#9B8E82] dark:text-[#555]"
                     }`}
                   >
-                    <Wifi
-                      className={`w-3 h-3 ${realtimeFlash ? "animate-pulse" : ""}`}
-                    />
+                    <Wifi className={`w-3 h-3 ${realtimeFlash ? "animate-pulse" : ""}`} />
                     مباشر
                   </div>
                 </div>

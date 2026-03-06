@@ -185,7 +185,7 @@ export const createCourseController = async (req: Request, res: Response) => {
 
   if ("error" in result) {
     if (result.error === "validation")
-      return res.status(400).json({ message: "course_name is required." });
+      return res.status(400).json({ message: "course_name is required" });
     if (result.error === "duplicate_code")
       return res
         .status(409)
