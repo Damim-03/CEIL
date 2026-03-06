@@ -622,7 +622,7 @@ const GroupDetailsPage = () => {
               </table>
             </div>
           ) : (
-            <div className="border-2 border-dashed border-[#D8CDC0]/40 dark:border-[#2A2A2A] rounded-xl p-12 text-center">
+            <div className="border-2 border-dashed border-brand-beige/40 dark:border-[#2A2A2A] rounded-xl p-12 text-center">
               <Users className="w-16 h-16 mx-auto text-[#D8CDC0] dark:text-[#555555] mb-3" />
               <p className="text-[#6B5D4F] dark:text-[#AAAAAA] font-medium">
                 {searchTerm
