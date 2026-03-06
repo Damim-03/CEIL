@@ -1,5 +1,5 @@
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import PageLoader from "../../../../components/PageLoader";
 import { Button } from "../../../../components/ui/button";
@@ -9,6 +9,7 @@ import {
   useDeleteGroup,
   useAssignInstructor,
 } from "../../../../hooks/admin/useAdmin";
+import { useAllTeachers } from "../../../../hooks/admin/useAdminGroups";
 import {
   ArrowLeft,
   Users,
@@ -28,6 +29,8 @@ import {
   Search,
   AlertCircle,
   RefreshCw,
+  Eye,
+  X,
 } from "lucide-react";
 import GroupFormModal from "../../components/GroupFormModal";
 import AssignInstructorModal from "../../components/Assigninstructormodal";
@@ -90,26 +93,21 @@ const GroupDetailsPage = () => {
         ? "fr-FR"
         : "en-US";
 
+  // Fetch all teachers so we can find teacher by ID even if API doesn't nest teacher object
+  const { data: allTeachers = [] } = useAllTeachers();
+
   const [editOpen, setEditOpen] = useState(false);
   const [assignInstructorOpen, setAssignInstructorOpen] = useState(false);
+  const [teacherInfoOpen, setTeacherInfoOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
-  // Local overrides — updated immediately after mutations without waiting for refetch
-  const [localTeacher, setLocalTeacher] = useState<
-    | {
-        teacher_id: string;
-        first_name: string;
-        last_name: string;
-        email?: string;
-        phone_number?: string;
-      }
-    | null
-    | "removed"
-  >("removed"); // "removed" = sentinel meaning "use group.teacher"
-  const [localCourseName, setLocalCourseName] = useState<string | null>(null);
+  // Local teacher override — set immediately after assign/remove without waiting for refetch
+  const [localTeacherId, setLocalTeacherId] = useState<string | null | "sync">(
+    "sync",
+  );
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -200,21 +198,27 @@ const GroupDetailsPage = () => {
   const maxCapacity = group.max_students ?? 25;
   const capacityPercent =
     maxCapacity > 0 ? (currentCapacity / maxCapacity) * 100 : 0;
-  // Resolve effective teacher: localTeacher overrides group data
-  // localTeacher === "removed" means use server data (initial state)
-  const effectiveTeacher =
-    localTeacher === "removed" ? (group.teacher ?? null) : localTeacher;
-  const hasInstructor = !!(
-    effectiveTeacher ||
-    (localTeacher === "removed" && group.teacher_id)
+
+  // Resolve effective teacher_id: "sync" = use server data, null = removed, string = local override
+  const effectiveTeacherId =
+    localTeacherId === "sync" ? (group.teacher_id ?? null) : localTeacherId;
+
+  // Find teacher data from the full teachers list
+  const effectiveTeacher = useMemo(
+    () =>
+      effectiveTeacherId
+        ? ((allTeachers as any[]).find(
+            (t: any) => t.teacher_id === effectiveTeacherId,
+          ) ?? null)
+        : null,
+    [effectiveTeacherId, allTeachers],
   );
 
-  // Resolve effective course name
+  const hasInstructor = !!effectiveTeacherId;
+
+  // Effective course name — API may or may not nest course object
   const effectiveCourseName =
-    localCourseName ||
-    group.course?.course_name ||
-    (group as any).course_name ||
-    null;
+    group.course?.course_name ?? (group as any).course_name ?? null;
 
   const students = Array.isArray(group.students) ? group.students : [];
   const filteredStudents = students.filter((student: any) => {
@@ -244,57 +248,23 @@ const GroupDetailsPage = () => {
     }
   };
 
-  const handleUpdate = async (
-    payload: UpdateGroupPayload & { course_name?: string },
-  ) => {
+  const handleUpdate = async (payload: UpdateGroupPayload) => {
     try {
       await updateGroup.mutateAsync({ groupId: group.group_id, payload });
-      // If course name was passed from the form, update local state immediately
-      if (payload.course_name) {
-        setLocalCourseName(payload.course_name);
-      }
       showToast(t("admin.groupDetails.groupUpdated"), "success");
       setEditOpen(false);
-      refetch(); // also refetch to sync all data
     } catch {
       showToast(t("admin.groupDetails.updateFailed"), "error");
     }
   };
 
-  const handleAssignInstructor = async (
-    instructorId: string,
-    instructorData?: {
-      first_name: string;
-      last_name: string;
-      email?: string;
-      phone_number?: string;
-    },
-  ) => {
+  const handleAssignInstructor = async (instructorId: string) => {
     try {
-      const result = await assignInstructor.mutateAsync({
+      await assignInstructor.mutateAsync({
         groupId: group.group_id,
         instructorId,
       });
-      // If AssignInstructorModal passes teacher data (enhanced version), use it immediately
-      if (instructorData) {
-        setLocalTeacher({ teacher_id: instructorId, ...instructorData });
-      } else if (result && (result as any).teacher) {
-        // Some APIs return updated group with teacher nested
-        const t_ = (result as any).teacher;
-        setLocalTeacher({
-          teacher_id: instructorId,
-          first_name: t_.first_name ?? "",
-          last_name: t_.last_name ?? "",
-          email: t_.email,
-          phone_number: t_.phone_number,
-        });
-      } else {
-        // Last resort: refetch from server
-        const refetched = await refetch();
-        if (refetched.data?.teacher) {
-          setLocalTeacher("removed"); // signal to use server data
-        }
-      }
+      setLocalTeacherId(instructorId); // update immediately — teacher data comes from useAllTeachers
       showToast(t("admin.groupDetails.teacherAssigned"), "success");
       setAssignInstructorOpen(false);
     } catch {
@@ -309,7 +279,7 @@ const GroupDetailsPage = () => {
         groupId: group.group_id,
         instructorId: null,
       });
-      setLocalTeacher(null); // null = no teacher
+      setLocalTeacherId(null); // remove immediately
       showToast(t("admin.groupDetails.teacherRemoved"), "success");
     } catch {
       showToast(t("admin.groupDetails.removeFailed"), "error");
@@ -439,42 +409,56 @@ const GroupDetailsPage = () => {
           <div className="mt-4">
             {hasInstructor ? (
               <div className="bg-white dark:bg-[#1A1A1A] border border-[#8DB896]/30 dark:border-[#4ADE80]/15 rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
                     {/* Avatar with initials */}
-                    <div className="w-12 h-12 rounded-full bg-[#2B6F5E] flex items-center justify-center text-white font-bold text-[15px] shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-[#2B6F5E] flex items-center justify-center text-white font-bold text-[15px] shrink-0 select-none">
                       {effectiveTeacher ? (
                         `${effectiveTeacher.first_name?.[0] ?? ""}${effectiveTeacher.last_name?.[0] ?? ""}`.toUpperCase()
                       ) : (
                         <User className="w-6 h-6" />
                       )}
                     </div>
-                    <div>
-                      <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
                         {effectiveTeacher
                           ? `${effectiveTeacher.first_name ?? ""} ${effectiveTeacher.last_name ?? ""}`.trim()
-                          : t("admin.groupDetails.teacherAssigned")}
+                          : t(
+                              "admin.groupDetails.teacherAssigned",
+                              "أستاذ معيّن",
+                            )}
                       </p>
                       {effectiveTeacher?.email && (
-                        <p className="text-sm text-[#6B5D4F] dark:text-[#888888] flex items-center gap-1 mt-0.5">
-                          <Mail className="w-3 h-3 text-[#BEB29E] dark:text-[#666666]" />
+                        <p className="text-sm text-[#6B5D4F] dark:text-[#888888] flex items-center gap-1 mt-0.5 truncate">
+                          <Mail className="w-3 h-3 text-[#BEB29E] dark:text-[#666666] shrink-0" />
                           {effectiveTeacher.email}
                         </p>
                       )}
                       {effectiveTeacher?.phone_number && (
                         <p className="text-sm text-[#6B5D4F] dark:text-[#888888] flex items-center gap-1 mt-0.5">
-                          <Phone className="w-3 h-3 text-[#BEB29E] dark:text-[#666666]" />
+                          <Phone className="w-3 h-3 text-[#BEB29E] dark:text-[#666666] shrink-0" />
                           {effectiveTeacher.phone_number}
                         </p>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
+                    {effectiveTeacher && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setTeacherInfoOpen(true)}
+                        className="gap-1.5 border-[#2B6F5E]/30 dark:border-[#4ADE80]/20 text-[#2B6F5E] dark:text-[#4ADE80] hover:bg-[#2B6F5E]/8 dark:hover:bg-[#4ADE80]/10"
+                      >
+                        <Eye className="w-3 h-3" />
+                        {t("admin.groupDetails.viewTeacher", "عرض")}
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => setAssignInstructorOpen(true)}
-                      className="gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] hover:bg-[#C4A035]/8 dark:hover:bg-[#C4A035]/10 hover:border-[#C4A035]/40 dark:hover:border-[#C4A035]/30 dark:text-[#E5E5E5]"
+                      className="gap-1.5 border-[#D8CDC0]/60 dark:border-[#2A2A2A] hover:bg-[#C4A035]/8 dark:hover:bg-[#C4A035]/10 hover:border-[#C4A035]/40 dark:hover:border-[#C4A035]/30 dark:text-[#E5E5E5]"
                     >
                       <Edit className="w-3 h-3" />
                       {t("admin.groupDetails.change")}
@@ -483,7 +467,7 @@ const GroupDetailsPage = () => {
                       size="sm"
                       variant="outline"
                       onClick={handleRemoveInstructor}
-                      className="gap-2 border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                      className="gap-1.5 border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
                     >
                       <XCircle className="w-3 h-3" />
                       {t("admin.groupDetails.remove")}
@@ -737,12 +721,16 @@ const GroupDetailsPage = () => {
         }}
         mode="edit"
       />
+      {teacherInfoOpen && effectiveTeacher && (
+        <TeacherInfoModal
+          teacher={effectiveTeacher}
+          onClose={() => setTeacherInfoOpen(false)}
+        />
+      )}
       <AssignInstructorModal
         open={assignInstructorOpen}
         onClose={() => setAssignInstructorOpen(false)}
         onSubmit={handleAssignInstructor}
-        // If AssignInstructorModal supports onSubmitWithData, pass it to get full teacher info
-        // onSubmitWithData={(id, data) => handleAssignInstructor(id, data)}
         isSubmitting={assignInstructor.isPending}
         currentInstructorId={group.teacher_id}
       />
@@ -751,6 +739,135 @@ const GroupDetailsPage = () => {
 };
 
 export default GroupDetailsPage;
+
+// ─── Teacher Info Modal ───────────────────────────────────────
+function TeacherInfoModal({
+  teacher,
+  onClose,
+}: {
+  teacher: any;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const initials =
+    `${teacher.first_name?.[0] ?? ""}${teacher.last_name?.[0] ?? ""}`.toUpperCase();
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative z-10 w-full max-w-sm bg-white dark:bg-[#161616] rounded-2xl shadow-2xl overflow-hidden">
+        {/* Gradient header */}
+        <div className="relative bg-gradient-to-br from-[#2B6F5E] to-[#1A4A3E] px-5 py-6 text-white">
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="flex items-center gap-4">
+            {/* Large avatar */}
+            <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-xl border-2 border-white/30 shrink-0 select-none">
+              {initials || <User className="w-8 h-8" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-widest opacity-70 mb-0.5">
+                {t("admin.groupDetails.assignedTeacher", "الأستاذ المعيّن")}
+              </p>
+              <h3 className="text-[18px] font-bold leading-tight truncate">
+                {teacher.first_name ?? ""} {teacher.last_name ?? ""}
+              </h3>
+              {teacher.speciality && (
+                <p className="text-[12px] opacity-75 mt-0.5 truncate">
+                  {teacher.speciality}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Info rows */}
+        <div className="p-4 space-y-2">
+          {teacher.email && (
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#F5F0EB] dark:bg-[#111]">
+              <div className="w-8 h-8 rounded-lg bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 flex items-center justify-center shrink-0">
+                <Mail className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-[#9B8E82] uppercase tracking-wide font-semibold">
+                  {t("admin.groupDetails.email", "البريد الإلكتروني")}
+                </p>
+                <p
+                  className="text-[13px] font-medium text-[#1B1B1B] dark:text-[#E5E5E5] truncate"
+                  dir="ltr"
+                >
+                  {teacher.email}
+                </p>
+              </div>
+            </div>
+          )}
+          {teacher.phone_number && (
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#F5F0EB] dark:bg-[#111]">
+              <div className="w-8 h-8 rounded-lg bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 flex items-center justify-center shrink-0">
+                <Phone className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-[#9B8E82] uppercase tracking-wide font-semibold">
+                  {t("admin.groupDetails.phone", "الهاتف")}
+                </p>
+                <p
+                  className="text-[13px] font-medium text-[#1B1B1B] dark:text-[#E5E5E5]"
+                  dir="ltr"
+                >
+                  {teacher.phone_number}
+                </p>
+              </div>
+            </div>
+          )}
+          {teacher.gender && (
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#F5F0EB] dark:bg-[#111]">
+              <div className="w-8 h-8 rounded-lg bg-[#C4A035]/10 dark:bg-[#D4A843]/10 flex items-center justify-center shrink-0">
+                <User className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843]" />
+              </div>
+              <div>
+                <p className="text-[10px] text-[#9B8E82] uppercase tracking-wide font-semibold">
+                  {t("admin.groupDetails.gender", "الجنس")}
+                </p>
+                <p className="text-[13px] font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
+                  {teacher.gender === "MALE"
+                    ? "ذكر"
+                    : teacher.gender === "FEMALE"
+                      ? "أنثى"
+                      : teacher.gender}
+                </p>
+              </div>
+            </div>
+          )}
+          {!teacher.email && !teacher.phone_number && !teacher.gender && (
+            <p className="text-center text-[13px] text-[#9B8E82] py-4">
+              {t(
+                "admin.groupDetails.noAdditionalInfo",
+                "لا توجد معلومات إضافية",
+              )}
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-4 pb-4">
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 rounded-xl border border-[#E8E0D5] dark:border-[#2A2A2A] text-[13px] text-[#9B8E82] hover:bg-[#F5F0EB] dark:hover:bg-[#1A1A1A] transition-colors"
+          >
+            {t("common.close", "إغلاق")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function InfoItem({
   icon: Icon,
