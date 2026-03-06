@@ -151,6 +151,8 @@ const CourseDetailsPage = () => {
   const handleGroupSubmit = async (payload: CreateGroupPayload) => {
     try {
       await createGroup.mutateAsync(payload);
+      // ✅ إبطال cache الدورة لإظهار الفوج الجديد فوراً
+      qc.invalidateQueries({ queryKey: ["admin-course", courseId] });
       setGroupFormOpen(false);
       setSelectedLevel(null);
       toast.success(t("admin.courseDetails.groupCreated"));
@@ -168,6 +170,8 @@ const CourseDetailsPage = () => {
       return;
     try {
       await deleteGroup.mutateAsync(groupId);
+      // ✅ إبطال cache الدورة لإزالة الفوج فوراً
+      qc.invalidateQueries({ queryKey: ["admin-course", courseId] });
       toast.success(
         t("admin.courseDetails.groupDeleted", "تم حذف الفوج بنجاح"),
       );
