@@ -382,8 +382,8 @@ export default function CourseInfoMorePage() {
             {course.groups && course.groups.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-3 px-1">
-                  <div className="w-9 h-9 rounded-lg bg-brand-teal-dark/8 dark:bg-[#4ADE80]/[0.08] flex items-center justify-center">
-                    <Users className="w-4 h-4 text-brand-teal-dark dark:text-[#4ADE80]" />
+                  <div className="w-10 h-10 rounded-xl bg-brand-teal-dark/8 dark:bg-[#4ADE80]/[0.08] flex items-center justify-center">
+                    <Users className="w-4.5 h-4.5 text-brand-teal-dark dark:text-[#4ADE80]" />
                   </div>
                   <div>
                     <h2
@@ -399,25 +399,26 @@ export default function CourseInfoMorePage() {
                     </p>
                   </div>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2">
                   {course.groups.map((g: any) => {
                     return (
                       <div
                         key={g.id}
-                        className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-brand-beige dark:border-[#2A2A2A] p-5 hover:shadow-md dark:hover:shadow-black/20 hover:border-brand-teal/20 dark:hover:border-[#4ADE80]/15 transition-all duration-300"
+                        className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] p-5 hover:shadow-lg dark:hover:shadow-black/30 hover:border-brand-teal/25 dark:hover:border-[#4ADE80]/20 transition-all duration-300 hover:-translate-y-0.5"
                       >
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h3 className="font-bold text-brand-black dark:text-[#E5E5E5] text-base">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-bold text-brand-black dark:text-[#E5E5E5] text-base leading-snug">
                               {g.name}
                             </h3>
                             {g.teacher && (
-                              <p className="text-brand-brown dark:text-[#888888] text-xs mt-0.5">
+                              <p className="text-brand-brown dark:text-[#888888] text-xs mt-1 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-brand-teal-dark/40 dark:bg-[#4ADE80]/40 shrink-0" />
                                 {g.teacher}
                               </p>
                             )}
                           </div>
-                          <span className="inline-flex px-2.5 py-1 rounded-lg bg-brand-teal-dark/8 dark:bg-[#4ADE80]/[0.1] text-brand-teal-dark dark:text-[#4ADE80] text-xs font-bold">
+                          <span className="inline-flex px-3 py-1.5 rounded-xl bg-brand-teal-dark/8 dark:bg-[#4ADE80]/[0.1] text-brand-teal-dark dark:text-[#4ADE80] text-xs font-bold shrink-0 border border-brand-teal/10 dark:border-[#4ADE80]/10">
                             {g.level}
                           </span>
                         </div>
@@ -465,7 +466,7 @@ export default function CourseInfoMorePage() {
 
           {/* Sidebar */}
           <div className="lg:w-[300px] shrink-0 space-y-5">
-            <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] overflow-hidden shadow-sm dark:shadow-black/20 sticky top-24">
+            <div className="bg-white dark:bg-[#161616] rounded-3xl border border-brand-beige dark:border-[#252525] overflow-hidden shadow-md dark:shadow-black/40 sticky top-24">
               <div
                 className={`px-5 py-4 flex items-center gap-2.5 ${isOpen ? "bg-gradient-to-l from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700" : "bg-gradient-to-l from-red-400 to-red-500 dark:from-red-500 dark:to-red-600"}`}
               >
@@ -585,7 +586,7 @@ export default function CourseInfoMorePage() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] p-5 shadow-sm dark:shadow-black/20">
+            <div className="bg-white dark:bg-[#161616] rounded-3xl border border-brand-beige dark:border-[#252525] p-5 shadow-sm dark:shadow-black/30">
               <h4
                 className="font-bold text-brand-black dark:text-[#E5E5E5] text-sm mb-4 flex items-center gap-2"
                 style={{ fontFamily: "var(--font-sans)" }}
