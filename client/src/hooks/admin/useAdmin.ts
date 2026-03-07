@@ -600,6 +600,14 @@ export const useAdminGroups = () =>
   useQuery<Group[]>({
     queryKey: GROUPS_KEY,
     queryFn: adminGroupsApi.getAll,
+    select: (data: unknown) => {
+      if (Array.isArray(data)) return data as Group[];
+      if (Array.isArray((data as { data?: unknown[] })?.data))
+        return (data as { data: Group[] }).data;
+      if (Array.isArray((data as { groups?: unknown[] })?.groups))
+        return (data as { groups: Group[] }).groups;
+      return [];
+    },
     refetchInterval: NORMAL,
     refetchOnWindowFocus: true,
     placeholderData: (prev: any) => prev,
@@ -957,8 +965,16 @@ export const useRejectDocument = () => {
 
 export const useAdminSessions = () =>
   useQuery({
-    queryKey: ["admin", "sessions"],
+    queryKey: SESSIONS_KEY, // ✅ was ["admin", "sessions"] — now consistent
     queryFn: () => adminSessionsApi.getAll(),
+    select: (data: unknown) => {
+      if (Array.isArray(data)) return data;
+      if (Array.isArray((data as { data?: unknown[] })?.data))
+        return (data as { data: unknown[] }).data;
+      if (Array.isArray((data as { sessions?: unknown[] })?.sessions))
+        return (data as { sessions: unknown[] }).sessions;
+      return [];
+    },
     refetchInterval: ACTIVE,
     refetchOnWindowFocus: true,
     placeholderData: (prev: any) => prev,
