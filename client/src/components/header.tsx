@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import logo from "../assets/download.png";
 import ceillogo from "../assets/logo-2.png";
 import {
@@ -18,6 +18,9 @@ import { LanguageSwitcher } from "../i18n/locales/components/LanguageSwitcher";
 import { LocaleLink } from "../i18n/locales/components/LocaleLink";
 import ThemeToggle from "../components/Themetoggle";
 import ThemeToggleHeader from "../components/ThemetoggleHeader";
+import { TermsModal } from "../app/auth/Authpage";
+
+// ✅ 1. Import TermsModal
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -26,10 +29,19 @@ export function Header() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const { data: user, isLoading } = useMe();
   const logoutMutation = useLogout();
   const { t, dir, isRTL, currentLang } = useLanguage();
+
+  // ✅ 2. Terms modal state
+  const [termsOpen, setTermsOpen] = useState(false);
+
+  // ✅ 3. Handler: open terms first, then navigate to register after accept
+  const handleRegisterWithTerms = () => {
+    setTermsOpen(true);
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -53,7 +65,6 @@ export function Header() {
     return () => document.removeEventListener("click", handler);
   }, [userMenuOpen]);
 
-  // Lock body scroll when mobile menu open
   useEffect(() => {
     document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
     return () => {
@@ -86,6 +97,16 @@ export function Header() {
 
   return (
     <>
+      {/* ✅ 4. TermsModal — يظهر قبل الانتقال لصفحة التسجيل */}
+      <TermsModal
+        open={termsOpen}
+        onAccept={() => {
+          setTermsOpen(false);
+          navigate(`/${currentLang}/register`);
+        }}
+        onClose={() => setTermsOpen(false)}
+      />
+
       <header
         className={`sticky top-0 z-50 w-full transition-all duration-500 ${
           scrolled
@@ -94,18 +115,14 @@ export function Header() {
         }`}
         dir={dir}
       >
-        {/* ═══════════════════════════════════════════════
-            TOP BAR — University Identity
-            ═══════════════════════════════════════════════ */}
+        {/* ═══ TOP BAR ═══ */}
         <div className="relative bg-white dark:bg-[#1A1A1A] overflow-hidden">
-          {/* Subtle geometric pattern */}
           <div
             className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03] pointer-events-none"
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23264230' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }}
           />
-          {/* Bottom gold accent line */}
           <div className="absolute bottom-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand-mustard/50 dark:via-brand-mustard/30 to-transparent" />
 
           <div
@@ -113,27 +130,20 @@ export function Header() {
               scrolled ? "h-14" : "h-[72px]"
             }`}
           >
-            {/* University Logo */}
             <LocaleLink to="/" className="group shrink-0 relative">
               <div className="relative">
                 <img
                   src={logo}
                   alt="University"
-                  className={`object-contain transition-all duration-500 ${
-                    scrolled ? "h-10 w-10" : "h-13 w-13"
-                  }`}
+                  className={`object-contain transition-all duration-500 ${scrolled ? "h-10 w-10" : "h-13 w-13"}`}
                 />
-                {/* Ring on hover */}
                 <div className="absolute -inset-1 rounded-2xl border-2 border-brand-teal-dark/0 group-hover:border-brand-teal-dark/[0.08] dark:group-hover:border-[#4ADE80]/[0.08] transition-all duration-300 scale-90 group-hover:scale-100" />
               </div>
             </LocaleLink>
 
-            {/* Center — University Name */}
             <div className="hidden sm:flex flex-col items-center text-center flex-1 px-8 select-none">
               <h1
-                className={`font-bold text-brand-teal-dark dark:text-[#E5E5E5] leading-tight tracking-tight transition-all duration-500 ${
-                  scrolled ? "text-sm" : "text-base sm:text-lg lg:text-xl"
-                }`}
+                className={`font-bold text-brand-teal-dark dark:text-[#E5E5E5] leading-tight tracking-tight transition-all duration-500 ${scrolled ? "text-sm" : "text-base sm:text-lg lg:text-xl"}`}
                 style={{ fontFamily: "var(--font-sans)" }}
                 dir="ltr"
               >
@@ -142,9 +152,7 @@ export function Header() {
               <div className="flex items-center gap-3 mt-1">
                 <span className="w-8 h-px bg-gradient-to-r from-transparent to-brand-mustard/50 dark:to-brand-mustard/30" />
                 <p
-                  className={`text-brand-teal-dark/50 dark:text-[#888888] font-medium tracking-wide transition-all duration-500 ${
-                    scrolled ? "text-[9px]" : "text-[11px] sm:text-xs"
-                  }`}
+                  className={`text-brand-teal-dark/50 dark:text-[#888888] font-medium tracking-wide transition-all duration-500 ${scrolled ? "text-[9px]" : "text-[11px] sm:text-xs"}`}
                   dir="ltr"
                 >
                   {t("header.centerName")}
@@ -152,17 +160,12 @@ export function Header() {
                 <span className="w-8 h-px bg-gradient-to-l from-transparent to-brand-mustard/50 dark:to-brand-mustard/30" />
               </div>
               <p
-                className={`text-brand-brown/50 dark:text-[#666666] transition-all duration-500 ${
-                  scrolled
-                    ? "text-[0px] opacity-0 h-0 mt-0"
-                    : "text-[11px] opacity-100 h-auto mt-0.5"
-                }`}
+                className={`text-brand-brown/50 dark:text-[#666666] transition-all duration-500 ${scrolled ? "text-[0px] opacity-0 h-0 mt-0" : "text-[11px] opacity-100 h-auto mt-0.5"}`}
               >
                 {t("header.centerNameAr")}
               </p>
             </div>
 
-            {/* Mobile Title */}
             <div className="flex sm:hidden flex-col items-center text-center flex-1 px-2 select-none">
               <p
                 className="text-sm font-bold text-brand-teal-dark dark:text-[#E5E5E5] tracking-tight"
@@ -175,15 +178,12 @@ export function Header() {
               </p>
             </div>
 
-            {/* CEIL Logo */}
             <LocaleLink to="/" className="group shrink-0 relative">
               <div className="relative">
                 <img
                   src={ceillogo}
                   alt="CEIL"
-                  className={`object-contain rounded-lg transition-all duration-500 ${
-                    scrolled ? "h-10 w-10" : "h-13 w-13"
-                  }`}
+                  className={`object-contain rounded-lg transition-all duration-500 ${scrolled ? "h-10 w-10" : "h-13 w-13"}`}
                 />
                 <div className="absolute -inset-1 rounded-2xl border-2 border-brand-teal-dark/0 group-hover:border-brand-teal-dark/8 dark:group-hover:border-[#4ADE80]/8 transition-all duration-300 scale-90 group-hover:scale-100" />
               </div>
@@ -191,22 +191,16 @@ export function Header() {
           </div>
         </div>
 
-        {/* ═══════════════════════════════════════════════
-            NAVIGATION BAR
-            ═══════════════════════════════════════════════ */}
+        {/* ═══ NAVIGATION BAR ═══ */}
         <div className="relative">
-          {/* Main bg */}
           <div className="absolute inset-0 bg-brand-teal-dark dark:bg-[#0F0F0F]" />
-          {/* Noise texture overlay */}
           <div
             className="absolute inset-0 opacity-[0.04] mix-blend-soft-light pointer-events-none"
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`,
             }}
           />
-          {/* Top shine */}
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.1] to-transparent" />
-          {/* Bottom brand accent */}
           <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-brand-mustard/0 via-brand-mustard/30 to-brand-mustard/0" />
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex items-center justify-between h-11">
@@ -223,31 +217,16 @@ export function Header() {
                     to={link.to}
                     className="relative px-4 py-[7px] text-[13px] font-medium transition-all duration-200 group"
                   >
-                    {/* Hover bg */}
                     <span
-                      className={`absolute inset-0 rounded-md transition-all duration-200 ${
-                        active
-                          ? "bg-white/[0.13]"
-                          : "bg-transparent group-hover:bg-white/[0.06]"
-                      }`}
+                      className={`absolute inset-0 rounded-md transition-all duration-200 ${active ? "bg-white/[0.13]" : "bg-transparent group-hover:bg-white/[0.06]"}`}
                     />
-                    {/* Text */}
                     <span
-                      className={`relative transition-colors duration-200 ${
-                        active
-                          ? "text-white"
-                          : "text-white/55 group-hover:text-white/90"
-                      }`}
+                      className={`relative transition-colors duration-200 ${active ? "text-white" : "text-white/55 group-hover:text-white/90"}`}
                     >
                       {link.label}
                     </span>
-                    {/* Active indicator */}
                     <span
-                      className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] rounded-full bg-brand-mustard transition-all duration-300 ${
-                        active
-                          ? "w-7 opacity-100"
-                          : "w-0 opacity-0 group-hover:w-4 group-hover:opacity-40"
-                      }`}
+                      className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] rounded-full bg-brand-mustard transition-all duration-300 ${active ? "w-7 opacity-100" : "w-0 opacity-0 group-hover:w-4 group-hover:opacity-40"}`}
                       style={
                         active
                           ? {
@@ -264,31 +243,26 @@ export function Header() {
 
             {/* ── Desktop: Lang + Auth ── */}
             <div className="hidden md:flex items-center gap-2.5">
-              {/* Language */}
               <div
-                className={`flex items-center ${
-                  isRTL ? "ml-2.5 border-l pl-2.5" : "mr-2.5 border-r pr-2.5"
-                } border-white/[0.1]`}
+                className={`flex items-center ${isRTL ? "ml-2.5 border-l pl-2.5" : "mr-2.5 border-r pr-2.5"} border-white/[0.1]`}
               >
                 <LanguageSwitcher variant="header" />
               </div>
 
-              {/* Theme Toggle */}
               <ThemeToggleHeader />
 
-              {/* Auth */}
               {!showUser && !isLoading && (
                 <div className="flex items-center gap-1.5">
+                  {/* ✅ زر S'inscrire — Desktop — يفتح TermsModal */}
                   <Button
-                    asChild
                     size="sm"
+                    onClick={handleRegisterWithTerms}
                     className="relative bg-brand-mustard text-white border-0 rounded-md gap-1.5 h-[30px] text-[11px] font-semibold px-3 overflow-hidden transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_4px_12px_rgba(193,154,94,0.35)] active:translate-y-0"
                   >
-                    <LocaleLink to="/register">
-                      <UserPlus className="w-3 h-3" />
-                      {t("common.register")}
-                    </LocaleLink>
+                    <UserPlus className="w-3 h-3" />
+                    {t("common.register")}
                   </Button>
+
                   <Button
                     asChild
                     size="sm"
@@ -303,7 +277,6 @@ export function Header() {
                 </div>
               )}
 
-              {/* User */}
               {showUser && (
                 <div className="relative" data-user-menu>
                   <button
@@ -311,13 +284,7 @@ export function Header() {
                       e.stopPropagation();
                       setUserMenuOpen((o) => !o);
                     }}
-                    className={`flex items-center gap-2 rounded-md border py-[3px] transition-all duration-200 ${
-                      isRTL ? "pl-2 pr-[3px]" : "pr-2 pl-[3px]"
-                    } ${
-                      userMenuOpen
-                        ? "bg-white/[0.1] border-white/20"
-                        : "border-white/[0.1] hover:bg-white/[0.07] hover:border-white/[0.16]"
-                    }`}
+                    className={`flex items-center gap-2 rounded-md border py-[3px] transition-all duration-200 ${isRTL ? "pl-2 pr-[3px]" : "pr-2 pl-[3px]"} ${userMenuOpen ? "bg-white/[0.1] border-white/20" : "border-white/[0.1] hover:bg-white/[0.07] hover:border-white/[0.16]"}`}
                   >
                     <div className="relative">
                       {user.google_avatar && !avatarError ? (
@@ -332,37 +299,24 @@ export function Header() {
                           <User className="h-3 w-3 text-white/60" />
                         </div>
                       )}
-                      {/* Online dot */}
                       <div className="absolute -bottom-[2px] -right-[2px] w-2.5 h-2.5 rounded-full bg-emerald-400 border-[1.5px] border-brand-teal-dark dark:border-[#0F0F0F]" />
                     </div>
                     <span className="text-[11px] font-medium text-white/75 max-w-[70px] truncate">
                       {user.first_name || t("common.dashboard")}
                     </span>
                     <ChevronDown
-                      className={`w-3 h-3 text-white/30 transition-transform duration-300 ${
-                        userMenuOpen ? "rotate-180" : ""
-                      }`}
+                      className={`w-3 h-3 text-white/30 transition-transform duration-300 ${userMenuOpen ? "rotate-180" : ""}`}
                     />
                   </button>
 
                   {/* Dropdown */}
                   <div
-                    className={`absolute top-full mt-2 w-56 z-50 transition-all duration-200 origin-top ${
-                      isRTL ? "left-0" : "right-0"
-                    } ${
-                      userMenuOpen
-                        ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
-                        : "opacity-0 scale-95 -translate-y-1 pointer-events-none"
-                    }`}
+                    className={`absolute top-full mt-2 w-56 z-50 transition-all duration-200 origin-top ${isRTL ? "left-0" : "right-0"} ${userMenuOpen ? "opacity-100 scale-100 translate-y-0 pointer-events-auto" : "opacity-0 scale-95 -translate-y-1 pointer-events-none"}`}
                   >
-                    {/* Arrow */}
                     <div
-                      className={`absolute -top-[6px] w-3 h-3 bg-white dark:bg-[#1A1A1A] rotate-45 border-l border-t border-brand-beige/40 dark:border-[#2A2A2A] ${
-                        isRTL ? "left-4" : "right-4"
-                      }`}
+                      className={`absolute -top-[6px] w-3 h-3 bg-white dark:bg-[#1A1A1A] rotate-45 border-l border-t border-brand-beige/40 dark:border-[#2A2A2A] ${isRTL ? "left-4" : "right-4"}`}
                     />
                     <div className="relative bg-white dark:bg-[#1A1A1A] rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.4)] border border-brand-beige/40 dark:border-[#2A2A2A] overflow-hidden">
-                      {/* User card */}
                       <div className="px-4 py-3 bg-gradient-to-b from-brand-gray/50 dark:from-[#222222] to-white dark:to-[#1A1A1A] border-b border-brand-beige/40 dark:border-[#2A2A2A]">
                         <div className="flex items-center gap-3">
                           <div className="relative">
@@ -392,9 +346,7 @@ export function Header() {
                       <div className="py-1.5">
                         <Link
                           to={dashboardPath}
-                          className={`flex items-center gap-2.5 px-4 py-2 text-[13px] text-brand-black/65 dark:text-[#AAAAAA] hover:bg-brand-teal-dark/[0.04] dark:hover:bg-[#222222] hover:text-brand-teal-dark dark:hover:text-[#4ADE80] transition-colors ${
-                            isRTL ? "flex-row" : "flex-row"
-                          }`}
+                          className="flex items-center gap-2.5 px-4 py-2 text-[13px] text-brand-black/65 dark:text-[#AAAAAA] hover:bg-brand-teal-dark/[0.04] dark:hover:bg-[#222222] hover:text-brand-teal-dark dark:hover:text-[#4ADE80] transition-colors"
                         >
                           <LayoutDashboard className="w-[15px] h-[15px]" />
                           {t("common.dashboard")}
@@ -422,15 +374,14 @@ export function Header() {
             <div className="flex md:hidden items-center gap-2 w-full justify-between">
               <div className="flex items-center gap-1.5">
                 {!showUser && !isLoading && (
+                  // ✅ زر S'inscrire — Mobile header — يفتح TermsModal
                   <Button
-                    asChild
                     size="sm"
+                    onClick={handleRegisterWithTerms}
                     className="bg-brand-mustard text-white border-0 rounded-md gap-1 h-7 text-[10px] font-semibold px-2.5"
                   >
-                    <LocaleLink to="/register">
-                      <UserPlus className="w-2.5 h-2.5" />
-                      {t("common.register")}
-                    </LocaleLink>
+                    <UserPlus className="w-2.5 h-2.5" />
+                    {t("common.register")}
                   </Button>
                 )}
                 {showUser && (
@@ -452,19 +403,13 @@ export function Header() {
               >
                 <div className="relative w-[18px] h-[18px]">
                   <span
-                    className={`absolute top-[3px] left-0 w-full h-[1.5px] bg-white rounded-full transition-all duration-300 origin-center ${
-                      mobileMenuOpen ? "rotate-45 top-[8px]" : ""
-                    }`}
+                    className={`absolute top-[3px] left-0 w-full h-[1.5px] bg-white rounded-full transition-all duration-300 origin-center ${mobileMenuOpen ? "rotate-45 top-[8px]" : ""}`}
                   />
                   <span
-                    className={`absolute top-[8px] left-0 w-full h-[1.5px] bg-white rounded-full transition-all duration-200 ${
-                      mobileMenuOpen ? "opacity-0 scale-x-0" : ""
-                    }`}
+                    className={`absolute top-[8px] left-0 w-full h-[1.5px] bg-white rounded-full transition-all duration-200 ${mobileMenuOpen ? "opacity-0 scale-x-0" : ""}`}
                   />
                   <span
-                    className={`absolute top-[13px] left-0 w-full h-[1.5px] bg-white rounded-full transition-all duration-300 origin-center ${
-                      mobileMenuOpen ? "-rotate-45 top-[8px]" : ""
-                    }`}
+                    className={`absolute top-[13px] left-0 w-full h-[1.5px] bg-white rounded-full transition-all duration-300 origin-center ${mobileMenuOpen ? "-rotate-45 top-[8px]" : ""}`}
                   />
                 </div>
               </button>
@@ -472,16 +417,11 @@ export function Header() {
           </div>
         </div>
 
-        {/* ═══════════════════════════════════════════════
-            MOBILE MENU — Full slide-down panel
-            ═══════════════════════════════════════════════ */}
+        {/* ═══ MOBILE MENU ═══ */}
         <div
-          className={`md:hidden overflow-hidden transition-all duration-400 ease-[cubic-bezier(0.23,1,0.32,1)] ${
-            mobileMenuOpen ? "max-h-[600px]" : "max-h-0"
-          }`}
+          className={`md:hidden overflow-hidden transition-all duration-400 ease-[cubic-bezier(0.23,1,0.32,1)] ${mobileMenuOpen ? "max-h-[600px]" : "max-h-0"}`}
         >
           <div className="relative bg-brand-teal-dark dark:bg-[#0F0F0F] overflow-hidden">
-            {/* Pattern bg */}
             <div
               className="absolute inset-0 opacity-[0.02] pointer-events-none"
               style={{
@@ -496,11 +436,7 @@ export function Header() {
                     key={link.to}
                     to={link.to}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`group flex items-center gap-3 px-4 py-3.5 text-[13px] font-medium rounded-xl transition-all duration-200 ${
-                      active
-                        ? "text-white bg-white/[0.1] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
-                        : "text-white/50 hover:bg-white/[0.05] hover:text-white/80"
-                    }`}
+                    className={`group flex items-center gap-3 px-4 py-3.5 text-[13px] font-medium rounded-xl transition-all duration-200 ${active ? "text-white bg-white/[0.1] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]" : "text-white/50 hover:bg-white/[0.05] hover:text-white/80"}`}
                     style={{
                       animation: mobileMenuOpen
                         ? `headerMobileIn 0.35s cubic-bezier(0.23,1,0.32,1) ${60 + i * 40}ms both`
@@ -508,11 +444,7 @@ export function Header() {
                     }}
                   >
                     <span
-                      className={`w-1 h-1 rounded-full transition-all duration-300 ${
-                        active
-                          ? "bg-brand-mustard w-2 shadow-[0_0_8px_rgba(193,154,94,0.6)]"
-                          : "bg-white/15 group-hover:bg-white/30"
-                      }`}
+                      className={`w-1 h-1 rounded-full transition-all duration-300 ${active ? "bg-brand-mustard w-2 shadow-[0_0_8px_rgba(193,154,94,0.6)]" : "bg-white/15 group-hover:bg-white/30"}`}
                     />
                     {link.label}
                     {active && (
@@ -524,12 +456,10 @@ export function Header() {
                 );
               })}
 
-              {/* Separator */}
               <div className="py-2">
                 <div className="h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
               </div>
 
-              {/* Language */}
               <div
                 className="px-4"
                 style={{
@@ -547,7 +477,6 @@ export function Header() {
                 <LanguageSwitcher variant="menu" />
               </div>
 
-              {/* Theme Toggle — Mobile */}
               <div
                 className="px-4 pt-2"
                 style={{
@@ -566,7 +495,6 @@ export function Header() {
                 </div>
               </div>
 
-              {/* Auth */}
               {!showUser && !isLoading && (
                 <div
                   style={{
@@ -587,14 +515,18 @@ export function Header() {
                       <LogIn className="w-3.5 h-3.5" />
                       {t("common.login")}
                     </LocaleLink>
-                    <LocaleLink
-                      to="/register"
-                      onClick={() => setMobileMenuOpen(false)}
+
+                    {/* ✅ زر S'inscrire — Mobile Menu — يفتح TermsModal */}
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleRegisterWithTerms();
+                      }}
                       className="flex items-center justify-center gap-1.5 py-3 text-[13px] font-bold text-white bg-brand-mustard hover:bg-brand-mustard/90 rounded-xl shadow-[0_2px_10px_rgba(193,154,94,0.25)] transition-all"
                     >
                       <UserPlus className="w-3.5 h-3.5" />
                       {t("common.register")}
-                    </LocaleLink>
+                    </button>
                   </div>
                 </div>
               )}
@@ -629,11 +561,7 @@ export function Header() {
 
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-40 md:hidden transition-all duration-300 ${
-          mobileMenuOpen
-            ? "bg-black/25 backdrop-blur-[2px] pointer-events-auto"
-            : "bg-transparent backdrop-blur-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 z-40 md:hidden transition-all duration-300 ${mobileMenuOpen ? "bg-black/25 backdrop-blur-[2px] pointer-events-auto" : "bg-transparent backdrop-blur-0 pointer-events-none"}`}
         onClick={() => setMobileMenuOpen(false)}
       />
 

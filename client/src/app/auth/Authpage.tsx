@@ -39,7 +39,7 @@ import logo from "../../assets/download.png";
 import ceillogo from "../../assets/logo.jpg";
 
 // ─── Terms Modal (self-contained, reuses existing modal style from FileCompositionSection) ───
-function TermsModal({
+export function TermsModal({
   open,
   onAccept,
   onClose,
