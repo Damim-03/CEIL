@@ -32,6 +32,44 @@ import DeleteConfirmDialog from "../../components/DeleteConfirmDialog";
 import type { Session } from "../../../../types/Types";
 import { toast } from "sonner";
 
+// ── Extended types for fields not in base Session ────────────────
+interface CourseInfo {
+  course_name: string;
+  course_code?: string;
+}
+interface TeacherInfo {
+  first_name: string;
+  last_name: string;
+  email?: string;
+}
+interface EnrollmentInfo {
+  registration_status: string;
+}
+interface GroupExtended {
+  group_id: string;
+  name: string;
+  level?: string;
+  max_students?: number;
+  course?: CourseInfo;
+  teacher?: TeacherInfo;
+  enrollments?: EnrollmentInfo[];
+}
+interface RoomInfo {
+  name: string;
+}
+interface SessionExtended extends Session {
+  end_time?: string;
+  room?: RoomInfo;
+  group?: GroupExtended;
+  _count?: { attendance: number };
+}
+
+// ── Error shape returned by Axios ────────────────────────────────
+interface ApiError {
+  response?: { data?: { message?: string } };
+  message?: string;
+}
+
 /* ─── Quick Attendance Modal ─── */
 const QuickAttendanceModal = ({
   open,
@@ -49,27 +87,32 @@ const QuickAttendanceModal = ({
   const createSession = useCreateSession();
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
+
   if (!open) return null;
-  const filteredGroups = groups.filter((g) => {
+
+  const filteredGroups = (groups as GroupExtended[]).filter((g) => {
     const s = search.toLowerCase();
     return (
       (g.name?.toLowerCase() || "").includes(s) ||
-      ((g as any).course?.course_name?.toLowerCase() || "").includes(s)
+      (g.course?.course_name?.toLowerCase() || "").includes(s)
     );
   });
+
   const getTodaySession = (groupId: string): Session | undefined => {
     const today = new Date();
     return sessions.find((s) => {
+      const ext = s as SessionExtended;
+      if (ext.group?.group_id !== groupId) return false;
       const sd = new Date(s.session_date);
       return (
-        s.group?.group_id === groupId &&
         sd.getDate() === today.getDate() &&
         sd.getMonth() === today.getMonth() &&
         sd.getFullYear() === today.getFullYear()
       );
     });
   };
-  const handleGroupClick = async (group: any) => {
+
+  const handleGroupClick = async (group: GroupExtended) => {
     const existing = getTodaySession(group.group_id);
     if (existing) {
       onSessionReady(existing);
@@ -82,17 +125,25 @@ const QuickAttendanceModal = ({
       const newSession = await createSession.mutateAsync({
         group_id: group.group_id,
         session_date: now.toISOString(),
-        topic: `Session - ${now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+        topic: `Session - ${now.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })}`,
       });
       toast.success("Session created for today");
       onSessionReady(newSession);
       onClose();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to create session");
+    } catch (err: unknown) {
+      const apiErr = err as ApiError;
+      toast.error(
+        apiErr?.response?.data?.message || "Failed to create session",
+      );
     } finally {
       setCreating(false);
     }
   };
+
   return (
     <>
       <div
@@ -137,9 +188,8 @@ const QuickAttendanceModal = ({
               <div className="space-y-2">
                 {filteredGroups.map((group) => {
                   const todaySession = getTodaySession(group.group_id);
-                  const courseName =
-                    (group as any).course?.course_name || "No course";
-                  const teacher = (group as any).teacher;
+                  const courseName = group.course?.course_name || "No course";
+                  const teacher = group.teacher;
                   const teacherName = teacher
                     ? `${teacher.first_name} ${teacher.last_name}`
                     : null;
@@ -235,16 +285,22 @@ const SessionsPage = () => {
       : i18n.language === "fr"
         ? "fr-FR"
         : "en-US";
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isQuickAttendanceOpen, setIsQuickAttendanceOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+
   const { data: sessions = [], isLoading, error, refetch } = useAdminSessions();
   const deleteSession = useDeleteSession();
 
-  const formatDate = (dateString: string) => {
+  // ── Helpers ──────────────────────────────────────────────────────
+
+  // ✅ Fix TS2345/2769: accept string | undefined, guard before use
+  const formatDate = (dateString: string | undefined): string => {
+    if (!dateString) return "—";
     try {
       return new Date(dateString).toLocaleDateString(locale, {
         weekday: "short",
@@ -256,7 +312,9 @@ const SessionsPage = () => {
       return "Invalid Date";
     }
   };
-  const formatTime = (dateString: string) => {
+
+  const formatTime = (dateString: string | undefined): string => {
+    if (!dateString) return "—";
     try {
       return new Date(dateString).toLocaleTimeString(locale, {
         hour: "2-digit",
@@ -266,8 +324,12 @@ const SessionsPage = () => {
       return "Invalid Time";
     }
   };
-  const getDurationLabel = (start: string, end: string | null | undefined) => {
-    if (!end) return null;
+
+  const getDurationLabel = (
+    start: string | undefined,
+    end: string | null | undefined,
+  ): string | null => {
+    if (!start || !end) return null;
     const diff = new Date(end).getTime() - new Date(start).getTime();
     if (diff <= 0) return null;
     const mins = Math.round(diff / 60000);
@@ -290,6 +352,7 @@ const SessionsPage = () => {
     setSelectedSession(session);
     setIsDeleteOpen(true);
   };
+
   const handleDeleteConfirm = async () => {
     if (!selectedSession) return;
     try {
@@ -297,10 +360,14 @@ const SessionsPage = () => {
       toast.success("Session deleted successfully");
       setIsDeleteOpen(false);
       setSelectedSession(null);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to delete session");
+    } catch (err: unknown) {
+      const apiErr = err as ApiError;
+      toast.error(
+        apiErr?.response?.data?.message || "Failed to delete session",
+      );
     }
   };
+
   const handleSuccess = () => refetch();
   const handleQuickSessionReady = (session: Session) => {
     refetch().then(() => {
@@ -308,19 +375,24 @@ const SessionsPage = () => {
       setIsAttendanceOpen(true);
     });
   };
-  const hasAttendanceRecords = (session: Session) =>
-    session._count && session._count.attendance > 0;
-  const getStudentCount = (session: Session) => {
-    if (!session.group?.enrollments) return 0;
-    return session.group.enrollments.filter(
-      (e: any) =>
-        e.registration_status === "VALIDATED" ||
-        e.registration_status === "PAID" ||
-        e.registration_status === "FINISHED",
+
+  const hasAttendanceRecords = (session: Session): boolean => {
+    const ext = session as SessionExtended;
+    return !!(ext._count && ext._count.attendance > 0);
+  };
+
+  const getStudentCount = (session: Session): number => {
+    const ext = session as SessionExtended;
+    if (!ext.group?.enrollments) return 0;
+    return ext.group.enrollments.filter((e) =>
+      ["VALIDATED", "PAID", "FINISHED"].includes(e.registration_status),
     ).length;
   };
+
+  // ✅ Fix no-explicit-any: all fields use SessionExtended / typed interfaces
   const getSessionData = (session: Session) => {
-    const group = session.group;
+    const ext = session as SessionExtended;
+    const group = ext.group;
     return {
       courseName: group?.course?.course_name || "Unknown Course",
       courseCode: group?.course?.course_code || null,
@@ -332,15 +404,16 @@ const SessionsPage = () => {
       teacherEmail: group?.teacher?.email || null,
       hasTeacher: !!group?.teacher,
       topic: session.topic || null,
-      sessionDate: session.session_date,
-      endTime: (session as any).end_time || null,
-      roomName: (session as any).room?.name || null,
+      sessionDate: session.session_date, // string — always defined
+      endTime: ext.end_time || null,
+      roomName: ext.room?.name || null,
       studentCount: getStudentCount(session),
-      attendanceCount: session._count?.attendance || 0,
+      attendanceCount: ext._count?.attendance || 0,
       maxStudents: group?.max_students || 0,
     };
   };
 
+  // ── Loading ───────────────────────────────────────────────────────
   if (isLoading)
     return (
       <div className="space-y-6">
@@ -362,6 +435,7 @@ const SessionsPage = () => {
       </div>
     );
 
+  // ── Error ─────────────────────────────────────────────────────────
   if (error)
     return (
       <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl p-8 border border-red-200 dark:border-red-800/40 text-center">
@@ -370,7 +444,7 @@ const SessionsPage = () => {
           {t("admin.sessions.failedToLoad")}
         </h3>
         <p className="text-[#6B5D4F] dark:text-[#AAAAAA] mb-4">
-          {(error as any)?.message || "Something went wrong"}
+          {(error as Error)?.message || "Something went wrong"}
         </p>
         <Button
           onClick={() => refetch()}
@@ -381,6 +455,7 @@ const SessionsPage = () => {
       </div>
     );
 
+  // ── Stats ─────────────────────────────────────────────────────────
   const stats = {
     total: sessions.length,
     today: sessions.filter((s) => {
@@ -551,6 +626,7 @@ const SessionsPage = () => {
                 key={session.session_id}
                 className={`bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden hover:shadow-lg dark:hover:shadow-black/20 transition-all group ${isPast ? "opacity-75" : ""}`}
               >
+                {/* Card header */}
                 <div className="bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/90 p-5 text-white">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
@@ -607,6 +683,8 @@ const SessionsPage = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Card body */}
                 <div className="p-5 space-y-3">
                   {data.hasTeacher ? (
                     <div className="flex items-center gap-2 text-sm">
@@ -670,7 +748,11 @@ const SessionsPage = () => {
                           <div
                             className="h-full bg-gradient-to-r from-[#2B6F5E] to-[#8DB896] rounded-full transition-all"
                             style={{
-                              width: `${Math.min((data.attendanceCount / data.studentCount) * 100, 100)}%`,
+                              width: `${Math.min(
+                                (data.attendanceCount / data.studentCount) *
+                                  100,
+                                100,
+                              )}%`,
                             }}
                           />
                         </div>
@@ -678,6 +760,8 @@ const SessionsPage = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Card actions */}
                 <div className="px-5 pb-5 flex items-center gap-2">
                   <Button
                     size="sm"
@@ -696,7 +780,7 @@ const SessionsPage = () => {
                   <Button
                     size="sm"
                     onClick={() => handleDeleteClick(session)}
-                    disabled={hasAttendance}
+                    disabled={!!hasAttendance}
                     className="gap-2 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 border-0 disabled:opacity-50 disabled:cursor-not-allowed"
                     title={
                       hasAttendance
@@ -713,6 +797,7 @@ const SessionsPage = () => {
         </div>
       )}
 
+      {/* Modals */}
       <SessionFormModal
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
