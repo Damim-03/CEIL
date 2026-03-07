@@ -24,8 +24,8 @@ import {
   useAdminSessions,
   useDeleteSession,
   useCreateSession,
-  useAdminGroups,
 } from "../../../../hooks/admin/useAdmin";
+import { useAdminGroups } from "../../../../hooks/admin/useAdminGroups";
 import SessionFormModal from "../../components/SessionFormModal";
 import AttendanceModal from "../../components/AttendanceModal";
 import DeleteConfirmDialog from "../../components/DeleteConfirmDialog";
@@ -83,14 +83,18 @@ const QuickAttendanceModal = ({
   sessions: Session[];
 }) => {
   const { t } = useTranslation();
-  const { data: groups = [], isLoading: groupsLoading } = useAdminGroups();
+  const { data: rawGroups, isLoading: groupsLoading } = useAdminGroups();
+  // ✅ Guard: ensure array even if hook returns object/undefined
+  const groups: GroupExtended[] = Array.isArray(rawGroups)
+    ? (rawGroups as GroupExtended[])
+    : [];
   const createSession = useCreateSession();
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
 
   if (!open) return null;
 
-  const filteredGroups = (groups as GroupExtended[]).filter((g) => {
+  const filteredGroups = groups.filter((g) => {
     const s = search.toLowerCase();
     return (
       (g.name?.toLowerCase() || "").includes(s) ||
@@ -293,7 +297,9 @@ const SessionsPage = () => {
   const [isQuickAttendanceOpen, setIsQuickAttendanceOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
-  const { data: sessions = [], isLoading, error, refetch } = useAdminSessions();
+  const { data: rawSessions, isLoading, error, refetch } = useAdminSessions();
+  // ✅ Guard: ensure array
+  const sessions: Session[] = Array.isArray(rawSessions) ? rawSessions : [];
   const deleteSession = useDeleteSession();
 
   // ── Helpers ──────────────────────────────────────────────────────
