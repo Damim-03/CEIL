@@ -12,7 +12,7 @@
     "dashboard": "لوحة التحكم",
     "loading": "جاري التحميل...",
     "viewAll": "عرض الكل",
-    "learnMore": "معرفة المزيد",
+    "learnMore": "اكتشف المزيد",
     "moreInfo": "مزيد من المعلومات",
     "back": "العودة",
     "search": "البحث...",
@@ -35,7 +35,7 @@
     "badge": "CEIL - Centre d'Enseignement Intensif des Langues",
     "title": "مركز التعليم المكثّف للغات",
     "subtitle": "جامعة الشهيد حمه لخضر - الوادي",
-    "description": "التميز الأكاديمي في تعليم اللغات",
+    "description": "تحدث مع العالم",
     "exploreCourses": "اكتشف برامجنا",
     "languages": "لغة",
     "levels": "مستويات",
@@ -119,7 +119,7 @@
     "teachersCannotRegister": "الأساتذة لا يمكنهم التسجيل"
   },
   "centerInfo": {
-    "whyChooseUs": "لماذا تختارنا؟",
+    "whyChooseUs": "لماذا CEIL؟",
     "officialCertificate": "شهادة رسمية",
     "officialCertificateDesc": "التحضير للاختبارات الدولية",
     "qualifiedStaff": "هيئة تدريس مؤهلة",
@@ -221,7 +221,7 @@
     "ourTeam": "فريقنا"
   },
   "director": {
-    "sectionTitle": "كلمة المدير",
+    "sectionTitle": "من مكتب المدير",
     "welcomeLabel": "كلمة ترحيبية من مدير المركز",
     "name": "أ.د. ناصر دحدة",
     "title": "أعزائي الطلاب والزوار، مرحباً بكم في CEIL!",

@@ -35,7 +35,7 @@
     "badge": "CEIL - Centre d'Enseignement Intensif des Langues",
     "title": "Centre d'Enseignement Intensif des Langues",
     "subtitle": "Université Hamma Lakhdar, El-Oued",
-    "description": "L'excellence académique dans l'enseignement des langues",
+    "description": "Parlez du monde",
     "exploreCourses": "Découvrir nos programmes",
     "languages": "Langues",
     "levels": "Niveaux",
@@ -119,7 +119,7 @@
     "teachersCannotRegister": "Les enseignants ne peuvent pas s'inscrire"
   },
   "centerInfo": {
-    "whyChooseUs": "Pourquoi nous choisir ?",
+    "whyChooseUs": "Pourquoi le CEIL ?",
     "officialCertificate": "Certificat officiel",
     "officialCertificateDesc": "Préparation aux examens internationaux",
     "qualifiedStaff": "Personnel enseignant qualifié",
@@ -221,7 +221,7 @@
     "ourTeam": "Notre équipe"
   },
   "director": {
-    "sectionTitle": "Message du Directeur",
+    "sectionTitle": "Du bureau du directeur",
     "welcomeLabel": "Message de bienvenue du Directeur du Centre",
     "name": "Pr. Nacer Dehda",
     "title": "Chers étudiants et visiteurs, Bienvenue au CEIL !",

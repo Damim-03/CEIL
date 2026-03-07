@@ -12,7 +12,7 @@
     "dashboard": "Dashboard",
     "loading": "Loading...",
     "viewAll": "View All",
-    "learnMore": "Learn More",
+    "learnMore": "Find Out More",
     "moreInfo": "More Info",
     "back": "Back",
     "search": "Search...",
@@ -35,7 +35,7 @@
     "badge": "CEIL - Intensive Language Teaching Center",
     "title": "Intensive Language Teaching Center",
     "subtitle": "Hamma Lakhdar University, El-Oued",
-    "description": "Academic excellence in language education",
+    "description": "Speak The World",
     "exploreCourses": "Explore Our Programs",
     "languages": "Languages",
     "levels": "Levels",
@@ -119,7 +119,7 @@
     "teachersCannotRegister": "Teachers cannot register for courses"
   },
   "centerInfo": {
-    "whyChooseUs": "Why Choose Us?",
+    "whyChooseUs": "Why CEIL?",
     "officialCertificate": "Official Certificate",
     "officialCertificateDesc": "Preparation for international exams",
     "qualifiedStaff": "Qualified Teaching Staff",
@@ -221,7 +221,7 @@
     "ourTeam": "Our Team"
   },
   "director": {
-    "sectionTitle": "Director's Message",
+    "sectionTitle": "From the Director Desk",
     "welcomeLabel": "Welcome Message from the Center Director",
     "name": "Prof Nacer Dehda",
     "title": "Dear students and visitors, Welcome to CEIL!",
