@@ -6,11 +6,9 @@ import {
   Clock,
   FileText,
   BookOpen,
-  Quote,
   CheckCircle2,
   ExternalLink,
   MapPin,
-  Phone,
   Mail,
   Sparkles,
   X,
@@ -196,202 +194,6 @@ function WhyChooseUsSection() {
 /* ═══════════════════════════════════════════════════════
    Section 2 — Testimonials
    ═══════════════════════════════════════════════════════ */
-const TESTIMONIALS = [
-  {
-    quote:
-      "La formation au CEIL m'a permis d'améliorer considérablement mon niveau en anglais académique.",
-    name: "Dr. Ahmed M.",
-    role: "Enseignant-chercheur",
-  },
-  {
-    quote:
-      "Excellente préparation au TOEFL avec des méthodes d'enseignement efficaces.",
-    name: "Sarah B.",
-    role: "Étudiante en Master",
-  },
-  {
-    quote:
-      "Les cours de français scientifique sont parfaitement adaptés aux besoins des chercheurs.",
-    name: "Prof. Karim L.",
-    role: "Professeur",
-  },
-];
-
-function TestimonialsSection() {
-  const { t, dir, isRTL } = useLanguage();
-  const { ref, visible } = useScrollVisible();
-  const [active, setActive] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
-
-  useEffect(() => {
-    intervalRef.current = setInterval(
-      () => setActive((p) => (p + 1) % TESTIMONIALS.length),
-      5000,
-    );
-    return () => clearInterval(intervalRef.current);
-  }, []);
-
-  const goTo = (idx: number) => {
-    setActive(idx);
-    clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(
-      () => setActive((p) => (p + 1) % TESTIMONIALS.length),
-      5000,
-    );
-  };
-
-  return (
-    <section
-      ref={ref}
-      className="py-20 lg:py-28 bg-brand-gray/50 dark:bg-[#0F0F0F] relative overflow-hidden"
-      dir={dir}
-    >
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[10%] right-[5%] w-72 h-72 rounded-full bg-brand-mustard/[0.025] dark:bg-brand-mustard/[0.015]" />
-        <div className="absolute bottom-[10%] left-[5%] w-80 h-80 rounded-full bg-brand-teal-dark/[0.02] dark:bg-[#4ADE80]/[0.01]" />
-      </div>
-
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div
-          className={`text-center mb-14 transition-all duration-1000 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
-        >
-          <h2
-            className="text-3xl sm:text-4xl font-bold text-brand-black dark:text-[#E5E5E5]"
-            style={{ fontFamily: "var(--font-sans)" }}
-          >
-            {t("centerInfo.testimonials")}
-          </h2>
-          <div className="flex justify-center mt-3">
-            <div
-              className={`h-1 rounded-full bg-brand-mustard transition-all duration-1000 ease-out ${visible ? "w-16" : "w-0"}`}
-              style={{ transitionDelay: "300ms" }}
-            />
-          </div>
-        </div>
-
-        {/* Desktop */}
-        <div className="hidden md:grid grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {TESTIMONIALS.map((item, i) => (
-            <div
-              key={i}
-              className={`relative bg-white dark:bg-[#1A1A1A] rounded-2xl p-7 border border-brand-beige/60 dark:border-[#2A2A2A] hover:shadow-xl hover:shadow-brand-teal-dark/[0.04] dark:hover:shadow-black/30 hover:-translate-y-1 transition-all duration-500 ${
-                visible
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-8"
-              }`}
-              style={{
-                transitionDelay: `${300 + i * 120}ms`,
-                transitionDuration: "800ms",
-              }}
-            >
-              <div className="absolute top-5 left-5">
-                <div className="w-10 h-10 rounded-xl bg-brand-mustard/[0.08] dark:bg-brand-mustard/[0.12] flex items-center justify-center">
-                  <Quote
-                    className="w-5 h-5 text-brand-mustard/50 dark:text-brand-mustard/60"
-                    strokeWidth={1.5}
-                  />
-                </div>
-              </div>
-              <div className="pt-12">
-                <p
-                  className="text-brand-black/60 dark:text-[#AAAAAA] text-[14px] leading-[1.85] min-h-[80px]"
-                  dir="ltr"
-                  style={{ textAlign: "right" }}
-                >
-                  {item.quote}
-                </p>
-                <div className="pt-4 mt-4 border-t border-brand-beige/50 dark:border-[#2A2A2A] flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-brand-teal-dark/[0.08] dark:bg-[#4ADE80]/[0.1] flex items-center justify-center shrink-0">
-                    <span className="text-xs font-bold text-brand-teal-dark dark:text-[#4ADE80]">
-                      {item.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </span>
-                  </div>
-                  <div>
-                    <p
-                      className="text-brand-black dark:text-[#E5E5E5] font-semibold text-sm"
-                      dir="ltr"
-                    >
-                      {item.name}
-                    </p>
-                    <p
-                      className="text-brand-brown/50 dark:text-[#666666] text-[11px]"
-                      dir="ltr"
-                    >
-                      {item.role}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Mobile */}
-        <div className="md:hidden max-w-md mx-auto">
-          <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl p-7 border border-brand-beige/60 dark:border-[#2A2A2A] shadow-sm min-h-[220px]">
-            <div className="absolute top-5 left-5">
-              <div className="w-10 h-10 rounded-xl bg-brand-mustard/[0.08] dark:bg-brand-mustard/[0.12] flex items-center justify-center">
-                <Quote
-                  className="w-5 h-5 text-brand-mustard/50 dark:text-brand-mustard/60"
-                  strokeWidth={1.5}
-                />
-              </div>
-            </div>
-            <div className="pt-12">
-              <p
-                className="text-brand-black/60 dark:text-[#AAAAAA] text-[14px] leading-[1.85]"
-                dir="ltr"
-                style={{ textAlign: "right" }}
-              >
-                {TESTIMONIALS[active].quote}
-              </p>
-              <div className="pt-4 mt-4 border-t border-brand-beige/50 dark:border-[#2A2A2A] flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-brand-teal-dark/[0.08] dark:bg-[#4ADE80]/[0.1] flex items-center justify-center shrink-0">
-                  <span className="text-xs font-bold text-brand-teal-dark dark:text-[#4ADE80]">
-                    {TESTIMONIALS[active].name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </span>
-                </div>
-                <div>
-                  <p
-                    className="text-brand-black dark:text-[#E5E5E5] font-semibold text-sm"
-                    dir="ltr"
-                  >
-                    {TESTIMONIALS[active].name}
-                  </p>
-                  <p
-                    className="text-brand-brown/50 dark:text-[#666666] text-[11px]"
-                    dir="ltr"
-                  >
-                    {TESTIMONIALS[active].role}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center justify-center gap-2 mt-6">
-            {TESTIMONIALS.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => goTo(i)}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  i === active
-                    ? "bg-brand-teal-dark dark:bg-[#4ADE80] w-8"
-                    : "bg-brand-beige dark:bg-[#333333] hover:bg-brand-brown/30 dark:hover:bg-[#555555] w-2"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 /* ═══════════════════════════════════════════════════════
    Section 3 — Presentation & Offers
@@ -1537,7 +1339,6 @@ export function CenterInfoPreview() {
   return (
     <>
       <WhyChooseUsSection />
-      <TestimonialsSection />
       <PresentationSection />
       <TrainingNatureSection />
       <EducationalResourcesSection />

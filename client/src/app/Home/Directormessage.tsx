@@ -123,27 +123,6 @@ export function DirectorMessage() {
                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.06] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               </div>
 
-              {/* Name Card */}
-              <div
-                className={`absolute -bottom-6 group-hover:-bottom-5 transition-all duration-500 ${
-                  isRTL ? "right-4 left-6" : "left-4 right-6"
-                }`}
-              >
-                <div className="relative bg-gradient-to-r from-brand-mustard to-brand-mustard/90 backdrop-blur-sm rounded-xl px-6 py-4 shadow-xl shadow-brand-mustard/20 group-hover:shadow-brand-mustard/35 transition-shadow duration-500 overflow-hidden">
-                  {/* Shimmer */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
-                  <p
-                    className="relative text-white font-bold text-base leading-snug"
-                    style={{ fontFamily: "var(--font-sans)" }}
-                  >
-                    {t("director.welcomeLabel")}
-                  </p>
-                  <p className="relative text-white/80 text-sm mt-1">
-                    {t("director.name")}
-                  </p>
-                </div>
-              </div>
-
               {/* Corner dots */}
               <div
                 className={`absolute -top-6 grid grid-cols-3 gap-1.5 opacity-30 ${
