@@ -271,7 +271,7 @@ function ImageSlideshow({ visible }: { visible: boolean }) {
             {/* Text */}
             <div>
               <p className="text-white/90 font-bold text-lg tracking-wide drop-shadow-lg">
-                CEIL – UHLO
+                CEIL
               </p>
               <p className="text-white/60 text-sm mt-0.5 drop-shadow">
                 مركز التعليم المكثف للغات
