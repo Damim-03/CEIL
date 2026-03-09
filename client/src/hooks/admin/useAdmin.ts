@@ -653,6 +653,10 @@ export const useUpdateGroup = () => {
     onSuccess: (updatedGroup) => {
       qc.setQueryData(groupKey(updatedGroup.group_id), updatedGroup);
       qc.invalidateQueries({ queryKey: GROUPS_KEY });
+      // ✅ Fix: invalidate useAdminGroupDetails cache key
+      qc.invalidateQueries({
+        queryKey: ["admin", "groups", updatedGroup.group_id],
+      });
     },
   });
 };
@@ -666,8 +670,9 @@ export const useDeleteGroup = () => {
       qc.invalidateQueries({ queryKey: GROUPS_KEY });
       qc.invalidateQueries({ queryKey: DASHBOARD_KEY });
       qc.invalidateQueries({ queryKey: COURSES_KEY });
-      // ✅ أضف هذا — يُبطل كل مفاتيح "admin-course" بغض النظر عن الـ id
       qc.invalidateQueries({ queryKey: ["admin-course"] });
+      // ✅ Fix: invalidate useAdminGroupDetails cache key
+      qc.invalidateQueries({ queryKey: ["admin", "groups", groupId] });
     },
   });
 };
@@ -685,6 +690,8 @@ export const useAssignInstructor = () => {
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: groupKey(vars.groupId) });
       qc.invalidateQueries({ queryKey: GROUPS_KEY });
+      // ✅ Fix: invalidate useAdminGroupDetails cache key
+      qc.invalidateQueries({ queryKey: ["admin", "groups", vars.groupId] });
     },
   });
 };

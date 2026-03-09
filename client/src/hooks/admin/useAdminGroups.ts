@@ -1,6 +1,7 @@
 // ================================================================
 // 📦 src/hooks/admin/useAdminGroups.ts
 // ✅ React Query hooks — uses groupApi
+// ✅ Fix: cross-invalidation with useAdmin.ts group keys
 // ================================================================
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -79,6 +80,11 @@ export const groupKeys = {
   transfers: () => ["admin", "groups", "transfer-requests"] as const,
 };
 
+// ─── Keys from useAdmin.ts (for cross-invalidation) ──────────
+// These mirror the constants in useAdmin.ts
+const GROUPS_KEY_LEGACY = ["admin-groups"];
+const groupKeyLegacy = (id: string) => ["admin-group", id];
+
 // ─── GET GROUPS ───────────────────────────────────────────────
 
 export function useAdminGroups(params: GroupsParams = {}) {
@@ -135,6 +141,9 @@ export function useChangeGroupStatus() {
     onSuccess: (_, { groupId }) => {
       qc.invalidateQueries({ queryKey: groupKeys.all() });
       qc.invalidateQueries({ queryKey: groupKeys.detail(groupId) });
+      // ✅ cross-invalidate legacy keys used by useAdmin.ts
+      qc.invalidateQueries({ queryKey: GROUPS_KEY_LEGACY });
+      qc.invalidateQueries({ queryKey: groupKeyLegacy(groupId) });
     },
   });
 }
@@ -154,6 +163,9 @@ export function useAssignGroupTeacher() {
     onSuccess: (_, { groupId }) => {
       qc.invalidateQueries({ queryKey: groupKeys.all() });
       qc.invalidateQueries({ queryKey: groupKeys.detail(groupId) });
+      // ✅ cross-invalidate legacy keys used by useAdmin.ts
+      qc.invalidateQueries({ queryKey: GROUPS_KEY_LEGACY });
+      qc.invalidateQueries({ queryKey: groupKeyLegacy(groupId) });
     },
   });
 }
@@ -173,12 +185,13 @@ export function useTransferStudent() {
       toGroupId: string;
     }) => groupApi.transferStudent(fromGroupId, studentId, toGroupId),
     onSuccess: (_, { fromGroupId, toGroupId }) => {
-      // ✅ invalidate both groups list + students + details
       qc.invalidateQueries({ queryKey: groupKeys.all() });
       qc.invalidateQueries({ queryKey: groupKeys.detail(fromGroupId) });
       qc.invalidateQueries({ queryKey: groupKeys.detail(toGroupId) });
       qc.invalidateQueries({ queryKey: groupKeys.students(fromGroupId) });
       qc.invalidateQueries({ queryKey: groupKeys.students(toGroupId) });
+      // ✅ cross-invalidate legacy keys
+      qc.invalidateQueries({ queryKey: GROUPS_KEY_LEGACY });
     },
   });
 }
