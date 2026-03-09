@@ -116,6 +116,29 @@ const GroupDetailsPage = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const getNestedValue = (
+    obj: Record<string, any>,
+    path: string,
+    defaultValue: any = null,
+  ): any => {
+    try {
+      const value = path
+        .split(".")
+        .reduce((acc: any, part: string) => acc?.[part], obj);
+      return value !== undefined && value !== null ? value : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  };
+
+  // Pre-compute teacher lookup before early returns (uses hook state only, not group data)
+  const resolvedTeacherId = localTeacherId === "sync" ? null : localTeacherId;
+  const preloadedTeacher = resolvedTeacherId
+    ? ((allTeachers as any[]).find(
+        (t: any) => t.teacher_id === resolvedTeacherId,
+      ) ?? null)
+    : null;
+
   if (isLoading) return <PageLoader />;
 
   if (isError) {
@@ -181,10 +204,10 @@ const GroupDetailsPage = () => {
     );
   }
 
-  // current_capacity OR enrolled_count (from new API) OR enrollments count
+  // ✅ Fix: use enrolled_count (from computeCapacity) OR fallback to counting VALIDATED+PAID
   const currentCapacity =
-    (group as any).current_capacity ??
     (group as any).enrolled_count ??
+    (group as any).current_capacity ??
     (group as any).enrollments?.filter((e: any) =>
       ["VALIDATED", "PAID"].includes(e.registration_status),
     ).length ??
@@ -194,14 +217,19 @@ const GroupDetailsPage = () => {
     maxCapacity > 0 ? (currentCapacity / maxCapacity) * 100 : 0;
 
   // Resolve effective teacher_id
+  // ✅ Fix: also check nested teacher object from groupstatus_service
   const effectiveTeacherId =
-    localTeacherId === "sync" ? (group.teacher_id ?? null) : localTeacherId;
+    localTeacherId === "sync"
+      ? ((group as any).teacher?.teacher_id ?? group.teacher_id ?? null)
+      : localTeacherId;
 
-  // Find teacher from teachers list
+  // Find teacher from teachers list OR from nested teacher object in response
   const effectiveTeacher = effectiveTeacherId
     ? ((allTeachers as any[]).find(
         (t: any) => t.teacher_id === effectiveTeacherId,
-      ) ?? null)
+      ) ??
+        (group as any).teacher) ||
+      null
     : null;
 
   const hasInstructor = !!effectiveTeacherId;
@@ -210,14 +238,17 @@ const GroupDetailsPage = () => {
   const effectiveCourseName =
     group.course?.course_name ?? (group as any).course_name ?? null;
 
-  // /details endpoint returns enrollments with student nested; old endpoint returns students array
+  // ✅ Fix: always extract from enrollments array (groupstatus_service never returns flat students[])
+  // Filter out enrollments where student is null (safety guard)
   const rawEnrollments: any[] = (group as any).enrollments ?? [];
-  const students: any[] = Array.isArray((group as any).students)
-    ? (group as any).students
-    : rawEnrollments.map((e: any) => ({
-        ...(e.student ?? {}),
-        created_at: e.enrollment_date ?? e.student?.created_at,
-      }));
+  const students: any[] = rawEnrollments
+    .filter((e: any) => e.student != null)
+    .map((e: any) => ({
+      ...(e.student ?? {}),
+      enrollment_date: e.enrollment_date,
+      registration_status: e.registration_status,
+      created_at: e.enrollment_date ?? e.student?.created_at,
+    }));
   const filteredStudents = students.filter((student: any) => {
     if (!student) return false;
     const sl = searchTerm.toLowerCase();
@@ -239,8 +270,7 @@ const GroupDetailsPage = () => {
     try {
       await deleteGroup.mutateAsync(group.group_id);
       showToast(t("admin.groupDetails.groupDeleted"), "success");
-      const courseId = group.course?.course_id ?? (group as any).course_id;
-      navigate(courseId ? `/admin/courses/${courseId}` : "/admin/courses");
+      navigate("/admin/groups");
     } catch {
       showToast(t("admin.groupDetails.deleteFailed"), "error");
     }
@@ -549,6 +579,9 @@ const GroupDetailsPage = () => {
                       {t("admin.groupDetails.enrollmentDate")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wider">
+                      {t("admin.groupDetails.status", "الحالة")}
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wider">
                       {t("admin.groupDetails.actions")}
                     </th>
                   </tr>
@@ -587,6 +620,37 @@ const GroupDetailsPage = () => {
                               locale,
                             )
                           : "-"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {student.registration_status &&
+                          (() => {
+                            const s = student.registration_status;
+                            const styles: Record<string, string> = {
+                              VALIDATED:
+                                "bg-[#2B6F5E]/15 text-[#2B6F5E] dark:bg-[#4ADE80]/10 dark:text-[#4ADE80] border-[#2B6F5E]/25 dark:border-[#4ADE80]/20",
+                              PAID: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border-blue-200 dark:border-blue-800/40",
+                              PENDING:
+                                "bg-[#C4A035]/10 text-[#C4A035] dark:bg-[#D4A843]/10 dark:text-[#D4A843] border-[#C4A035]/25 dark:border-[#D4A843]/20",
+                              FINISHED:
+                                "bg-[#D8CDC0]/20 text-[#6B5D4F] dark:bg-[#555]/20 dark:text-[#888] border-[#D8CDC0]/40 dark:border-[#555]/30",
+                              REJECTED:
+                                "bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800/40",
+                            };
+                            const labels: Record<string, string> = {
+                              VALIDATED: "مؤكد",
+                              PAID: "مدفوع",
+                              PENDING: "معلق",
+                              FINISHED: "منتهي",
+                              REJECTED: "مرفوض",
+                            };
+                            return (
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${styles[s] ?? styles.PENDING}`}
+                              >
+                                {labels[s] ?? s}
+                              </span>
+                            );
+                          })()}
                       </td>
                       <td className="px-4 py-3">
                         <Button
