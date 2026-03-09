@@ -860,13 +860,30 @@ function GroupDetails({
 
   const flag = COURSE_FLAG[group.course.course_code] ?? COURSE_FLAG.default;
   const lvl = LEVEL_COLORS[group.level] ?? LEVEL_COLORS.A1;
+  // ✅ Fix: compute real counts from loaded students (includes FINISHED)
+  const realTotal =
+    students.length > 0
+      ? students.length
+      : group.enrolled_count + group.pending_count;
+  const realPending = students.filter(
+    (s) => s.registration_status === "PENDING",
+  ).length;
+  const realActive = students.filter((s) =>
+    ["VALIDATED", "PAID"].includes(s.registration_status),
+  ).length;
+  const realFinished = students.filter(
+    (s) => s.registration_status === "FINISHED",
+  ).length;
+  const maxCapacity = group.max_students ?? 25;
+  // capacity % based on active (VALIDATED+PAID) only — for progress bar business logic
+  const realCapacityPct =
+    maxCapacity > 0 ? Math.round((realActive / maxCapacity) * 100) : 0;
   const capacityColor =
-    group.capacity_pct >= 90
+    realCapacityPct >= 90
       ? "#ef4444"
-      : group.capacity_pct >= 70
+      : realCapacityPct >= 70
         ? "#f59e0b"
         : "#2B6F5E";
-  const totalStudents = group.enrolled_count + group.pending_count;
 
   return (
     <div className="flex flex-col h-full bg-[#FDFAF7] dark:bg-[#0A0A0A]">
@@ -941,9 +958,9 @@ function GroupDetails({
                     className="text-[18px] font-black leading-none"
                     style={{ color: capacityColor }}
                   >
-                    {totalStudents}
+                    {realTotal}
                     <span className="text-[12px] font-semibold text-[#9B8E82]">
-                      /{group.max_students}
+                      /{maxCapacity}
                     </span>
                   </p>
                   <p className="text-[9px] text-[#9B8E82] mt-0.5">طالب</p>
@@ -953,7 +970,7 @@ function GroupDetails({
                     <div
                       className="h-full rounded-full transition-all duration-700"
                       style={{
-                        width: `${group.capacity_pct}%`,
+                        width: `${realCapacityPct}%`,
                         background: capacityColor,
                       }}
                     />
@@ -962,7 +979,7 @@ function GroupDetails({
                     className="text-[9px] font-semibold mt-0.5"
                     style={{ color: capacityColor }}
                   >
-                    {group.capacity_pct}% إشغال
+                    {realCapacityPct}% إشغال ({realActive} نشط)
                   </p>
                 </div>
               </div>
@@ -977,28 +994,22 @@ function GroupDetails({
                 className="rounded-xl p-2.5 text-center"
                 style={{
                   background:
-                    group.pending_count > 0
-                      ? "rgba(245,158,11,0.08)"
-                      : "#F5F0EB",
+                    realPending > 0 ? "rgba(245,158,11,0.08)" : "#F5F0EB",
                   border:
-                    group.pending_count > 0
+                    realPending > 0
                       ? "1px solid rgba(245,158,11,0.25)"
                       : "none",
                 }}
               >
                 <Clock
                   className="w-3.5 h-3.5 mx-auto mb-0.5"
-                  style={{
-                    color: group.pending_count > 0 ? "#f59e0b" : "#C8BFB5",
-                  }}
+                  style={{ color: realPending > 0 ? "#f59e0b" : "#C8BFB5" }}
                 />
                 <p
                   className="text-[16px] font-black leading-none"
-                  style={{
-                    color: group.pending_count > 0 ? "#f59e0b" : "#9B8E82",
-                  }}
+                  style={{ color: realPending > 0 ? "#f59e0b" : "#9B8E82" }}
                 >
-                  {group.pending_count}
+                  {realPending}
                 </p>
                 <p className="text-[9px] text-[#9B8E82] mt-0.5">معلق</p>
               </div>
@@ -1035,12 +1046,12 @@ function GroupDetails({
               {filtered.length !== students.length ? `/${students.length}` : ""}
               )
             </span>
-            {group.pending_count > 0 && enrollFilter !== "PENDING" && (
+            {realPending > 0 && enrollFilter !== "PENDING" && (
               <button
                 onClick={() => setEnrollFilter("PENDING")}
                 className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 hover:bg-amber-200 transition-colors"
               >
-                {group.pending_count} معلق
+                {realPending} معلق
               </button>
             )}
             {/* ✅ Fix: added FINISHED + REJECTED to filter pills */}
