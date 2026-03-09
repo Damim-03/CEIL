@@ -1,14 +1,6 @@
 /* ===============================================================
    OwnerFeeAnalytics.tsx
-   
-   📁 src/app/owner/pages/FeeAnalytics/OwnerFeeAnalytics.tsx
-   
-   🔒 Owner-exclusive: Fee analytics page
-   ✅ Daily / Monthly / Yearly views
-   ✅ Who paid, when, who confirmed
-   ✅ Who hasn't paid, when due
-   ✅ Revenue charts & breakdowns
-   ✅ Dark mode · i18n (AR / EN / FR)
+   ✅ + Edit Fee Amount modal (for unpaid fees only)
 =============================================================== */
 
 import { useState, useMemo } from "react";
@@ -28,9 +20,15 @@ import {
   CreditCard,
   Banknote,
   Eye,
+  Pencil,
+  X,
+  Save,
+  DollarSign,
 } from "lucide-react";
 import PageLoader from "../../../components/PageLoader";
 import { useOwnerFeeAnalytics } from "../../../hooks/owner/Useowner.hooks";
+import { useUpdateFee } from "../../../hooks/admin/useAdmin";
+import { toast } from "sonner";
 
 /* ═══ Helpers ═══ */
 const formatCurrency = (n: number) => `${Number(n).toLocaleString("en-US")} DA`;
@@ -64,10 +62,207 @@ const MONTHS_SHORT = [
   "Dec",
 ];
 
+/* ═══ Edit Fee Modal ═══ */
+function EditFeeModal({
+  fee,
+  onClose,
+  onSuccess,
+}: {
+  fee: any;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const { t } = useTranslation();
+  const { mutate: updateFee, isPending } = useUpdateFee();
+  const [amount, setAmount] = useState(String(fee.amount));
+  const [error, setError] = useState("");
+
+  const studentName = fee.student
+    ? `${fee.student.first_name} ${fee.student.last_name}`
+    : t("owner.feeAnalytics.unknownStudent", "Unknown Student");
+
+  const diff = Number(amount) - fee.amount;
+  const hasDiff = !isNaN(Number(amount)) && Number(amount) !== fee.amount;
+
+  const handleSave = () => {
+    const val = Number(amount);
+    if (isNaN(val) || val <= 0) {
+      setError("المبلغ يجب أن يكون رقماً موجباً");
+      return;
+    }
+    if (val === fee.amount) {
+      setError("المبلغ لم يتغير");
+      return;
+    }
+    updateFee(
+      { feeId: fee.fee_id, payload: { amount: val } },
+      {
+        onSuccess: () => {
+          toast.success(`تم تعديل الرسوم: ${formatCurrency(val)}`);
+          onSuccess();
+          onClose();
+        },
+        onError: (e: any) => {
+          toast.error(e?.response?.data?.message || "فشل تعديل الرسوم");
+        },
+      },
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative z-10 w-full max-w-md bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] shadow-2xl overflow-hidden">
+        {/* Top accent bar */}
+        <div className="h-1 w-full bg-gradient-to-r from-[#C4A035] to-[#2B6F5E]" />
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#C4A035]/10 dark:bg-[#D4A843]/10 flex items-center justify-center">
+              <Pencil className="w-5 h-5 text-[#C4A035] dark:text-[#D4A843]" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                {t("owner.feeAnalytics.editFee", "تعديل الرسوم")}
+              </h3>
+              <p className="text-xs text-[#BEB29E] dark:text-[#666666] mt-0.5">
+                {studentName}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-[#6B5D4F] dark:text-[#666666] hover:bg-[#D8CDC0]/20 dark:hover:bg-[#2A2A2A] transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 space-y-5">
+          {/* Student + Course info */}
+          <div className="p-4 bg-[#D8CDC0]/10 dark:bg-[#151515] rounded-xl space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-[#6B5D4F] dark:text-[#888888]">الطالب</span>
+              <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                {studentName}
+              </span>
+            </div>
+            {fee.course && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-[#6B5D4F] dark:text-[#888888]">
+                  الدورة
+                </span>
+                <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] text-right max-w-[200px] truncate">
+                  {fee.course.course_name}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-[#6B5D4F] dark:text-[#888888]">
+                المبلغ الحالي
+              </span>
+              <span className="font-bold text-[#C4A035] dark:text-[#D4A843]">
+                {formatCurrency(fee.amount)}
+              </span>
+            </div>
+          </div>
+
+          {/* Amount Input */}
+          <div>
+            <label className="block text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
+              المبلغ الجديد (DA)
+            </label>
+            <div className="relative">
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-[#C4A035]/10 dark:bg-[#D4A843]/10 flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843]" />
+              </div>
+              <input
+                type="number"
+                min="1"
+                value={amount}
+                onChange={(e) => {
+                  setAmount(e.target.value);
+                  setError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                className="w-full pr-14 pl-4 py-3 rounded-xl border-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] bg-white dark:bg-[#111111] text-[#1B1B1B] dark:text-[#E5E5E5] text-lg font-bold focus:outline-none focus:border-[#C4A035] dark:focus:border-[#D4A843] transition-colors placeholder:text-[#BEB29E] dark:placeholder:text-[#555555]"
+                placeholder="أدخل المبلغ..."
+                dir="ltr"
+              />
+            </div>
+            {error && (
+              <p className="mt-1.5 text-xs text-red-500 dark:text-red-400 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5" /> {error}
+              </p>
+            )}
+          </div>
+
+          {/* Diff preview */}
+          {hasDiff && !isNaN(Number(amount)) && Number(amount) > 0 && (
+            <div
+              className={`flex items-center justify-between p-3 rounded-xl text-sm font-medium ${
+                diff > 0
+                  ? "bg-[#2B6F5E]/8 dark:bg-[#2B6F5E]/10 border border-[#2B6F5E]/20 dark:border-[#2B6F5E]/20"
+                  : "bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30"
+              }`}
+            >
+              <span
+                className={
+                  diff > 0
+                    ? "text-[#2B6F5E] dark:text-[#4ADE80]"
+                    : "text-red-600 dark:text-red-400"
+                }
+              >
+                {diff > 0 ? "⬆ زيادة" : "⬇ تخفيض"}
+              </span>
+              <span
+                className={`font-bold ${diff > 0 ? "text-[#2B6F5E] dark:text-[#4ADE80]" : "text-red-600 dark:text-red-400"}`}
+              >
+                {diff > 0 ? "+" : ""}
+                {formatCurrency(diff)}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex gap-3 px-6 pb-6">
+          <button
+            onClick={onClose}
+            disabled={isPending}
+            className="flex-1 py-2.5 rounded-xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-sm font-medium text-[#6B5D4F] dark:text-[#888888] hover:bg-[#D8CDC0]/15 dark:hover:bg-[#222222] transition-colors disabled:opacity-50"
+          >
+            إلغاء
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={isPending || !amount || Number(amount) === fee.amount}
+            className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#C4A035] to-[#C4A035]/80 hover:from-[#B8922E] hover:to-[#B8922E]/80 text-white text-sm font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-[#C4A035]/20 dark:shadow-[#C4A035]/10"
+          >
+            {isPending ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            حفظ التعديل
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function OwnerFeeAnalytics() {
   const { t } = useTranslation();
 
-  // ── State ──
   const [period, setPeriod] = useState<"daily" | "monthly" | "yearly">(
     "monthly",
   );
@@ -84,31 +279,27 @@ export default function OwnerFeeAnalytics() {
   );
   const [page, setPage] = useState(1);
   const [activeTab, setActiveTab] = useState<"paid" | "unpaid">("paid");
+  const [editingFee, setEditingFee] = useState<any | null>(null);
 
-  // ── Date for API ──
   const apiDate = useMemo(() => {
     if (period === "daily") return dailyDate;
     if (period === "yearly") return yearDate;
     return monthDate;
   }, [period, dailyDate, monthDate, yearDate]);
 
-  // ── Fetch ──
-  const { data, isLoading, isError } = useOwnerFeeAnalytics({
+  const { data, isLoading, isError, refetch } = useOwnerFeeAnalytics({
     period,
     date: apiDate,
     page,
     limit: 15,
   });
 
-  // ── Display label ──
-  // ── Display label ──
   const periodLabel = data?.period_label;
-  const displayLabel = useMemo(() => {
-    if (periodLabel) return periodLabel;
-    return apiDate;
-  }, [periodLabel, apiDate]);
+  const displayLabel = useMemo(
+    () => periodLabel ?? apiDate,
+    [periodLabel, apiDate],
+  );
 
-  // ── Navigation ──
   const navigateDate = (dir: -1 | 1) => {
     if (period === "daily") {
       const d = new Date(dailyDate);
@@ -140,37 +331,34 @@ export default function OwnerFeeAnalytics() {
 
   return (
     <div className="space-y-6">
-      {/* ═══════════ HEADER ═══════════ */}
+      {/* HEADER */}
       <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#C4A035] to-[#2B6F5E]"></div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-lg shadow-[#C4A035]/20 dark:shadow-[#C4A035]/10">
-              <BarChart3 className="w-7 h-7 text-white" />
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-lg shadow-[#C4A035]/20 dark:shadow-[#C4A035]/10">
+            <BarChart3 className="w-7 h-7 text-white" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                {t("owner.feeAnalytics.title", "Fee Analytics")}
+              </h1>
+              <span className="px-2 py-0.5 bg-[#C4A035]/15 dark:bg-[#C4A035]/20 text-[#9A7D2A] dark:text-[#D4A843] text-[10px] font-bold rounded-full uppercase tracking-wider">
+                {t("owner.feeAnalytics.ownerBadge", "Owner")}
+              </span>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                  {t("owner.feeAnalytics.title", "Fee Analytics")}
-                </h1>
-                <span className="px-2 py-0.5 bg-[#C4A035]/15 dark:bg-[#C4A035]/20 text-[#9A7D2A] dark:text-[#D4A843] text-[10px] font-bold rounded-full uppercase tracking-wider">
-                  {t("owner.feeAnalytics.ownerBadge", "Owner")}
-                </span>
-              </div>
-              <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
-                {t(
-                  "owner.feeAnalytics.subtitle",
-                  "Track payments, revenue, and outstanding fees",
-                )}
-              </p>
-            </div>
+            <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
+              {t(
+                "owner.feeAnalytics.subtitle",
+                "Track payments, revenue, and outstanding fees",
+              )}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* ═══════════ PERIOD SELECTOR + DATE NAV ═══════════ */}
+      {/* PERIOD SELECTOR + DATE NAV */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        {/* Period Tabs */}
         <div className="flex gap-1 p-1 bg-[#D8CDC0]/20 dark:bg-[#151515] rounded-xl">
           {(["daily", "monthly", "yearly"] as const).map((p) => (
             <button
@@ -179,11 +367,7 @@ export default function OwnerFeeAnalytics() {
                 setPeriod(p);
                 setPage(1);
               }}
-              className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                period === p
-                  ? "bg-white dark:bg-[#1A1A1A] text-[#C4A035] dark:text-[#D4A843] shadow-sm dark:shadow-black/20"
-                  : "text-[#6B5D4F] dark:text-[#666666] hover:text-[#1B1B1B] dark:hover:text-[#AAAAAA]"
-              }`}
+              className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${period === p ? "bg-white dark:bg-[#1A1A1A] text-[#C4A035] dark:text-[#D4A843] shadow-sm dark:shadow-black/20" : "text-[#6B5D4F] dark:text-[#666666] hover:text-[#1B1B1B] dark:hover:text-[#AAAAAA]"}`}
             >
               {t(
                 `owner.feeAnalytics.${p}`,
@@ -192,8 +376,6 @@ export default function OwnerFeeAnalytics() {
             </button>
           ))}
         </div>
-
-        {/* Date Navigation */}
         <div className="flex items-center gap-2 bg-white dark:bg-[#1A1A1A] border border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-xl px-2 py-1.5">
           <button
             onClick={() => navigateDate(-1)}
@@ -257,7 +439,7 @@ export default function OwnerFeeAnalytics() {
         </div>
       </div>
 
-      {/* ═══════════ SUMMARY CARDS ═══════════ */}
+      {/* SUMMARY CARDS */}
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <SummaryCard
@@ -291,7 +473,7 @@ export default function OwnerFeeAnalytics() {
         </div>
       )}
 
-      {/* ═══════════ CHART — Daily/Monthly Breakdown ═══════════ */}
+      {/* CHART */}
       {(dailyBreakdown.length > 0 || monthlyBreakdown.length > 0) && (
         <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#8DB896]"></div>
@@ -305,8 +487,6 @@ export default function OwnerFeeAnalytics() {
                 : t("owner.feeAnalytics.dailyBreakdown", "Daily Breakdown")}
             </h3>
           </div>
-
-          {/* Simple bar chart */}
           <div className="overflow-x-auto">
             <div className="flex items-end gap-1.5 min-w-[500px] h-[180px] pt-4">
               {(period === "yearly" ? monthlyBreakdown : dailyBreakdown).map(
@@ -327,7 +507,7 @@ export default function OwnerFeeAnalytics() {
                     <div
                       key={idx}
                       className="flex flex-col items-center gap-1 flex-1 min-w-[28px]"
-                      title={`${formatCurrency(val)} · ${item.paid_count || item.count || 0} ${t("owner.feeAnalytics.payments", "payments")}`}
+                      title={`${formatCurrency(val)} · ${item.paid_count || item.count || 0} payments`}
                     >
                       <span className="text-[9px] font-medium text-[#6B5D4F] dark:text-[#888888]">
                         {val > 0
@@ -352,11 +532,9 @@ export default function OwnerFeeAnalytics() {
         </div>
       )}
 
-      {/* ═══════════ PAID / UNPAID TABS ═══════════ */}
+      {/* PAID / UNPAID TABS */}
       <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden">
         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#C4A035] to-[#C4A035]/60"></div>
-
-        {/* Tab Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
           <div className="flex gap-1 p-1 bg-[#D8CDC0]/20 dark:bg-[#151515] rounded-xl">
             <button
@@ -364,11 +542,7 @@ export default function OwnerFeeAnalytics() {
                 setActiveTab("paid");
                 setPage(1);
               }}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                activeTab === "paid"
-                  ? "bg-white dark:bg-[#1A1A1A] text-[#2B6F5E] dark:text-[#4ADE80] shadow-sm dark:shadow-black/20"
-                  : "text-[#6B5D4F] dark:text-[#666666]"
-              }`}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === "paid" ? "bg-white dark:bg-[#1A1A1A] text-[#2B6F5E] dark:text-[#4ADE80] shadow-sm dark:shadow-black/20" : "text-[#6B5D4F] dark:text-[#666666]"}`}
             >
               <CheckCircle className="w-4 h-4" />
               {t("owner.feeAnalytics.paidFees", "Paid Fees")}
@@ -383,11 +557,7 @@ export default function OwnerFeeAnalytics() {
                 setActiveTab("unpaid");
                 setPage(1);
               }}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                activeTab === "unpaid"
-                  ? "bg-white dark:bg-[#1A1A1A] text-red-600 dark:text-red-400 shadow-sm dark:shadow-black/20"
-                  : "text-[#6B5D4F] dark:text-[#666666]"
-              }`}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === "unpaid" ? "bg-white dark:bg-[#1A1A1A] text-red-600 dark:text-red-400 shadow-sm dark:shadow-black/20" : "text-[#6B5D4F] dark:text-[#666666]"}`}
             >
               <XCircle className="w-4 h-4" />
               {t("owner.feeAnalytics.unpaidFees", "Unpaid Fees")}
@@ -400,7 +570,6 @@ export default function OwnerFeeAnalytics() {
           </div>
         </div>
 
-        {/* Tab Content */}
         <div className="divide-y divide-[#D8CDC0]/30 dark:divide-[#2A2A2A]">
           {activeTab === "paid" ? (
             paidFees.length > 0 ? (
@@ -412,14 +581,17 @@ export default function OwnerFeeAnalytics() {
             )
           ) : unpaidFees.length > 0 ? (
             unpaidFees.map((fee: any) => (
-              <UnpaidFeeRow key={fee.fee_id} fee={fee} />
+              <UnpaidFeeRow
+                key={fee.fee_id}
+                fee={fee}
+                onEdit={() => setEditingFee(fee)}
+              />
             ))
           ) : (
             <EmptyState type="unpaid" />
           )}
         </div>
 
-        {/* Pagination */}
         {pagination && pagination.pages > 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
             <p className="text-xs text-[#BEB29E] dark:text-[#666666]">
@@ -442,11 +614,7 @@ export default function OwnerFeeAnalytics() {
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
-                    page === p
-                      ? "bg-[#C4A035] text-white"
-                      : "text-[#6B5D4F] dark:text-[#888888] hover:bg-[#D8CDC0]/15 dark:hover:bg-[#222222]"
-                  }`}
+                  className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${page === p ? "bg-[#C4A035] text-white" : "text-[#6B5D4F] dark:text-[#888888] hover:bg-[#D8CDC0]/15 dark:hover:bg-[#222222]"}`}
                 >
                   {p}
                 </button>
@@ -462,13 +630,20 @@ export default function OwnerFeeAnalytics() {
           </div>
         )}
       </div>
+
+      {/* EDIT FEE MODAL */}
+      {editingFee && (
+        <EditFeeModal
+          fee={editingFee}
+          onClose={() => setEditingFee(null)}
+          onSuccess={() => refetch()}
+        />
+      )}
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   SUB-COMPONENTS
-═══════════════════════════════════════════════════════════ */
+/* ═══ SUB-COMPONENTS ═══ */
 
 function SummaryCard({
   icon: Icon,
@@ -537,29 +712,22 @@ function SummaryCard({
   );
 }
 
-/* ── Paid Fee Row ── */
 function PaidFeeRow({ fee }: { fee: any }) {
   const { t } = useTranslation();
-
   return (
     <div className="p-5 hover:bg-[#D8CDC0]/5 dark:hover:bg-[#222222] transition-colors">
       <div className="flex items-start gap-4">
-        {/* Status Icon */}
         <div className="w-10 h-10 rounded-xl bg-[#8DB896]/12 dark:bg-[#4ADE80]/10 flex items-center justify-center shrink-0">
           <CheckCircle className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
         </div>
-
-        {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div>
-              {/* Student */}
               <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {fee.student
                   ? `${fee.student.first_name} ${fee.student.last_name}`
                   : t("owner.feeAnalytics.unknownStudent", "Unknown Student")}
               </p>
-              {/* Course */}
               {fee.course && (
                 <p className="text-xs text-[#6B5D4F] dark:text-[#888888] mt-0.5">
                   {fee.course.course_name}
@@ -572,13 +740,10 @@ function PaidFeeRow({ fee }: { fee: any }) {
                 </p>
               )}
             </div>
-            {/* Amount */}
             <p className="text-lg font-bold text-[#2B6F5E] dark:text-[#4ADE80] shrink-0">
               {formatCurrency(fee.amount)}
             </p>
           </div>
-
-          {/* Details Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 p-3 bg-[#D8CDC0]/8 dark:bg-[#151515] rounded-xl">
             <DetailItem
               icon={Calendar}
@@ -613,8 +778,7 @@ function PaidFeeRow({ fee }: { fee: any }) {
   );
 }
 
-/* ── Unpaid Fee Row ── */
-function UnpaidFeeRow({ fee }: { fee: any }) {
+function UnpaidFeeRow({ fee, onEdit }: { fee: any; onEdit: () => void }) {
   const { t } = useTranslation();
   const now = new Date();
   const dueDate = fee.due_date ? new Date(fee.due_date) : null;
@@ -623,13 +787,8 @@ function UnpaidFeeRow({ fee }: { fee: any }) {
   return (
     <div className="p-5 hover:bg-[#D8CDC0]/5 dark:hover:bg-[#222222] transition-colors">
       <div className="flex items-start gap-4">
-        {/* Status Icon */}
         <div
-          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-            isOverdue
-              ? "bg-red-100 dark:bg-red-950/30"
-              : "bg-[#C4A035]/10 dark:bg-[#D4A843]/10"
-          }`}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isOverdue ? "bg-red-100 dark:bg-red-950/30" : "bg-[#C4A035]/10 dark:bg-[#D4A843]/10"}`}
         >
           {isOverdue ? (
             <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
@@ -637,8 +796,6 @@ function UnpaidFeeRow({ fee }: { fee: any }) {
             <Clock className="w-5 h-5 text-[#C4A035] dark:text-[#D4A843]" />
           )}
         </div>
-
-        {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -660,18 +817,23 @@ function UnpaidFeeRow({ fee }: { fee: any }) {
                 </p>
               )}
             </div>
-            <p
-              className={`text-lg font-bold shrink-0 ${
-                isOverdue
-                  ? "text-red-600 dark:text-red-400"
-                  : "text-[#C4A035] dark:text-[#D4A843]"
-              }`}
-            >
-              {formatCurrency(fee.amount)}
-            </p>
+            <div className="flex items-center gap-2 shrink-0">
+              <p
+                className={`text-lg font-bold ${isOverdue ? "text-red-600 dark:text-red-400" : "text-[#C4A035] dark:text-[#D4A843]"}`}
+              >
+                {formatCurrency(fee.amount)}
+              </p>
+              {/* ✅ Edit Button */}
+              <button
+                onClick={onEdit}
+                title="تعديل المبلغ"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#C4A035]/10 dark:bg-[#D4A843]/10 hover:bg-[#C4A035]/20 dark:hover:bg-[#D4A843]/20 text-[#C4A035] dark:text-[#D4A843] text-xs font-semibold transition-all border border-[#C4A035]/20 dark:border-[#D4A843]/20 hover:border-[#C4A035]/40"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                تعديل
+              </button>
+            </div>
           </div>
-
-          {/* Details */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3 p-3 bg-[#D8CDC0]/8 dark:bg-[#151515] rounded-xl">
             <DetailItem
               icon={Calendar}
@@ -697,7 +859,6 @@ function UnpaidFeeRow({ fee }: { fee: any }) {
   );
 }
 
-/* ── Detail Item ── */
 function DetailItem({
   icon: Icon,
   label,
@@ -717,11 +878,7 @@ function DetailItem({
         <Icon className="w-3 h-3" /> {label}
       </p>
       <p
-        className={`text-xs font-semibold truncate ${
-          highlight
-            ? "text-[#2B6F5E] dark:text-[#4ADE80]"
-            : "text-[#1B1B1B] dark:text-[#E5E5E5]"
-        } ${mono ? "font-mono text-[11px] bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] px-1.5 py-0.5 rounded inline-block" : ""}`}
+        className={`text-xs font-semibold truncate ${highlight ? "text-[#2B6F5E] dark:text-[#4ADE80]" : "text-[#1B1B1B] dark:text-[#E5E5E5]"} ${mono ? "font-mono text-[11px] bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] px-1.5 py-0.5 rounded inline-block" : ""}`}
       >
         {value}
       </p>
@@ -729,10 +886,8 @@ function DetailItem({
   );
 }
 
-/* ── Empty State ── */
 function EmptyState({ type }: { type: "paid" | "unpaid" }) {
   const { t } = useTranslation();
-
   return (
     <div className="text-center py-16">
       <div className="w-16 h-16 rounded-2xl bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] flex items-center justify-center mx-auto mb-4">
