@@ -89,7 +89,7 @@ const GroupDetailsPage = () => {
   // ✅ Fix: fetch students independently — avoids stale cache from groups list
   // (the groups list endpoint strips enrollments[], details endpoint keeps them)
   const { data: studentsData, isLoading: studentsLoading } =
-    useAdminGroupStudents(groupId ?? null);
+    useAdminGroupStudents(groupId ?? null, { limit: 200 });
 
   const updateGroup = useUpdateGroup();
   const deleteGroup = useDeleteGroup();
@@ -109,6 +109,7 @@ const GroupDetailsPage = () => {
   const [assignInstructorOpen, setAssignInstructorOpen] = useState(false);
   const [teacherInfoOpen, setTeacherInfoOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
@@ -284,6 +285,9 @@ const GroupDetailsPage = () => {
 
   const filteredStudents = students.filter((student: any) => {
     if (!student) return false;
+    // Status filter
+    if (statusFilter !== "ALL" && student.registration_status !== statusFilter)
+      return false;
     const sl = searchTerm.toLowerCase();
     return (
       (student.first_name || "").toLowerCase().includes(sl) ||
@@ -588,6 +592,64 @@ const GroupDetailsPage = () => {
               />
             </div>
           </div>
+
+          {/* Status Filter Tabs */}
+          {students.length > 0 && (
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {(
+                [
+                  "ALL",
+                  "VALIDATED",
+                  "PAID",
+                  "PENDING",
+                  "FINISHED",
+                  "REJECTED",
+                ] as const
+              ).map((s) => {
+                const count =
+                  s === "ALL"
+                    ? students.length
+                    : students.filter((st: any) => st.registration_status === s)
+                        .length;
+                if (s !== "ALL" && count === 0) return null;
+                const colors: Record<string, string> = {
+                  ALL: "bg-[#2B6F5E]/10 text-[#2B6F5E] border-[#2B6F5E]/30 dark:bg-[#2B6F5E]/20 dark:text-[#4ADE80]",
+                  VALIDATED:
+                    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400",
+                  PAID: "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400",
+                  PENDING:
+                    "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400",
+                  FINISHED:
+                    "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400",
+                  REJECTED:
+                    "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400",
+                };
+                const labels: Record<string, string> = {
+                  ALL: "الكل",
+                  VALIDATED: "مؤكد",
+                  PAID: "مدفوع",
+                  PENDING: "معلق",
+                  FINISHED: "منتهي",
+                  REJECTED: "مرفوض",
+                };
+                const isActive = statusFilter === s;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setStatusFilter(s)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                      isActive
+                        ? colors[s] +
+                          " ring-2 ring-offset-1 ring-current/30 font-bold"
+                        : "bg-transparent text-[#6B5D4F] border-[#D8CDC0]/40 dark:text-[#888888] dark:border-[#2A2A2A] hover:border-[#2B6F5E]/40"
+                    }`}
+                  >
+                    {labels[s]} ({count})
+                  </button>
+                );
+              })}
+            </div>
+          )}
           {studentsLoading && students.length === 0 ? (
             <div className="border border-[#D8CDC0]/40 dark:border-[#2A2A2A] rounded-xl p-8 text-center">
               <div className="w-8 h-8 border-2 border-[#2B6F5E] border-t-transparent rounded-full animate-spin mx-auto mb-3" />

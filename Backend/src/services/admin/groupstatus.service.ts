@@ -267,8 +267,8 @@ export async function getGroupStudents(
 
   const where: any = {
     group_id,
-    // ✅ إذا لم يُحدد status نجلب VALIDATED + PAID + PENDING معاً
-    registration_status: status ?? { in: ["VALIDATED", "PAID", "PENDING"] },
+    // ✅ إذا لم يُحدد status نجلب كل الحالات (VALIDATED + PAID + PENDING + FINISHED + REJECTED)
+    ...(status ? { registration_status: status } : {}),
   };
 
   const [enrollments, total] = await Promise.all([
