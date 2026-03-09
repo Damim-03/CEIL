@@ -1,8 +1,8 @@
 // ================================================================
 // 📦 src/pages/admin/groups/AdminGroupsPage.tsx
-// ✅ Split view — list left + details right
-// ✅ Real API via useAdminGroups hooks
-// ✅ Status change, teacher assign, student transfer
+// ✅ Fix: useAdminGroupStudents with limit:200 to fetch ALL students
+// ✅ Fix: Filter pills include FINISHED + REJECTED
+// ✅ Fix: ENROLL_STATUS_CFG includes REJECTED
 // ================================================================
 
 import { useState, useMemo } from "react";
@@ -79,6 +79,7 @@ const STATUS_CFG: Record<
   },
 };
 
+// ✅ Fix: added REJECTED
 const ENROLL_STATUS_CFG: Record<
   string,
   { ar: string; color: string; bg: string }
@@ -168,11 +169,9 @@ function GroupRow({
       }`}
     >
       <div className="flex items-center gap-3">
-        {/* Flag avatar */}
         <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 bg-[#F5F0EB] dark:bg-[#1A1A1A]">
           {flag}
         </div>
-
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-1">
             <span
@@ -182,7 +181,6 @@ function GroupRow({
             </span>
             <StatusBadge status={group.status} />
           </div>
-
           <div className="flex items-center gap-2">
             <span
               className="px-1.5 py-0.5 rounded text-[10px] font-bold"
@@ -197,8 +195,6 @@ function GroupRow({
               {group.enrolled_count + group.pending_count}/{group.max_students}
             </span>
           </div>
-
-          {/* mini bar */}
           <div className="mt-1.5 h-1 rounded-full bg-[#F0EBE5] dark:bg-[#2A2A2A] overflow-hidden">
             <div
               className="h-full rounded-full transition-all"
@@ -210,12 +206,30 @@ function GroupRow({
             />
           </div>
         </div>
-
         <ChevronRight
           className={`w-4 h-4 shrink-0 transition-transform ${selected ? "text-[#2B6F5E] dark:text-[#4ADE80] rotate-90" : "text-[#C8BFB5] dark:text-[#333]"}`}
         />
       </div>
     </button>
+  );
+}
+
+// ─── Overlay ──────────────────────────────────────────────────
+function Overlay({
+  children,
+  onClose,
+}: {
+  children: React.ReactNode;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative z-10 w-full flex justify-center">{children}</div>
+    </div>
   );
 }
 
@@ -256,14 +270,11 @@ function StatusModal({
           transition: "border-color 0.3s",
         }}
       >
-        {/* animated top bar */}
         <div
           className="h-[3px] w-full transition-all duration-300"
           style={{ background: previewCfg.color }}
         />
-
         <div className="p-5">
-          {/* header row */}
           <div className="flex items-start justify-between mb-5">
             <div>
               <p className="text-[10px] font-semibold text-[#9B8E82] uppercase tracking-[0.12em] mb-1">
@@ -273,7 +284,6 @@ function StatusModal({
                 {group.name}
               </h3>
             </div>
-            {/* live preview pill */}
             <div
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition-all duration-300"
               style={{
@@ -288,8 +298,6 @@ function StatusModal({
               {previewCfg.ar}
             </div>
           </div>
-
-          {/* 3-segment pill control */}
           <div className="relative flex p-1 rounded-2xl bg-[#F5F0EB] dark:bg-[#1A1A1A] mb-4">
             {statuses.map((s) => {
               const cfg = STATUS_CFG[s];
@@ -335,15 +343,12 @@ function StatusModal({
               );
             })}
           </div>
-
-          {/* FINISHED warning — only when active group is not already finished */}
           {(hovered === "FINISHED" || preview === "FINISHED") &&
             group.status !== "FINISHED" && (
               <div className="mb-3 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 text-[11px] text-amber-600 dark:text-amber-400 text-center">
                 ⚠️ سيتم إغلاق جميع التسجيلات النشطة
               </div>
             )}
-
           {isPending ? (
             <div className="flex justify-center py-2">
               <Loader2 className="w-4 h-4 animate-spin text-[#9B8E82]" />
@@ -406,7 +411,6 @@ function TeacherModal({
           تعيين أستاذ
         </h3>
         <p className="text-[12px] text-[#9B8E82] mb-4">{group.name}</p>
-
         <div className="relative mb-3">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9B8E82]" />
           <input
@@ -416,7 +420,6 @@ function TeacherModal({
             className="w-full h-9 pr-9 pl-3 rounded-xl border border-[#E8E0D5] dark:border-[#2A2A2A] bg-[#F5F0EB] dark:bg-[#111] text-[13px] text-[#1B1B1B] dark:text-[#E5E5E5] outline-none"
           />
         </div>
-
         <div className="max-h-60 overflow-y-auto space-y-1 mb-3">
           {isLoading ? (
             <div className="py-8 flex justify-center">
@@ -430,11 +433,7 @@ function TeacherModal({
                   key={t.teacher_id}
                   onClick={() => assign(t.teacher_id)}
                   disabled={isPending}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
-                    isCurrent
-                      ? "bg-[#EDF6F3] dark:bg-[#0F2420]"
-                      : "hover:bg-[#F5F0EB] dark:hover:bg-[#111]"
-                  }`}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isCurrent ? "bg-[#EDF6F3] dark:bg-[#0F2420]" : "hover:bg-[#F5F0EB] dark:hover:bg-[#111]"}`}
                 >
                   <div className="w-8 h-8 rounded-full bg-[#2B6F5E] flex items-center justify-center text-white text-[11px] font-bold shrink-0">
                     {t.first_name[0]}
@@ -457,7 +456,6 @@ function TeacherModal({
             </p>
           )}
         </div>
-
         {group.teacher && (
           <button
             onClick={() => assign(null)}
@@ -475,151 +473,6 @@ function TeacherModal({
         </button>
       </div>
     </Overlay>
-  );
-}
-
-// ─── Transfer Modal ───────────────────────────────────────────
-function TransferModal({
-  student,
-  fromGroup,
-  allGroups,
-  onClose,
-}: {
-  student: GroupStudent;
-  fromGroup: Group;
-  allGroups: Group[];
-  onClose: () => void;
-}) {
-  const { mutate, isPending } = useTransferStudent();
-  const [search, setSearch] = useState("");
-  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
-
-  const eligible = allGroups.filter(
-    (g) =>
-      g.group_id !== fromGroup.group_id &&
-      g.course.course_id === fromGroup.course.course_id &&
-      g.status !== "FINISHED" &&
-      !g.is_full &&
-      g.name.toLowerCase().includes(search.toLowerCase()),
-  );
-
-  const handle = () => {
-    if (!selectedGroup) return;
-    mutate(
-      {
-        fromGroupId: fromGroup.group_id,
-        studentId: student.student.student_id,
-        toGroupId: selectedGroup.group_id,
-      },
-      {
-        onSuccess: () => {
-          toast.success(
-            `تم نقل ${student.student.first_name} إلى ${selectedGroup.name}`,
-          );
-          onClose();
-        },
-        onError: (e: any) =>
-          toast.error(e?.response?.data?.message ?? "خطأ في النقل"),
-      },
-    );
-  };
-
-  return (
-    <Overlay onClose={onClose}>
-      <div className="bg-white dark:bg-[#161616] rounded-2xl p-6 w-full max-w-md shadow-2xl">
-        <h3 className="text-base font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-1">
-          نقل الطالب
-        </h3>
-        <p className="text-[12px] text-[#9B8E82] mb-4">
-          {student.student.first_name} {student.student.last_name} — من:{" "}
-          <span className="font-semibold">{fromGroup.name}</span>
-        </p>
-
-        <div className="relative mb-3">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9B8E82]" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="ابحث عن فوج..."
-            className="w-full h-9 pr-9 pl-3 rounded-xl border border-[#E8E0D5] dark:border-[#2A2A2A] bg-[#F5F0EB] dark:bg-[#111] text-[13px] outline-none text-[#1B1B1B] dark:text-[#E5E5E5]"
-          />
-        </div>
-
-        <div className="max-h-52 overflow-y-auto space-y-1 mb-4">
-          {eligible.length === 0 ? (
-            <p className="py-8 text-center text-[12px] text-[#9B8E82]">
-              لا توجد أفواج متاحة لنفس المادة
-            </p>
-          ) : (
-            eligible.map((g) => (
-              <button
-                key={g.group_id}
-                onClick={() => setSelectedGroup(g)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all ${
-                  selectedGroup?.group_id === g.group_id
-                    ? "border-[#2B6F5E] bg-[#EDF6F3] dark:bg-[#0F2420]"
-                    : "border-transparent hover:bg-[#F5F0EB] dark:hover:bg-[#111]"
-                }`}
-              >
-                <div className="flex-1 text-start">
-                  <p className="text-[13px] font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
-                    {g.name}
-                  </p>
-                  <p className="text-[11px] text-[#9B8E82]">
-                    {g.level.replace("_", "-")} · {g.enrolled_count}/
-                    {g.max_students}
-                  </p>
-                </div>
-                <StatusBadge status={g.status} />
-                {selectedGroup?.group_id === g.group_id && (
-                  <Check className="w-4 h-4 text-[#2B6F5E] shrink-0" />
-                )}
-              </button>
-            ))
-          )}
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border border-[#E8E0D5] dark:border-[#2A2A2A] text-[13px] text-[#9B8E82]"
-          >
-            إلغاء
-          </button>
-          <button
-            onClick={handle}
-            disabled={!selectedGroup || isPending}
-            className="flex-1 py-2.5 rounded-xl bg-[#2B6F5E] hover:bg-[#235C4E] text-white text-[13px] font-semibold flex items-center justify-center gap-2 disabled:opacity-40 transition-colors"
-          >
-            {isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <ArrowLeftRight className="w-4 h-4" />
-            )}
-            نقل
-          </button>
-        </div>
-      </div>
-    </Overlay>
-  );
-}
-
-// ─── Overlay ──────────────────────────────────────────────────
-function Overlay({
-  children,
-  onClose,
-}: {
-  children: React.ReactNode;
-  onClose: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="relative z-10 w-full flex justify-center">{children}</div>
-    </div>
   );
 }
 
@@ -646,7 +499,6 @@ function StudentDetailModal({
   const lvl = LEVEL_COLORS[group.level] ?? LEVEL_COLORS.A1;
   const flag = COURSE_FLAG[group.course.course_code] ?? COURSE_FLAG.default;
 
-  // كل الأفواج من نفس المادة عدا الفوج الحالي
   const eligibleGroups = allGroups.filter(
     (g) =>
       g.group_id !== group.group_id &&
@@ -685,7 +537,6 @@ function StudentDetailModal({
   return (
     <Overlay onClose={onClose}>
       <div className="bg-white dark:bg-[#161616] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
-        {/* ── Header ── */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#F0EBE5] dark:border-[#1E1E1E]">
           <div className="flex items-center gap-2">
             {step === "transfer" && (
@@ -711,7 +562,6 @@ function StudentDetailModal({
         {step === "info" ? (
           <>
             <div className="p-5 space-y-4">
-              {/* Avatar + name */}
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-[#2B6F5E]/10 flex items-center justify-center text-[15px] font-bold text-[#2B6F5E] dark:text-[#4ADE80] shrink-0">
                   {s.first_name[0]}
@@ -730,8 +580,6 @@ function StudentDetailModal({
                   {cfg.ar}
                 </span>
               </div>
-
-              {/* Info grid */}
               <div className="grid grid-cols-2 gap-2">
                 {s.phone_number && (
                   <div className="bg-[#F5F0EB] dark:bg-[#111] rounded-xl px-3 py-2">
@@ -771,8 +619,6 @@ function StudentDetailModal({
                   </div>
                 )}
               </div>
-
-              {/* Current group card */}
               <div className="rounded-xl border border-[#E8E0D5] dark:border-[#2A2A2A] overflow-hidden">
                 <div className="px-3 py-2 bg-[#F5F0EB] dark:bg-[#111] border-b border-[#E8E0D5] dark:border-[#2A2A2A]">
                   <p className="text-[10px] font-semibold text-[#9B8E82] uppercase tracking-wide">
@@ -808,8 +654,6 @@ function StudentDetailModal({
                 </div>
               </div>
             </div>
-
-            {/* Footer */}
             <div className="px-5 pb-5 flex gap-2">
               <button
                 onClick={onClose}
@@ -817,19 +661,23 @@ function StudentDetailModal({
               >
                 إغلاق
               </button>
-              <button
-                onClick={() => setStep("transfer")}
-                className="flex-1 py-2.5 rounded-xl bg-[#2B6F5E] hover:bg-[#235C4E] text-white text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors"
-              >
-                <ArrowLeftRight className="w-4 h-4" />
-                تحويل إلى فوج آخر
-              </button>
+              {/* Only show transfer for active enrollments */}
+              {["VALIDATED", "PAID", "PENDING"].includes(
+                student.registration_status,
+              ) && (
+                <button
+                  onClick={() => setStep("transfer")}
+                  className="flex-1 py-2.5 rounded-xl bg-[#2B6F5E] hover:bg-[#235C4E] text-white text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors"
+                >
+                  <ArrowLeftRight className="w-4 h-4" />
+                  تحويل إلى فوج آخر
+                </button>
+              )}
             </div>
           </>
         ) : (
           <>
             <div className="p-5 space-y-3">
-              {/* Student reminder */}
               <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#F5F0EB] dark:bg-[#111]">
                 <div className="w-7 h-7 rounded-full bg-[#2B6F5E]/10 flex items-center justify-center text-[11px] font-bold text-[#2B6F5E] dark:text-[#4ADE80] shrink-0">
                   {s.first_name[0]}
@@ -842,8 +690,6 @@ function StudentDetailModal({
                   من: <span className="font-semibold">{group.name}</span>
                 </span>
               </div>
-
-              {/* Search */}
               <div className="relative">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9B8E82]" />
                 <input
@@ -853,8 +699,6 @@ function StudentDetailModal({
                   className="w-full h-9 pr-9 pl-3 rounded-xl border border-[#E8E0D5] dark:border-[#2A2A2A] bg-[#F5F0EB] dark:bg-[#111] text-[13px] outline-none text-[#1B1B1B] dark:text-[#E5E5E5]"
                 />
               </div>
-
-              {/* Groups list */}
               <div className="max-h-64 overflow-y-auto space-y-1.5 -mx-1 px-1">
                 {filteredGroups.length === 0 ? (
                   <p className="py-8 text-center text-[12px] text-[#9B8E82]">
@@ -865,14 +709,12 @@ function StudentDetailModal({
                     const isFull = g.is_full;
                     const isSelected = selectedGroup?.group_id === g.group_id;
                     const gLvl = LEVEL_COLORS[g.level] ?? LEVEL_COLORS.A1;
-                    const capacityPct = g.capacity_pct;
                     const capacityColor =
-                      capacityPct >= 90
+                      g.capacity_pct >= 90
                         ? "#ef4444"
-                        : capacityPct >= 70
+                        : g.capacity_pct >= 70
                           ? "#f59e0b"
                           : "#2B6F5E";
-
                     return (
                       <button
                         key={g.group_id}
@@ -887,7 +729,6 @@ function StudentDetailModal({
                         }`}
                       >
                         <div className="flex items-start gap-2">
-                          {/* Group info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                               <span className="text-[13px] font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
@@ -908,8 +749,6 @@ function StudentDetailModal({
                                 </span>
                               )}
                             </div>
-
-                            {/* Teacher */}
                             <div className="flex items-center gap-1 text-[11px] text-[#9B8E82] mb-1.5">
                               <GraduationCap className="w-3 h-3 shrink-0" />
                               {g.teacher ? (
@@ -918,8 +757,6 @@ function StudentDetailModal({
                                 <span className="italic">لا يوجد أستاذ</span>
                               )}
                             </div>
-
-                            {/* Capacity bar */}
                             <div className="space-y-0.5">
                               <div className="flex justify-between text-[10px]">
                                 <span className="text-[#9B8E82]">الطاقة</span>
@@ -934,15 +771,13 @@ function StudentDetailModal({
                                 <div
                                   className="h-full rounded-full transition-all"
                                   style={{
-                                    width: `${capacityPct}%`,
+                                    width: `${g.capacity_pct}%`,
                                     background: capacityColor,
                                   }}
                                 />
                               </div>
                             </div>
                           </div>
-
-                          {/* Check icon */}
                           {isSelected && (
                             <Check className="w-4 h-4 text-[#2B6F5E] shrink-0 mt-1" />
                           )}
@@ -953,8 +788,6 @@ function StudentDetailModal({
                 )}
               </div>
             </div>
-
-            {/* Footer */}
             <div className="px-5 pb-5 flex gap-2">
               <button
                 onClick={() => setStep("info")}
@@ -999,11 +832,12 @@ function GroupDetails({
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [studentSearch, setStudentSearch] = useState("");
 
+  // ✅ Fix: limit:200 to fetch ALL students including FINISHED
   const {
     data: studentsData,
     isLoading: loadingStudents,
     refetch,
-  } = useAdminGroupStudents(group.group_id);
+  } = useAdminGroupStudents(group.group_id, { limit: 200 });
 
   const students = studentsData?.data ?? [];
 
@@ -1036,11 +870,9 @@ function GroupDetails({
 
   return (
     <div className="flex flex-col h-full bg-[#FDFAF7] dark:bg-[#0A0A0A]">
-      {/* ══ COMPACT HEADER (always visible) ══════════════════════ */}
+      {/* Header */}
       <div className="shrink-0 bg-white dark:bg-[#0D0D0D] border-b border-[#E8E0D5] dark:border-[#1E1E1E]">
-        {/* Top strip — group identity + actions */}
         <div className="px-4 py-3 flex items-center gap-3">
-          {/* Flag + name */}
           <div className="w-9 h-9 rounded-xl bg-[#F5F0EB] dark:bg-[#1A1A1A] flex items-center justify-center text-xl shrink-0">
             {flag}
           </div>
@@ -1061,8 +893,6 @@ function GroupDetails({
               {group.course.course_name}
             </p>
           </div>
-
-          {/* Quick action buttons */}
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => setStatusModal(true)}
@@ -1085,7 +915,6 @@ function GroupDetails({
             >
               <RefreshCw className="w-3.5 h-3.5 text-[#C8BFB5]" />
             </button>
-            {/* Collapse toggle */}
             <button
               onClick={() => setHeaderCollapsed((p) => !p)}
               title="تصغير/تكبير"
@@ -1097,12 +926,9 @@ function GroupDetails({
           </div>
         </div>
 
-        {/* Expandable stats area */}
         {!headerCollapsed && (
           <div className="px-4 pb-3 space-y-2.5">
-            {/* Stats row — inline compact */}
             <div className="grid grid-cols-4 gap-2">
-              {/* Capacity */}
               <div
                 className="col-span-2 rounded-xl p-2.5 flex items-center gap-2.5"
                 style={{
@@ -1140,8 +966,6 @@ function GroupDetails({
                   </p>
                 </div>
               </div>
-
-              {/* Sessions */}
               <div className="rounded-xl p-2.5 bg-[#F5F0EB] dark:bg-[#111] text-center">
                 <Layers className="w-3.5 h-3.5 text-[#2B6F5E] dark:text-[#4ADE80] mx-auto mb-0.5" />
                 <p className="text-[16px] font-black text-[#1B1B1B] dark:text-[#E5E5E5] leading-none">
@@ -1149,8 +973,6 @@ function GroupDetails({
                 </p>
                 <p className="text-[9px] text-[#9B8E82] mt-0.5">حصة</p>
               </div>
-
-              {/* Pending */}
               <div
                 className="rounded-xl p-2.5 text-center"
                 style={{
@@ -1181,8 +1003,6 @@ function GroupDetails({
                 <p className="text-[9px] text-[#9B8E82] mt-0.5">معلق</p>
               </div>
             </div>
-
-            {/* Teacher row — ultra compact */}
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#F5F0EB] dark:bg-[#111]">
               <div className="w-6 h-6 rounded-full bg-[#2B6F5E]/15 flex items-center justify-center shrink-0">
                 <GraduationCap className="w-3.5 h-3.5 text-[#2B6F5E] dark:text-[#4ADE80]" />
@@ -1205,9 +1025,8 @@ function GroupDetails({
         )}
       </div>
 
-      {/* ══ STUDENTS SECTION ══════════════════════════════════════ */}
+      {/* Students Section */}
       <div className="flex-1 overflow-hidden flex flex-col">
-        {/* Students toolbar */}
         <div className="px-4 py-2.5 bg-white dark:bg-[#0D0D0D] border-b border-[#F0EBE5] dark:border-[#1A1A1A] shrink-0">
           <div className="flex items-center gap-2 mb-2">
             <Users className="w-3.5 h-3.5 text-[#2B6F5E] dark:text-[#4ADE80]" />
@@ -1224,14 +1043,24 @@ function GroupDetails({
                 {group.pending_count} معلق
               </button>
             )}
-            {/* Filter pills */}
-            <div className="ms-auto flex gap-1">
-              {(["ALL", "VALIDATED", "PAID", "PENDING"] as const).map((s) => {
+            {/* ✅ Fix: added FINISHED + REJECTED to filter pills */}
+            <div className="ms-auto flex gap-1 flex-wrap">
+              {(
+                [
+                  "ALL",
+                  "VALIDATED",
+                  "PAID",
+                  "PENDING",
+                  "FINISHED",
+                  "REJECTED",
+                ] as const
+              ).map((s) => {
                 const count =
                   s === "ALL"
                     ? students.length
                     : students.filter((st) => st.registration_status === s)
                         .length;
+                if (s !== "ALL" && count === 0) return null;
                 const cfg = ENROLL_STATUS_CFG[s];
                 const isActive = enrollFilter === s;
                 return (
@@ -1258,7 +1087,6 @@ function GroupDetails({
             </div>
           </div>
 
-          {/* Student search */}
           <div className="relative">
             <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#C8BFB5]" />
             <input
@@ -1303,14 +1131,13 @@ function GroupDetails({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {filtered.map((s, idx) => {
+              {filtered.map((s) => {
                 const cfg =
                   ENROLL_STATUS_CFG[s.registration_status] ??
                   ENROLL_STATUS_CFG.PENDING;
                 const canTransfer = ["VALIDATED", "PAID", "PENDING"].includes(
                   s.registration_status,
                 );
-                // Avatar color based on status
                 const avatarBg = cfg.color + "18";
                 const initials = `${s.student.first_name[0] ?? ""}${s.student.last_name[0] ?? ""}`;
 
@@ -1320,26 +1147,20 @@ function GroupDetails({
                     onClick={() => setSelectedStudent(s)}
                     className="group/card relative bg-white dark:bg-[#111] rounded-xl border border-[#E8E0D5] dark:border-[#1E1E1E] p-3 cursor-pointer hover:border-[#2B6F5E]/40 hover:shadow-md dark:hover:shadow-black/30 transition-all duration-200 overflow-hidden"
                   >
-                    {/* Status top stripe */}
                     <div
                       className="absolute top-0 left-0 right-0 h-[2px] rounded-t-xl transition-all duration-200 group-hover/card:h-[3px]"
                       style={{ background: cfg.color }}
                     />
-
                     <div className="flex items-start gap-2.5 mt-1">
-                      {/* Avatar */}
                       <div
                         className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-black shrink-0 relative"
                         style={{ background: avatarBg, color: cfg.color }}
                       >
                         {initials}
-                        {/* Pulse for pending */}
                         {s.registration_status === "PENDING" && (
                           <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[#111] bg-[#f59e0b]" />
                         )}
                       </div>
-
-                      {/* Info */}
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5] truncate leading-tight">
                           {s.student.first_name} {s.student.last_name}
@@ -1361,8 +1182,6 @@ function GroupDetails({
                           </span>
                         </div>
                       </div>
-
-                      {/* Transfer btn — on hover */}
                       {canTransfer && (
                         <button
                           onClick={(e) => {
@@ -1384,7 +1203,6 @@ function GroupDetails({
         </div>
       </div>
 
-      {/* Modals */}
       {statusModal && (
         <StatusModal group={group} onClose={() => setStatusModal(false)} />
       )}
@@ -1421,7 +1239,6 @@ export default function AdminGroupsPage() {
   const groups = data?.data ?? [];
   const selected = groups.find((g) => g.group_id === selectedId) ?? null;
 
-  // ✅ Realtime — auto-refresh on socket events
   const [realtimeFlash, setRealtimeFlash] = useState(false);
   useGroupsSocket({
     watchGroupIds: selectedId ? [selectedId] : [],
@@ -1446,9 +1263,8 @@ export default function AdminGroupsPage() {
       className="flex flex-col h-[calc(100vh-64px)] bg-[#FDFAF7] dark:bg-[#0A0A0A]"
       dir="rtl"
     >
-      {/* ── Top bar ── */}
+      {/* Top bar */}
       <div className="px-5 pt-4 pb-3 bg-white dark:bg-[#0D0D0D] border-b border-[#E8E0D5] dark:border-[#1E1E1E] shrink-0 space-y-3">
-        {/* Row 1 — Title + live badge + stats pills */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <h1 className="text-[18px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
@@ -1456,17 +1272,12 @@ export default function AdminGroupsPage() {
             </h1>
             <span
               title="مباشر"
-              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold transition-all duration-500 ${
-                realtimeFlash
-                  ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 scale-110"
-                  : "bg-[#F0EBE5] dark:bg-[#1A1A1A] text-[#9B8E82]"
-              }`}
+              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold transition-all duration-500 ${realtimeFlash ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 scale-110" : "bg-[#F0EBE5] dark:bg-[#1A1A1A] text-[#9B8E82]"}`}
             >
               <Wifi className="w-2.5 h-2.5" />
               مباشر
             </span>
           </div>
-          {/* Stats pills */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#F0EBE5] dark:bg-[#1A1A1A] text-[#9B8E82]">
               {stats.total} فوج
@@ -1487,9 +1298,7 @@ export default function AdminGroupsPage() {
           </div>
         </div>
 
-        {/* Row 2 — Search + Filters */}
         <div className="flex items-center gap-3">
-          {/* ── Search bar — larger, prominent ── */}
           <div className="relative flex-1 min-w-0 group/search">
             <div className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9B8E82] group-focus-within/search:text-[#2B6F5E] dark:group-focus-within/search:text-[#4ADE80] transition-colors pointer-events-none">
               <Search className="w-4 h-4" />
@@ -1510,7 +1319,6 @@ export default function AdminGroupsPage() {
             )}
           </div>
 
-          {/* ── Status filter — icon + label pills ── */}
           <div className="flex items-center gap-1 shrink-0 p-1 rounded-2xl bg-[#F5F0EB] dark:bg-[#1A1A1A] border border-[#E8E0D5] dark:border-[#2A2A2A]">
             {(
               [
@@ -1560,7 +1368,6 @@ export default function AdminGroupsPage() {
             })}
           </div>
 
-          {/* ── Level filter — colored pill buttons ── */}
           <div className="flex items-center gap-1 shrink-0 p-1 rounded-2xl bg-[#F5F0EB] dark:bg-[#1A1A1A] border border-[#E8E0D5] dark:border-[#2A2A2A]">
             {(
               [
@@ -1599,15 +1406,11 @@ export default function AdminGroupsPage() {
         </div>
       </div>
 
-      {/* ── Split view ── */}
+      {/* Split view */}
       <div className="flex flex-1 overflow-hidden">
-        {/* LEFT — Groups list */}
         <div
-          className={`shrink-0 border-l border-[#E8E0D5] dark:border-[#1E1E1E] flex flex-col bg-white dark:bg-[#0D0D0D] overflow-hidden transition-all duration-300 ${
-            selected ? "w-80" : "w-full max-w-full"
-          }`}
+          className={`shrink-0 border-l border-[#E8E0D5] dark:border-[#1E1E1E] flex flex-col bg-white dark:bg-[#0D0D0D] overflow-hidden transition-all duration-300 ${selected ? "w-80" : "w-full max-w-full"}`}
         >
-          {/* List header */}
           <div className="px-4 py-2.5 border-b border-[#F0EBE5] dark:border-[#1A1A1A] flex items-center justify-between shrink-0">
             <span className="text-[12px] text-[#9B8E82]">
               {groups.length} فوج
@@ -1621,8 +1424,6 @@ export default function AdminGroupsPage() {
               </button>
             )}
           </div>
-
-          {/* List body */}
           <div className="flex-1 overflow-y-auto">
             {isLoading ? (
               <div className="py-20 flex justify-center">
@@ -1659,7 +1460,6 @@ export default function AdminGroupsPage() {
           </div>
         </div>
 
-        {/* RIGHT — Details */}
         {selected ? (
           <div className="flex-1 overflow-hidden">
             <GroupDetails group={selected} allGroups={groups} />
