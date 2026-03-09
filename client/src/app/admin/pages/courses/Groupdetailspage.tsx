@@ -211,9 +211,19 @@ const GroupDetailsPage = () => {
     );
   }
 
-  // ✅ enrolled_count from computeCapacity (backend) — most accurate
-  const currentCapacity =
+  // enrolled_count = VALIDATED+PAID only (for capacity/progress bar)
+  const enrolledCount =
     (group as any).enrolled_count ?? (group as any).current_capacity ?? 0;
+
+  // total registered = all statuses including PENDING (for header display)
+  const totalRegistered =
+    ((studentsData as any)?.meta?.total ?? (group as any).pending_count != null)
+      ? enrolledCount + ((group as any).pending_count ?? 0)
+      : enrolledCount;
+
+  const currentCapacity = enrolledCount; // used for progress bar
+  const displayCount = totalRegistered; // used for "N من 25 طالب مسجل"
+
   const maxCapacity = group.max_students ?? 25;
   const capacityPercent =
     maxCapacity > 0 ? (currentCapacity / maxCapacity) * 100 : 0;
@@ -420,7 +430,7 @@ const GroupDetailsPage = () => {
                 {t("admin.groupDetails.enrollment")}
               </p>
               <p className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                {currentCapacity}/{maxCapacity}
+                {displayCount}/{maxCapacity}
               </p>
               <p className="text-xs text-[#BEB29E] dark:text-[#666666] mt-1">
                 {t("admin.groupDetails.full", {
@@ -562,7 +572,7 @@ const GroupDetailsPage = () => {
               </h2>
               <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
                 {t("admin.groupDetails.enrolledCount", {
-                  current: currentCapacity,
+                  current: displayCount,
                   max: maxCapacity,
                 })}
               </p>
