@@ -101,6 +101,8 @@ export function useAdminGroupDetails(groupId: string | null) {
     queryKey: groupKeys.detail(groupId!),
     queryFn: () => groupApi.getGroupDetails(groupId!),
     enabled: !!groupId,
+    // ✅ Fix: always fetch fresh — groups list cache (no enrollments) must not bleed in
+    staleTime: 0,
   });
 }
 

@@ -88,10 +88,8 @@ const GroupDetailsPage = () => {
 
   // ✅ Fix: fetch students independently — avoids stale cache from groups list
   // (the groups list endpoint strips enrollments[], details endpoint keeps them)
-  const {
-    data: studentsData,
-    isLoading: studentsLoading,
-  } = useAdminGroupStudents(groupId ?? null);
+  const { data: studentsData, isLoading: studentsLoading } =
+    useAdminGroupStudents(groupId ?? null);
 
   const updateGroup = useUpdateGroup();
   const deleteGroup = useDeleteGroup();
@@ -215,9 +213,7 @@ const GroupDetailsPage = () => {
 
   // ✅ enrolled_count from computeCapacity (backend) — most accurate
   const currentCapacity =
-    (group as any).enrolled_count ??
-    (group as any).current_capacity ??
-    0;
+    (group as any).enrolled_count ?? (group as any).current_capacity ?? 0;
   const maxCapacity = group.max_students ?? 25;
   const capacityPercent =
     maxCapacity > 0 ? (currentCapacity / maxCapacity) * 100 : 0;
@@ -229,9 +225,11 @@ const GroupDetailsPage = () => {
       : localTeacherId;
 
   const effectiveTeacher = effectiveTeacherId
-    ? (((allTeachers as any[]).find(
+    ? ((allTeachers as any[]).find(
         (t: any) => t.teacher_id === effectiveTeacherId,
-      ) ?? (group as any).teacher) || null)
+      ) ??
+        (group as any).teacher) ||
+      null
     : null;
 
   const hasInstructor = !!effectiveTeacherId;
@@ -249,8 +247,8 @@ const GroupDetailsPage = () => {
     const apiStudents = Array.isArray((studentsData as any)?.data)
       ? (studentsData as any).data
       : Array.isArray(studentsData)
-      ? studentsData as any[]
-      : null;
+        ? (studentsData as any[])
+        : null;
 
     if (apiStudents && apiStudents.length > 0) {
       return apiStudents
@@ -583,7 +581,9 @@ const GroupDetailsPage = () => {
           {studentsLoading && students.length === 0 ? (
             <div className="border border-[#D8CDC0]/40 dark:border-[#2A2A2A] rounded-xl p-8 text-center">
               <div className="w-8 h-8 border-2 border-[#2B6F5E] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-sm text-[#BEB29E] dark:text-[#666666]">جاري تحميل الطلاب...</p>
+              <p className="text-sm text-[#BEB29E] dark:text-[#666666]">
+                جاري تحميل الطلاب...
+              </p>
             </div>
           ) : filteredStudents.length > 0 ? (
             <div className="border border-[#D8CDC0]/40 dark:border-[#2A2A2A] rounded-xl overflow-hidden">
@@ -607,6 +607,9 @@ const GroupDetailsPage = () => {
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wider">
                       {t("admin.groupDetails.enrollmentDate")}
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wider">
+                      {t("admin.groupDetails.status", "الحالة")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wider">
                       {t("admin.groupDetails.actions")}
@@ -649,6 +652,42 @@ const GroupDetailsPage = () => {
                           : "-"}
                       </td>
                       <td className="px-4 py-3">
+                        {(() => {
+                          const s = student.registration_status;
+                          if (!s)
+                            return (
+                              <span className="text-[#BEB29E] dark:text-[#666666] text-xs">
+                                —
+                              </span>
+                            );
+                          const styles: Record<string, string> = {
+                            VALIDATED:
+                              "bg-[#2B6F5E]/15 text-[#2B6F5E] dark:bg-[#4ADE80]/10 dark:text-[#4ADE80] border-[#2B6F5E]/25 dark:border-[#4ADE80]/20",
+                            PAID: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border-blue-200 dark:border-blue-800/40",
+                            PENDING:
+                              "bg-[#C4A035]/10 text-[#C4A035] dark:bg-[#D4A843]/10 dark:text-[#D4A843] border-[#C4A035]/25 dark:border-[#D4A843]/20",
+                            FINISHED:
+                              "bg-[#D8CDC0]/20 text-[#6B5D4F] dark:bg-[#555]/20 dark:text-[#888] border-[#D8CDC0]/40 dark:border-[#555]/30",
+                            REJECTED:
+                              "bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800/40",
+                          };
+                          const labels: Record<string, string> = {
+                            VALIDATED: "مؤكد",
+                            PAID: "مدفوع",
+                            PENDING: "معلق",
+                            FINISHED: "منتهي",
+                            REJECTED: "مرفوض",
+                          };
+                          return (
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${styles[s] ?? styles.PENDING}`}
+                            >
+                              {labels[s] ?? s}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td className="px-4 py-3">
                         <Button
                           asChild
                           size="sm"
@@ -679,7 +718,7 @@ const GroupDetailsPage = () => {
                   : t("admin.groupDetails.noStudentsHint")}
               </p>
             </div>
-          ) : null}
+          )}
         </div>
 
         {/* Group Info */}
