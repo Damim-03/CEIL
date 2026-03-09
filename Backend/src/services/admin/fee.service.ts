@@ -5,7 +5,10 @@
 // ================================================================
 
 import { prisma } from "../../prisma/client";
-import { FeeStatus, RegistrationStatus } from "../../../generated/prisma/client";
+import {
+  FeeStatus,
+  RegistrationStatus,
+} from "../../../generated/prisma/client";
 import {
   emitToAdminLevel,
   emitToUser,
@@ -163,4 +166,18 @@ export async function markFeeAsPaid(
   triggerDashboardRefresh("fee_paid");
 
   return { data: result };
+}
+
+export async function correctFeeAmount(feeId: string, newAmount: number, adminUserId?: string) {
+  if (!newAmount || newAmount <= 0) return { error: "invalid_amount" as const };
+  const fee = await prisma.fee.findUnique({ where: { fee_id: feeId } });
+  if (!fee) return { error: "not_found" as const };
+  const oldAmount = Number(fee.amount);
+  if (oldAmount === newAmount) return { error: "same_amount" as const };
+  const updated = await prisma.fee.update({
+    where: { fee_id: feeId },
+    data: { amount: newAmount, processed_by: adminUserId, processed_at: new Date() },
+  });
+  triggerDashboardRefresh("fee_corrected");
+  return { data: updated, correction: { old_amount: oldAmount, new_amount: newAmount, diff: newAmount - oldAmount } };
 }

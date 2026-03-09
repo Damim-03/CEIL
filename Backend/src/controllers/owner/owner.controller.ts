@@ -43,6 +43,7 @@ import { getFeeAnalytics } from "../../services/owner/feeAnalytics.service";
 import { uploadToCloudinary } from "../../middlewares/uploadToCloudinary";
 import { Roles } from "../../enums/role.enum";
 import { hashPassword } from "../../utils/password.util";
+import { correctFeeAmount } from "../../services/admin/fee.service";
 
 // ─── Helpers ──────────────────────────────────────────────
 function handleServiceResult(res: Response, result: any, successStatus = 200) {
@@ -2372,5 +2373,49 @@ export const ownerUpdateAvatarController = async (
     return res.json({ message: "Avatar updated", user: u });
   } catch {
     return res.status(500).json({ message: "Failed to update avatar" });
+  }
+};
+
+export const ownerCorrectFeeAmountController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const { feeId } = req.params;
+    const { amount } = req.body;
+
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      return res
+        .status(400)
+        .json({ message: "المبلغ يجب أن يكون رقماً موجباً" });
+    }
+
+    const result = await correctFeeAmount(
+      feeId,
+      Number(amount),
+      (req as any).user?.user_id, // ✅ fixed: was req.user?.user_id
+    );
+
+    if ("error" in result) {
+      const messages: Record<string, string> = {
+        not_found: "الرسم غير موجود",
+        same_amount: "المبلغ الجديد مساوٍ للحالي",
+        invalid_amount: "مبلغ غير صالح",
+      };
+      const errKey = result.error as string;
+      return res.status(400).json({ message: messages[errKey] ?? errKey });
+    }
+
+    emitToAdminLevel("fee:corrected", { feeId, correction: result.correction });
+    triggerDashboardRefresh("fee_corrected");
+
+    return res.json({
+      message: "تم تعديل المبلغ بنجاح",
+      data: result.data,
+      correction: result.correction,
+    });
+  } catch (err) {
+    console.error("ownerCorrectFeeAmountController:", err);
+    return res.status(500).json({ message: "خطأ في الخادم" });
   }
 };

@@ -567,6 +567,21 @@ export const ownerFeesApi = {
     return data;
   },
 
+  correctAmount: async (
+    feeId: string,
+    amount: number,
+  ): Promise<{
+    message: string;
+    data: any;
+    correction: { old_amount: number; new_amount: number; diff: number };
+  }> => {
+    const { data } = await axiosInstance.patch(
+      `${BASE}/fees/${feeId}/correct-amount`,
+      { amount },
+    );
+    return data;
+  },
+
   getFeeAnalytics: (params?: {
     period?: "daily" | "monthly" | "yearly";
     date?: string;

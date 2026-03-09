@@ -232,6 +232,7 @@ import {
   ownerGetRoomScheduleController,
   ownerGetRoomsScheduleOverviewController,
   ownerCheckRoomAvailabilityController,
+  ownerCorrectFeeAmountController,
 } from "../../controllers/owner/owner.controller";
 
 import {
@@ -933,6 +934,13 @@ ownerRoutes.get(
   "/rooms/:roomId/availability",
   validate({ params: roomIdParam, query: roomAvailabilityQuerySchema }),
   ownerCheckRoomAvailabilityController,
+);
+
+ownerRoutes.patch(
+  "/fees/:feeId/correct-amount",
+  validateParams(feeIdParam),
+  sensitiveLimit,
+  ownerCorrectFeeAmountController,
 );
 
 export default ownerRoutes;

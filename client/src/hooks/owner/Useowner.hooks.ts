@@ -874,6 +874,26 @@ export const useOwnerFeeDetail = (feeId?: string) =>
     enabled: !!feeId,
   });
 
+export const useOwnerCorrectFeeAmount = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ feeId, amount }: { feeId: string; amount: number }) =>
+      ownerFeesApi.correctAmount(feeId, amount),
+    onSuccess: (data, { feeId }) => {
+      qc.invalidateQueries({ queryKey: OWNER_KEYS.fees });
+      qc.invalidateQueries({ queryKey: OWNER_KEYS.feeDetail(feeId) });
+      qc.invalidateQueries({ queryKey: ["owner", "fee-analytics"] });
+      qc.invalidateQueries({ queryKey: OWNER_KEYS.revenue });
+      toast.success(
+        `✅ تم تعديل المبلغ — ${data.correction.new_amount.toLocaleString()} DA`,
+      );
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "فشل تعديل المبلغ");
+    },
+  });
+};
+
 export const useOwnerCreateFee = () => {
   const qc = useQueryClient();
   return useMutation({
