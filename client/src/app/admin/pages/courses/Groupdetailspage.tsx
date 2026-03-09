@@ -10,6 +10,7 @@ import {
 } from "../../../../hooks/admin/useAdmin";
 import {
   useAdminGroupDetails,
+  useAdminGroupStudents,
   useAllTeachers,
 } from "../../../../hooks/admin/useAdminGroups";
 import {
@@ -84,6 +85,14 @@ const GroupDetailsPage = () => {
     error,
     refetch,
   } = useAdminGroupDetails(groupId ?? null);
+
+  // ✅ Fix: fetch students independently — avoids stale cache from groups list
+  // (the groups list endpoint strips enrollments[], details endpoint keeps them)
+  const {
+    data: studentsData,
+    isLoading: studentsLoading,
+  } = useAdminGroupStudents(groupId ?? null);
+
   const updateGroup = useUpdateGroup();
   const deleteGroup = useDeleteGroup();
   const assignInstructor = useAssignInstructor();
@@ -204,51 +213,67 @@ const GroupDetailsPage = () => {
     );
   }
 
-  // ✅ Fix: use enrolled_count (from computeCapacity) OR fallback to counting VALIDATED+PAID
+  // ✅ enrolled_count from computeCapacity (backend) — most accurate
   const currentCapacity =
     (group as any).enrolled_count ??
     (group as any).current_capacity ??
-    (group as any).enrollments?.filter((e: any) =>
-      ["VALIDATED", "PAID"].includes(e.registration_status),
-    ).length ??
     0;
   const maxCapacity = group.max_students ?? 25;
   const capacityPercent =
     maxCapacity > 0 ? (currentCapacity / maxCapacity) * 100 : 0;
 
-  // Resolve effective teacher_id
-  // ✅ Fix: also check nested teacher object from groupstatus_service
+  // Resolve effective teacher — check nested teacher object first (groupstatus_service returns it)
   const effectiveTeacherId =
     localTeacherId === "sync"
       ? ((group as any).teacher?.teacher_id ?? group.teacher_id ?? null)
       : localTeacherId;
 
-  // Find teacher from teachers list OR from nested teacher object in response
   const effectiveTeacher = effectiveTeacherId
-    ? ((allTeachers as any[]).find(
+    ? (((allTeachers as any[]).find(
         (t: any) => t.teacher_id === effectiveTeacherId,
-      ) ??
-        (group as any).teacher) ||
-      null
+      ) ?? (group as any).teacher) || null)
     : null;
 
   const hasInstructor = !!effectiveTeacherId;
 
-  // Effective course name — API may or may not nest course object
+  // Effective course name
   const effectiveCourseName =
     group.course?.course_name ?? (group as any).course_name ?? null;
 
-  // ✅ Fix: always extract from enrollments array (groupstatus_service never returns flat students[])
-  // Filter out enrollments where student is null (safety guard)
+  // ✅ Fix: use studentsData from useAdminGroupStudents (dedicated endpoint)
+  // Falls back to enrollments from group details if students endpoint hasn't loaded yet
   const rawEnrollments: any[] = (group as any).enrollments ?? [];
-  const students: any[] = rawEnrollments
-    .filter((e: any) => e.student != null)
-    .map((e: any) => ({
-      ...(e.student ?? {}),
-      enrollment_date: e.enrollment_date,
-      registration_status: e.registration_status,
-      created_at: e.enrollment_date ?? e.student?.created_at,
-    }));
+
+  const students: any[] = (() => {
+    // Primary: use dedicated /students endpoint (returns { data: enrollment[] })
+    const apiStudents = Array.isArray((studentsData as any)?.data)
+      ? (studentsData as any).data
+      : Array.isArray(studentsData)
+      ? studentsData as any[]
+      : null;
+
+    if (apiStudents && apiStudents.length > 0) {
+      return apiStudents
+        .filter((e: any) => e.student != null)
+        .map((e: any) => ({
+          ...(e.student ?? {}),
+          enrollment_date: e.enrollment_date,
+          registration_status: e.registration_status,
+          created_at: e.enrollment_date ?? e.student?.created_at,
+        }));
+    }
+
+    // Fallback: enrollments from group details endpoint
+    return rawEnrollments
+      .filter((e: any) => e.student != null)
+      .map((e: any) => ({
+        ...(e.student ?? {}),
+        enrollment_date: e.enrollment_date,
+        registration_status: e.registration_status,
+        created_at: e.enrollment_date ?? e.student?.created_at,
+      }));
+  })();
+
   const filteredStudents = students.filter((student: any) => {
     if (!student) return false;
     const sl = searchTerm.toLowerCase();
@@ -555,7 +580,12 @@ const GroupDetailsPage = () => {
               />
             </div>
           </div>
-          {filteredStudents.length > 0 ? (
+          {studentsLoading && students.length === 0 ? (
+            <div className="border border-[#D8CDC0]/40 dark:border-[#2A2A2A] rounded-xl p-8 text-center">
+              <div className="w-8 h-8 border-2 border-[#2B6F5E] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-sm text-[#BEB29E] dark:text-[#666666]">جاري تحميل الطلاب...</p>
+            </div>
+          ) : filteredStudents.length > 0 ? (
             <div className="border border-[#D8CDC0]/40 dark:border-[#2A2A2A] rounded-xl overflow-hidden">
               <table className="w-full">
                 <thead className="bg-[#D8CDC0]/10 dark:bg-[#0F0F0F] border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
@@ -577,9 +607,6 @@ const GroupDetailsPage = () => {
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wider">
                       {t("admin.groupDetails.enrollmentDate")}
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wider">
-                      {t("admin.groupDetails.status", "الحالة")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-[#6B5D4F] dark:text-[#888888] uppercase tracking-wider">
                       {t("admin.groupDetails.actions")}
@@ -622,37 +649,6 @@ const GroupDetailsPage = () => {
                           : "-"}
                       </td>
                       <td className="px-4 py-3">
-                        {student.registration_status &&
-                          (() => {
-                            const s = student.registration_status;
-                            const styles: Record<string, string> = {
-                              VALIDATED:
-                                "bg-[#2B6F5E]/15 text-[#2B6F5E] dark:bg-[#4ADE80]/10 dark:text-[#4ADE80] border-[#2B6F5E]/25 dark:border-[#4ADE80]/20",
-                              PAID: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border-blue-200 dark:border-blue-800/40",
-                              PENDING:
-                                "bg-[#C4A035]/10 text-[#C4A035] dark:bg-[#D4A843]/10 dark:text-[#D4A843] border-[#C4A035]/25 dark:border-[#D4A843]/20",
-                              FINISHED:
-                                "bg-[#D8CDC0]/20 text-[#6B5D4F] dark:bg-[#555]/20 dark:text-[#888] border-[#D8CDC0]/40 dark:border-[#555]/30",
-                              REJECTED:
-                                "bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800/40",
-                            };
-                            const labels: Record<string, string> = {
-                              VALIDATED: "مؤكد",
-                              PAID: "مدفوع",
-                              PENDING: "معلق",
-                              FINISHED: "منتهي",
-                              REJECTED: "مرفوض",
-                            };
-                            return (
-                              <span
-                                className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${styles[s] ?? styles.PENDING}`}
-                              >
-                                {labels[s] ?? s}
-                              </span>
-                            );
-                          })()}
-                      </td>
-                      <td className="px-4 py-3">
                         <Button
                           asChild
                           size="sm"
@@ -683,7 +679,7 @@ const GroupDetailsPage = () => {
                   : t("admin.groupDetails.noStudentsHint")}
               </p>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Group Info */}
