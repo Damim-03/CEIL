@@ -86,10 +86,10 @@ export default function Profile() {
   const handleSave = () => {
     updateProfile.mutate(
       {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        phone_number: formData.phone,
-        address: formData.address,
+        first_name: formData.firstName || null,
+        last_name: formData.lastName || null,
+        phone_number: formData.phone || null,
+        address: formData.address || null,
         date_of_birth: formData.dateOfBirth || null,
         gender: formData.gender || null,
         nationality: formData.nationality || null,
@@ -103,23 +103,11 @@ export default function Profile() {
   };
 
   const isSaving = updateProfile.isPending;
+  const isProfileComplete = profile.is_profile_complete;
+
   const initials = profile.email
     ? profile.email.split("@")[0].slice(0, 2).toUpperCase()
     : "ST";
-  const isProfileComplete = profile.is_profile_complete;
-
-  const hasPersonalInfo = !!(
-    profile.first_name &&
-    profile.last_name &&
-    profile.phone_number &&
-    profile.date_of_birth &&
-    profile.gender &&
-    profile.nationality &&
-    profile.education_level &&
-    profile.study_location &&
-    profile.language &&
-    profile.address
-  );
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -170,33 +158,6 @@ export default function Profile() {
           )}
         </div>
       </div>
-
-      {/* Alert */}
-      {!hasPersonalInfo && !isEditing && (
-        <div className="bg-[#C4A035]/5 dark:bg-[#D4A843]/[0.03] border border-[#C4A035]/20 dark:border-[#D4A843]/15 rounded-2xl p-6">
-          <div className="flex gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shrink-0 shadow-lg shadow-[#C4A035]/20 dark:shadow-black/30">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
-                Complete Your Profile to Get Your Student ID
-              </h3>
-              <p className="text-sm text-[#6B5D4F] dark:text-[#888888] mb-3">
-                Fill in all required fields to generate your digital student ID
-                card and become eligible for course enrollment.
-              </p>
-              <Button
-                size="sm"
-                onClick={handleEdit}
-                className="bg-[#C4A035] hover:bg-[#C4A035]/90 text-white rounded-xl"
-              >
-                <Edit className="w-4 h-4 mr-2" /> Complete Profile Now
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Profile Card */}
       <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden">
@@ -252,11 +213,6 @@ export default function Profile() {
                       <CheckCircle className="w-3 h-3" /> Active
                     </span>
                   )}
-                  {hasPersonalInfo && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-[#C4A035]/15 text-[#C4A035] border border-white/10">
-                      <CheckCircle className="w-3 h-3" /> ID Card Ready
-                    </span>
-                  )}
                   {isProfileComplete && (
                     <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-[#2B6F5E]/30 text-white/80 border border-white/10">
                       <CheckCircle className="w-3 h-3" /> Enrollment Ready
@@ -282,14 +238,12 @@ export default function Profile() {
                 placeholder="Enter your first name"
                 value={formData.firstName}
                 onChange={(v) => setFormData({ ...formData, firstName: v })}
-                required
               />
               <InputField
                 label="Last Name"
                 placeholder="Enter your last name"
                 value={formData.lastName}
                 onChange={(v) => setFormData({ ...formData, lastName: v })}
-                required
               />
               <InputField
                 label="Email Address"
@@ -312,33 +266,29 @@ export default function Profile() {
                 placeholder="Enter your phone number"
                 value={formData.phone}
                 onChange={(v) => setFormData({ ...formData, phone: v })}
-                required
               />
               <InputField
                 label="Date of Birth"
                 type="date"
                 value={formData.dateOfBirth}
                 onChange={(v) => setFormData({ ...formData, dateOfBirth: v })}
-                required
               />
               <SelectField
                 label="Gender"
                 value={formData.gender}
                 onChange={(v) => setFormData({ ...formData, gender: v })}
                 options={[
-                  { value: "", label: "Select gender" },
+                  { value: "", label: "Select gender (optional)" },
                   { value: "Male", label: "Male" },
                   { value: "Female", label: "Female" },
                   { value: "Other", label: "Other" },
                 ]}
-                required
               />
               <InputField
                 label="Nationality"
-                placeholder="Enter your nationality"
+                placeholder="Enter your nationality (optional)"
                 value={formData.nationality}
                 onChange={(v) => setFormData({ ...formData, nationality: v })}
-                required
               />
               <SelectField
                 label="Education Level"
@@ -347,32 +297,29 @@ export default function Profile() {
                   setFormData({ ...formData, educationLevel: v })
                 }
                 options={[
-                  { value: "", label: "Select education level" },
+                  { value: "", label: "Select education level (optional)" },
                   { value: "High School", label: "High School" },
                   { value: "Bachelor's Degree", label: "Bachelor's Degree" },
                   { value: "Master's Degree", label: "Master's Degree" },
                   { value: "Doctorate", label: "Doctorate" },
                   { value: "Other", label: "Other" },
                 ]}
-                required
               />
               <InputField
                 label="Study Location"
-                placeholder="Enter your study location"
+                placeholder="Enter your study location (optional)"
                 value={formData.studyLocation}
                 onChange={(v) => setFormData({ ...formData, studyLocation: v })}
-                required
               />
               <InputField
                 label="Language"
-                placeholder="Enter your preferred language"
+                placeholder="Enter your preferred language (optional)"
                 value={formData.language}
                 onChange={(v) => setFormData({ ...formData, language: v })}
-                required
               />
               <InputField
                 label="Address"
-                placeholder="Enter your address"
+                placeholder="Enter your address (optional)"
                 value={formData.address}
                 onChange={(v) => setFormData({ ...formData, address: v })}
                 full
@@ -424,22 +371,6 @@ export default function Profile() {
             )}
             <div>
               <p className="text-xs font-medium text-[#BEB29E] dark:text-[#666666] uppercase tracking-wider">
-                Profile Completion
-              </p>
-              <div className="mt-1.5">
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    hasPersonalInfo
-                      ? "bg-[#8DB896]/12 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80]"
-                      : "bg-[#C4A035]/8 dark:bg-[#D4A843]/[0.08] text-[#C4A035] dark:text-[#D4A843]"
-                  }`}
-                >
-                  {hasPersonalInfo ? "Complete" : "Incomplete"}
-                </span>
-              </div>
-            </div>
-            <div>
-              <p className="text-xs font-medium text-[#BEB29E] dark:text-[#666666] uppercase tracking-wider">
                 Enrollment Eligibility
               </p>
               <div className="mt-1.5">
@@ -472,7 +403,6 @@ function InputField({
   placeholder,
   helpText,
   full = false,
-  required = false,
 }: {
   label: string;
   value: string;
@@ -482,12 +412,11 @@ function InputField({
   placeholder?: string;
   helpText?: string;
   full?: boolean;
-  required?: boolean;
 }) {
   return (
     <div className={full ? "md:col-span-2" : ""}>
       <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
-        {label} {required && <span className="text-red-500">*</span>}
+        {label}
       </label>
       <Input
         type={type}
@@ -511,18 +440,16 @@ function SelectField({
   value,
   onChange,
   options,
-  required = false,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: { value: string; label: string }[];
-  required?: boolean;
 }) {
   return (
     <div>
       <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
-        {label} {required && <span className="text-red-500">*</span>}
+        {label}
       </label>
       <select
         value={value}
