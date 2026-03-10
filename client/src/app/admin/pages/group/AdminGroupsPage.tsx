@@ -26,7 +26,6 @@ import {
   Check,
   Wifi,
 } from "lucide-react";
-import { useLanguage } from "../../../../hooks/useLanguage";
 import { toast } from "sonner";
 import {
   useAdminGroups,
@@ -38,6 +37,7 @@ import {
   type Group,
   type GroupStudent,
   type GroupStatus,
+  type GroupTeacher,
 } from "../../../../hooks/admin/useAdminGroups";
 import { useGroupsSocket } from "../../../../hooks/admin/useGroupsSocket";
 
@@ -99,36 +99,6 @@ const COURSE_FLAG: Record<string, string> = {
   DEU: "🇩🇪",
   default: "🌐",
 };
-
-// ─── Capacity Bar ─────────────────────────────────────────────
-function CapacityBar({
-  pct,
-  count,
-  max,
-}: {
-  pct: number;
-  count: number;
-  max: number;
-}) {
-  const color = pct >= 90 ? "#ef4444" : pct >= 70 ? "#f59e0b" : "#2B6F5E";
-  return (
-    <div className="space-y-1">
-      <div className="flex justify-between text-[11px]">
-        <span className="text-[#9B8E82] dark:text-[#666]">الطلبة</span>
-        <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-          {count}
-          <span className="text-[#9B8E82] font-normal">/{max}</span>
-        </span>
-      </div>
-      <div className="h-1.5 rounded-full bg-[#F0EBE5] dark:bg-[#2A2A2A] overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${pct}%`, background: color }}
-        />
-      </div>
-    </div>
-  );
-}
 
 // ─── Status Badge ─────────────────────────────────────────────
 function StatusBadge({ status }: { status: GroupStatus }) {
@@ -261,7 +231,10 @@ function StatusModal({
           toast.success("تم تغيير حالة الفوج");
           onClose();
         },
-        onError: (e: any) => toast.error(e?.response?.data?.message ?? "خطأ"),
+        onError: (e: unknown) => {
+          const err = e as { response?: { data?: { message?: string } } };
+          toast.error(err?.response?.data?.message ?? "خطأ");
+        },
       },
     );
   };
@@ -276,7 +249,7 @@ function StatusModal({
         }}
       >
         <div
-          className="h-[3px] w-full transition-all duration-300"
+          className="h-0.75 w-full transition-all duration-300"
           style={{ background: previewCfg.color }}
         />
         <div className="p-5">
@@ -285,7 +258,7 @@ function StatusModal({
               <p className="text-[10px] font-semibold text-[#9B8E82] uppercase tracking-[0.12em] mb-1">
                 حالة الفوج
               </p>
-              <h3 className="text-[14px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5] leading-tight max-w-[140px] truncate">
+              <h3 className="text-[14px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5] leading-tight max-w-35 truncate">
                 {group.name}
               </h3>
             </div>
@@ -386,7 +359,7 @@ function TeacherModal({
 
   const filtered = useMemo(
     () =>
-      (teachers as any[]).filter((t: any) =>
+      (teachers as GroupTeacher[]).filter((t: GroupTeacher) =>
         `${t.first_name} ${t.last_name}`
           .toLowerCase()
           .includes(search.toLowerCase()),
@@ -404,7 +377,10 @@ function TeacherModal({
           );
           onClose();
         },
-        onError: (e: any) => toast.error(e?.response?.data?.message ?? "خطأ"),
+        onError: (e: unknown) => {
+          const err = e as { response?: { data?: { message?: string } } };
+          toast.error(err?.response?.data?.message ?? "خطأ");
+        },
       },
     );
   };
@@ -431,7 +407,7 @@ function TeacherModal({
               <Loader2 className="w-5 h-5 animate-spin text-[#9B8E82]" />
             </div>
           ) : (
-            filtered.map((t: any) => {
+            filtered.map((t: GroupTeacher) => {
               const isCurrent = group.teacher?.teacher_id === t.teacher_id;
               return (
                 <button
@@ -533,8 +509,10 @@ function StudentDetailModal({
           toast.success(`تم نقل ${s.first_name} إلى ${selectedGroup.name}`);
           onClose();
         },
-        onError: (e: any) =>
-          toast.error(e?.response?.data?.message ?? "خطأ في النقل"),
+        onError: (e: unknown) => {
+          const err = e as { response?: { data?: { message?: string } } };
+          toast.error(err?.response?.data?.message ?? "خطأ في النقل");
+        },
       },
     );
   };
@@ -844,17 +822,19 @@ function GroupDetails({
     refetch,
   } = useAdminGroupStudents(group.group_id, { limit: 200 });
 
-  const students = studentsData?.data ?? [];
+  const students = useMemo(() => studentsData?.data ?? [], [studentsData]);
 
   const filtered = useMemo(() => {
     let list =
       enrollFilter === "ALL"
         ? students
-        : students.filter((s) => s.registration_status === enrollFilter);
+        : students.filter(
+            (s: GroupStudent) => s.registration_status === enrollFilter,
+          );
     if (studentSearch.trim()) {
       const q = studentSearch.toLowerCase();
       list = list.filter(
-        (s) =>
+        (s: GroupStudent) =>
           `${s.student.first_name} ${s.student.last_name}`
             .toLowerCase()
             .includes(q) || s.student.email?.toLowerCase().includes(q),
@@ -871,18 +851,17 @@ function GroupDetails({
       ? students.length
       : group.enrolled_count + group.pending_count;
   const realPending = students.filter(
-    (s) => s.registration_status === "PENDING",
+    (s: GroupStudent) => s.registration_status === "PENDING",
   ).length;
-  const realActive = students.filter((s) =>
+  const realActive = students.filter((s: GroupStudent) =>
     ["VALIDATED", "PAID"].includes(s.registration_status),
-  ).length;
-  const realFinished = students.filter(
-    (s) => s.registration_status === "FINISHED",
   ).length;
   const maxCapacity = group.max_students ?? 25;
   // capacity % based on active (VALIDATED+PAID) only — for progress bar business logic
   const realCapacityPct =
-    maxCapacity > 0 ? Math.round((realActive / maxCapacity) * 100) : 0;
+    maxCapacity > 0
+      ? Math.min(Math.round((realTotal / maxCapacity) * 100), 100)
+      : 0;
   const capacityColor =
     realCapacityPct >= 90
       ? "#ef4444"
@@ -984,7 +963,8 @@ function GroupDetails({
                     className="text-[9px] font-semibold mt-0.5"
                     style={{ color: capacityColor }}
                   >
-                    {realCapacityPct}% إشغال ({realActive} نشط)
+                    {realCapacityPct}% إشغال ({realActive} نشط
+                    {realPending > 0 ? ` · ${realPending} معلق` : ""})
                   </p>
                 </div>
               </div>
@@ -1074,8 +1054,9 @@ function GroupDetails({
                 const count =
                   s === "ALL"
                     ? students.length
-                    : students.filter((st) => st.registration_status === s)
-                        .length;
+                    : students.filter(
+                        (st: GroupStudent) => st.registration_status === s,
+                      ).length;
                 if (s !== "ALL" && count === 0) return null;
                 const cfg = ENROLL_STATUS_CFG[s];
                 const isActive = enrollFilter === s;
@@ -1147,7 +1128,7 @@ function GroupDetails({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {filtered.map((s) => {
+              {filtered.map((s: GroupStudent) => {
                 const cfg =
                   ENROLL_STATUS_CFG[s.registration_status] ??
                   ENROLL_STATUS_CFG.PENDING;
@@ -1164,7 +1145,7 @@ function GroupDetails({
                     className="group/card relative bg-white dark:bg-[#111] rounded-xl border border-[#E8E0D5] dark:border-[#1E1E1E] p-3 cursor-pointer hover:border-[#2B6F5E]/40 hover:shadow-md dark:hover:shadow-black/30 transition-all duration-200 overflow-hidden"
                   >
                     <div
-                      className="absolute top-0 left-0 right-0 h-[2px] rounded-t-xl transition-all duration-200 group-hover/card:h-[3px]"
+                      className="absolute top-0 left-0 right-0 h-0.5 rounded-t-xl transition-all duration-200 group-hover/card:h-0.75"
                       style={{ background: cfg.color }}
                     />
                     <div className="flex items-start gap-2.5 mt-1">
@@ -1239,7 +1220,6 @@ function GroupDetails({
 
 // ─── Main Page ────────────────────────────────────────────────
 export default function AdminGroupsPage() {
-  const { currentLang } = useLanguage();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [filterLevel, setFilterLevel] = useState("ALL");
@@ -1247,13 +1227,13 @@ export default function AdminGroupsPage() {
 
   const { data, isLoading, isError, refetch } = useAdminGroups({
     search: search || undefined,
-    status: filterStatus !== "ALL" ? (filterStatus as any) : undefined,
+    status: filterStatus !== "ALL" ? (filterStatus as GroupStatus) : undefined,
     level: filterLevel !== "ALL" ? filterLevel : undefined,
     limit: 100,
   });
 
-  const groups = data?.data ?? [];
-  const selected = groups.find((g) => g.group_id === selectedId) ?? null;
+  const groups = useMemo(() => data?.data ?? [], [data]);
+  const selected = groups.find((g: Group) => g.group_id === selectedId) ?? null;
 
   const [realtimeFlash, setRealtimeFlash] = useState(false);
   useGroupsSocket({
@@ -1267,9 +1247,9 @@ export default function AdminGroupsPage() {
   const stats = useMemo(
     () => ({
       total: groups.length,
-      open: groups.filter((g) => g.status === "OPEN").length,
-      full: groups.filter((g) => g.status === "FULL").length,
-      finished: groups.filter((g) => g.status === "FINISHED").length,
+      open: groups.filter((g: Group) => g.status === "OPEN").length,
+      full: groups.filter((g: Group) => g.status === "FULL").length,
+      finished: groups.filter((g: Group) => g.status === "FINISHED").length,
     }),
     [groups],
   );
@@ -1464,7 +1444,7 @@ export default function AdminGroupsPage() {
                 <p className="text-[13px] text-[#9B8E82]">لا توجد أفواج</p>
               </div>
             ) : (
-              groups.map((g) => (
+              groups.map((g: Group) => (
                 <GroupRow
                   key={g.group_id}
                   group={g}
