@@ -157,7 +157,12 @@ function GroupRow({
 }) {
   const flag = COURSE_FLAG[group.course.course_code] ?? COURSE_FLAG.default;
   const lvl = LEVEL_COLORS[group.level] ?? LEVEL_COLORS.A1;
-  const fill = group.capacity_pct;
+  // حساب الـ fill يدوياً بدل الاعتماد على capacity_pct من API
+  const studentCount = group.enrolled_count + group.pending_count;
+  const fill =
+    group.max_students > 0
+      ? Math.min(Math.round((studentCount / group.max_students) * 100), 100)
+      : 0;
 
   return (
     <button
@@ -192,7 +197,7 @@ function GroupRow({
               {group.course.course_name}
             </span>
             <span className="text-[11px] text-[#9B8E82] dark:text-[#555] ms-auto">
-              {group.enrolled_count + group.pending_count}/{group.max_students}
+              {studentCount}/{group.max_students}
             </span>
           </div>
           <div className="mt-1.5 h-1 rounded-full bg-[#F0EBE5] dark:bg-[#2A2A2A] overflow-hidden">
