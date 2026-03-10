@@ -61,6 +61,7 @@ import {
   finishEnrollmentController,
   markEnrollmentPaidController,
   rejectEnrollmentController,
+  deleteEnrollmentController,
 
   /* ================= SESSIONS ================= */
   createSessionController,
@@ -158,14 +159,14 @@ import {
 } from "../../controllers/admin/Room.controller";
 
 import {
-  getGroups            as getGroupsWithStatsController,
-  getGroupById         as getGroupDetailsController,
-  getGroupStudents     as getGroupStudentsController,
-  getGroupTeacher      as getGroupTeacherController,
-  changeGroupStatus    as changeGroupStatusController,
-  assignTeacher        as assignGroupTeacherController,
-  transferStudent      as transferStudentController,
-  getTransferRequests  as getTransferRequestsController,
+  getGroups as getGroupsWithStatsController,
+  getGroupById as getGroupDetailsController,
+  getGroupStudents as getGroupStudentsController,
+  getGroupTeacher as getGroupTeacherController,
+  changeGroupStatus as changeGroupStatusController,
+  assignTeacher as assignGroupTeacherController,
+  transferStudent as transferStudentController,
+  getTransferRequests as getTransferRequestsController,
 } from "../../controllers/admin/group.controller";
 
 const adminRoutes = Router();
@@ -534,6 +535,13 @@ adminRoutes.patch(
   authMiddleware,
   roleGuard([Permissions.MANAGE_ENROLLMENTS]),
   finishEnrollmentController,
+);
+
+adminRoutes.delete(
+  "/enrollments/:enrollmentId",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_ENROLLMENTS]),
+  deleteEnrollmentController,
 );
 
 /* ======================================================

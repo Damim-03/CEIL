@@ -752,6 +752,19 @@ export const useAdminEnrollment = (enrollmentId?: string) =>
     enabled: Boolean(enrollmentId),
   });
 
+// في useAdmin.ts أضف هذا الـ hook
+export const useDeleteEnrollment = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (enrollmentId: string) =>
+      adminEnrollmentsApi.delete(enrollmentId),
+    onSuccess: (_, enrollmentId) => {
+      qc.removeQueries({ queryKey: enrollmentKey(enrollmentId) });
+      invalidateEnrollments(qc, enrollmentId);
+    },
+  });
+};
+
 const invalidateEnrollments = (
   qc: ReturnType<typeof useQueryClient>,
   id?: string,

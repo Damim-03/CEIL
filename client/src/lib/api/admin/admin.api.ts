@@ -566,6 +566,23 @@ export const adminEnrollmentsApi = {
     return res.data;
   },
 
+  // بعد سطر finish():
+  async delete(enrollmentId: string): Promise<{
+    message: string;
+    deleted: {
+      enrollment_id: string;
+      student: string;
+      course: string;
+      status: string;
+      fees_deleted: number;
+    };
+  }> {
+    const res = await axiosInstance.delete(
+      `/admin/enrollments/${enrollmentId}`,
+    );
+    return res.data;
+  },
+
   async reject(
     enrollmentId: string,
     payload?: { reason?: string },

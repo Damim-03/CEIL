@@ -649,6 +649,62 @@ export const finishEnrollmentController = async (
   res.json(result.data);
 };
 
+export const deleteEnrollmentController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const admin = (req as Request & { user?: JwtUser }).user;
+
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { enrollment_id: req.params.enrollmentId },
+      include: {
+        student: true,
+        course: true,
+        fees: true,
+      },
+    });
+
+    if (!enrollment) {
+      return res.status(404).json({ message: "Enrollment not found" });
+    }
+
+    // حذف cascade: fees أولاً ثم التسجيل
+    await prisma.$transaction([
+      prisma.fee.deleteMany({
+        where: { enrollment_id: req.params.enrollmentId },
+      }),
+      prisma.enrollment.delete({
+        where: { enrollment_id: req.params.enrollmentId },
+      }),
+    ]);
+
+    // Socket event
+    emitToAdminLevel("enrollment:deleted", {
+      enrollment_id: req.params.enrollmentId,
+      student_id: enrollment.student_id,
+      deleted_by: admin?.user_id,
+    });
+
+    return res.json({
+      message: "Enrollment deleted successfully",
+      deleted: {
+        enrollment_id: req.params.enrollmentId,
+        student:
+          `${enrollment.student?.first_name ?? ""} ${enrollment.student?.last_name ?? ""}`.trim(),
+        course: enrollment.course?.course_name ?? "",
+        status: enrollment.registration_status,
+        fees_deleted: enrollment.fees.length,
+      },
+    });
+  } catch (error: any) {
+    console.error("deleteEnrollment error:", error);
+    return res
+      .status(500)
+      .json({ message: error.message || "Failed to delete enrollment" });
+  }
+};
+
 /* ═══ SESSIONS — Using SessionService ✅ ═══ */
 
 export const createSessionController = async (req: Request, res: Response) => {

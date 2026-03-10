@@ -3,6 +3,7 @@
    ✅ All logic preserved
    ✅ Full i18n — zero hardcoded strings
    ✅ New: deep visual hierarchy, gradient cards, micro-animations
+   ✅ Delete enrollment support
 =============================================================== */
 
 import { useState } from "react";
@@ -24,6 +25,7 @@ import {
   Sparkles,
   ArrowRight,
   X,
+  Trash2,
 } from "lucide-react";
 
 import PageLoader from "../../../../components/PageLoader";
@@ -50,6 +52,7 @@ import {
   useRejectEnrollment,
   useFinishEnrollment,
   useAddStudentToGroup,
+  useDeleteEnrollment,
 } from "../../../../hooks/admin/useAdmin";
 
 import type { Enrollment } from "../../../../types/Types";
@@ -241,6 +244,7 @@ export default function AdminEnrollmentsPage() {
   const rejectEnrollment = useRejectEnrollment();
   const finishEnrollment = useFinishEnrollment();
   const addToGroup = useAddStudentToGroup();
+  const deleteEnrollment = useDeleteEnrollment();
 
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("pending");
@@ -248,6 +252,7 @@ export default function AdminEnrollmentsPage() {
     useState<Enrollment | null>(null);
   const [rejectDialog, setRejectDialog] = useState(false);
   const [assignGroupDialog, setAssignGroupDialog] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState("");
 
@@ -388,6 +393,20 @@ export default function AdminEnrollmentsPage() {
     } catch (err: any) {
       toast.error(
         err?.response?.data?.message || t("admin.enrollments.finishFailed"),
+      );
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedEnrollment) return;
+    try {
+      await deleteEnrollment.mutateAsync(selectedEnrollment.enrollment_id);
+      toast.success(t("admin.enrollments.deleteSuccess"));
+      setDeleteDialog(false);
+      setSelectedEnrollment(null);
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || t("admin.enrollments.deleteFailed"),
       );
     }
   };
@@ -596,6 +615,10 @@ export default function AdminEnrollmentsPage() {
                     ? () => handleFinish(enrollment.enrollment_id)
                     : undefined
                 }
+                onDelete={() => {
+                  setSelectedEnrollment(enrollment);
+                  setDeleteDialog(true);
+                }}
               />
             ))}
           </div>
@@ -715,6 +738,61 @@ export default function AdminEnrollmentsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* ══════════════ DELETE DIALOG ══════════════ */}
+        <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
+          <DialogContent className="dark:bg-[#111] dark:border-[#2A2A2A]">
+            <DialogHeader>
+              <DialogTitle className="text-red-500 dark:text-red-400 flex items-center gap-2">
+                <Trash2 className="w-5 h-5" />
+                {t("admin.enrollments.deleteDialog.title")}
+              </DialogTitle>
+              <DialogDescription className="dark:text-[#888]">
+                {t("admin.enrollments.deleteDialog.description", {
+                  name: `${selectedEnrollment?.student?.first_name || ""} ${selectedEnrollment?.student?.last_name || ""}`.trim(),
+                  course: selectedEnrollment?.course?.course_name || "",
+                })}
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Warning box */}
+            <div className="rounded-xl p-4 border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/20">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-[12px] font-bold text-red-600 dark:text-red-400">
+                    {t("admin.enrollments.deleteDialog.warningTitle")}
+                  </p>
+                  <p className="text-[11px] text-red-500/80 dark:text-red-400/70">
+                    {t("admin.enrollments.deleteDialog.warningBody")}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDeleteDialog(false);
+                  setSelectedEnrollment(null);
+                }}
+                className="dark:border-[#2A2A2A] dark:text-[#E5E5E5] dark:hover:bg-[#1A1A1A]"
+              >
+                {t("admin.enrollments.cancel")}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deleteEnrollment.isPending}
+              >
+                {deleteEnrollment.isPending
+                  ? t("admin.enrollments.deleteDialog.deleting")
+                  : t("admin.enrollments.deleteDialog.confirm")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
@@ -731,6 +809,7 @@ function EnrollmentCard({
   showGoToFees,
   onAssignGroup,
   onFinish,
+  onDelete,
 }: {
   enrollment: any;
   onValidate?: () => void;
@@ -738,6 +817,7 @@ function EnrollmentCard({
   showGoToFees?: boolean;
   onAssignGroup?: () => void;
   onFinish?: () => void;
+  onDelete: () => void;
 }) {
   const { t } = useTranslation();
   const status = (enrollment.registration_status as StatusKey) ?? "PENDING";
@@ -1060,6 +1140,20 @@ function EnrollmentCard({
           {t("admin.enrollments.actions.viewStudent")}
           <ChevronRight className="w-3 h-3 opacity-50" />
         </Link>
+
+        {/* ── Delete button — always visible ── */}
+        <button
+          onClick={onDelete}
+          className="w-full flex items-center justify-center gap-2 h-9 rounded-xl text-[12px] font-semibold border transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
+          style={{
+            borderColor: "rgba(239,68,68,0.25)",
+            color: "#ef4444",
+            background: "rgba(239,68,68,0.03)",
+          }}
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          {t("admin.enrollments.actions.delete")}
+        </button>
       </div>
     </div>
   );
