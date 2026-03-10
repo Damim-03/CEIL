@@ -219,7 +219,7 @@ const Courses = () => {
     setIsPricingModalOpen(true);
   };
 
-  const confirmEnrollment = async () => {
+  const confirmEnrollment = async (pricingId: string) => {
     if (!selectedGroupForEnrollment || !selectedCourse) return;
     const selectedGroup = groups.find(
       (g: Group) => g.group_id === selectedGroupForEnrollment,
@@ -228,6 +228,7 @@ const Courses = () => {
       {
         course_id: selectedCourse.course_id,
         group_id: selectedGroupForEnrollment,
+        pricing_id: pricingId,
       },
       {
         onSuccess: () => {
