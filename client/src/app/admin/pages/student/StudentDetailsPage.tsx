@@ -2,10 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import PageLoader from "../../../../components/PageLoader";
 import { Button } from "../../../../components/ui/button";
-import {
-  useAdminStudent,
-  type AdminStudent,
-} from "../../../../hooks/admin/useAdmin";
+import { useAdminStudent, type AdminStudent } from "../../../../hooks/admin/useAdmin";
 import {
   ArrowLeft,
   Mail,
@@ -27,12 +24,7 @@ import {
 import { useState } from "react";
 import EditStudentModal from "../../components/EditStudentModal";
 import { UserIDCardFlip } from "../../components/UserIDCardFlip";
-import {
-  getCompletionLabel,
-  getProfileCompletion,
-  type CompletionStep,
-  getCompletionColor,
-} from "../../../../lib/utils/profileCompletion";
+import { getCompletionColor, getCompletionLabel, type CompletionStep, getProfileCompletion } from "../../../../lib/utils/profileCompletion";
 
 // ─── Circular Progress ────────────────────────────────────────
 function CircularProgress({
@@ -495,7 +487,7 @@ const StudentDetailsPage = () => {
                           </p>
                           <p className="text-[10px] text-[#2B6F5E] dark:text-[#4ADE80]/70">
                             {t("admin.studentDetails.daysAgo", {
-                              count: enrolledDays,
+                              count: enrolledDays ?? undefined,
                             })}
                           </p>
                         </div>
@@ -686,7 +678,9 @@ const StudentDetailsPage = () => {
                       {t("admin.studentDetails.enrollmentAge")}
                     </span>
                     <span className="text-sm font-bold text-[#C4A035] dark:text-[#D4A843] bg-[#C4A035]/8 dark:bg-[#C4A035]/10 px-3 py-1 rounded-lg">
-                      {t("admin.studentDetails.days", { count: enrolledDays })}
+                      {t("admin.studentDetails.days", {
+                        count: enrolledDays ?? undefined,
+                      })}
                     </span>
                   </div>
                 )}
