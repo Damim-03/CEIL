@@ -2,7 +2,10 @@ import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import PageLoader from "../../../../components/PageLoader";
 import { Button } from "../../../../components/ui/button";
-import { useAdminStudent, type AdminStudent } from "../../../../hooks/admin/useAdmin";
+import {
+  useAdminStudent,
+  type AdminStudent,
+} from "../../../../hooks/admin/useAdmin";
 import {
   ArrowLeft,
   Mail,
@@ -20,87 +23,100 @@ import {
   XCircle,
   BookOpen,
   CircleUser,
+  Sparkles,
 } from "lucide-react";
 import { useState } from "react";
 import EditStudentModal from "../../components/EditStudentModal";
 import { UserIDCardFlip } from "../../components/UserIDCardFlip";
-import { getCompletionColor, getCompletionLabel, type CompletionStep, getProfileCompletion } from "../../../../lib/utils/profileCompletion";
+import {
+  getCompletionColor,
+  getCompletionLabel,
+  type CompletionStep,
+  getProfileCompletion,
+} from "../../../../lib/utils/profileCompletion";
 
-// ─── Circular Progress ────────────────────────────────────────
+/* ═══════════════════════════════════════════════
+   CIRCULAR PROGRESS
+═══════════════════════════════════════════════ */
 function CircularProgress({
   percentage,
-  size = 88,
+  size = 96,
   color,
+  strokeWidth = 8,
 }: {
   percentage: number;
   size?: number;
   color: string;
+  strokeWidth?: number;
 }) {
-  const r = (size - 10) / 2;
+  const r = (size - strokeWidth * 2) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (percentage / 100) * circ;
-
+  const cx = size / 2,
+    cy = size / 2;
   return (
     <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-      {/* track */}
       <circle
-        cx={size / 2}
-        cy={size / 2}
+        cx={cx}
+        cy={cy}
         r={r}
         fill="none"
-        stroke="currentColor"
-        strokeWidth={8}
-        className="text-[#D8CDC0]/40 dark:text-[#2A2A2A]"
+        stroke="rgba(255,255,255,0.07)"
+        strokeWidth={strokeWidth}
       />
-      {/* fill */}
       <circle
-        cx={size / 2}
-        cy={size / 2}
+        cx={cx}
+        cy={cy}
         r={r}
         fill="none"
         stroke={color}
-        strokeWidth={8}
+        strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeDasharray={circ}
         strokeDashoffset={offset}
-        style={{ transition: "stroke-dashoffset 0.8s ease" }}
+        style={{
+          transition: "stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)",
+          filter: `drop-shadow(0 0 8px ${color}70)`,
+        }}
       />
     </svg>
   );
 }
 
-// ─── Step Row ─────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════
+   STEP ROW
+═══════════════════════════════════════════════ */
 function StepRow({ step }: { step: CompletionStep }) {
   return (
-    <div className="flex items-center gap-2.5 py-1.5">
-      {step.done ? (
-        <CheckCircle2 className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80] shrink-0" />
-      ) : (
-        <XCircle className="w-4 h-4 text-[#BEB29E] dark:text-[#555] shrink-0" />
-      )}
+    <div
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${step.done ? "bg-white/[0.04]" : "opacity-50"}`}
+    >
+      <div
+        className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${step.done ? "bg-[#4ADE80]/15" : "bg-white/8"}`}
+      >
+        {step.done ? (
+          <CheckCircle2 className="w-3.5 h-3.5 text-[#4ADE80]" />
+        ) : (
+          <XCircle className="w-3.5 h-3.5 text-white/25" />
+        )}
+      </div>
       <span
-        className={`text-sm flex-1 ${
-          step.done
-            ? "text-[#1B1B1B] dark:text-[#E5E5E5]"
-            : "text-[#9B8E82] dark:text-[#666] line-through decoration-[#BEB29E]/60"
-        }`}
+        className={`text-sm flex-1 ${step.done ? "text-white/85" : "text-white/30 line-through"}`}
       >
         {step.labelAr}
       </span>
       <span
-        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
-          step.done
-            ? "bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80]"
-            : "bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] text-[#9B8E82]"
-        }`}
+        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${step.done ? "bg-[#4ADE80]/12 text-[#4ADE80]" : "bg-white/6 text-white/25"}`}
       >
-        {step.weight}%
+        +{step.weight}
       </span>
     </div>
   );
 }
 
-// ─── Profile Completion Card ───────────────────────────────────
+/* ═══════════════════════════════════════════════
+   PROFILE COMPLETION CARD
+═══════════════════════════════════════════════ */
 function ProfileCompletionCard({ student }: { student: AdminStudent }) {
   const { percentage, isComplete, steps, infoScore, docsScore, isActive } =
     getProfileCompletion(student);
@@ -108,7 +124,6 @@ function ProfileCompletionCard({ student }: { student: AdminStudent }) {
   const { ar: label } = getCompletionLabel(percentage);
   const missing = steps.filter((s) => !s.done);
 
-  // تقسيم الخطوات
   const infoSteps = steps.filter(
     (s) => !["docs_uploaded", "docs_approved", "active"].includes(s.key),
   );
@@ -118,183 +133,234 @@ function ProfileCompletionCard({ student }: { student: AdminStudent }) {
   const activeStep = steps.find((s) => s.key === "active")!;
 
   return (
-    <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-lg dark:shadow-black/20 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden">
-      {/* شريط علوي ملوّن */}
-      <div className="h-1 w-full" style={{ background: color }} />
+    <div
+      className="relative rounded-2xl overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(150deg, #0d1f18 0%, #162d22 60%, #0a1810 100%)",
+        boxShadow: `0 0 50px ${color}18, inset 0 1px 0 rgba(255,255,255,0.05)`,
+        border: `1px solid ${color}20`,
+      }}
+    >
+      {/* ambient glow */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div
+          className="absolute top-0 right-0 w-48 h-48 rounded-full opacity-15"
+          style={{
+            background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
+            transform: "translate(30%, -30%)",
+          }}
+        />
+      </div>
+      {/* top glow line */}
       <div
-        className="absolute left-0 top-1 bottom-0 w-1.5"
-        style={{ background: `${color}60` }}
+        className="absolute top-0 left-0 right-0 h-px"
+        style={{
+          background: `linear-gradient(90deg, transparent, ${color}70, transparent)`,
+        }}
       />
 
-      <div className="p-5">
-        {/* عنوان */}
-        <div className="flex items-center gap-2.5 mb-5">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: `${color}18` }}
-          >
-            <CircleUser className="w-5 h-5" style={{ color }} />
+      <div className="relative p-5">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-5">
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{
+                background: `${color}18`,
+                border: `1px solid ${color}30`,
+              }}
+            >
+              <CircleUser className="w-4.5 h-4.5" style={{ color }} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-white/35 uppercase tracking-widest">
+                اكتمال الحساب
+              </p>
+              <p className="text-sm font-bold text-white/80 mt-0.5">
+                {missing.length === 0
+                  ? "مكتمل ✓"
+                  : `${missing.length} خطوات ناقصة`}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-              اكتمال الحساب
-            </h3>
-            <p className="text-[11px] text-[#9B8E82] dark:text-[#666]">
-              {missing.length === 0
-                ? "الحساب مكتمل"
-                : `${missing.length} خطوة ناقصة`}
+          <div className="text-right">
+            <p
+              className="text-[10px] font-bold uppercase tracking-widest mb-0.5"
+              style={{ color: `${color}80` }}
+            >
+              {label}
+            </p>
+            <p
+              className="text-3xl font-black tabular-nums leading-none"
+              style={{ color }}
+            >
+              {percentage}
+              <span className="text-base font-bold opacity-70">%</span>
             </p>
           </div>
         </div>
 
-        {/* دائرة النسبة */}
-        <div className="flex items-center justify-center mb-5">
-          <div className="relative inline-flex items-center justify-center">
-            <CircularProgress
-              percentage={percentage}
-              size={100}
-              color={color}
-            />
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span
-                className="text-2xl font-black tabular-nums leading-none"
-                style={{ color }}
-              >
-                {percentage}
-              </span>
-              <span className="text-[10px] text-[#9B8E82] dark:text-[#666] font-semibold">
-                %
-              </span>
+        {/* Circular + sub-bars */}
+        <div className="flex items-center gap-5 mb-5">
+          <div className="relative shrink-0">
+            <CircularProgress percentage={percentage} size={90} color={color} />
+            <div className="absolute inset-0 flex items-center justify-center">
+              {isComplete ? (
+                <Sparkles className="w-5 h-5" style={{ color }} />
+              ) : (
+                <span
+                  className="text-sm font-black"
+                  style={{ color: `${color}80` }}
+                >
+                  {percentage}
+                </span>
+              )}
             </div>
           </div>
 
-          {/* أعمدة جانبية */}
-          <div className="mr-4 space-y-3">
-            <div>
-              <div className="flex items-center justify-between gap-3 mb-1">
-                <span className="text-[11px] text-[#6B5D4F] dark:text-[#888]">
-                  المعلومات
-                </span>
-                <span
-                  className="text-[11px] font-bold"
-                  style={{ color: getCompletionColor(infoScore) }}
-                >
-                  {infoScore}%
-                </span>
-              </div>
-              <div className="w-28 h-1.5 rounded-full bg-[#D8CDC0]/40 dark:bg-[#2A2A2A] overflow-hidden">
+          <div className="flex-1 space-y-3">
+            {[
+              {
+                label: "معلومات",
+                pct: infoScore,
+                c: getCompletionColor(infoScore),
+              },
+              {
+                label: "وثائق",
+                pct: docsScore,
+                c: getCompletionColor(docsScore),
+              },
+              {
+                label: "تفعيل",
+                pct: isActive ? 100 : 0,
+                c: isActive ? "#4ADE80" : "#ef4444",
+                text: isActive ? "مفعّل" : "معطّل",
+              },
+            ].map((b) => (
+              <div key={b.label}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] text-white/35">{b.label}</span>
+                  <span
+                    className="text-[10px] font-black tabular-nums"
+                    style={{ color: b.c }}
+                  >
+                    {b.text ?? `${b.pct}%`}
+                  </span>
+                </div>
                 <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{
-                    width: `${infoScore}%`,
-                    background: getCompletionColor(infoScore),
-                  }}
-                />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between gap-3 mb-1">
-                <span className="text-[11px] text-[#6B5D4F] dark:text-[#888]">
-                  الوثائق
-                </span>
-                <span
-                  className="text-[11px] font-bold"
-                  style={{ color: getCompletionColor(docsScore) }}
+                  className="h-1 rounded-full overflow-hidden"
+                  style={{ background: "rgba(255,255,255,0.07)" }}
                 >
-                  {docsScore}%
-                </span>
+                  <div
+                    className="h-full rounded-full transition-all duration-1000"
+                    style={{
+                      width: `${b.pct}%`,
+                      background: b.c,
+                      boxShadow: `0 0 5px ${b.c}70`,
+                    }}
+                  />
+                </div>
               </div>
-              <div className="w-28 h-1.5 rounded-full bg-[#D8CDC0]/40 dark:bg-[#2A2A2A] overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{
-                    width: `${docsScore}%`,
-                    background: getCompletionColor(docsScore),
-                  }}
-                />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between gap-3 mb-1">
-                <span className="text-[11px] text-[#6B5D4F] dark:text-[#888]">
-                  التفعيل
-                </span>
-                <span
-                  className="text-[11px] font-bold"
-                  style={{ color: isActive ? "#2B6F5E" : "#ef4444" }}
-                >
-                  {isActive ? "مفعّل" : "غير مفعّل"}
-                </span>
-              </div>
-              <div className="w-28 h-1.5 rounded-full bg-[#D8CDC0]/40 dark:bg-[#2A2A2A] overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{
-                    width: isActive ? "100%" : "0%",
-                    background: "#2B6F5E",
-                  }}
-                />
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* شارة الحالة */}
+        {/* Status badge */}
         <div
-          className="flex items-center justify-center gap-1.5 py-2 rounded-xl mb-4 text-sm font-bold"
-          style={{ background: `${color}12`, color }}
+          className="flex items-center justify-center gap-2 py-2.5 rounded-xl mb-4 text-sm font-bold"
+          style={{
+            background: `${color}10`,
+            border: `1px solid ${color}22`,
+            color,
+          }}
         >
           {isComplete ? (
             <CheckCircle2 className="w-4 h-4" />
           ) : (
             <AlertCircle className="w-4 h-4" />
           )}
-          {label}
+          {isComplete ? "الحساب مكتمل بالكامل" : label}
         </div>
 
-        {/* تفاصيل الخطوات */}
-        <div className="space-y-1">
-          {/* قسم المعلومات */}
-          <div className="mb-2">
-            <p className="text-[10px] font-bold text-[#9B8E82] dark:text-[#555] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <User className="w-3 h-3" />
-              المعلومات الشخصية
-            </p>
-            <div className="space-y-0.5 pl-1">
-              {infoSteps.map((s) => (
-                <StepRow key={s.key} step={s} />
-              ))}
-            </div>
-          </div>
+        {/* Steps */}
+        <div className="space-y-0.5">
+          <p className="text-[9px] font-black text-white/25 uppercase tracking-[0.15em] px-3 pt-1 pb-2 flex items-center gap-2">
+            <User className="w-3 h-3" /> المعلومات الشخصية
+          </p>
+          {infoSteps.map((s) => (
+            <StepRow key={s.key} step={s} />
+          ))}
 
-          <div className="border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A] my-2" />
+          <div className="border-t border-white/[0.06] my-2" />
+          <p className="text-[9px] font-black text-white/25 uppercase tracking-[0.15em] px-3 pt-1 pb-2 flex items-center gap-2">
+            <BookOpen className="w-3 h-3" /> الوثائق
+          </p>
+          {docSteps.map((s) => (
+            <StepRow key={s.key} step={s} />
+          ))}
 
-          {/* قسم الوثائق */}
-          <div className="mb-2">
-            <p className="text-[10px] font-bold text-[#9B8E82] dark:text-[#555] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <BookOpen className="w-3 h-3" />
-              الوثائق
-            </p>
-            <div className="space-y-0.5 pl-1">
-              {docSteps.map((s) => (
-                <StepRow key={s.key} step={s} />
-              ))}
-            </div>
-          </div>
-
-          <div className="border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A] my-2" />
-
-          {/* التفعيل */}
-          <div className="pl-1">
-            <StepRow step={activeStep} />
-          </div>
+          <div className="border-t border-white/[0.06] my-2" />
+          <StepRow step={activeStep} />
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════
+   INFO CARD — grid tile
+═══════════════════════════════════════════════ */
+function InfoCard({
+  icon: Icon,
+  label,
+  value,
+  accent,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  accent: string;
+}) {
+  return (
+    <div
+      className="flex items-start gap-3 p-4 rounded-xl transition-all duration-200 cursor-default group"
+      style={{ background: `${accent}06`, border: `1px solid ${accent}14` }}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.background = `${accent}0d`;
+        el.style.borderColor = `${accent}28`;
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.background = `${accent}06`;
+        el.style.borderColor = `${accent}14`;
+      }}
+    >
+      <div
+        className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: `${accent}12`, border: `1px solid ${accent}1e` }}
+      >
+        <Icon className="w-4 h-4" style={{ color: accent }} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p
+          className="text-[10px] font-black uppercase tracking-wider mb-1"
+          style={{ color: `${accent}80` }}
+        >
+          {label}
+        </p>
+        <p className="text-sm font-semibold text-[#1B1B1B] dark:text-white/85 break-all leading-snug">
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   MAIN PAGE
+═══════════════════════════════════════════════ */
 const StudentDetailsPage = () => {
   const { t, i18n } = useTranslation();
   const { studentId } = useParams();
@@ -317,20 +383,11 @@ const StudentDetailsPage = () => {
           <div className="w-24 h-24 mx-auto rounded-full bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] flex items-center justify-center">
             <GraduationCap className="w-12 h-12 text-[#BEB29E] dark:text-[#666666]" />
           </div>
-          <div>
-            <h2 className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
-              {t("admin.studentDetails.studentNotFound")}
-            </h2>
-            <p className="text-[#6B5D4F] dark:text-[#AAAAAA] text-lg">
-              {t("admin.studentDetails.studentNotFoundDesc")}
-            </p>
-          </div>
+          <h2 className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+            {t("admin.studentDetails.studentNotFound")}
+          </h2>
           <Link to="/admin/students">
-            <Button
-              variant="outline"
-              size="lg"
-              className="gap-2 mt-4 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:text-[#E5E5E5] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222]"
-            >
+            <Button variant="outline" size="lg" className="gap-2 mt-4">
               <ArrowLeft className="w-4 h-4" />
               {t("admin.studentDetails.backToStudents")}
             </Button>
@@ -352,35 +409,86 @@ const StudentDetailsPage = () => {
   const { ar: completionLabel } = getCompletionLabel(percentage);
 
   return (
-    <div className="pb-12">
+    <div className="pb-16">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Back */}
         <Link to="/admin/students">
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2 text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/15 dark:hover:bg-[#222222] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]"
+            className="gap-2 text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/15 dark:hover:bg-white/5"
           >
             <ArrowLeft className="w-4 h-4" />
             {t("admin.studentDetails.backToStudents")}
           </Button>
         </Link>
 
-        {/* Hero Card */}
-        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-xl dark:shadow-black/30 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden">
-          <div className="h-36 bg-gradient-to-r from-[#2B6F5E] via-[#2B6F5E]/90 to-[#2B6F5E]/80 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/10"></div>
-            <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#C4A035]/15 rounded-full blur-2xl"></div>
-            <div className="absolute -left-10 top-20 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#C4A035] via-[#C4A035]/60 to-transparent"></div>
+        {/* ══════════ HERO ══════════ */}
+        <div
+          className="relative rounded-3xl overflow-hidden"
+          style={{
+            background:
+              "linear-gradient(140deg, #0c2018 0%, #163326 45%, #0d1e17 100%)",
+            boxShadow:
+              "0 25px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
+          }}
+        >
+          {/* Decorative bg */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div
+              className="absolute -top-20 -right-20 w-80 h-80 rounded-full opacity-[0.18]"
+              style={{
+                background: `radial-gradient(circle, ${completionColor} 0%, transparent 65%)`,
+              }}
+            />
+            <div
+              className="absolute top-1/2 -left-10 w-48 h-48 rounded-full opacity-10"
+              style={{
+                background:
+                  "radial-gradient(circle, #C4A035 0%, transparent 65%)",
+              }}
+            />
+            {/* subtle grid */}
+            <svg
+              className="absolute inset-0 w-full h-full opacity-[0.035]"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <pattern
+                  id="g"
+                  width="40"
+                  height="40"
+                  patternUnits="userSpaceOnUse"
+                >
+                  <path
+                    d="M 40 0 L 0 0 0 40"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="0.8"
+                  />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#g)" />
+            </svg>
+          </div>
 
-            {/* ✅ شارة الاكتمال في الـ hero */}
-            <div className="absolute top-4 left-4">
+          {/* Top glow */}
+          <div
+            className="absolute top-0 left-0 right-0 h-px"
+            style={{
+              background: `linear-gradient(90deg, transparent 0%, ${completionColor}70 35%, #C4A03560 65%, transparent 100%)`,
+            }}
+          />
+
+          <div className="relative px-6 sm:px-10 pt-7 pb-8">
+            {/* Top row: badge + actions */}
+            <div className="flex items-center justify-between mb-8">
               <div
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold backdrop-blur-sm border"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold"
                 style={{
-                  background: `${completionColor}25`,
-                  borderColor: `${completionColor}50`,
-                  color: "#fff",
+                  background: `${completionColor}15`,
+                  border: `1px solid ${completionColor}30`,
+                  color: completionColor,
                 }}
               >
                 {isComplete ? (
@@ -390,300 +498,455 @@ const StudentDetailsPage = () => {
                 )}
                 {completionLabel} — {percentage}%
               </div>
-            </div>
-          </div>
 
-          <div className="px-6 sm:px-8 pb-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6 -mt-16 relative">
-              <div className="relative group">
-                {student.user?.google_avatar ? (
-                  <img
-                    src={student.user.google_avatar}
-                    alt={`${student.first_name || ""} ${student.last_name || ""}`}
-                    className="w-32 h-32 rounded-2xl object-cover border-4 border-white dark:border-[#1A1A1A] shadow-xl group-hover:shadow-2xl transition-all duration-300"
-                  />
-                ) : (
-                  <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center text-white text-4xl font-bold shadow-xl border-4 border-white dark:border-[#1A1A1A] group-hover:shadow-2xl transition-all duration-300">
-                    {student.first_name?.charAt(0) || "?"}
-                    {student.last_name?.charAt(0) || ""}
-                  </div>
-                )}
-                {/* حلقة الاكتمال حول الصورة */}
+              <div className="flex items-center gap-2.5">
+                <button
+                  onClick={() => setIsEditOpen(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200"
+                  style={{
+                    background: "rgba(196,160,53,0.12)",
+                    border: "1px solid rgba(196,160,53,0.28)",
+                    color: "#C4A035",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background =
+                      "rgba(196,160,53,0.22)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background =
+                      "rgba(196,160,53,0.12)";
+                  }}
+                >
+                  <Edit className="w-3.5 h-3.5" />
+                  {t("admin.studentDetails.edit")}
+                </button>
+                <button
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200"
+                  style={{
+                    background: "rgba(239,68,68,0.10)",
+                    border: "1px solid rgba(239,68,68,0.22)",
+                    color: "#f87171",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background =
+                      "rgba(239,68,68,0.20)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background =
+                      "rgba(239,68,68,0.10)";
+                  }}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  {t("admin.students.delete")}
+                </button>
+              </div>
+            </div>
+
+            {/* Avatar + name */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+              {/* Avatar */}
+              <div className="relative shrink-0">
+                {/* glow ring */}
                 <div
-                  className="absolute inset-0 rounded-2xl border-4 pointer-events-none"
-                  style={{ borderColor: `${completionColor}60` }}
+                  className="absolute -inset-2 rounded-2xl opacity-50 blur-md"
+                  style={{
+                    background: `linear-gradient(135deg, ${completionColor}50, #C4A03540)`,
+                  }}
                 />
-                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-white dark:bg-[#1A1A1A] rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-[#1A1A1A]">
-                  {student.status === "ACTIVE" ? (
-                    <div className="w-4 h-4 bg-[#8DB896] rounded-full animate-pulse"></div>
+                <div
+                  className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-2xl overflow-hidden"
+                  style={{ border: "2px solid rgba(255,255,255,0.12)" }}
+                >
+                  {student.user?.google_avatar ? (
+                    <img
+                      src={student.user.google_avatar}
+                      alt={`${student.first_name} ${student.last_name}`}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    <div className="w-4 h-4 bg-[#BEB29E] rounded-full"></div>
+                    <div
+                      className="w-full h-full flex items-center justify-center text-white text-5xl font-black"
+                      style={{
+                        background: "linear-gradient(135deg, #2B6F5E, #C4A035)",
+                      }}
+                    >
+                      {student.first_name?.charAt(0)}
+                      {student.last_name?.charAt(0)}
+                    </div>
                   )}
                 </div>
-              </div>
-
-              <div className="flex-1 sm:mt-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h1 className="text-3xl sm:text-4xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                        {student.first_name || ""}{" "}
-                        {student.last_name || "Unknown"}
-                      </h1>
-                      <GraduationCap className="w-7 h-7 text-[#C4A035]" />
-                    </div>
-                    <p className="text-[#6B5D4F] dark:text-[#888888] text-sm mb-3">
-                      {t("admin.studentDetails.studentId", {
-                        id: student.student_id,
-                      })}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-3 mb-4">
-                      <span
-                        className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold ${
-                          student.status === "ACTIVE"
-                            ? "bg-[#8DB896]/15 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80] border border-[#8DB896]/30 dark:border-[#4ADE80]/20"
-                            : "bg-[#D8CDC0]/30 dark:bg-[#555555]/20 text-[#6B5D4F] dark:text-[#AAAAAA] border border-[#D8CDC0]/50 dark:border-[#555555]/30"
-                        }`}
-                      >
-                        {student.status || t("admin.studentDetails.unknown")}
-                      </span>
-                      {/* ✅ شريط اكتمال مدمج في الـ hero */}
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 h-2 rounded-full bg-[#D8CDC0]/40 dark:bg-[#2A2A2A] overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-700"
-                            style={{
-                              width: `${percentage}%`,
-                              background: completionColor,
-                            }}
-                          />
-                        </div>
-                        <span
-                          className="text-sm font-bold"
-                          style={{ color: completionColor }}
-                        >
-                          {percentage}%
-                        </span>
-                      </div>
-                    </div>
-                    {student.created_at && (
-                      <div className="inline-flex items-center gap-3 bg-[#2B6F5E]/5 dark:bg-[#2B6F5E]/10 rounded-xl px-4 py-2.5 border border-[#2B6F5E]/15 dark:border-[#2B6F5E]/20">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shrink-0 shadow-md shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10">
-                          <Calendar className="w-4 h-4 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-bold text-[#2B6F5E] dark:text-[#4ADE80] uppercase tracking-wider">
-                            {t("admin.studentDetails.enrolledSince")}
-                          </p>
-                          <p className="text-sm font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                            {new Date(student.created_at).toLocaleDateString(
-                              locale,
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              },
-                            )}
-                          </p>
-                          <p className="text-[10px] text-[#2B6F5E] dark:text-[#4ADE80]/70">
-                            {t("admin.studentDetails.daysAgo", {
-                              count: enrolledDays ?? undefined,
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={() => setIsEditOpen(true)}
-                      className="gap-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#1B1B1B] dark:text-[#E5E5E5] hover:bg-[#C4A035]/8 dark:hover:bg-[#C4A035]/10 hover:border-[#C4A035]/40 dark:hover:border-[#C4A035]/30 hover:text-[#C4A035] dark:hover:text-[#D4A843] transition-all"
-                    >
-                      <Edit className="w-4 h-4" />
-                      {t("admin.studentDetails.edit")}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="gap-2 border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 dark:hover:border-red-700/50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      {t("admin.students.delete")}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Details Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Student Info */}
-          <div className="lg:col-span-2 relative bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-lg dark:shadow-black/20 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 sm:p-8 overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-md shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10">
-                <User className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                {t("admin.studentDetails.studentInfo")}
-              </h2>
-            </div>
-            <div className="space-y-2">
-              <InfoRow
-                icon={Mail}
-                label={t("admin.studentDetails.emailAddress")}
-                value={student.email || "—"}
-                color="teal"
-              />
-              <InfoRow
-                icon={Phone}
-                label={t("admin.studentDetails.phoneNumber")}
-                value={student.phone_number || "—"}
-                color="mustard"
-              />
-              {student.date_of_birth && (
-                <InfoRow
-                  icon={Calendar}
-                  label={t("admin.studentDetails.dateOfBirth")}
-                  value={new Date(student.date_of_birth).toLocaleDateString(
-                    locale,
-                    { year: "numeric", month: "long", day: "numeric" },
-                  )}
-                  color="teal"
-                />
-              )}
-              {student.address && (
-                <InfoRow
-                  icon={MapPin}
-                  label={t("admin.studentDetails.address")}
-                  value={student.address}
-                  color="mustard"
-                />
-              )}
-              {student.emergency_contact && (
-                <InfoRow
-                  icon={AlertCircle}
-                  label={t("admin.studentDetails.emergencyContact")}
-                  value={student.emergency_contact}
-                  color="teal"
-                />
-              )}
-            </div>
-
-            <div className="mt-10 pt-8 border-t-2 border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 mb-4 shadow-xl shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10">
-                  <Shield className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
-                  {t("admin.studentDetails.studentIdCard")}
-                </h3>
-                <p className="text-sm text-[#6B5D4F] dark:text-[#AAAAAA] max-w-md mx-auto">
-                  {t("admin.studentDetails.studentIdCardDesc")}
-                </p>
-              </div>
-              <div className="max-w-md mx-auto">
-                <UserIDCardFlip
-                  profile={{
-                    user_id: student.student_id,
-                    email: student.email || "",
-                    google_avatar: student.user?.google_avatar,
-                    role: "STUDENT",
-                    is_active: student.status === "ACTIVE",
+                {/* status dot */}
+                <div
+                  className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 z-10 ${
+                    student.status === "ACTIVE" ? "bg-[#4ADE80]" : "bg-white/25"
+                  }`}
+                  style={{
+                    borderColor: "#0c2018",
+                    boxShadow:
+                      student.status === "ACTIVE"
+                        ? "0 0 10px #4ADE8090"
+                        : undefined,
                   }}
                 />
               </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-none mb-2">
+                  {student.first_name} {student.last_name}
+                </h1>
+                <p className="text-white/25 text-xs font-mono mb-5 tracking-wider">
+                  {student.student_id}
+                </p>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* status badge */}
+                  <span
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${
+                      student.status === "ACTIVE"
+                        ? "text-[#4ADE80]"
+                        : "text-white/40"
+                    }`}
+                    style={{
+                      background:
+                        student.status === "ACTIVE"
+                          ? "rgba(74,222,128,0.12)"
+                          : "rgba(255,255,255,0.06)",
+                      border: `1px solid ${student.status === "ACTIVE" ? "rgba(74,222,128,0.25)" : "rgba(255,255,255,0.1)"}`,
+                    }}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${student.status === "ACTIVE" ? "bg-[#4ADE80] animate-pulse" : "bg-white/25"}`}
+                    />
+                    {student.status}
+                  </span>
+
+                  {/* completion bar */}
+                  <div
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+                    style={{
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                    }}
+                  >
+                    <div
+                      className="w-20 h-1 rounded-full overflow-hidden"
+                      style={{ background: "rgba(255,255,255,0.1)" }}
+                    >
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${percentage}%`,
+                          background: completionColor,
+                          boxShadow: `0 0 5px ${completionColor}`,
+                        }}
+                      />
+                    </div>
+                    <span
+                      className="text-xs font-black tabular-nums"
+                      style={{ color: completionColor }}
+                    >
+                      {percentage}%
+                    </span>
+                  </div>
+
+                  {/* date */}
+                  {student.created_at && (
+                    <div
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs text-white/35"
+                      style={{
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                      }}
+                    >
+                      <Calendar className="w-3.5 h-3.5" />
+                      {new Date(student.created_at).toLocaleDateString(locale, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                      {enrolledDays !== null && (
+                        <span className="text-white/20 mx-0.5">·</span>
+                      )}
+                      {enrolledDays !== null && <span>{enrolledDays} يوم</span>}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Right Sidebar */}
-          <div className="space-y-6">
-            {/* ✅ بطاقة اكتمال الحساب */}
-            <ProfileCompletionCard student={student} />
+          {/* Bottom border */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-px"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent, rgba(196,160,53,0.35), transparent)",
+            }}
+          />
+        </div>
 
-            {/* Status Card */}
-            <div className="relative overflow-hidden rounded-2xl shadow-xl p-6 text-white bg-gradient-to-br from-[#2B6F5E] via-[#2B6F5E] to-[#2B6F5E]/90">
-              <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C4A035]"></div>
-              <div className="absolute inset-0 opacity-[0.06]">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
-              </div>
-              <div className="relative">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center border border-white/10">
-                    <Activity className="w-5 h-5 text-[#C4A035]" />
+        {/* ══════════ CONTENT GRID ══════════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* ─── Left col ─── */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Personal info */}
+            <div
+              className="relative bg-white dark:bg-[#0e0e0e] rounded-2xl overflow-hidden"
+              style={{
+                border: "1px solid rgba(43,111,94,0.15)",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+              }}
+            >
+              <div
+                className="absolute left-0 top-0 bottom-0 w-1"
+                style={{
+                  background: "linear-gradient(to bottom, #2B6F5E, #C4A035)",
+                }}
+              />
+              <div className="p-6 sm:p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{
+                      background: "linear-gradient(135deg, #2B6F5E, #2B6F5E90)",
+                    }}
+                  >
+                    <User className="w-5 h-5 text-white" />
                   </div>
-                  <h3 className="text-lg font-bold">
-                    {t("admin.studentDetails.studentStatus")}
-                  </h3>
+                  <div>
+                    <h2 className="text-base font-bold text-[#1B1B1B] dark:text-white">
+                      {t("admin.studentDetails.studentInfo")}
+                    </h2>
+                    <p className="text-xs text-[#9B8E82] dark:text-white/30">
+                      البيانات الشخصية والتواصل
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/5">
-                    <p className="text-xs text-white/60 mb-1">
-                      {t("admin.studentDetails.currentStatus")}
-                    </p>
-                    <p className="text-2xl font-bold text-[#C4A035] capitalize">
-                      {student.status || t("admin.studentDetails.unknown")}
-                    </p>
-                  </div>
-                  <div className="text-sm text-white/70 bg-white/5 rounded-lg p-3">
-                    {student.status === "ACTIVE"
-                      ? t("admin.studentDetails.statusActiveDesc")
-                      : t("admin.studentDetails.statusInactiveDesc")}
-                  </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <InfoCard
+                    icon={Mail}
+                    label={t("admin.studentDetails.emailAddress")}
+                    value={student.email || "—"}
+                    accent="#2B6F5E"
+                  />
+                  <InfoCard
+                    icon={Phone}
+                    label={t("admin.studentDetails.phoneNumber")}
+                    value={student.phone_number || "—"}
+                    accent="#C4A035"
+                  />
+                  {student.date_of_birth && (
+                    <InfoCard
+                      icon={Calendar}
+                      label={t("admin.studentDetails.dateOfBirth")}
+                      value={new Date(student.date_of_birth).toLocaleDateString(
+                        locale,
+                        { year: "numeric", month: "long", day: "numeric" },
+                      )}
+                      accent="#2B6F5E"
+                    />
+                  )}
+                  {student.address && (
+                    <InfoCard
+                      icon={MapPin}
+                      label={t("admin.studentDetails.address")}
+                      value={student.address}
+                      accent="#C4A035"
+                    />
+                  )}
+                  {student.emergency_contact && (
+                    <InfoCard
+                      icon={AlertCircle}
+                      label={t("admin.studentDetails.emergencyContact")}
+                      value={student.emergency_contact}
+                      accent="#f97316"
+                    />
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Quick Info */}
-            <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-lg dark:shadow-black/20 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
-              <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#C4A035] to-[#C4A035]/60"></div>
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-md shadow-[#C4A035]/20 dark:shadow-[#C4A035]/10">
-                  <GraduationCap className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                  {t("admin.studentDetails.quickInfo")}
-                </h3>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-2.5 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
-                  <span className="text-sm text-[#6B5D4F] dark:text-[#888888]">
-                    {t("admin.studentDetails.type")}
-                  </span>
-                  <span className="text-sm font-bold text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 px-3 py-1 rounded-lg">
-                    {t("admin.studentDetails.student")}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-2.5 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
-                  <span className="text-sm text-[#6B5D4F] dark:text-[#888888]">
-                    {t("admin.studentDetails.status")}
-                  </span>
-                  <span
-                    className={`text-sm font-bold px-3 py-1 rounded-lg ${
-                      student.status === "ACTIVE"
-                        ? "text-[#2B6F5E] dark:text-[#4ADE80] bg-[#8DB896]/15 dark:bg-[#4ADE80]/10"
-                        : "text-[#6B5D4F] dark:text-[#AAAAAA] bg-[#D8CDC0]/30 dark:bg-[#555555]/20"
-                    }`}
-                  >
-                    {student.status || t("admin.studentDetails.unknown")}
-                  </span>
-                </div>
-                {enrolledDays !== null && (
-                  <div className="flex items-center justify-between py-2.5">
-                    <span className="text-sm text-[#6B5D4F] dark:text-[#888888]">
-                      {t("admin.studentDetails.enrollmentAge")}
-                    </span>
-                    <span className="text-sm font-bold text-[#C4A035] dark:text-[#D4A843] bg-[#C4A035]/8 dark:bg-[#C4A035]/10 px-3 py-1 rounded-lg">
-                      {t("admin.studentDetails.days", {
-                        count: enrolledDays ?? undefined,
-                      })}
-                    </span>
+            {/* Stats row */}
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                {
+                  label: "النوع",
+                  value: "طالب",
+                  color: "#2B6F5E",
+                  icon: GraduationCap,
+                  suffix: "",
+                },
+                {
+                  label: "الحالة",
+                  value: student.status || "—",
+                  color: student.status === "ACTIVE" ? "#4ADE80" : "#9B8E82",
+                  icon: Activity,
+                  suffix: "",
+                },
+                {
+                  label: "أيام التسجيل",
+                  value: enrolledDays !== null ? `${enrolledDays}` : "—",
+                  color: "#C4A035",
+                  icon: Calendar,
+                  suffix: " يوم",
+                },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="relative rounded-2xl overflow-hidden"
+                  style={{
+                    background: "linear-gradient(135deg, #0d1f18, #142d22)",
+                    border: `1px solid ${item.color}18`,
+                    boxShadow: `0 0 20px ${item.color}08`,
+                  }}
+                >
+                  <div
+                    className="absolute top-0 left-0 right-0 h-px"
+                    style={{
+                      background: `linear-gradient(90deg, ${item.color}50, transparent)`,
+                    }}
+                  />
+                  <div className="p-4">
+                    <div
+                      className="w-8 h-8 rounded-xl flex items-center justify-center mb-3"
+                      style={{
+                        background: `${item.color}15`,
+                        border: `1px solid ${item.color}25`,
+                      }}
+                    >
+                      <item.icon
+                        className="w-4 h-4"
+                        style={{ color: item.color }}
+                      />
+                    </div>
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">
+                      {item.label}
+                    </p>
+                    <p
+                      className="text-lg font-black"
+                      style={{ color: item.color }}
+                    >
+                      {item.value}
+                      <span className="text-sm">{item.suffix}</span>
+                    </p>
                   </div>
-                )}
+                </div>
+              ))}
+            </div>
+
+            {/* ID Card */}
+            <div
+              className="relative rounded-2xl overflow-hidden"
+              style={{
+                background: "linear-gradient(135deg, #0a1d16, #132b20)",
+                border: "1px solid rgba(43,111,94,0.2)",
+              }}
+            >
+              <div
+                className="absolute top-0 left-0 right-0 h-px"
+                style={{
+                  background:
+                    "linear-gradient(90deg, transparent, rgba(74,222,128,0.5), transparent)",
+                }}
+              />
+              <div className="p-6 sm:p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{
+                      background: "rgba(43,111,94,0.2)",
+                      border: "1px solid rgba(43,111,94,0.3)",
+                    }}
+                  >
+                    <Shield className="w-5 h-5 text-[#4ADE80]" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white">
+                      {t("admin.studentDetails.studentIdCard")}
+                    </h3>
+                    <p className="text-xs text-white/30">
+                      {t("admin.studentDetails.studentIdCardDesc")}
+                    </p>
+                  </div>
+                </div>
+                <div className="max-w-md mx-auto">
+                  <UserIDCardFlip
+                    profile={{
+                      user_id: student.student_id,
+                      email: student.email || "",
+                      google_avatar: student.user?.google_avatar,
+                      role: "STUDENT",
+                      is_active: student.status === "ACTIVE",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ─── Right sidebar ─── */}
+          <div className="space-y-5">
+            <ProfileCompletionCard student={student} />
+
+            {/* Status */}
+            <div
+              className="relative rounded-2xl overflow-hidden"
+              style={{
+                background: "linear-gradient(140deg, #0f2a22, #1a3d2e)",
+                border: "1px solid rgba(43,111,94,0.2)",
+                boxShadow: "0 0 30px rgba(43,111,94,0.08)",
+              }}
+            >
+              <div
+                className="absolute top-0 left-0 right-0 h-px"
+                style={{
+                  background:
+                    "linear-gradient(90deg, transparent, rgba(74,222,128,0.5), transparent)",
+                }}
+              />
+              <div className="p-5">
+                <div className="flex items-center gap-2.5 mb-4">
+                  <div
+                    className="w-8 h-8 rounded-xl flex items-center justify-center"
+                    style={{
+                      background: "rgba(74,222,128,0.12)",
+                      border: "1px solid rgba(74,222,128,0.2)",
+                    }}
+                  >
+                    <Activity className="w-4 h-4 text-[#4ADE80]" />
+                  </div>
+                  <h3 className="text-sm font-bold text-white/75">
+                    {t("admin.studentDetails.studentStatus")}
+                  </h3>
+                </div>
+                <div className="text-center py-4">
+                  <div
+                    className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl text-base font-black ${
+                      student.status === "ACTIVE"
+                        ? "text-[#4ADE80]"
+                        : "text-white/35"
+                    }`}
+                    style={{
+                      background:
+                        student.status === "ACTIVE"
+                          ? "rgba(74,222,128,0.08)"
+                          : "rgba(255,255,255,0.03)",
+                      border: `1px solid ${student.status === "ACTIVE" ? "rgba(74,222,128,0.2)" : "rgba(255,255,255,0.06)"}`,
+                    }}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${student.status === "ACTIVE" ? "bg-[#4ADE80] animate-pulse" : "bg-white/20"}`}
+                    />
+                    {student.status}
+                  </div>
+                  <p className="text-xs text-white/25 mt-3 px-2 leading-relaxed">
+                    {student.status === "ACTIVE"
+                      ? t("admin.studentDetails.statusActiveDesc")
+                      : t("admin.studentDetails.statusInactiveDesc")}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -701,54 +964,3 @@ const StudentDetailsPage = () => {
 };
 
 export default StudentDetailsPage;
-
-function InfoRow({
-  icon: Icon,
-  label,
-  value,
-  color,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  color: "teal" | "mustard";
-}) {
-  const styles = {
-    teal: {
-      iconBg: "bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10",
-      icon: "text-[#2B6F5E] dark:text-[#4ADE80]",
-      label: "text-[#2B6F5E] dark:text-[#4ADE80]",
-      hover: "hover:bg-[#2B6F5E]/8 dark:hover:bg-[#2B6F5E]/10",
-    },
-    mustard: {
-      iconBg: "bg-[#C4A035]/10 dark:bg-[#D4A843]/10",
-      icon: "text-[#C4A035] dark:text-[#D4A843]",
-      label: "text-[#C4A035] dark:text-[#D4A843]",
-      hover: "hover:bg-[#C4A035]/8 dark:hover:bg-[#C4A035]/10",
-    },
-  };
-  const s = styles[color];
-  return (
-    <div
-      className={`group ${s.hover} -mx-4 px-4 py-4 rounded-xl transition-all duration-200`}
-    >
-      <div className="flex items-start gap-4">
-        <div
-          className={`w-11 h-11 rounded-xl ${s.iconBg} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}
-        >
-          <Icon className={`w-5 h-5 ${s.icon}`} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p
-            className={`text-[10px] font-bold ${s.label} uppercase tracking-wider mb-1`}
-          >
-            {label}
-          </p>
-          <p className="text-lg font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] break-all">
-            {value}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
