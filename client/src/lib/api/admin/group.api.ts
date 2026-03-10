@@ -12,13 +12,13 @@ import type {
 } from "../../../hooks/admin/useAdminGroups";
 
 export interface GroupsParams {
-  status?:     GroupStatus;
-  level?:      string;
-  course_id?:  string;
+  status?: GroupStatus;
+  level?: string;
+  course_id?: string;
   teacher_id?: string;
-  search?:     string;
-  page?:       number;
-  limit?:      number;
+  search?: string;
+  page?: number;
+  limit?: number;
 }
 
 // ─── GET GROUPS ───────────────────────────────────────────────
@@ -47,8 +47,8 @@ export const groupApi = {
           capacity_pct: Math.round(
             ((g.current_capacity ?? 0) / g.max_students) * 100,
           ),
-          is_full:  (g.current_capacity ?? 0) >= g.max_students,
-          _count:   g._count ?? { enrollments: 0, sessions: 0 },
+          is_full: (g.current_capacity ?? 0) >= g.max_students,
+          _count: g._count ?? { enrollments: 0, sessions: 0 },
         })),
         meta: { total: raw.length, page: 1, limit: raw.length, total_pages: 1 },
       };
@@ -81,15 +81,15 @@ export const groupApi = {
       const enrollments = group.enrollments ?? [];
       return {
         data: enrollments.map((e: any) => ({
-          enrollment_id:       e.enrollment_id,
+          enrollment_id: e.enrollment_id,
           registration_status: e.registration_status,
-          enrollment_date:     e.enrollment_date,
-          student:             e.student,
+          enrollment_date: e.enrollment_date,
+          student: e.student,
         })),
         meta: {
-          total:       enrollments.length,
-          page:        1,
-          limit:       enrollments.length,
+          total: enrollments.length,
+          page: 1,
+          limit: enrollments.length,
           total_pages: 1,
         },
       };
@@ -112,15 +112,22 @@ export const groupApi = {
 
   transferStudent: async (
     fromGroupId: string,
-    studentId:   string,
-    toGroupId:   string,
+    studentId: string,
+    toGroupId: string,
   ) => {
     const res = await axiosInstance.post(
       `/admin/groups/${fromGroupId}/transfer`,
       {
-        student_id:  studentId,
+        student_id: studentId,
         to_group_id: toGroupId,
       },
+    );
+    return res.data;
+  },
+
+  removeStudent: async (groupId: string, studentId: string) => {
+    const res = await axiosInstance.delete(
+      `/admin/groups/${groupId}/students/${studentId}`,
     );
     return res.data;
   },

@@ -3,6 +3,7 @@
 // ✅ Fix: useAdminGroupStudents with limit:200 to fetch ALL students
 // ✅ Fix: Filter pills include FINISHED + REJECTED
 // ✅ Fix: ENROLL_STATUS_CFG includes REJECTED
+// ✅ Added: Remove student from group (with confirmation dialog)
 // ================================================================
 
 import { useState, useMemo } from "react";
@@ -25,6 +26,7 @@ import {
   BookOpen,
   Check,
   Wifi,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -33,6 +35,7 @@ import {
   useChangeGroupStatus,
   useAssignGroupTeacher,
   useTransferStudent,
+  useRemoveStudentFromGroup,
   useAllTeachers,
   type Group,
   type GroupStudent,
@@ -127,7 +130,6 @@ function GroupRow({
 }) {
   const flag = COURSE_FLAG[group.course.course_code] ?? COURSE_FLAG.default;
   const lvl = LEVEL_COLORS[group.level] ?? LEVEL_COLORS.A1;
-  // حساب الـ fill يدوياً بدل الاعتماد على capacity_pct من API
   const studentCount = group.enrolled_count + group.pending_count;
   const fill =
     group.max_students > 0
@@ -457,7 +459,7 @@ function TeacherModal({
   );
 }
 
-// ─── Student Detail + Transfer Modal ─────────────────────────
+// ─── Student Detail + Transfer + Remove Modal ─────────────────
 function StudentDetailModal({
   student,
   group,
@@ -469,10 +471,15 @@ function StudentDetailModal({
   allGroups: Group[];
   onClose: () => void;
 }) {
-  const { mutate, isPending } = useTransferStudent();
+  const { mutate: transferMutate, isPending: transferPending } =
+    useTransferStudent();
+  const { mutate: removeMutate, isPending: removePending } =
+    useRemoveStudentFromGroup();
   const [search, setSearch] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
-  const [step, setStep] = useState<"info" | "transfer">("info");
+  const [step, setStep] = useState<"info" | "transfer" | "confirmRemove">(
+    "info",
+  );
 
   const s = student.student;
   const cfg =
@@ -498,7 +505,7 @@ function StudentDetailModal({
 
   const handleTransfer = () => {
     if (!selectedGroup) return;
-    mutate(
+    transferMutate(
       {
         fromGroupId: group.group_id,
         studentId: s.student_id,
@@ -516,6 +523,78 @@ function StudentDetailModal({
       },
     );
   };
+
+  const handleRemove = () => {
+    removeMutate(
+      { groupId: group.group_id, studentId: s.student_id },
+      {
+        onSuccess: () => {
+          toast.success(`تم حذف ${s.first_name} من الفوج`);
+          onClose();
+        },
+        onError: (e: unknown) => {
+          const err = e as { response?: { data?: { message?: string } } };
+          toast.error(err?.response?.data?.message ?? "خطأ في الحذف");
+        },
+      },
+    );
+  };
+
+  // ─── Confirm Remove Screen ────────────────────────────────
+  if (step === "confirmRemove") {
+    return (
+      <Overlay onClose={onClose}>
+        <div className="bg-white dark:bg-[#161616] rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+          <div className="h-1 w-full bg-red-500" />
+          <div className="p-6">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 mx-auto mb-4">
+              <Trash2 className="w-5 h-5 text-red-500" />
+            </div>
+            <h3 className="text-[15px] font-bold text-[#1B1B1B] dark:text-[#E5E5E5] text-center mb-1">
+              حذف الطالب من الفوج
+            </h3>
+            <p className="text-[12px] text-[#9B8E82] text-center mb-4">
+              هل تريد حذف{" "}
+              <span className="font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                {s.first_name} {s.last_name}
+              </span>{" "}
+              من فوج{" "}
+              <span className="font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                {group.name}
+              </span>
+              ؟
+            </p>
+            <div className="px-3 py-2.5 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30 mb-5">
+              <p className="text-[11px] text-red-600 dark:text-red-400 text-center">
+                ⚠️ سيتم حذف تسجيله من هذا الفوج نهائياً
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setStep("info")}
+                disabled={removePending}
+                className="flex-1 py-2.5 rounded-xl border border-[#E8E0D5] dark:border-[#2A2A2A] text-[13px] text-[#9B8E82] hover:bg-[#F5F0EB] dark:hover:bg-[#1A1A1A] transition-colors"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleRemove}
+                disabled={removePending}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-[13px] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
+              >
+                {removePending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                نعم، احذف
+              </button>
+            </div>
+          </div>
+        </div>
+      </Overlay>
+    );
+  }
 
   return (
     <Overlay onClose={onClose}>
@@ -637,14 +716,25 @@ function StudentDetailModal({
                 </div>
               </div>
             </div>
+
+            {/* ✅ Footer: إغلاق + حذف + تحويل */}
             <div className="px-5 pb-5 flex gap-2">
               <button
                 onClick={onClose}
-                className="flex-1 py-2.5 rounded-xl border border-[#E8E0D5] dark:border-[#2A2A2A] text-[13px] text-[#9B8E82] hover:bg-[#F5F0EB] dark:hover:bg-[#1A1A1A] transition-colors"
+                className="py-2.5 px-3 rounded-xl border border-[#E8E0D5] dark:border-[#2A2A2A] text-[13px] text-[#9B8E82] hover:bg-[#F5F0EB] dark:hover:bg-[#1A1A1A] transition-colors"
               >
                 إغلاق
               </button>
-              {/* Only show transfer for active enrollments */}
+              {/* ✅ زر حذف من الفوج — لكل الحالات */}
+              <button
+                onClick={() => setStep("confirmRemove")}
+                className="py-2.5 px-3 rounded-xl border border-red-200 dark:border-red-900/40 text-red-500 text-[13px] font-medium hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-1.5 transition-colors"
+                title="حذف من الفوج"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                حذف
+              </button>
+              {/* ✅ زر التحويل — فقط للحالات النشطة */}
               {["VALIDATED", "PAID", "PENDING", "FINISHED"].includes(
                 student.registration_status,
               ) && (
@@ -780,10 +870,10 @@ function StudentDetailModal({
               </button>
               <button
                 onClick={handleTransfer}
-                disabled={!selectedGroup || isPending}
+                disabled={!selectedGroup || transferPending}
                 className="flex-1 py-2.5 rounded-xl bg-[#2B6F5E] hover:bg-[#235C4E] text-white text-[13px] font-semibold flex items-center justify-center gap-2 disabled:opacity-40 transition-colors"
               >
-                {isPending ? (
+                {transferPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <ArrowLeftRight className="w-4 h-4" />
@@ -815,7 +905,6 @@ function GroupDetails({
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [studentSearch, setStudentSearch] = useState("");
 
-  // ✅ Fix: limit:200 to fetch ALL students including FINISHED
   const {
     data: studentsData,
     isLoading: loadingStudents,
@@ -845,7 +934,6 @@ function GroupDetails({
 
   const flag = COURSE_FLAG[group.course.course_code] ?? COURSE_FLAG.default;
   const lvl = LEVEL_COLORS[group.level] ?? LEVEL_COLORS.A1;
-  // ✅ Fix: compute real counts from loaded students (includes FINISHED)
   const realTotal =
     students.length > 0
       ? students.length
@@ -857,7 +945,6 @@ function GroupDetails({
     ["VALIDATED", "PAID"].includes(s.registration_status),
   ).length;
   const maxCapacity = group.max_students ?? 25;
-  // capacity % based on active (VALIDATED+PAID) only — for progress bar business logic
   const realCapacityPct =
     maxCapacity > 0
       ? Math.min(Math.round((realTotal / maxCapacity) * 100), 100)
@@ -1039,7 +1126,6 @@ function GroupDetails({
                 {realPending} معلق
               </button>
             )}
-            {/* ✅ Fix: added FINISHED + REJECTED to filter pills */}
             <div className="ms-auto flex gap-1 flex-wrap">
               {(
                 [
@@ -1182,18 +1268,33 @@ function GroupDetails({
                           </span>
                         </div>
                       </div>
-                      {canTransfer && (
+                      {/* ✅ Action buttons on hover: Transfer + Delete */}
+                      <div className="shrink-0 flex flex-col gap-1 opacity-0 group-hover/card:opacity-100 transition-all duration-150 mt-0.5">
+                        {canTransfer && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedStudent(s);
+                            }}
+                            title="نقل الطالب"
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-[#9B8E82] hover:text-[#2B6F5E] hover:bg-[#EDF6F3] dark:hover:bg-[#0F2420] transition-all duration-150"
+                          >
+                            <ArrowLeftRight className="w-3 h-3" />
+                          </button>
+                        )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedStudent(s);
+                            // فتح الـ modal مباشرة على شاشة التأكيد
+                            // نفتح الـ modal أولاً ثم ننتقل لـ confirmRemove
                           }}
-                          title="نقل الطالب"
-                          className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[#9B8E82] hover:text-[#2B6F5E] hover:bg-[#EDF6F3] dark:hover:bg-[#0F2420] opacity-0 group-hover/card:opacity-100 transition-all duration-150 mt-0.5"
+                          title="حذف من الفوج"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-[#9B8E82] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all duration-150"
                         >
-                          <ArrowLeftRight className="w-3 h-3" />
+                          <Trash2 className="w-3 h-3" />
                         </button>
-                      )}
+                      </div>
                     </div>
                   </div>
                 );

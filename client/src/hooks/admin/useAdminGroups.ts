@@ -2,6 +2,7 @@
 // 📦 src/hooks/admin/useAdminGroups.ts
 // ✅ React Query hooks — uses groupApi
 // ✅ Fix: cross-invalidation with useAdmin.ts group keys
+// ✅ Added: useRemoveStudentFromGroup
 // ================================================================
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -84,6 +85,8 @@ export const groupKeys = {
 // These mirror the constants in useAdmin.ts
 const GROUPS_KEY_LEGACY = ["admin-groups"];
 const groupKeyLegacy = (id: string) => ["admin-group", id];
+const ENROLLMENTS_KEY_LEGACY = ["admin-enrollments"];
+const DASHBOARD_KEY_LEGACY = ["admin-dashboard"];
 
 // ─── GET GROUPS ───────────────────────────────────────────────
 
@@ -194,6 +197,33 @@ export function useTransferStudent() {
       qc.invalidateQueries({ queryKey: groupKeys.students(toGroupId) });
       // ✅ cross-invalidate legacy keys
       qc.invalidateQueries({ queryKey: GROUPS_KEY_LEGACY });
+    },
+  });
+}
+
+// ─── REMOVE STUDENT FROM GROUP ────────────────────────────────
+
+export function useRemoveStudentFromGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      groupId,
+      studentId,
+    }: {
+      groupId: string;
+      studentId: string;
+    }) => groupApi.removeStudent(groupId, studentId),
+    onSuccess: (_, { groupId }) => {
+      // ✅ invalidate students list for this group
+      qc.invalidateQueries({ queryKey: groupKeys.students(groupId) });
+      // ✅ invalidate group details (capacity updates)
+      qc.invalidateQueries({ queryKey: groupKeys.detail(groupId) });
+      qc.invalidateQueries({ queryKey: groupKeys.all() });
+      // ✅ cross-invalidate legacy keys
+      qc.invalidateQueries({ queryKey: GROUPS_KEY_LEGACY });
+      qc.invalidateQueries({ queryKey: groupKeyLegacy(groupId) });
+      qc.invalidateQueries({ queryKey: ENROLLMENTS_KEY_LEGACY });
+      qc.invalidateQueries({ queryKey: DASHBOARD_KEY_LEGACY });
     },
   });
 }
