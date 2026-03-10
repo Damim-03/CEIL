@@ -1313,7 +1313,8 @@
         "confirmPayment": "تأكيد الدفع في صفحة الرسوم",
         "assignGroup": "تعيين في مجموعة",
         "markFinished": "تحديد كمنتهي",
-        "viewStudent": "عرض تفاصيل الطالب"
+        "viewStudent": "عرض تفاصيل الطالب",
+        "delete": "حذف التسجيل"
       },
       "rejectDialog": {
         "title": "رفض التسجيل",
@@ -1349,7 +1350,17 @@
       "assignGroupFailed": "فشل في تعيين الطالب في المجموعة",
       "confirmFinish": "تحديد هذا التسجيل كمنتهي؟",
       "finishSuccess": "تم تحديد التسجيل كمنتهي!",
-      "finishFailed": "فشل في إنهاء التسجيل"
+      "finishFailed": "فشل في إنهاء التسجيل",
+      "deleteDialog": {
+        "title": "حذف التسجيل",
+        "description": "هل أنت متأكد من حذف تسجيل {{name}} في دورة {{course}} نهائياً؟",
+        "warningTitle": "لا يمكن التراجع عن هذا الإجراء",
+        "warningBody": "سيتم حذف جميع الرسوم المرتبطة أيضاً. يمكن للطالب إعادة التسجيل إذا لزم الأمر.",
+        "confirm": "نعم، احذف نهائياً",
+        "deleting": "جاري الحذف..."
+      },
+      "deleteSuccess": "تم حذف التسجيل بنجاح",
+      "deleteFailed": "فشل في حذف التسجيل"
     },
     "documents": {
       "title": "وثائق الطلاب",

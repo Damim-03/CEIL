@@ -1312,7 +1312,8 @@
         "confirmPayment": "Confirmer le paiement dans la page Frais",
         "assignGroup": "Assigner au groupe",
         "markFinished": "Marquer comme terminé",
-        "viewStudent": "Voir détails de l'étudiant"
+        "viewStudent": "Voir détails de l'étudiant",
+        "delete": "Supprimer l'inscription"
       },
       "rejectDialog": {
         "title": "Rejeter l'inscription",
@@ -1348,7 +1349,17 @@
       "assignGroupFailed": "Échec de l'assignation au groupe",
       "confirmFinish": "Marquer cette inscription comme terminée ?",
       "finishSuccess": "Inscription marquée comme terminée !",
-      "finishFailed": "Échec de la finalisation de l'inscription"
+      "finishFailed": "Échec de la finalisation de l'inscription",
+      "deleteDialog": {
+        "title": "Supprimer l'inscription",
+        "description": "Êtes-vous sûr de vouloir supprimer définitivement l'inscription de {{name}} dans {{course}} ?",
+        "warningTitle": "Cette action est irréversible",
+        "warningBody": "Tous les frais associés seront également supprimés. L'étudiant peut se réinscrire si nécessaire.",
+        "confirm": "Oui, supprimer définitivement",
+        "deleting": "Suppression..."
+      },
+      "deleteSuccess": "Inscription supprimée avec succès",
+      "deleteFailed": "Échec de la suppression de l'inscription"
     },
     "documents": {
       "title": "Documents des étudiants",
