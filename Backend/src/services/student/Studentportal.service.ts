@@ -3,6 +3,7 @@
 // ✅ Updated: Category-based document requirements
 // ✅ Updated: BASICS level support
 // ✅ FIXED: Robust registrant_category fallback (null-safe)
+// ✅ CHANGED: is_profile_complete = رفع مستند واحد على الأقل
 // ================================================================
 
 import { prisma } from "../../prisma/client";
@@ -71,7 +72,6 @@ async function getStudentByUserId(userId: string) {
 }
 
 // ─── Helper: get registrant category (null-safe) ─────────
-// ✅ FIXED: handles null, undefined, and invalid values from DB
 function getCategory(student: any): RegistrantCategory {
   const cat = student?.registrant_category;
   if (cat && VALID_CATEGORIES.includes(cat as RegistrantCategory)) {
@@ -103,23 +103,14 @@ export async function getProfile(userId: string) {
 
   const category = getCategory(student);
 
-  const isProfileComplete = Boolean(
-    student.first_name &&
-    student.last_name &&
-    student.date_of_birth &&
-    student.gender &&
-    student.phone_number &&
-    student.nationality &&
-    student.language &&
-    student.education_level &&
-    student.study_location,
-  );
-
   const uploadedTypes = student.documents.map((d) => d.type as DocumentType);
   const approvedTypes = student.documents
     .filter((d) => d.status === "APPROVED")
     .map((d) => d.type as DocumentType);
   const docCheck = areDocumentsComplete(category, uploadedTypes, approvedTypes);
+
+  // ✅ CHANGED: اكتمال الملف = رفع مستند واحد على الأقل
+  const isProfileComplete = student.documents.length > 0;
 
   return {
     ...student,
@@ -903,6 +894,7 @@ export async function getDashboard(userId: string) {
 
   const category = getCategory(student);
 
+  // ─── Profile completion (informational only, لا يؤثر على is_profile_complete) ───
   const profileFields = [
     student.first_name,
     student.last_name,
@@ -928,7 +920,6 @@ export async function getDashboard(userId: string) {
   const completedFields = profileFields.filter(Boolean).length;
   const totalFields = profileFields.length;
   const percentage = Math.round((completedFields / totalFields) * 100);
-  const isProfileComplete = percentage === 100;
   const missingFields = fieldNames.filter((_, i) => !profileFields[i]);
 
   const uploadedTypes = student.documents.map((d) => d.type as DocumentType);
@@ -947,8 +938,10 @@ export async function getDashboard(userId: string) {
     (d) => d.status === "REJECTED",
   ).length;
 
+  // ✅ CHANGED: يكفي رفع مستند واحد على الأقل
+  const isProfileComplete = student.documents.length > 0;
   const isDocumentsComplete = docCheck.complete;
-  const isEnrollmentReady = isProfileComplete && isDocumentsComplete;
+  const isEnrollmentReady = isProfileComplete; // ✅ لا يشترط شيء آخر
 
   const activeEnrollments = student.enrollments.filter((e) =>
     ["PENDING", "VALIDATED", "PAID"].includes(e.registration_status),
