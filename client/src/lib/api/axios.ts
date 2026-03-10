@@ -5,14 +5,15 @@
    are excluded from the refresh retry logic to prevent
    infinite 401 → refresh → 401 → refresh loops.
    
-   This was the ROOT CAUSE of:
-   - ProtectedRoute not redirecting (stuck in loading)
-   - Login page flash before redirect
-   - useMe() hanging forever on public pages
+   ✅ NEW: Dispatches SESSION_EXPIRED_EVENT when refresh fails
+   → SessionGuard catches it → shows SessionExpiredModal
 =============================================================== */
 
 import axios from "axios";
 import { authApi } from "./auth.api";
+
+// ─── اسم الحدث (نفس القيمة في SessionGuard.tsx) ──────────────
+export const SESSION_EXPIRED_EVENT = "session:expired";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -35,7 +36,6 @@ const SKIP_REFRESH_URLS = [
 axiosInstance.interceptors.request.use(
   (config) => {
     if (config.data instanceof FormData) {
-      // Let browser set Content-Type with boundary for file uploads
       delete config.headers["Content-Type"];
     } else if (!config.headers["Content-Type"]) {
       config.headers["Content-Type"] = "application/json";
@@ -90,6 +90,10 @@ axiosInstance.interceptors.response.use(
         // Refresh failed — reject all queued requests
         queue.forEach((cb) => cb(false));
         queue = [];
+
+        // ✅ NEW: أطلق حدث انتهاء الجلسة → SessionGuard يعرض Modal
+        window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+
         return Promise.reject(error);
       } finally {
         isRefreshing = false;
