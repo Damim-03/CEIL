@@ -645,7 +645,7 @@ function StudentDetailModal({
                 إغلاق
               </button>
               {/* Only show transfer for active enrollments */}
-              {["VALIDATED", "PAID", "PENDING"].includes(
+              {["VALIDATED", "PAID", "PENDING", "FINISHED"].includes(
                 student.registration_status,
               ) && (
                 <button
@@ -1132,9 +1132,12 @@ function GroupDetails({
                 const cfg =
                   ENROLL_STATUS_CFG[s.registration_status] ??
                   ENROLL_STATUS_CFG.PENDING;
-                const canTransfer = ["VALIDATED", "PAID", "PENDING"].includes(
-                  s.registration_status,
-                );
+                const canTransfer = [
+                  "VALIDATED",
+                  "PAID",
+                  "PENDING",
+                  "FINISHED",
+                ].includes(s.registration_status);
                 const avatarBg = cfg.color + "18";
                 const initials = `${s.student.first_name[0] ?? ""}${s.student.last_name[0] ?? ""}`;
 
