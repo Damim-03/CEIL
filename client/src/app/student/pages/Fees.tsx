@@ -1,14 +1,12 @@
 import {
   DollarSign,
-  Download,
   CheckCircle,
-  Clock,
   Calendar,
   AlertCircle,
   CreditCard,
   FileText,
+  Banknote,
 } from "lucide-react";
-import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import PageLoader from "../../../components/PageLoader";
 import { useStudentFees } from "../../../hooks/student/Usestudent";
@@ -20,23 +18,22 @@ export default function Fees() {
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 px-4">
-        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-red-50 dark:bg-red-950/20 mb-4">
-          <AlertCircle className="h-8 w-8 text-red-500 dark:text-red-400" />
+      <div className="flex flex-col items-center justify-center py-20 px-4">
+        <div className="w-16 h-16 rounded-2xl bg-red-950/20 border border-red-800/30 flex items-center justify-center mb-5">
+          <AlertCircle className="h-7 w-7 text-red-400" />
         </div>
-        <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-1">
-          Error loading fees
+        <h3 className="text-base font-semibold text-red-400 mb-1">
+          Failed to load fees
         </h3>
-        <p className="text-sm text-[#6B5D4F] dark:text-[#888888] text-center max-w-sm mb-4">
-          {error instanceof Error ? error.message : "Failed to load fees"}
+        <p className="text-sm text-[#9B8E82] dark:text-[#666666] text-center max-w-xs mb-5">
+          {error instanceof Error ? error.message : "Something went wrong"}
         </p>
-        <Button
+        <button
           onClick={() => window.location.reload()}
-          variant="outline"
-          className="border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#888888] rounded-xl"
+          className="px-5 py-2.5 rounded-xl bg-[#C4A035] hover:bg-[#C4A035]/90 text-white text-sm font-medium transition-colors"
         >
-          Retry
-        </Button>
+          Try Again
+        </button>
       </div>
     );
   }
@@ -55,246 +52,318 @@ export default function Fees() {
       month: "short",
       day: "numeric",
     });
+
   const formatCurrency = (amount: number) => `${amount.toLocaleString()} DA`;
+
   const isOverdue = (dueDate: string, status: string) => {
     if (status === "PAID") return false;
     return new Date(dueDate) < new Date();
   };
 
+  const paidPercent =
+    summary.total > 0 ? Math.round((summary.paid / summary.total) * 100) : 0;
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
-        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C4A035] to-[#C4A035]/80 flex items-center justify-center shadow-lg shadow-[#C4A035]/20 dark:shadow-black/30">
-            <CreditCard className="w-6 h-6 text-white" />
+    <div className="space-y-5">
+      {/* ── Header ── */}
+      <div className="relative bg-white dark:bg-[#111111] rounded-2xl border border-[#E8DDD4]/70 dark:border-[#1E1E1E] overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C4A035]/50 to-transparent" />
+        <div className="p-6 flex items-center gap-5">
+          <div className="relative shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#C4A035] to-[#a07a20] flex items-center justify-center shadow-lg shadow-[#C4A035]/25 dark:shadow-[#C4A035]/10">
+              <CreditCard className="w-6 h-6 text-white" />
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#2B6F5E] border-2 border-white dark:border-[#111111]" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl font-bold tracking-tight text-[#1B1B1B] dark:text-[#E8E8E8]">
               My Fees
             </h1>
-            <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
+            <p className="text-sm text-[#9B8E82] dark:text-[#555555] mt-0.5">
               Manage your registration and course fees
             </p>
           </div>
+          {/* compact progress pill */}
+          {summary.total > 0 && (
+            <div className="hidden sm:flex flex-col items-end gap-1 shrink-0">
+              <span className="text-xs text-[#9B8E82] dark:text-[#555555] font-medium">
+                {paidPercent}% paid
+              </span>
+              <div className="w-28 h-1.5 rounded-full bg-[#E8DDD4]/60 dark:bg-[#1E1E1E] overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#2B6F5E] to-[#C4A035] transition-all duration-700"
+                  style={{ width: `${paidPercent}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Summary */}
+      {/* ── Summary cards ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="relative bg-white dark:bg-[#1A1A1A] border border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-2xl p-6 overflow-hidden">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#2B6F5E] to-[#2B6F5E]/70 opacity-60"></div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/[0.08] rounded-xl">
-              <DollarSign className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
-            </div>
-            <p className="text-sm font-medium text-[#6B5D4F] dark:text-[#888888]">
-              Total Fees
-            </p>
+        {/* Total */}
+        <div className="bg-white dark:bg-[#111111] border border-[#E8DDD4]/70 dark:border-[#1E1E1E] rounded-2xl p-5 hover:border-[#2B6F5E]/25 dark:hover:border-[#2B6F5E]/25 transition-colors">
+          <div className="w-9 h-9 rounded-xl bg-[#2B6F5E]/8 dark:bg-[#2B6F5E]/10 flex items-center justify-center mb-3">
+            <Banknote className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
           </div>
-          <p className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+          <p className="text-xs text-[#9B8E82] dark:text-[#555555] font-medium mb-1">
+            Total Fees
+          </p>
+          <p className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E8E8E8] tabular-nums">
             {formatCurrency(summary.total)}
           </p>
         </div>
-        <div className="relative bg-[#8DB896]/5 dark:bg-[#4ADE80]/5 border border-[#8DB896]/25 dark:border-[#4ADE80]/15 rounded-2xl p-6 overflow-hidden">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#8DB896] to-[#8DB896]/70 opacity-60"></div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-[#8DB896]/12 dark:bg-[#4ADE80]/10 rounded-xl">
-              <CheckCircle className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
-            </div>
-            <p className="text-sm font-medium text-[#2B6F5E] dark:text-[#4ADE80]">
-              Paid
-            </p>
+
+        {/* Paid */}
+        <div className="bg-[#2B6F5E]/[0.04] dark:bg-[#2B6F5E]/[0.06] border border-[#2B6F5E]/15 dark:border-[#2B6F5E]/20 rounded-2xl p-5 hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/25 transition-colors">
+          <div className="w-9 h-9 rounded-xl bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 flex items-center justify-center mb-3">
+            <CheckCircle className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
           </div>
-          <p className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+          <p className="text-xs text-[#2B6F5E]/60 dark:text-[#4ADE80]/50 font-medium mb-1">
+            Paid
+          </p>
+          <p className="text-2xl font-bold text-[#2B6F5E] dark:text-[#4ADE80] tabular-nums">
             {formatCurrency(summary.paid)}
           </p>
         </div>
+
+        {/* Outstanding */}
         <div
-          className={`relative border rounded-2xl p-6 overflow-hidden ${summary.remaining > 0 ? "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800/30" : "bg-white dark:bg-[#1A1A1A] border-[#D8CDC0]/60 dark:border-[#2A2A2A]"}`}
+          className={`rounded-2xl p-5 border transition-colors ${
+            summary.remaining > 0
+              ? "bg-red-50/60 dark:bg-red-950/10 border-red-200/60 dark:border-red-900/25 hover:border-red-300/60 dark:hover:border-red-800/40"
+              : "bg-white dark:bg-[#111111] border-[#E8DDD4]/70 dark:border-[#1E1E1E]"
+          }`}
         >
           <div
-            className={`absolute left-0 top-0 bottom-0 w-1 opacity-60 ${summary.remaining > 0 ? "bg-gradient-to-b from-red-500 to-red-500/70" : "bg-gradient-to-b from-[#D8CDC0] to-[#D8CDC0]/70 dark:from-[#2A2A2A] dark:to-[#2A2A2A]/70"}`}
-          ></div>
-          <div className="flex items-center gap-3 mb-2">
-            <div
-              className={`p-2 rounded-xl ${summary.remaining > 0 ? "bg-red-100 dark:bg-red-950/30" : "bg-[#D8CDC0]/20 dark:bg-[#2A2A2A]"}`}
-            >
-              <CreditCard
-                className={`w-5 h-5 ${summary.remaining > 0 ? "text-red-600 dark:text-red-400" : "text-[#6B5D4F] dark:text-[#888888]"}`}
-              />
-            </div>
-            <p
-              className={`text-sm font-medium ${summary.remaining > 0 ? "text-red-700 dark:text-red-400" : "text-[#6B5D4F] dark:text-[#888888]"}`}
-            >
-              Outstanding
-            </p>
+            className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${
+              summary.remaining > 0
+                ? "bg-red-100/80 dark:bg-red-950/30"
+                : "bg-[#E8DDD4]/40 dark:bg-[#1E1E1E]"
+            }`}
+          >
+            <CreditCard
+              className={`w-4 h-4 ${
+                summary.remaining > 0
+                  ? "text-red-500 dark:text-red-400"
+                  : "text-[#9B8E82] dark:text-[#444444]"
+              }`}
+            />
           </div>
           <p
-            className={`text-3xl font-bold ${summary.remaining > 0 ? "text-red-900 dark:text-red-300" : "text-[#1B1B1B] dark:text-[#E5E5E5]"}`}
+            className={`text-xs font-medium mb-1 ${
+              summary.remaining > 0
+                ? "text-red-400 dark:text-red-500/70"
+                : "text-[#9B8E82] dark:text-[#555555]"
+            }`}
+          >
+            Outstanding
+          </p>
+          <p
+            className={`text-2xl font-bold tabular-nums ${
+              summary.remaining > 0
+                ? "text-red-600 dark:text-red-400"
+                : "text-[#1B1B1B] dark:text-[#E8E8E8]"
+            }`}
           >
             {formatCurrency(summary.remaining)}
           </p>
         </div>
       </div>
 
-      {/* Status Banner */}
-      {summary.is_fully_paid ? (
-        <div className="bg-[#8DB896]/8 dark:bg-[#4ADE80]/5 border border-[#8DB896]/25 dark:border-[#4ADE80]/15 rounded-2xl p-4">
-          <div className="flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
-            <div>
-              <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                All Paid!
-              </p>
-              <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
-                You have no outstanding fees
-              </p>
-            </div>
-          </div>
+      {/* ── Status banner ── */}
+      <div
+        className={`rounded-2xl border px-5 py-4 flex items-center gap-3.5 ${
+          summary.is_fully_paid
+            ? "bg-[#2B6F5E]/[0.04] dark:bg-[#4ADE80]/[0.04] border-[#2B6F5E]/15 dark:border-[#4ADE80]/15"
+            : "bg-[#C4A035]/[0.04] dark:bg-[#D4A843]/[0.03] border-[#C4A035]/20 dark:border-[#D4A843]/15"
+        }`}
+      >
+        <div
+          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+            summary.is_fully_paid
+              ? "bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10"
+              : "bg-[#C4A035]/10 dark:bg-[#D4A843]/10"
+          }`}
+        >
+          {summary.is_fully_paid ? (
+            <CheckCircle className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-[#C4A035] dark:text-[#D4A843]" />
+          )}
         </div>
-      ) : (
-        <div className="bg-[#C4A035]/5 dark:bg-[#D4A843]/[0.03] border border-[#C4A035]/20 dark:border-[#D4A843]/15 rounded-2xl p-4">
-          <div className="flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-[#C4A035] dark:text-[#D4A843]" />
-            <div>
-              <p className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                Payment Required
-              </p>
-              <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
-                You have {formatCurrency(summary.remaining)} in outstanding fees
-              </p>
-            </div>
-          </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E8E8E8]">
+            {summary.is_fully_paid ? "All Paid!" : "Payment Required"}
+          </p>
+          <p className="text-xs text-[#9B8E82] dark:text-[#555555] mt-0.5">
+            {summary.is_fully_paid
+              ? "You have no outstanding fees. Great job!"
+              : `You have ${formatCurrency(summary.remaining)} in outstanding fees`}
+          </p>
         </div>
-      )}
+        <span
+          className={`shrink-0 text-xs font-bold px-3 py-1 rounded-full ${
+            summary.is_fully_paid
+              ? "bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80]"
+              : "bg-[#C4A035]/10 dark:bg-[#D4A843]/10 text-[#C4A035] dark:text-[#D4A843]"
+          }`}
+        >
+          {summary.is_fully_paid ? "✓ Clear" : `${paidPercent}%`}
+        </span>
+      </div>
 
-      {/* Fees List */}
-      <div className="space-y-4">
+      {/* ── Fees list ── */}
+      <div className="space-y-3">
         {fees.length > 0 ? (
           fees.map((fee: any) => {
             const overdue = isOverdue(fee.due_date, fee.status);
+            const isPaid = fee.status === "PAID";
+
+            const statusColor = isPaid
+              ? {
+                  iconBg: "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8",
+                  iconColor: "text-[#2B6F5E] dark:text-[#4ADE80]",
+                  badge:
+                    "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80]",
+                }
+              : overdue
+                ? {
+                    iconBg: "bg-red-100/80 dark:bg-red-950/30",
+                    iconColor: "text-red-500 dark:text-red-400",
+                    badge:
+                      "bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-400",
+                  }
+                : {
+                    iconBg: "bg-[#C4A035]/8 dark:bg-[#D4A843]/8",
+                    iconColor: "text-[#C4A035] dark:text-[#D4A843]",
+                    badge:
+                      "bg-[#C4A035]/8 dark:bg-[#D4A843]/10 text-[#C4A035] dark:text-[#D4A843]",
+                  };
+
             return (
               <div
                 key={fee.fee_id}
-                className="bg-white dark:bg-[#1A1A1A] border border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-2xl p-6 hover:shadow-md dark:hover:shadow-black/20 transition-shadow"
+                className="bg-white dark:bg-[#111111] border border-[#E8DDD4]/70 dark:border-[#1E1E1E] rounded-2xl overflow-hidden hover:border-[#D8CDC0]/80 dark:hover:border-[#2A2A2A] transition-colors"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start gap-4">
-                    <div
-                      className={`p-3 rounded-xl ${fee.status === "PAID" ? "bg-[#8DB896]/12 dark:bg-[#4ADE80]/10" : overdue ? "bg-red-100 dark:bg-red-950/30" : "bg-[#C4A035]/8 dark:bg-[#D4A843]/[0.08]"}`}
+                {/* top accent line for unpaid */}
+                {!isPaid && (
+                  <div
+                    className={`h-0.5 ${
+                      overdue
+                        ? "bg-gradient-to-r from-red-500 to-red-400"
+                        : "bg-gradient-to-r from-[#C4A035] to-[#D4A843]"
+                    }`}
+                  />
+                )}
+
+                <div className="p-5">
+                  {/* fee header row */}
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${statusColor.iconBg}`}
+                      >
+                        <DollarSign
+                          className={`w-5 h-5 ${statusColor.iconColor}`}
+                        />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E8E8E8]">
+                          Registration Fee
+                        </h3>
+                        {fee.enrollment?.course && (
+                          <p className="text-xs text-[#9B8E82] dark:text-[#555555] mt-0.5">
+                            {fee.enrollment.course.course_name}
+                            {fee.enrollment.level &&
+                              ` · ${fee.enrollment.level}`}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <span
+                      className={`shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wide ${statusColor.badge}`}
                     >
-                      <DollarSign
-                        className={`w-6 h-6 ${fee.status === "PAID" ? "text-[#2B6F5E] dark:text-[#4ADE80]" : overdue ? "text-red-600 dark:text-red-400" : "text-[#C4A035] dark:text-[#D4A843]"}`}
-                      />
+                      {isPaid ? "PAID" : overdue ? "OVERDUE" : "PENDING"}
+                    </span>
+                  </div>
+
+                  {/* detail grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-[#F8F4F0]/60 dark:bg-[#0D0D0D] rounded-xl mb-3">
+                    <div>
+                      <p className="text-[10px] text-[#9B8E82] dark:text-[#444444] font-medium uppercase tracking-wider mb-1">
+                        Amount
+                      </p>
+                      <p className="text-base font-bold text-[#1B1B1B] dark:text-[#E8E8E8] tabular-nums">
+                        {formatCurrency(fee.amount)}
+                      </p>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg text-[#1B1B1B] dark:text-[#E5E5E5]">
-                        Registration Fee
-                      </h3>
-                      {fee.enrollment?.course && (
-                        <p className="text-sm text-[#6B5D4F] dark:text-[#888888] mt-1">
-                          {fee.enrollment.course.course_name}
-                          {fee.enrollment.level && ` - ${fee.enrollment.level}`}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <Badge
-                    className={
-                      fee.status === "PAID"
-                        ? "bg-[#8DB896]/12 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80] border-[#8DB896]/25 dark:border-[#4ADE80]/15"
-                        : overdue
-                          ? "bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/30"
-                          : "bg-[#C4A035]/8 dark:bg-[#D4A843]/[0.08] text-[#C4A035] dark:text-[#D4A843] border-[#C4A035]/20 dark:border-[#D4A843]/15"
-                    }
-                  >
-                    {fee.status === "PAID" ? (
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                    ) : overdue ? (
-                      <AlertCircle className="w-3 h-3 mr-1" />
-                    ) : (
-                      <Clock className="w-3 h-3 mr-1" />
-                    )}
-                    {fee.status === "PAID"
-                      ? "PAID"
-                      : overdue
-                        ? "OVERDUE"
-                        : "PENDING"}
-                  </Badge>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-4 bg-[#D8CDC0]/8 dark:bg-[#151515] rounded-xl">
-                  <div>
-                    <p className="text-xs text-[#BEB29E] dark:text-[#666666] mb-1">
-                      Amount
-                    </p>
-                    <p className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                      {formatCurrency(fee.amount)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-[#BEB29E] dark:text-[#666666] mb-1">
-                      Due Date
-                    </p>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-[#BEB29E] dark:text-[#666666]" />
-                      <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                      <p className="text-[10px] text-[#9B8E82] dark:text-[#444444] font-medium uppercase tracking-wider mb-1">
+                        Due Date
+                      </p>
+                      <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E8E8E8] flex items-center gap-1">
+                        <Calendar className="w-3 h-3 text-[#9B8E82] dark:text-[#444444]" />
                         {formatDate(fee.due_date)}
                       </p>
                     </div>
+                    {isPaid && (
+                      <>
+                        <div>
+                          <p className="text-[10px] text-[#9B8E82] dark:text-[#444444] font-medium uppercase tracking-wider mb-1">
+                            Paid On
+                          </p>
+                          <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E8E8E8]">
+                            {formatDate(fee.paid_at)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-[#9B8E82] dark:text-[#444444] font-medium uppercase tracking-wider mb-1">
+                            Reference
+                          </p>
+                          <p className="text-xs font-mono text-[#1B1B1B] dark:text-[#E8E8E8] bg-[#E8DDD4]/50 dark:bg-[#1E1E1E] px-2 py-1 rounded-lg truncate">
+                            {fee.reference_code}
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </div>
-                  {fee.status === "PAID" && (
-                    <>
-                      <div>
-                        <p className="text-xs text-[#BEB29E] dark:text-[#666666] mb-1">
-                          Payment Date
-                        </p>
-                        <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                          {formatDate(fee.paid_at)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-[#BEB29E] dark:text-[#666666] mb-1">
-                          Reference
-                        </p>
-                        <p className="text-xs font-mono text-[#1B1B1B] dark:text-[#E5E5E5] bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] px-2 py-1 rounded">
-                          {fee.reference_code}
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-                {fee.status === "PAID" && fee.payment_method && (
-                  <div className="mb-4 p-3 bg-[#8DB896]/8 dark:bg-[#4ADE80]/5 border border-[#8DB896]/20 dark:border-[#4ADE80]/15 rounded-xl">
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
-                      <span className="text-sm text-[#2B6F5E] dark:text-[#4ADE80]">
+
+                  {/* payment method */}
+                  {isPaid && fee.payment_method && (
+                    <div className="flex items-center gap-2 mb-3 px-3 py-2.5 bg-[#2B6F5E]/[0.04] dark:bg-[#4ADE80]/[0.04] border border-[#2B6F5E]/12 dark:border-[#4ADE80]/12 rounded-xl">
+                      <CreditCard className="w-3.5 h-3.5 text-[#2B6F5E] dark:text-[#4ADE80] shrink-0" />
+                      <span className="text-xs text-[#2B6F5E] dark:text-[#4ADE80]">
                         Paid via <strong>{fee.payment_method}</strong>
                       </span>
                     </div>
-                  </div>
-                )}
-                {fee.status === "PAID" && (
-                  <Button
-                    variant="outline"
-                    className="w-full border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-[#6B5D4F] dark:text-[#888888] rounded-xl"
-                  >
-                    <FileText className="w-4 h-4 mr-2" /> Download Receipt
-                  </Button>
-                )}
+                  )}
+
+                  {/* receipt button */}
+                  {isPaid && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full border-[#E8DDD4]/70 dark:border-[#1E1E1E] text-[#6B5D4F] dark:text-[#666666] hover:border-[#C4A035]/40 dark:hover:border-[#D4A843]/30 hover:text-[#C4A035] dark:hover:text-[#D4A843] rounded-xl transition-colors text-xs"
+                    >
+                      <FileText className="w-3.5 h-3.5 mr-2" />
+                      Download Receipt
+                    </Button>
+                  )}
+                </div>
               </div>
             );
           })
         ) : (
-          <div className="text-center py-16 bg-white dark:bg-[#1A1A1A] border border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-2xl">
-            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] mx-auto mb-4">
-              <DollarSign className="w-8 h-8 text-[#BEB29E] dark:text-[#555555]" />
+          <div className="text-center py-16 bg-white dark:bg-[#111111] border border-[#E8DDD4]/70 dark:border-[#1E1E1E] rounded-2xl">
+            <div className="w-14 h-14 rounded-2xl bg-[#F0EBE5] dark:bg-[#1E1E1E] flex items-center justify-center mx-auto mb-4">
+              <DollarSign className="w-6 h-6 text-[#BEB29E] dark:text-[#444444]" />
             </div>
-            <h3 className="text-lg font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
+            <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E8E8E8]">
               No Fees Yet
-            </h3>
-            <p className="text-sm text-[#6B5D4F] dark:text-[#888888] max-w-sm mx-auto">
+            </p>
+            <p className="text-xs text-[#9B8E82] dark:text-[#555555] mt-1 max-w-xs mx-auto">
               Your fees will appear here once you enroll in a course
             </p>
           </div>

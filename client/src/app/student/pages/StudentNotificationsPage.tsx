@@ -1,12 +1,3 @@
-/* ===============================================================
-   StudentNotificationsPage.tsx
-   
-   Student Notifications - Inbox style
-   ✅ View + Filter + Mark as read + Pagination
-   ✅ Imports from UseStudent
-   ✅ Dark mode support
-=============================================================== */
-
 import { useState } from "react";
 import {
   Bell,
@@ -30,48 +21,59 @@ import {
   useMarkAllStudentNotificationsRead,
 } from "../../../hooks/student/Usestudent";
 
-const PRIORITY_STYLES: Record<
-  string,
-  { bg: string; border: string; icon: typeof Info; dot: string }
+/* ── Priority config ── */
+type PriorityKey = "LOW" | "NORMAL" | "HIGH" | "URGENT";
+
+const PRIORITY: Record<
+  PriorityKey,
+  {
+    cardBg: string;
+    cardBorder: string;
+    accentBar: string;
+    dotUnread: string;
+    badge: string;
+    icon: typeof Info;
+    label: string;
+  }
 > = {
   LOW: {
-    bg: "bg-gray-50 dark:bg-[#151515]",
-    border: "border-gray-200 dark:border-[#2A2A2A]",
+    cardBg: "bg-white dark:bg-[#111111]",
+    cardBorder: "border-[#E8DDD4]/70 dark:border-[#1E1E1E]",
+    accentBar: "from-[#9B8E82]/40 to-[#9B8E82]/10",
+    dotUnread: "bg-[#9B8E82]",
+    badge: "bg-[#F0EBE5] dark:bg-[#1E1E1E] text-[#9B8E82] dark:text-[#555555]",
     icon: Info,
-    dot: "bg-gray-400 dark:bg-[#555555]",
+    label: "Low",
   },
   NORMAL: {
-    bg: "bg-white dark:bg-[#1A1A1A]",
-    border: "border-gray-200 dark:border-[#2A2A2A]",
+    cardBg: "bg-white dark:bg-[#111111]",
+    cardBorder: "border-[#E8DDD4]/70 dark:border-[#1E1E1E]",
+    accentBar: "from-[#2B6F5E]/50 to-[#2B6F5E]/10",
+    dotUnread: "bg-[#2B6F5E] dark:bg-[#4ADE80]",
+    badge:
+      "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80]",
     icon: Bell,
-    dot: "bg-blue-500 dark:bg-[#4ADE80]",
+    label: "Normal",
   },
   HIGH: {
-    bg: "bg-amber-50/50 dark:bg-[#D4A843]/[0.03]",
-    border: "border-amber-200 dark:border-[#D4A843]/15",
+    cardBg: "bg-[#C4A035]/[0.025] dark:bg-[#D4A843]/[0.025]",
+    cardBorder: "border-[#C4A035]/25 dark:border-[#D4A843]/20",
+    accentBar: "from-[#C4A035] to-[#C4A035]/10",
+    dotUnread: "bg-[#C4A035] dark:bg-[#D4A843]",
+    badge:
+      "bg-[#C4A035]/10 dark:bg-[#D4A843]/10 text-[#C4A035] dark:text-[#D4A843]",
     icon: AlertTriangle,
-    dot: "bg-amber-500 dark:bg-[#D4A843]",
+    label: "High",
   },
   URGENT: {
-    bg: "bg-red-50/50 dark:bg-red-950/20",
-    border: "border-red-200 dark:border-red-800/30",
+    cardBg: "bg-red-50/50 dark:bg-red-950/[0.08]",
+    cardBorder: "border-red-200/60 dark:border-red-900/25",
+    accentBar: "from-red-500 to-red-500/10",
+    dotUnread: "bg-red-500",
+    badge: "bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-400",
     icon: AlertCircle,
-    dot: "bg-red-500 dark:bg-red-400",
+    label: "Urgent",
   },
-};
-
-const PRIORITY_LABELS: Record<string, string> = {
-  LOW: "Low",
-  NORMAL: "Normal",
-  HIGH: "High",
-  URGENT: "Urgent",
-};
-
-const PRIORITY_BADGES: Record<string, string> = {
-  LOW: "bg-gray-100 dark:bg-[#2A2A2A] text-gray-600 dark:text-[#888888]",
-  NORMAL: "bg-blue-100 dark:bg-[#4ADE80]/10 text-blue-700 dark:text-[#4ADE80]",
-  HIGH: "bg-amber-100 dark:bg-[#D4A843]/10 text-amber-700 dark:text-[#D4A843]",
-  URGENT: "bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400",
 };
 
 function formatTimeAgo(dateStr: string): string {
@@ -109,166 +111,186 @@ export default function StudentNotificationsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-[#E5E5E5] flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-[#4ADE80]/[0.08] flex items-center justify-center">
-              <Bell className="w-5 h-5 text-teal-700 dark:text-[#4ADE80]" />
+    <div className="space-y-5">
+      {/* ── Header ── */}
+      <div className="relative bg-white dark:bg-[#111111] rounded-2xl border border-[#E8DDD4]/70 dark:border-[#1E1E1E] overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#2B6F5E]/40 to-transparent" />
+        <div className="p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-5 flex-1 min-w-0">
+            <div className="relative shrink-0">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#1a4a3a] flex items-center justify-center shadow-lg shadow-[#2B6F5E]/25 dark:shadow-[#2B6F5E]/10">
+                <Bell className="w-6 h-6 text-white" />
+              </div>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1 shadow-sm">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </div>
-            Notifications
-            {unreadCount > 0 && (
-              <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                {unreadCount}
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-[#1B1B1B] dark:text-[#E8E8E8]">
+                Notifications
+              </h1>
+              <p className="text-sm text-[#9B8E82] dark:text-[#555555] mt-0.5">
+                Stay up to date with the latest announcements
+              </p>
+            </div>
+          </div>
+
+          {unreadCount > 0 && (
+            <button
+              onClick={() => markAllRead.mutate()}
+              disabled={markAllRead.isPending}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#E8DDD4]/70 dark:border-[#1E1E1E] text-xs font-medium text-[#6B5D4F] dark:text-[#666666] hover:border-[#2B6F5E]/30 dark:hover:border-[#2B6F5E]/30 hover:text-[#2B6F5E] dark:hover:text-[#4ADE80] transition-colors shrink-0"
+            >
+              <CheckCheck className="w-3.5 h-3.5" />
+              {markAllRead.isPending ? "Marking..." : "Mark all as read"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Filter tabs ── */}
+      <div className="flex gap-1 p-1 bg-[#F0EBE5]/80 dark:bg-[#0D0D0D] rounded-xl w-fit border border-[#E8DDD4]/50 dark:border-[#1A1A1A]">
+        {[
+          {
+            label: "All",
+            icon: Inbox,
+            active: !unreadOnly,
+            onClick: () => {
+              setUnreadOnly(false);
+              setPage(1);
+            },
+          },
+          {
+            label: "Unread",
+            icon: Bell,
+            active: unreadOnly,
+            onClick: () => {
+              setUnreadOnly(true);
+              setPage(1);
+            },
+            count: unreadCount,
+          },
+        ].map((tab) => (
+          <button
+            key={tab.label}
+            onClick={tab.onClick}
+            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-semibold transition-all ${
+              tab.active
+                ? "bg-white dark:bg-[#111111] text-[#2B6F5E] dark:text-[#4ADE80] shadow-sm dark:shadow-black/30 border border-[#E8DDD4]/60 dark:border-[#1E1E1E]"
+                : "text-[#9B8E82] dark:text-[#555555] hover:text-[#6B5D4F] dark:hover:text-[#888888]"
+            }`}
+          >
+            <tab.icon className="w-3.5 h-3.5" />
+            {tab.label}
+            {tab.count !== undefined && tab.count > 0 && (
+              <span className="bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {tab.count}
               </span>
             )}
-          </h1>
-          <p className="text-gray-500 dark:text-[#888888] text-sm mt-1">
-            Stay up to date with the latest announcements
-          </p>
-        </div>
-
-        {unreadCount > 0 && (
-          <button
-            onClick={() => markAllRead.mutate()}
-            disabled={markAllRead.isPending}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-[#2A2A2A] text-sm text-gray-600 dark:text-[#888888] hover:bg-gray-50 dark:hover:bg-[#222222] transition-colors"
-          >
-            <CheckCheck className="w-4 h-4" />
-            {markAllRead.isPending ? "Marking..." : "Mark all as read"}
           </button>
-        )}
+        ))}
       </div>
 
-      {/* Filter */}
-      <div className="flex gap-1 p-1 bg-gray-100 dark:bg-[#151515] rounded-xl w-fit">
-        <button
-          onClick={() => {
-            setUnreadOnly(false);
-            setPage(1);
-          }}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-            !unreadOnly
-              ? "bg-white dark:bg-[#1A1A1A] text-teal-700 dark:text-[#4ADE80] shadow-sm dark:shadow-black/20"
-              : "text-gray-500 dark:text-[#666666] hover:text-gray-700 dark:hover:text-[#888888]"
-          }`}
-        >
-          <Inbox className="w-4 h-4" />
-          All
-        </button>
-        <button
-          onClick={() => {
-            setUnreadOnly(true);
-            setPage(1);
-          }}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-            unreadOnly
-              ? "bg-white dark:bg-[#1A1A1A] text-teal-700 dark:text-[#4ADE80] shadow-sm dark:shadow-black/20"
-              : "text-gray-500 dark:text-[#666666] hover:text-gray-700 dark:hover:text-[#888888]"
-          }`}
-        >
-          <Bell className="w-4 h-4" />
-          Unread
-          {unreadCount > 0 && (
-            <span className="bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs font-bold px-2 py-0.5 rounded-full">
-              {unreadCount}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* List */}
+      {/* ── Notification list ── */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-3 border-teal-200 dark:border-[#2A2A2A] border-t-teal-600 dark:border-t-[#4ADE80] rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 border-[#E8DDD4] dark:border-[#1E1E1E] border-t-[#2B6F5E] dark:border-t-[#4ADE80] rounded-full animate-spin" />
         </div>
       ) : notifications.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-[#2A2A2A] flex items-center justify-center mx-auto mb-4">
-            <BellOff className="w-8 h-8 text-gray-300 dark:text-[#555555]" />
+        <div className="text-center py-20 bg-white dark:bg-[#111111] border border-[#E8DDD4]/70 dark:border-[#1E1E1E] rounded-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-[#F0EBE5] dark:bg-[#1E1E1E] flex items-center justify-center mx-auto mb-4">
+            <BellOff className="w-6 h-6 text-[#BEB29E] dark:text-[#444444]" />
           </div>
-          <p className="text-gray-500 dark:text-[#888888] font-medium">
+          <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E8E8E8]">
             {unreadOnly ? "No unread notifications" : "No notifications yet"}
           </p>
-          <p className="text-gray-400 dark:text-[#666666] text-sm mt-1">
+          <p className="text-xs text-[#9B8E82] dark:text-[#555555] mt-1">
             Notifications will appear here when sent by administration
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {notifications.map((n: any) => {
-            const style = PRIORITY_STYLES[n.priority] || PRIORITY_STYLES.NORMAL;
+            const priority = (n.priority as PriorityKey) ?? "NORMAL";
+            const style = PRIORITY[priority] ?? PRIORITY.NORMAL;
             const isExpanded = expandedId === n.recipient_id;
+            const isUnread = !n.is_read;
 
             return (
               <div
                 key={n.recipient_id}
                 onClick={() => handleExpand(n.recipient_id, n.is_read)}
-                className={`rounded-2xl border transition-all duration-200 overflow-hidden cursor-pointer ${
-                  style.border
-                } ${style.bg} ${
-                  !n.is_read
-                    ? "ring-2 ring-teal-500/20 dark:ring-[#4ADE80]/20 shadow-sm dark:shadow-black/20"
-                    : "opacity-90 hover:opacity-100"
+                className={`relative rounded-2xl border overflow-hidden cursor-pointer transition-all duration-200 ${style.cardBg} ${style.cardBorder} ${
+                  isUnread
+                    ? "shadow-sm dark:shadow-black/20 ring-1 ring-[#2B6F5E]/10 dark:ring-[#4ADE80]/8"
+                    : "hover:border-[#D8CDC0]/80 dark:hover:border-[#2A2A2A]"
                 }`}
               >
-                <div className="flex items-start gap-4 p-5">
-                  {/* Unread dot */}
-                  <div className="pt-1.5 shrink-0">
+                {/* left accent bar */}
+                <div
+                  className={`absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b ${style.accentBar}`}
+                />
+
+                <div className="pl-4 pr-5 py-4 flex items-start gap-3.5">
+                  {/* unread dot */}
+                  <div className="pt-1.5 shrink-0 w-4 flex justify-center">
                     <div
-                      className={`w-2.5 h-2.5 rounded-full ${
-                        !n.is_read
-                          ? `${style.dot} animate-pulse`
-                          : "bg-gray-200 dark:bg-[#2A2A2A]"
+                      className={`w-2 h-2 rounded-full ${
+                        isUnread
+                          ? `${style.dotUnread}`
+                          : "bg-[#E8DDD4] dark:bg-[#222222]"
                       }`}
                     />
                   </div>
 
-                  {/* Content */}
+                  {/* content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1.5">
+                        {/* title row */}
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
                           <h3
-                            className={`text-sm line-clamp-1 ${
-                              !n.is_read
-                                ? "font-bold text-gray-900 dark:text-[#E5E5E5]"
-                                : "font-medium text-gray-700 dark:text-[#BBBBBB]"
+                            className={`text-sm leading-snug ${
+                              isUnread
+                                ? "font-bold text-[#1B1B1B] dark:text-[#E8E8E8]"
+                                : "font-medium text-[#4A4A4A] dark:text-[#AAAAAA]"
                             }`}
                           >
                             {n.title_ar || n.title}
                           </h3>
-                          {n.priority !== "NORMAL" && (
+                          {priority !== "NORMAL" && (
                             <span
-                              className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${
-                                PRIORITY_BADGES[n.priority]
-                              }`}
+                              className={`text-[10px] px-2 py-0.5 rounded-full font-semibold shrink-0 ${style.badge}`}
                             >
-                              {PRIORITY_LABELS[n.priority]}
+                              {style.label}
                             </span>
                           )}
                         </div>
 
+                        {/* message preview */}
                         <p
-                          className={`text-sm text-gray-500 dark:text-[#888888] leading-relaxed ${isExpanded ? "" : "line-clamp-2"}`}
+                          className={`text-xs text-[#9B8E82] dark:text-[#666666] leading-relaxed ${
+                            isExpanded ? "" : "line-clamp-2"
+                          }`}
                         >
                           {n.message_ar || n.message}
                         </p>
 
-                        {/* Expanded */}
+                        {/* expanded content */}
                         {isExpanded && (
-                          <div className="mt-4 space-y-3">
+                          <div className="mt-3 space-y-3">
                             {((n.title_ar && n.title) ||
                               (n.message_ar && n.message)) && (
-                              <div className="bg-white/60 dark:bg-[#222222]/60 rounded-xl p-4 border border-gray-100 dark:border-[#2A2A2A]">
+                              <div className="bg-[#F8F4F0]/80 dark:bg-[#0D0D0D] rounded-xl p-3.5 border border-[#E8DDD4]/60 dark:border-[#1A1A1A]">
                                 {n.title_ar && n.title && (
-                                  <p className="font-medium text-gray-700 dark:text-[#BBBBBB] text-sm mb-1">
+                                  <p className="text-xs font-semibold text-[#4A4A4A] dark:text-[#BBBBBB] mb-1">
                                     {n.title}
                                   </p>
                                 )}
                                 {n.message_ar && n.message && (
-                                  <p className="text-gray-500 dark:text-[#888888] text-sm leading-relaxed">
+                                  <p className="text-xs text-[#9B8E82] dark:text-[#666666] leading-relaxed">
                                     {n.message}
                                   </p>
                                 )}
@@ -277,19 +299,19 @@ export default function StudentNotificationsPage() {
 
                             <div className="flex flex-wrap items-center gap-2">
                               {n.course && (
-                                <span className="flex items-center gap-1 text-xs bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#2A2A2A] px-2.5 py-1 rounded-lg text-gray-600 dark:text-[#888888]">
+                                <span className="flex items-center gap-1 text-[10px] font-medium bg-white dark:bg-[#111111] border border-[#E8DDD4]/70 dark:border-[#1E1E1E] px-2.5 py-1 rounded-lg text-[#6B5D4F] dark:text-[#777777]">
                                   <BookOpen className="w-3 h-3" />
                                   {n.course.course_name}
                                 </span>
                               )}
                               {n.group && (
-                                <span className="flex items-center gap-1 text-xs bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#2A2A2A] px-2.5 py-1 rounded-lg text-gray-600 dark:text-[#888888]">
+                                <span className="flex items-center gap-1 text-[10px] font-medium bg-white dark:bg-[#111111] border border-[#E8DDD4]/70 dark:border-[#1E1E1E] px-2.5 py-1 rounded-lg text-[#6B5D4F] dark:text-[#777777]">
                                   <Layers className="w-3 h-3" />
                                   {n.group.name}
                                 </span>
                               )}
                               {n.is_read && n.read_at && (
-                                <span className="text-xs text-gray-400 dark:text-[#666666]">
+                                <span className="text-[10px] text-[#9B8E82] dark:text-[#555555]">
                                   Read on{" "}
                                   {new Date(n.read_at).toLocaleDateString(
                                     "en-US",
@@ -307,7 +329,8 @@ export default function StudentNotificationsPage() {
                         )}
                       </div>
 
-                      <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-[#666666] whitespace-nowrap shrink-0">
+                      {/* timestamp */}
+                      <span className="flex items-center gap-1 text-[10px] text-[#9B8E82] dark:text-[#555555] whitespace-nowrap shrink-0 mt-0.5">
                         <Clock className="w-3 h-3" />
                         {formatTimeAgo(n.created_at)}
                       </span>
@@ -320,20 +343,21 @@ export default function StudentNotificationsPage() {
         </div>
       )}
 
-      {/* Pagination */}
+      {/* ── Pagination ── */}
       {meta && meta.pages > 1 && (
-        <div className="flex items-center justify-between bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-[#2A2A2A] px-5 py-3">
-          <p className="text-xs text-gray-500 dark:text-[#888888]">
+        <div className="flex items-center justify-between bg-white dark:bg-[#111111] border border-[#E8DDD4]/70 dark:border-[#1E1E1E] rounded-xl px-5 py-3">
+          <p className="text-[10px] text-[#9B8E82] dark:text-[#555555] font-medium">
             Page {meta.page} of {meta.pages}
           </p>
           <div className="flex items-center gap-1">
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#222222] disabled:opacity-30 disabled:cursor-not-allowed text-gray-600 dark:text-[#888888]"
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#F0EBE5] dark:hover:bg-[#1A1A1A] disabled:opacity-30 disabled:cursor-not-allowed text-[#6B5D4F] dark:text-[#666666] transition-colors"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5" />
             </button>
+
             {Array.from(
               { length: Math.min(meta.pages, 5) },
               (_, i) => i + 1,
@@ -341,21 +365,22 @@ export default function StudentNotificationsPage() {
               <button
                 key={p}
                 onClick={() => setPage(p)}
-                className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
+                className={`w-7 h-7 rounded-lg text-[10px] font-bold transition-colors ${
                   page === p
-                    ? "bg-teal-600 dark:bg-[#4ADE80] text-white dark:text-[#0F0F0F]"
-                    : "text-gray-500 dark:text-[#888888] hover:bg-gray-100 dark:hover:bg-[#222222]"
+                    ? "bg-[#2B6F5E] dark:bg-[#2B6F5E] text-white"
+                    : "text-[#9B8E82] dark:text-[#666666] hover:bg-[#F0EBE5] dark:hover:bg-[#1A1A1A]"
                 }`}
               >
                 {p}
               </button>
             ))}
+
             <button
               disabled={page >= meta.pages}
               onClick={() => setPage((p) => p + 1)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#222222] disabled:opacity-30 disabled:cursor-not-allowed text-gray-600 dark:text-[#888888]"
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#F0EBE5] dark:hover:bg-[#1A1A1A] disabled:opacity-30 disabled:cursor-not-allowed text-[#6B5D4F] dark:text-[#666666] transition-colors"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
