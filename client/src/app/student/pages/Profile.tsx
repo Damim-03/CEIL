@@ -631,10 +631,8 @@ export default function Profile() {
                 value={formData.gender}
                 onChange={set("gender")}
                 options={[
-                  { value: "", label: "Optional" },
                   { value: "Male", label: "Male" },
                   { value: "Female", label: "Female" },
-                  { value: "Other", label: "Other" },
                 ]}
               />
               <FieldInput
