@@ -8,6 +8,7 @@
     "dev": "npm run build && nodemon src/app.ts",
     "build": "tsc",
     "start": "npm run build && node dist/app.js",
+    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy"
   },
