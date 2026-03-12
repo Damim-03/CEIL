@@ -17,6 +17,8 @@ export type AttendanceStatus = "PRESENT" | "ABSENT";
 export type FeeStatus = "PAID" | "UNPAID";
 export type Gender = "MALE" | "FEMALE" | "OTHER";
 export type RegistrantCategory = "STUDENT" | "EXTERNAL" | "EMPLOYEE";
+
+export type CourseType = "NORMAL" | "INTENSIVE";
 export type RegistrationStatus =
   | "PENDING"
   | "VALIDATED"
@@ -809,6 +811,8 @@ export interface CreateCoursePayload {
   course_code?: string;
   credits?: number;
   description?: string;
+  course_type?: CourseType;
+  session_duration?: number;
 }
 
 export interface UpdateCoursePayload {
@@ -816,6 +820,8 @@ export interface UpdateCoursePayload {
   course_code?: string;
   credits?: number;
   description?: string;
+  course_type?: CourseType;
+  session_duration?: number;
 }
 
 // Department

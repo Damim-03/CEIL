@@ -226,6 +226,16 @@ export const updateCourseController = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Request body is empty" });
     if (result.error === "not_found")
       return res.status(404).json({ message: "Course not found" });
+    if (result.error === "invalid_course_type")
+      // ✅ جديد
+      return res
+        .status(400)
+        .json({ message: "Invalid course_type. Use NORMAL or INTENSIVE" });
+    if (result.error === "invalid_session_duration")
+      // ✅ جديد
+      return res
+        .status(400)
+        .json({ message: "session_duration must be a positive number" });
   }
 
   // ✅ Realtime — إشعار بتحديث الدورة

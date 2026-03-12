@@ -1,9 +1,11 @@
 // ================================================================
 // 📦 src/services/course.service.ts
 // ✅ Course CRUD — shared between Admin & Owner
+// ✅ Supports course_type (NORMAL | INTENSIVE) and session_duration
 // ================================================================
 
 import { prisma } from "../../prisma/client";
+import { CourseType } from "../../../generated/prisma/client";
 
 // ─── CREATE ──────────────────────────────────────────────
 
@@ -11,8 +13,11 @@ export async function createCourse(input: {
   course_name: string;
   course_code?: string;
   credits?: number;
+  course_type?: CourseType;
+  session_duration?: number;
 }) {
-  const { course_name, course_code, credits } = input;
+  const { course_name, course_code, credits, course_type, session_duration } =
+    input;
 
   if (!course_name?.trim()) {
     return { error: "validation" as const };
@@ -28,6 +33,8 @@ export async function createCourse(input: {
       course_name: course_name.trim(),
       course_code,
       credits,
+      course_type: course_type ?? CourseType.NORMAL,
+      session_duration: session_duration ?? null,
     },
   });
 
@@ -36,7 +43,9 @@ export async function createCourse(input: {
 
 // ─── LIST ────────────────────────────────────────────────
 
-export async function listCourses(params: { page?: number; limit?: number } = {}) {
+export async function listCourses(
+  params: { page?: number; limit?: number } = {},
+) {
   const page = params.page || 1;
   const limit = params.limit || 20;
 
@@ -73,7 +82,9 @@ export async function getCourseById(courseId: string) {
             select: {
               enrollments: {
                 where: {
-                  registration_status: { in: ["VALIDATED", "PAID", "FINISHED"] },
+                  registration_status: {
+                    in: ["VALIDATED", "PAID", "FINISHED"],
+                  },
                 },
               },
             },
@@ -85,7 +96,6 @@ export async function getCourseById(courseId: string) {
 
   if (!course) return null;
 
-  // Transform groups to include current_capacity
   return {
     ...course,
     groups: course.groups.map((group) => ({
@@ -97,7 +107,10 @@ export async function getCourseById(courseId: string) {
 
 // ─── UPDATE ──────────────────────────────────────────────
 
-export async function updateCourse(courseId: string, body: Record<string, any>) {
+export async function updateCourse(
+  courseId: string,
+  body: Record<string, any>,
+) {
   if (Object.keys(body).length === 0) {
     return { error: "empty_body" as const };
   }
@@ -108,10 +121,33 @@ export async function updateCourse(courseId: string, body: Record<string, any>) 
 
   if (!course) return { error: "not_found" as const };
 
-  const allowedFields = ["course_name", "course_code", "credits"];
+  const allowedFields = [
+    "course_name",
+    "course_code",
+    "credits",
+    "course_type", // ✅
+    "session_duration", // ✅
+  ];
+
   const data = Object.fromEntries(
     Object.entries(body).filter(([key]) => allowedFields.includes(key)),
   );
+
+  // Validate course_type if provided
+  if (
+    data.course_type &&
+    !Object.values(CourseType).includes(data.course_type)
+  ) {
+    return { error: "invalid_course_type" as const };
+  }
+
+  // Validate session_duration if provided
+  if (data.session_duration !== undefined && data.session_duration !== null) {
+    data.session_duration = Number(data.session_duration);
+    if (isNaN(data.session_duration) || data.session_duration <= 0) {
+      return { error: "invalid_session_duration" as const };
+    }
+  }
 
   const updated = await prisma.course.update({
     where: { course_id: courseId },
