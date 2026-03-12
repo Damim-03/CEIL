@@ -27,8 +27,6 @@ import {
   UserCheck,
   UserX,
   ExternalLink,
-  Zap,
-  Clock,
 } from "lucide-react";
 import CourseFormModal from "../../components/CourseFormModal";
 import GroupFormModal from "../../components/GroupFormModal";
@@ -200,6 +198,8 @@ const CourseDetailsPage = () => {
           course_name: payload.course_name ?? course.course_name,
           course_code: payload.course_code,
           credits: payload.credits,
+          course_type: payload.course_type,
+          session_duration: payload.session_duration,
         },
       });
       setEditOpen(false);
@@ -258,42 +258,22 @@ const CourseDetailsPage = () => {
                 <BookOpen className="w-8 h-8" />
               </div>
               <div>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                    {course.course_name}
-                  </h1>
-                  {(course as any).course_type === "INTENSIVE" ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-700/40 shadow-sm">
-                      <Zap className="w-4 h-4" /> مكثف
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-[#2B6F5E]/8 dark:bg-[#2B6F5E]/15 text-[#2B6F5E] dark:text-[#4ADE80] border border-[#2B6F5E]/20 dark:border-[#2B6F5E]/25">
-                      <BookOpen className="w-4 h-4" /> عادي
-                    </span>
-                  )}
-                </div>
+                <h1 className="text-3xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                  {course.course_name}
+                </h1>
                 <p className="text-sm text-[#6B5D4F] dark:text-[#888888] mt-1">
                   {t("admin.courseDetails.courseId", {
                     id: course.course_id.slice(0, 8),
                   })}
                 </p>
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  {course.course_code && (
+                {course.course_code && (
+                  <div className="mt-2">
                     <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-[#C4A035]/10 dark:bg-[#D4A843]/10 text-[#C4A035] dark:text-[#D4A843] border border-[#C4A035]/20 dark:border-[#D4A843]/15">
                       <Tag className="w-3 h-3 mr-1" />
                       {course.course_code}
                     </span>
-                  )}
-                  {(course as any).session_duration && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] border border-[#D8CDC0]/40 dark:border-[#2A2A2A]">
-                      <Clock className="w-3 h-3" />
-                      {Math.floor((course as any).session_duration / 60) > 0
-                        ? `${Math.floor((course as any).session_duration / 60)}س${(course as any).session_duration % 60 > 0 ? ` ${(course as any).session_duration % 60}د` : ""}`
-                        : `${(course as any).session_duration}د`}{" "}
-                      / حصة
-                    </span>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
             {course.credits !== null && course.credits !== undefined && (
@@ -606,46 +586,6 @@ const CourseDetailsPage = () => {
               </div>
             )}
             <div className="flex items-start gap-3">
-              <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${(course as any).course_type === "INTENSIVE" ? "bg-amber-50 dark:bg-amber-900/20" : "bg-[#2B6F5E]/8 dark:bg-[#2B6F5E]/10"}`}
-              >
-                {(course as any).course_type === "INTENSIVE" ? (
-                  <Zap className="w-5 h-5 text-amber-500" />
-                ) : (
-                  <BookOpen className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-[#6B5D4F] dark:text-[#888888]">
-                  نوع الدورة
-                </p>
-                <p
-                  className={`text-base font-semibold mt-1 ${(course as any).course_type === "INTENSIVE" ? "text-amber-600 dark:text-amber-400" : "text-[#2B6F5E] dark:text-[#4ADE80]"}`}
-                >
-                  {(course as any).course_type === "INTENSIVE"
-                    ? "مكثفة"
-                    : "عادية"}
-                </p>
-              </div>
-            </div>
-            {(course as any).session_duration && (
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] flex items-center justify-center shrink-0">
-                  <Clock className="w-5 h-5 text-[#6B5D4F] dark:text-[#AAAAAA]" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-[#6B5D4F] dark:text-[#888888]">
-                    مدة الحصة
-                  </p>
-                  <p className="text-base text-[#1B1B1B] dark:text-[#E5E5E5] mt-1">
-                    {Math.floor((course as any).session_duration / 60) > 0
-                      ? `${Math.floor((course as any).session_duration / 60)} ساعة${(course as any).session_duration % 60 > 0 ? ` و${(course as any).session_duration % 60} دقيقة` : ""}`
-                      : `${(course as any).session_duration} دقيقة`}
-                  </p>
-                </div>
-              </div>
-            )}
-            <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-[#D8CDC0]/20 dark:bg-[#555555]/20 flex items-center justify-center shrink-0">
                 <Users className="w-5 h-5 text-[#6B5D4F] dark:text-[#AAAAAA]" />
               </div>
@@ -701,6 +641,8 @@ const CourseDetailsPage = () => {
           course_name: course.course_name,
           course_code: course.course_code || undefined,
           credits: course.credits || undefined,
+          course_type: (course as any).course_type ?? "NORMAL",
+          session_duration: (course as any).session_duration ?? undefined,
         }}
         mode="edit"
       />

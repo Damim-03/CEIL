@@ -13,7 +13,6 @@ import { toast } from "sonner";
 import {
   adminAttendanceApi,
   adminCoursesApi,
-  type CoursePayload,
   adminDepartmentsApi,
   adminDocumentsApi,
   adminEnrollmentsApi,
@@ -77,6 +76,7 @@ import type {
   Result,
   Permission,
   CreatePermissionPayload,
+  UpdateCoursePayload,
 } from "../../types/Types";
 
 /* ===============================================================
@@ -511,7 +511,7 @@ export const useUpdateCourse = () => {
       payload,
     }: {
       courseId: string;
-      payload: CoursePayload;
+      payload: UpdateCoursePayload;
     }) => adminCoursesApi.update(courseId, payload),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: COURSES_KEY });
