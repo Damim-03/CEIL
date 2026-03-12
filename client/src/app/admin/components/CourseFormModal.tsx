@@ -88,7 +88,7 @@ const CourseFormModal = ({
       form.session_duration !== undefined &&
       (form.session_duration <= 0 || !Number.isInteger(form.session_duration))
     ) {
-      next.session_duration = "يجب أن يكون عدداً صحيحاً موجباً";
+      next.session_duration = "يجب أن يكون عدداً صحيحاً موجباً.";
     }
     setErrors(next);
     return Object.keys(next).length === 0;
