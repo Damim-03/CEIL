@@ -8,33 +8,32 @@ datasource db {
 }
 
 model Student {
-  student_id      String              @id @default(uuid()) @db.Uuid
-  first_name      String              @db.VarChar(100)
-  last_name       String              @db.VarChar(100)
-  date_of_birth   DateTime?
-  gender          Gender?
-  user_id         String              @unique @db.Uuid
-  phone_number    String?             @db.VarChar(35)
-  email           String?             @db.VarChar(100)
-  secondary_email String?             @db.VarChar(100)
-  address         String?
-  nationality     String?             @db.VarChar(50)
-  language        String?
-  avatar_url      String?
-  education_level String?             @db.VarChar(100)
-  study_location  String?             @db.VarChar(100)
-  status          StudentStatus       @default(ACTIVE)
-  created_at      DateTime            @default(now())
-  updated_at      DateTime            @updatedAt
-  attendance      Attendance[]
-  documents       Document[]          @relation("StudentDocuments")
-  enrollments     Enrollment[]
-  fees            Fee[]
-  results         Result[]
-  permissions     StudentPermission[]
-  user            User?
-
-  registrant_category RegistrantCategory @default(STUDENT)
+  student_id          String              @id @default(uuid()) @db.Uuid
+  first_name          String              @db.VarChar(100)
+  last_name           String              @db.VarChar(100)
+  date_of_birth       DateTime?
+  gender              Gender?
+  user_id             String              @unique @db.Uuid
+  phone_number        String?             @db.VarChar(35)
+  email               String?             @db.VarChar(100)
+  secondary_email     String?             @db.VarChar(100)
+  address             String?
+  nationality         String?             @db.VarChar(50)
+  language            String?
+  avatar_url          String?
+  education_level     String?             @db.VarChar(100)
+  study_location      String?             @db.VarChar(100)
+  status              StudentStatus       @default(ACTIVE)
+  created_at          DateTime            @default(now())
+  updated_at          DateTime            @updatedAt
+  registrant_category RegistrantCategory  @default(STUDENT)
+  attendance          Attendance[]
+  documents           Document[]          @relation("StudentDocuments")
+  enrollments         Enrollment[]
+  fees                Fee[]
+  results             Result[]
+  permissions         StudentPermission[]
+  user                User?
 
   @@map("Student")
 }
@@ -59,7 +58,7 @@ model Course {
   credits          Int?
   fee_amount       Decimal?       @default(1000) @db.Decimal(10, 2)
   course_type      CourseType     @default(NORMAL)
-  session_duration Int? // بالدقائق — الأدمين يحدده يدوياً
+  session_duration Int?
   profile          CourseProfile?
   enrollments      Enrollment[]
   exams            Exam[]
@@ -329,27 +328,26 @@ model RefreshToken {
 }
 
 model Announcement {
-  announcement_id String    @id @default(uuid())
-  title           String
-  title_ar        String?
-  content         String
-  content_ar      String?
-  excerpt         String?
-  excerpt_ar      String?
-  category        String?
-  image_url       String?
-  image_public_id String?
-  is_published    Boolean   @default(false)
-  published_at    DateTime?
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
-  is_pinned       Boolean   @default(false)
-  pinned_at       DateTime?
-
-  attachment_url       String?
+  announcement_id      String    @id @default(uuid())
+  title                String
+  title_ar             String?
+  content              String
+  content_ar           String?
+  excerpt              String?
+  excerpt_ar           String?
+  category             String?
+  image_url            String?
+  image_public_id      String?
+  is_published         Boolean   @default(false)
+  published_at         DateTime?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+  is_pinned            Boolean   @default(false)
+  pinned_at            DateTime?
+  attachment_name      String?
   attachment_public_id String?
-  attachment_name      String? // اسم الملف الأصلي
-  attachment_type      String? // "pdf" | "docx" | "image"
+  attachment_type      String?
+  attachment_url       String?
 
   @@map("announcements")
 }
@@ -419,18 +417,10 @@ model SystemSettings {
 enum NotificationTarget {
   ALL_STUDENTS
   ALL_TEACHERS
-  ALL_ADMINS
-  ALL_USERS
   SPECIFIC_STUDENTS
   SPECIFIC_TEACHERS
-  SPECIFIC_ADMINS
   GROUP
   COURSE
-}
-
-enum CourseType {
-  NORMAL
-  INTENSIVE
 }
 
 enum NotificationPriority {
@@ -506,6 +496,11 @@ enum Level {
   B1
   B2
   C1
+}
+
+enum CourseType {
+  NORMAL
+  INTENSIVE
 }
 
 enum DocumentStatus {
