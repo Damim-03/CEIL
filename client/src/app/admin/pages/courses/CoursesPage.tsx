@@ -11,6 +11,8 @@ import {
   Award,
   Layers,
   Wifi,
+  Zap,
+  Clock,
 } from "lucide-react";
 import { useCoursesSocket } from "../../../../hooks/admin/useCoursesSocket";
 import PageLoader from "../../../../components/PageLoader";
@@ -33,6 +35,9 @@ const CoursesPage = () => {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<"ALL" | "NORMAL" | "INTENSIVE">(
+    "ALL",
+  );
   const [realtimeFlash, setRealtimeFlash] = useState(false);
 
   // ✅ Realtime — يُحدَّث تلقائياً عند إنشاء/تعديل/حذف أي دورة
@@ -45,12 +50,23 @@ const CoursesPage = () => {
 
   if (isLoading) return <PageLoader />;
 
-  const filteredCourses = courses.filter((course) =>
-    course.course_name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filteredCourses = courses.filter((course) => {
+    const matchSearch = course.course_name
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchType =
+      typeFilter === "ALL" ||
+      (course as any).course_type === typeFilter ||
+      (typeFilter === "NORMAL" && !(course as any).course_type);
+    return matchSearch && matchType;
+  });
 
   const stats = {
     total: courses.length,
+    intensive: courses.filter((c) => (c as any).course_type === "INTENSIVE")
+      .length,
+    normal: courses.filter((c) => (c as any).course_type !== "INTENSIVE")
+      .length,
     totalCredits: courses.reduce(
       (sum, course) => sum + (course.credits || 0),
       0,
@@ -194,16 +210,26 @@ const CoursesPage = () => {
               className="pl-10 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
             />
           </div>
-          <p className="text-sm text-[#6B5D4F] dark:text-[#888888] whitespace-nowrap">
-            <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-              {filteredCourses.length}
-            </span>{" "}
-            {t("admin.courses.of")}{" "}
-            <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-              {courses.length}
-            </span>{" "}
-            {t("admin.courses.courses_label")}
-          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setTypeFilter("ALL")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${typeFilter === "ALL" ? "bg-[#2B6F5E] text-white shadow-sm" : "bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/40 dark:hover:bg-[#333]"}`}
+            >
+              الكل ({stats.total})
+            </button>
+            <button
+              onClick={() => setTypeFilter("NORMAL")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${typeFilter === "NORMAL" ? "bg-[#2B6F5E] text-white shadow-sm" : "bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/40 dark:hover:bg-[#333]"}`}
+            >
+              <BookOpen className="w-3 h-3" /> عادي ({stats.normal})
+            </button>
+            <button
+              onClick={() => setTypeFilter("INTENSIVE")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${typeFilter === "INTENSIVE" ? "bg-amber-500 text-white shadow-sm" : "bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/40 dark:hover:bg-[#333]"}`}
+            >
+              <Zap className="w-3 h-3" /> مكثف ({stats.intensive})
+            </button>
+          </div>
         </div>
       </div>
 
@@ -239,6 +265,23 @@ const CoursesPage = () => {
                         <span className="inline-flex items-center gap-1 bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80] text-xs font-medium px-2.5 py-0.5 rounded-md">
                           <GraduationCap className="w-3 h-3" />
                           {course.credits} cr
+                        </span>
+                      )}
+                      {(course as any).course_type === "INTENSIVE" ? (
+                        <span className="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-semibold px-2.5 py-0.5 rounded-md border border-amber-200 dark:border-amber-700/40">
+                          <Zap className="w-3 h-3" /> مكثف
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 bg-[#2B6F5E]/6 dark:bg-[#2B6F5E]/10 text-[#2B6F5E] dark:text-[#4ADE80] text-xs font-medium px-2.5 py-0.5 rounded-md border border-[#2B6F5E]/15 dark:border-[#2B6F5E]/20">
+                          <BookOpen className="w-3 h-3" /> عادي
+                        </span>
+                      )}
+                      {(course as any).session_duration && (
+                        <span className="inline-flex items-center gap-1 bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] text-[#6B5D4F] dark:text-[#AAAAAA] text-xs font-medium px-2.5 py-0.5 rounded-md">
+                          <Clock className="w-3 h-3" />
+                          {Math.floor((course as any).session_duration / 60) > 0
+                            ? `${Math.floor((course as any).session_duration / 60)}س ${(course as any).session_duration % 60 > 0 ? ((course as any).session_duration % 60) + "د" : ""}`
+                            : `${(course as any).session_duration}د`}
                         </span>
                       )}
                     </div>
