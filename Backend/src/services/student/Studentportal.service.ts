@@ -823,6 +823,8 @@ export async function getCoursesWithGroups() {
       course_name: true,
       course_code: true,
       credits: true,
+      course_type: true,
+      session_duration: true,
       groups: {
         select: {
           group_id: true,
@@ -1117,7 +1119,13 @@ export async function getCourseProfileWithPricing(courseId: string) {
     include: {
       pricing: { orderBy: { sort_order: "asc" } },
       course: {
-        select: { course_id: true, course_name: true, course_code: true },
+        select: {
+          course_id: true,
+          course_name: true,
+          course_code: true,
+          course_type: true,
+          session_duration: true,
+        },
       },
     },
   });

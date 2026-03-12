@@ -165,6 +165,8 @@ export async function listPublicCourses(params: {
             course_name: true,
             course_code: true,
             fee_amount: true,
+            course_type: true,
+            session_duration: true,
             groups: {
               select: {
                 max_students: true,
@@ -205,6 +207,8 @@ export async function listPublicCourses(params: {
       id: p.course.course_id,
       course_name: p.course.course_name,
       course_code: p.course.course_code,
+      course_type: p.course.course_type,
+      session_duration: p.course.session_duration,
       title_ar: p.title_ar,
       description: p.description,
       description_ar: p.description_ar,
@@ -241,6 +245,8 @@ export async function getPublicCourseById(courseId: string) {
           course_name: true,
           course_code: true,
           fee_amount: true,
+          course_type: true,
+          session_duration: true,
           groups: {
             select: {
               group_id: true,
@@ -282,6 +288,8 @@ export async function getPublicCourseById(courseId: string) {
     id: course.course_id,
     course_name: course.course_name,
     course_code: course.course_code,
+    course_type: course.course_type,
+    session_duration: course.session_duration,
     title_ar: profile.title_ar,
     description: profile.description,
     description_ar: profile.description_ar,
