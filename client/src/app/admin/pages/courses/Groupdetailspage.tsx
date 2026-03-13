@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import GroupFormModal from "../../components/GroupFormModal";
 import AssignInstructorModal from "../../components/Assigninstructormodal";
-import type { UpdateGroupPayload } from "../../../../types/Types";
+import type { Student, UpdateGroupPayload } from "../../../../types/Types";
 
 const LEVEL_COLORS = {
   PRE_A1: "from-[#7C8FA6] to-[#4A6178]",
@@ -141,9 +141,9 @@ const GroupDetailsPage = () => {
 
   // Pre-compute teacher lookup before early returns (uses hook state only, not group data)
   const resolvedTeacherId = localTeacherId === "sync" ? null : localTeacherId;
-  const preloadedTeacher = resolvedTeacherId
-    ? ((allTeachers as any[]).find(
-        (t: any) => t.teacher_id === resolvedTeacherId,
+  const preloadedTeacher: Teacher | null = resolvedTeacherId
+    ? ((allTeachers as Teacher[]).find(
+        (t) => t.teacher_id === resolvedTeacherId,
       ) ?? null)
     : null;
 
@@ -212,53 +212,109 @@ const GroupDetailsPage = () => {
     );
   }
 
-  // enrolled_count = VALIDATED+PAID only (for capacity/progress bar)
-  const enrolledCount =
-    (group as any).enrolled_count ?? (group as any).current_capacity ?? 0;
+  // ── Capacity calculation ──────────────────────────────────────
+  type GroupExtended = typeof group & {
+    enrolled_count?: number;
+    current_capacity?: number;
+    pending_count?: number;
+    enrollments?: { registration_status: string }[];
+  };
+  type EnrollmentRow = { registration_status: string };
+  type StudentsResponse = { data: EnrollmentRow[] };
 
-  // total registered = all statuses including PENDING (for header display)
-  const totalRegistered =
-    ((studentsData as any)?.meta?.total ?? (group as any).pending_count != null)
-      ? enrolledCount + ((group as any).pending_count ?? 0)
-      : enrolledCount;
+  const g = group as GroupExtended;
+  const sdData: EnrollmentRow[] = Array.isArray(
+    (studentsData as StudentsResponse | undefined)?.data,
+  )
+    ? (studentsData as StudentsResponse).data
+    : [];
+
+  const enrolledCount: number = (() => {
+    // 1. Direct from API (groupstatus_service returns enrolled_count = VALIDATED+PAID)
+    if (typeof g.enrolled_count === "number") return g.enrolled_count;
+    // 2. current_capacity from group_service
+    if (typeof g.current_capacity === "number") return g.current_capacity;
+    // 3. Count from studentsData (VALIDATED + PAID)
+    const active = sdData.filter((e) =>
+      ["VALIDATED", "PAID"].includes(e.registration_status),
+    ).length;
+    if (active > 0) return active;
+    // 4. Count from group.enrollments array
+    return (g.enrollments ?? []).filter((e) =>
+      ["VALIDATED", "PAID"].includes(e.registration_status),
+    ).length;
+  })();
+
+  const pendingCount: number =
+    g.pending_count ??
+    sdData.filter((e) => e.registration_status === "PENDING").length;
 
   const currentCapacity = enrolledCount; // used for progress bar
-  const displayCount = totalRegistered; // used for "N من 25 طالب مسجل"
+  const displayCount = enrolledCount + pendingCount; // total shown in header
 
   const maxCapacity = group.max_students ?? 25;
   const capacityPercent =
     maxCapacity > 0 ? (currentCapacity / maxCapacity) * 100 : 0;
 
   // Resolve effective teacher — check nested teacher object first (groupstatus_service returns it)
+  type Teacher = {
+    teacher_id: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone_number?: string;
+    gender?: string;
+    speciality?: string;
+  };
+  type GroupWithTeacher = typeof group & {
+    teacher?: Teacher | null;
+  };
+
+  const gWithTeacher = group as GroupWithTeacher;
+  const teachers = allTeachers as Teacher[];
+
   const effectiveTeacherId =
     localTeacherId === "sync"
-      ? ((group as any).teacher?.teacher_id ?? group.teacher_id ?? null)
+      ? (gWithTeacher.teacher?.teacher_id ?? group.teacher_id ?? null)
       : localTeacherId;
 
-  const effectiveTeacher = effectiveTeacherId
-    ? ((allTeachers as any[]).find(
-        (t: any) => t.teacher_id === effectiveTeacherId,
-      ) ??
-        (group as any).teacher) ||
-      null
+  const effectiveTeacher: Teacher | null = effectiveTeacherId
+    ? (teachers.find((t) => t.teacher_id === effectiveTeacherId) ??
+      gWithTeacher.teacher ??
+      null)
     : null;
 
   const hasInstructor = !!effectiveTeacherId;
 
   // Effective course name
+  type GroupWithCourse = typeof group & {
+    course_name?: string;
+    course_id?: string;
+  };
+  const gWithCourse = group as GroupWithCourse;
   const effectiveCourseName =
-    group.course?.course_name ?? (group as any).course_name ?? null;
+    group.course?.course_name ?? gWithCourse.course_name ?? null;
 
   // ✅ Fix: use studentsData from useAdminGroupStudents (dedicated endpoint)
   // Falls back to enrollments from group details if students endpoint hasn't loaded yet
-  const rawEnrollments: any[] = (group as any).enrollments ?? [];
+  const rawEnrollments: {
+    registration_status: string;
+    student?: unknown;
+    enrollment_date?: string;
+  }[] = (g.enrollments ?? []) as {
+    registration_status: string;
+    student?: unknown;
+    enrollment_date?: string;
+  }[];
 
   const students: any[] = (() => {
     // Primary: use dedicated /students endpoint (returns { data: enrollment[] })
-    const apiStudents = Array.isArray((studentsData as any)?.data)
-      ? (studentsData as any).data
+    const apiStudents = Array.isArray(
+      (studentsData as StudentsResponse | undefined)?.data,
+    )
+      ? (studentsData as StudentsResponse).data
       : Array.isArray(studentsData)
-        ? (studentsData as any[])
+        ? (studentsData as EnrollmentRow[])
         : null;
 
     if (apiStudents && apiStudents.length > 0) {
@@ -283,7 +339,7 @@ const GroupDetailsPage = () => {
       }));
   })();
 
-  const filteredStudents = students.filter((student: any) => {
+  const filteredStudents = students.filter((student) => {
     if (!student) return false;
     // Status filter
     if (statusFilter !== "ALL" && student.registration_status !== statusFilter)
@@ -363,7 +419,7 @@ const GroupDetailsPage = () => {
 
       <div className="flex items-center justify-between">
         <Link
-          to={`/admin/courses/${group.course?.course_id ?? (group as any).course_id ?? ""}`}
+          to={`/admin/courses/${group.course?.course_id ?? gWithCourse.course_id ?? ""}`}
         >
           <Button
             variant="ghost"
@@ -444,9 +500,17 @@ const GroupDetailsPage = () => {
             </div>
           </div>
           <div className="mt-6">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs text-[#BEB29E] dark:text-[#666666]">
+                {enrolledCount} مؤكد · {pendingCount} معلق
+              </span>
+              <span className="text-xs font-bold text-[#BEB29E] dark:text-[#666666]">
+                {Math.round(capacityPercent)}%
+              </span>
+            </div>
             <div className="w-full bg-[#D8CDC0]/30 dark:bg-[#2A2A2A] rounded-full h-3 overflow-hidden">
               <div
-                className={`h-full transition-all duration-300 rounded-full ${
+                className={`h-full transition-all duration-700 rounded-full ${
                   capacityPercent >= 100
                     ? "bg-gradient-to-r from-red-500 to-red-600"
                     : capacityPercent >= 80
@@ -884,7 +948,7 @@ const GroupDetailsPage = () => {
         initialData={{
           name: group.name,
           level: group.level,
-          course_id: group.course?.course_id ?? (group as any).course_id,
+          course_id: group.course?.course_id ?? gWithCourse.course_id,
           max_students: maxCapacity,
           teacher_id: group.teacher_id ?? undefined,
           department_id: group.department_id ?? undefined,
