@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import {
@@ -28,7 +28,7 @@ import {
   useMyDocuments,
 } from "../../../hooks/student/Usestudent";
 import PageLoader from "../../../components/PageLoader";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { PricingModal } from "../components/Pricingmodal";
 import {
@@ -91,6 +91,7 @@ interface Enrollment {
 
 const Courses = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState<Step>("courses");
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
@@ -100,6 +101,8 @@ const Courses = () => {
   const [selectedGroupForEnrollment, setSelectedGroupForEnrollment] = useState<
     string | null
   >(null);
+  // Track if we already auto-navigated to avoid re-triggering
+  const [autoNavigated, setAutoNavigated] = useState(false);
 
   const enrollMutation = useEnrollInCourse();
   const { data: courses = [], isLoading: coursesLoading } = useCourses();
@@ -130,6 +133,42 @@ const Courses = () => {
   const { data: groups = [], isLoading: groupsLoading } = useCourseGroups(
     selectedCourse?.course_id,
   );
+
+  // ── Auto-select course from ?courseId= query param ──────────────────
+  useEffect(() => {
+    if (
+      autoNavigated ||
+      coursesLoading ||
+      enrollmentsLoading ||
+      !isProfileComplete ||
+      !isDocumentsComplete
+    )
+      return;
+
+    const courseId = searchParams.get("courseId");
+    if (!courseId || courses.length === 0) return;
+
+    const course = courses.find((c: Course) => c.course_id === courseId);
+    if (!course) return;
+
+    setAutoNavigated(true);
+    // Clean up the query param FIRST before handleSelectCourse to avoid re-trigger
+    navigate("/student/courses", { replace: true });
+    // Use setTimeout to ensure navigation completes before state updates
+    setTimeout(() => {
+      handleSelectCourse(course);
+    }, 0);
+  }, [
+    searchParams,
+    courses,
+    enrollments,
+    coursesLoading,
+    enrollmentsLoading,
+    isProfileComplete,
+    isDocumentsComplete,
+    autoNavigated,
+  ]);
+  // ────────────────────────────────────────────────────────────────────
 
   const handleSelectCourse = (course: Course) => {
     const enrollment = enrollments.find(
