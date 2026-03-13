@@ -108,15 +108,6 @@ function LanguageCard({
           )}
         </div>
 
-        {/* Badge: intensive exists */}
-        {hasIntensive && (
-          <div className="absolute top-4 right-4 z-10">
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-400/90 text-amber-950 shadow-lg">
-              <Zap className="w-2.5 h-2.5" /> مكثف
-            </span>
-          </div>
-        )}
-
         {/* Bottom: lang name */}
         <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
           <p className="text-white text-xl font-bold capitalize">
