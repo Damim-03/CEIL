@@ -222,13 +222,11 @@ const AdminDocuments = () => {
       return;
     }
 
+    // ✅ نرسل documentId + reason فقط — الـ backend يُرسل الإشعار
     rejectDocument(
       {
         documentId: documentToReject.id,
-        reason: rejectReason,
-        studentUserId:
-          (documentToReject.student as { userId?: string }).userId ?? "",
-        fileName: documentToReject.fileName,
+        reason: rejectReason.trim(),
       },
       {
         onSuccess: () => {
@@ -238,7 +236,6 @@ const AdminDocuments = () => {
           setRejectReason("");
         },
         onError: (error: unknown) => {
-          console.error("Error rejecting document:", error);
           toast.error(
             (error as Error)?.message ||
               t("admin.documents.toast.rejectFailed"),

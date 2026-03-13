@@ -23,6 +23,7 @@ import * as SessionService from "../../services/admin/session.service";
 import * as AttendanceService from "../../services/admin/attendance.service";
 import * as ExamService from "../../services/admin/exam.service";
 import * as SocketService from "../../services/socket.service";
+import * as NotificationService from "../../services/admin/Notification.service";
 import { emitToAdminLevel, emitToUser } from "../../services/socket.service";
 
 /* ═══ STUDENTS — Using StudentService ✅ ═══ */
@@ -1093,11 +1094,14 @@ export const rejectDocumentController = async (req: Request, res: Response) => {
   const { documentId } = req.params;
   const { reason } = req.body;
 
+  // ✅ السبب مطلوب
+  if (!reason?.trim()) {
+    return res.status(400).json({ message: "Rejection reason is required" });
+  }
+
   const document = await prisma.document.findUnique({
     where: { document_id: documentId },
-    include: {
-      student: true,
-    },
+    include: { student: true },
   });
 
   if (!document) {
@@ -1105,17 +1109,19 @@ export const rejectDocumentController = async (req: Request, res: Response) => {
   }
 
   if (document.status === "REJECTED") {
-    return res.status(400).json({
-      message: "Document already rejected",
-    });
+    return res.status(400).json({ message: "Document already rejected" });
   }
 
+  const fileName = document.file_path?.split("/").pop() ?? "الوثيقة";
+
+  // ✅ يحفظ rejection_reason
   const updatedDocument = await prisma.document.update({
     where: { document_id: documentId },
     data: {
       status: "REJECTED",
       reviewed_at: new Date(),
       reviewed_by: admin?.user_id,
+      rejection_reason: reason.trim(),
     },
   });
 
@@ -1124,15 +1130,36 @@ export const rejectDocumentController = async (req: Request, res: Response) => {
     document_id: documentId,
     student_id: document.student_id,
   });
-  const docRejUser = await prisma.user.findFirst({
+
+  const studentUser = await prisma.user.findFirst({
     where: { student_id: document.student_id },
     select: { user_id: true },
   });
-  if (docRejUser) {
-    emitToUser(docRejUser.user_id, "document:rejected", {
+
+  if (studentUser) {
+    emitToUser(studentUser.user_id, "document:rejected", {
       document_id: documentId,
       student_id: document.student_id,
+      rejection_reason: reason.trim(),
     });
+
+    // 📢 Notification في DB — يصل حتى لو كان offline ويحتوي على السبب
+    try {
+      await NotificationService.sendNotificationWithRecipients(
+        {
+          title: "Document Rejected ❌",
+          title_ar: `تم رفض وثيقتك ❌`,
+          message: `Your document "${fileName}" was rejected.\nReason: ${reason.trim()}\nPlease upload a new document.`,
+          message_ar: `تم رفض وثيقتك "${fileName}".\nالسبب: ${reason.trim()}\nيرجى رفع وثيقة جديدة.`,
+          target_type: "SPECIFIC_STUDENTS",
+          priority: "HIGH",
+          created_by: admin?.user_id,
+        },
+        [studentUser.user_id],
+      );
+    } catch (notifErr) {
+      console.warn("⚠️ Reject notification failed:", notifErr);
+    }
   }
 
   return res.json({
