@@ -116,7 +116,13 @@
     "groups": "Groupes",
     "adminFee": "Frais administratifs",
     "adminsCannotRegister": "Les administrateurs ne peuvent pas s'inscrire",
-    "teachersCannotRegister": "Les enseignants ne peuvent pas s'inscrire"
+    "teachersCannotRegister": "Les enseignants ne peuvent pas s'inscrire",
+    "normal": "Standard",
+    "intensive": "Intensif",
+    "normalCourses": "Formations Standard",
+    "intensiveCourses": "Formations Intensives",
+    "intensiveDescription": "Formations intensives pour progresser rapidement",
+    "allCourseTypes": "Tous"
   },
   "centerInfo": {
     "whyChooseUs": "Pourquoi le CEIL ?",

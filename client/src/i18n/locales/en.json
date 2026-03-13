@@ -116,7 +116,13 @@
     "groups": "Groups",
     "adminFee": "Admin Fee",
     "adminsCannotRegister": "Admins cannot register for courses",
-    "teachersCannotRegister": "Teachers cannot register for courses"
+    "teachersCannotRegister": "Teachers cannot register for courses",
+    "normal": "Standard",
+    "intensive": "Intensive",
+    "normalCourses": "Standard Courses",
+    "intensiveCourses": "Intensive Courses",
+    "intensiveDescription": "Fast-track intensive courses for rapid progress",
+    "allCourseTypes": "All"
   },
   "centerInfo": {
     "whyChooseUs": "Why CEIL?",

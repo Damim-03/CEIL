@@ -116,7 +116,13 @@
     "groups": "المجموعات",
     "adminFee": "رسوم إدارية",
     "adminsCannotRegister": "المدراء لا يمكنهم التسجيل",
-    "teachersCannotRegister": "الأساتذة لا يمكنهم التسجيل"
+    "teachersCannotRegister": "الأساتذة لا يمكنهم التسجيل",
+    "normal": "عادية",
+    "intensive": "مكثفة",
+    "normalCourses": "الدورات العادية",
+    "intensiveCourses": "الدورات المكثفة",
+    "intensiveDescription": "دورات مكثفة لتحقيق تقدم سريع في وقت قصير",
+    "allCourseTypes": "الكل"
   },
   "centerInfo": {
     "whyChooseUs": "لماذا CEIL؟",
