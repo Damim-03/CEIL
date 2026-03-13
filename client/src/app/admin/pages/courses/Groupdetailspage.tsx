@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import GroupFormModal from "../../components/GroupFormModal";
 import AssignInstructorModal from "../../components/Assigninstructormodal";
-import type { Student, UpdateGroupPayload } from "../../../../types/Types";
+import type { UpdateGroupPayload } from "../../../../types/Types";
 
 const LEVEL_COLORS = {
   PRE_A1: "from-[#7C8FA6] to-[#4A6178]",
@@ -229,17 +229,14 @@ const GroupDetailsPage = () => {
     ? (studentsData as StudentsResponse).data
     : [];
 
+  // VALIDATED + PAID = confirmed students (for strict capacity)
   const enrolledCount: number = (() => {
-    // 1. Direct from API (groupstatus_service returns enrolled_count = VALIDATED+PAID)
     if (typeof g.enrolled_count === "number") return g.enrolled_count;
-    // 2. current_capacity from group_service
     if (typeof g.current_capacity === "number") return g.current_capacity;
-    // 3. Count from studentsData (VALIDATED + PAID)
     const active = sdData.filter((e) =>
       ["VALIDATED", "PAID"].includes(e.registration_status),
     ).length;
     if (active > 0) return active;
-    // 4. Count from group.enrollments array
     return (g.enrollments ?? []).filter((e) =>
       ["VALIDATED", "PAID"].includes(e.registration_status),
     ).length;
@@ -249,7 +246,10 @@ const GroupDetailsPage = () => {
     g.pending_count ??
     sdData.filter((e) => e.registration_status === "PENDING").length;
 
-  const currentCapacity = enrolledCount; // used for progress bar
+  // For progress bar — include PENDING so bar moves even before validation
+  const totalForBar = enrolledCount + pendingCount;
+
+  const currentCapacity = totalForBar; // used for progress bar (VALIDATED+PAID+PENDING)
   const displayCount = enrolledCount + pendingCount; // total shown in header
 
   const maxCapacity = group.max_students ?? 25;
@@ -339,7 +339,7 @@ const GroupDetailsPage = () => {
       }));
   })();
 
-  const filteredStudents = students.filter((student) => {
+  const filteredStudents = students.filter((student: any) => {
     if (!student) return false;
     // Status filter
     if (statusFilter !== "ALL" && student.registration_status !== statusFilter)
@@ -502,7 +502,20 @@ const GroupDetailsPage = () => {
           <div className="mt-6">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs text-[#BEB29E] dark:text-[#666666]">
-                {enrolledCount} مؤكد · {pendingCount} معلق
+                {enrolledCount > 0 && (
+                  <span className="text-emerald-500 dark:text-emerald-400">
+                    {enrolledCount} مؤكد
+                  </span>
+                )}
+                {enrolledCount > 0 && pendingCount > 0 && <span> · </span>}
+                {pendingCount > 0 && (
+                  <span className="text-amber-500 dark:text-amber-400">
+                    {pendingCount} معلق
+                  </span>
+                )}
+                {enrolledCount === 0 && pendingCount === 0 && (
+                  <span>لا يوجد طلاب</span>
+                )}
               </span>
               <span className="text-xs font-bold text-[#BEB29E] dark:text-[#666666]">
                 {Math.round(capacityPercent)}%
