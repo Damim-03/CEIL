@@ -1,21 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Calendar,
   UserPlus,
   Loader2,
   Globe,
   GraduationCap,
-  Search,
   BookOpen,
   Clock,
   CheckCircle2,
   XCircle,
   Info,
   Zap,
-  LayoutGrid,
+  ChevronRight,
+  ChevronLeft,
+  Users,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
-import { useSearchParams } from "react-router-dom";
 import { usePublicCourses } from "../../hooks/announce/Usepublic";
 import type { PublicCourse } from "../../lib/api/announce/announce.api";
 import { useAuthRedirect } from "../../lib/utils/auth-redirect";
@@ -44,6 +44,194 @@ function formatDuration(
   if (h > 0 && m > 0) return `${h}س ${m}د`;
   if (h > 0) return `${h} ${t("courses.hours")}`;
   return `${m} ${t("courses.minutes")}`;
+}
+
+// ─── Language Card ──────────────────────────────────────────
+function LanguageCard({
+  lang,
+  displayName,
+  courses,
+  onSelect,
+}: {
+  lang: string;
+  displayName?: string;
+  courses: PublicCourse[];
+  onSelect: () => void;
+}) {
+  const { currentLang } = useLanguage();
+  // pick first course with an image for the bg
+  const sample = courses.find((c) => c.image_url) || courses[0];
+  const flag = courses[0]?.flag_emoji;
+  const hasIntensive = courses.some(
+    (c) => (c as any).course_type === "INTENSIVE",
+  );
+  const totalGroups = courses.reduce(
+    (acc, c) => acc + (c.groups_count ?? 0),
+    0,
+  );
+
+  return (
+    <button
+      onClick={onSelect}
+      className="group relative flex flex-col rounded-2xl overflow-hidden text-left transition-all duration-400 hover:shadow-2xl hover:-translate-y-2 cursor-pointer"
+      style={{ border: "1px solid rgba(216,205,192,0.5)" }}
+    >
+      {/* Hero image / gradient */}
+      <div className="relative h-44 overflow-hidden">
+        {sample?.image_url ? (
+          <>
+            <img
+              src={sample.image_url}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-108"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+          </>
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(135deg, #0A1F14 0%, #163524 50%, #0A1510 100%)",
+            }}
+          />
+        )}
+
+        {/* Flag */}
+        <div className="absolute top-4 left-4 z-10">
+          {flag ? (
+            <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center text-3xl shadow-xl group-hover:scale-110 transition-transform duration-300">
+              {flag}
+            </div>
+          ) : (
+            <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center">
+              <Globe className="w-6 h-6 text-white/60" />
+            </div>
+          )}
+        </div>
+
+        {/* Badge: intensive exists */}
+        {hasIntensive && (
+          <div className="absolute top-4 right-4 z-10">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-400/90 text-amber-950 shadow-lg">
+              <Zap className="w-2.5 h-2.5" /> مكثف
+            </span>
+          </div>
+        )}
+
+        {/* Bottom: lang name */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
+          <p className="text-white text-xl font-bold capitalize">
+            {displayName || lang}
+          </p>
+          <p className="text-white/55 text-xs mt-0.5">
+            {courses.length} دورة{courses.length > 1 ? "" : ""}
+          </p>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="bg-white dark:bg-[#161616] p-4 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 text-xs text-brand-brown dark:text-[#666]">
+          <Users className="w-3.5 h-3.5" />
+          <span>{totalGroups} مجموعة</span>
+        </div>
+        <div className="flex items-center gap-1 text-brand-teal-dark dark:text-[#4ADE80] text-xs font-semibold">
+          <span>اختر</span>
+          <ChevronLeft className="w-4 h-4" />
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// ─── Type Card ──────────────────────────────────────────────
+function TypeCard({
+  type,
+  count,
+  onSelect,
+}: {
+  type: "NORMAL" | "INTENSIVE";
+  count: number;
+  onSelect: () => void;
+}) {
+  const isIntensive = type === "INTENSIVE";
+  return (
+    <button
+      onClick={onSelect}
+      className="group relative flex flex-col items-center justify-center rounded-2xl p-10 text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 cursor-pointer"
+      style={{
+        border: isIntensive
+          ? "1.5px solid rgba(251,191,36,0.3)"
+          : "1.5px solid rgba(74,112,102,0.25)",
+        background: isIntensive
+          ? "linear-gradient(135deg, rgba(251,191,36,0.04) 0%, rgba(255,255,255,1) 100%)"
+          : "linear-gradient(135deg, rgba(38,66,48,0.04) 0%, rgba(255,255,255,1) 100%)",
+      }}
+    >
+      {/* Dark mode override via class */}
+      <div
+        className="dark:hidden absolute inset-0 rounded-2xl"
+        style={{
+          background: isIntensive
+            ? "linear-gradient(135deg, rgba(251,191,36,0.04), white)"
+            : "linear-gradient(135deg, rgba(38,66,48,0.04), white)",
+        }}
+      />
+      <div
+        className="hidden dark:block absolute inset-0 rounded-2xl"
+        style={{
+          background: isIntensive
+            ? "linear-gradient(135deg, rgba(251,191,36,0.06), #161616)"
+            : "linear-gradient(135deg, rgba(38,66,48,0.07), #161616)",
+        }}
+      />
+
+      <div
+        className="relative w-20 h-20 rounded-2xl flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110"
+        style={{
+          background: isIntensive
+            ? "linear-gradient(135deg, #D97706, #F59E0B)"
+            : "linear-gradient(135deg, #26423D, #4A7066)",
+          boxShadow: isIntensive
+            ? "0 8px 24px rgba(217,119,6,0.35)"
+            : "0 8px 24px rgba(38,66,48,0.3)",
+        }}
+      >
+        {isIntensive ? (
+          <Zap className="w-9 h-9 text-white" />
+        ) : (
+          <BookOpen className="w-9 h-9 text-white" />
+        )}
+      </div>
+
+      <h3
+        className="relative text-2xl font-bold mb-2"
+        style={{ color: isIntensive ? "#B45309" : "#26423D" }}
+      >
+        {isIntensive ? "مكثفة ⚡" : "عادية"}
+      </h3>
+      <p className="relative text-sm text-brand-brown dark:text-[#888] mb-1">
+        {isIntensive
+          ? "دورات مكثفة لتحقيق تقدم سريع في وقت قصير"
+          : "دورات منتظمة مع جدول زمني مرن ومتوازن"}
+      </p>
+      <span
+        className="relative inline-flex items-center justify-center mt-3 px-4 py-1.5 rounded-full text-sm font-bold"
+        style={{
+          background: isIntensive
+            ? "rgba(251,191,36,0.12)"
+            : "rgba(38,66,48,0.09)",
+          color: isIntensive ? "#D97706" : "#26423D",
+          border: isIntensive
+            ? "1px solid rgba(251,191,36,0.3)"
+            : "1px solid rgba(38,66,48,0.2)",
+        }}
+      >
+        {count} دورة
+      </span>
+    </button>
+  );
 }
 
 // ─── CourseCard ─────────────────────────────────────────────
@@ -85,9 +273,8 @@ function CourseCard({
       }}
       dir={dir}
     >
-      {/* ── Image / Hero ── */}
+      {/* Image */}
       <div className="relative h-52 overflow-hidden">
-        {/* Intensive accent line */}
         {isIntensive && (
           <div
             className="absolute top-0 left-0 right-0 h-0.5 z-10"
@@ -97,7 +284,6 @@ function CourseCard({
             }}
           />
         )}
-
         {course.image_url ? (
           <>
             <img
@@ -106,51 +292,37 @@ function CourseCard({
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-            <div
-              className="absolute inset-0"
-              style={{
-                background: isIntensive
-                  ? "linear-gradient(135deg, rgba(180,120,0,0.22) 0%, transparent 60%)"
-                  : "linear-gradient(135deg, rgba(38,66,48,0.22) 0%, transparent 60%)",
-              }}
-            />
           </>
         ) : (
-          <>
-            <div
-              className="absolute inset-0"
-              style={{
-                background: isIntensive
-                  ? "linear-gradient(135deg, #3D2800 0%, #7A5000 50%, #3D2800 100%)"
-                  : "linear-gradient(135deg, #0A1F14 0%, #163524 50%, #0A1510 100%)",
-              }}
-            />
-            <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full border border-white/5" />
-            <div className="absolute -bottom-4 -left-4 w-24 h-24 rounded-full border border-white/5" />
-          </>
+          <div
+            className="absolute inset-0"
+            style={{
+              background: isIntensive
+                ? "linear-gradient(135deg, #3D2800 0%, #7A5000 50%, #3D2800 100%)"
+                : "linear-gradient(135deg, #0A1F14 0%, #163524 50%, #0A1510 100%)",
+            }}
+          />
         )}
 
-        {/* Top row: flag + badges */}
+        {/* Top badges */}
         <div className="absolute top-4 left-4 right-4 flex items-start justify-between z-10">
           {course.flag_emoji ? (
-            <div className="w-12 h-12 rounded-xl bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+            <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
               {course.flag_emoji}
             </div>
           ) : (
-            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center">
+            <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center">
               <Globe className="w-5 h-5 text-white/60" />
             </div>
           )}
-
           <div className="flex flex-col items-end gap-1.5">
             {isIntensive && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-400/90 text-amber-950 shadow-lg backdrop-blur-sm">
-                <Zap className="w-2.5 h-2.5" />
-                {t("courses.intensive")}
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-400/90 text-amber-950 shadow-lg">
+                <Zap className="w-2.5 h-2.5" /> مكثف
               </span>
             )}
             <span
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold shadow-lg backdrop-blur-sm ${
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold shadow-lg ${
                 isOpen
                   ? "bg-emerald-500/90 text-white"
                   : "bg-red-500/90 text-white"
@@ -170,7 +342,7 @@ function CourseCard({
           </div>
         </div>
 
-        {/* Bottom: title + chips */}
+        {/* Bottom info */}
         <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
           <h3
             className="text-white text-lg font-bold leading-snug drop-shadow-sm line-clamp-2"
@@ -189,12 +361,6 @@ function CourseCard({
             </p>
           )}
           <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
-            {course.language && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/15 text-white text-[10px] font-semibold backdrop-blur-sm border border-white/10">
-                <Globe className="w-2 h-2" />
-                {course.language}
-              </span>
-            )}
             {course.level && (
               <span
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
@@ -219,7 +385,7 @@ function CourseCard({
         </div>
       </div>
 
-      {/* ── Body ── */}
+      {/* Body */}
       <div className="flex-1 p-5 space-y-3">
         {(course.description_ar || course.description) && (
           <p className="text-xs text-brand-black/55 dark:text-[#777777] leading-relaxed line-clamp-2">
@@ -242,7 +408,7 @@ function CourseCard({
                 : {
                     background: "rgba(74,112,102,0.06)",
                     borderColor: "rgba(74,112,102,0.15)",
-                    color: "var(--color-brand-teal-dark, #26423D)",
+                    color: "#26423D",
                   }
             }
           >
@@ -270,11 +436,7 @@ function CourseCard({
               <div className="flex items-center gap-1">
                 <Calendar
                   className="w-3 h-3 shrink-0"
-                  style={{
-                    color: isIntensive
-                      ? "#D97706"
-                      : "var(--color-brand-teal-dark, #26423D)",
-                  }}
+                  style={{ color: isIntensive ? "#D97706" : "#26423D" }}
                 />
                 <span
                   className="text-xs font-bold text-brand-black dark:text-[#E5E5E5]"
@@ -313,10 +475,9 @@ function CourseCard({
         )}
       </div>
 
-      {/* ── Divider ── */}
       <div className="mx-5 h-px bg-brand-beige/50 dark:bg-[#222222]" />
 
-      {/* ── Actions ── */}
+      {/* Actions */}
       <div className="p-4 flex gap-2">
         {isOpen && canRegister && (
           <Button
@@ -366,220 +527,146 @@ function CourseCard({
   );
 }
 
-// ─── Section Header ─────────────────────────────────────────
-function SectionHeader({
-  icon,
-  title,
-  count,
-  accent,
+// ─── Breadcrumb ─────────────────────────────────────────────
+function Breadcrumb({
+  steps,
+  onNavigate,
+  dir,
 }: {
-  icon: React.ReactNode;
-  title: string;
-  count: number;
-  accent: "teal" | "amber";
+  steps: { label: string; onClick: () => void }[];
+  onNavigate?: () => void;
+  dir: string;
 }) {
-  const tealColor = "var(--color-brand-teal-dark, #26423D)";
-  const amberColor = "#D97706";
-  const color = accent === "amber" ? amberColor : tealColor;
-
+  const Arrow = dir === "rtl" ? ChevronLeft : ChevronRight;
   return (
-    <div className="flex items-center gap-3 mb-6">
-      <div
-        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-        style={{
-          background:
-            accent === "amber"
-              ? "rgba(251,191,36,0.09)"
-              : "rgba(38,66,48,0.07)",
-          border: `1px solid ${accent === "amber" ? "rgba(251,191,36,0.22)" : "rgba(38,66,48,0.12)"}`,
-        }}
-      >
-        <span style={{ color }}>{icon}</span>
-      </div>
-      <h2
-        className="text-lg font-bold text-brand-black dark:text-[#E5E5E5]"
-        style={{ fontFamily: "var(--font-sans)" }}
-      >
-        {title}
-      </h2>
-      <span
-        className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold"
-        style={{
-          background:
-            accent === "amber"
-              ? "rgba(251,191,36,0.09)"
-              : "rgba(38,66,48,0.07)",
-          color,
-          border: `1px solid ${accent === "amber" ? "rgba(251,191,36,0.2)" : "rgba(38,66,48,0.12)"}`,
-        }}
-      >
-        {count}
-      </span>
-      <div
-        className="hidden sm:block flex-1 max-w-xs h-px ms-1"
-        style={{
-          background:
-            accent === "amber"
-              ? "linear-gradient(to right, rgba(251,191,36,0.3), transparent)"
-              : "linear-gradient(to right, rgba(38,66,48,0.15), transparent)",
-        }}
-      />
-    </div>
-  );
-}
-
-// ─── Type Tabs ───────────────────────────────────────────────
-type TypeFilter = "all" | "NORMAL" | "INTENSIVE";
-
-function TypeTabs({
-  value,
-  onChange,
-  normalCount,
-  intensiveCount,
-  allCount,
-  t,
-}: {
-  value: TypeFilter;
-  onChange: (v: TypeFilter) => void;
-  normalCount: number;
-  intensiveCount: number;
-  allCount: number;
-  t: (k: string) => string;
-}) {
-  const tabs: {
-    id: TypeFilter;
-    label: string;
-    count: number;
-    icon: React.ReactNode;
-  }[] = [
-    {
-      id: "all",
-      label: t("common.all"),
-      count: allCount,
-      icon: <LayoutGrid className="w-3.5 h-3.5" />,
-    },
-    {
-      id: "NORMAL",
-      label: t("courses.normal"),
-      count: normalCount,
-      icon: <BookOpen className="w-3.5 h-3.5" />,
-    },
-    {
-      id: "INTENSIVE",
-      label: t("courses.intensive"),
-      count: intensiveCount,
-      icon: <Zap className="w-3.5 h-3.5" />,
-    },
-  ];
-
-  return (
-    <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white dark:bg-[#161616] border border-brand-beige/80 dark:border-[#222222] w-fit flex-wrap">
-      {tabs.map((tab) => {
-        const active = value === tab.id;
-        const isIntensiveTab = tab.id === "INTENSIVE";
-        let activeStyle: React.CSSProperties = {};
-        if (active) {
-          activeStyle = isIntensiveTab
-            ? {
-                background: "linear-gradient(135deg, #D97706, #F59E0B)",
-                color: "#fff",
-                boxShadow: "0 3px 10px rgba(217,119,6,0.3)",
-              }
-            : {
-                background: "var(--color-brand-teal-dark, #26423D)",
-                color: "#fff",
-                boxShadow: "0 3px 10px rgba(38,66,48,0.25)",
-              };
-        }
-        return (
+    <div className="flex items-center gap-2 text-sm flex-wrap">
+      {steps.map((s, i) => (
+        <span key={i} className="flex items-center gap-2">
+          {i > 0 && (
+            <Arrow className="w-4 h-4 text-brand-brown/40 dark:text-[#444]" />
+          )}
           <button
-            key={tab.id}
-            onClick={() => onChange(tab.id)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200"
-            style={
-              active
-                ? activeStyle
-                : { color: "#888", background: "transparent" }
-            }
+            onClick={s.onClick}
+            className={`font-medium transition-colors ${
+              i === steps.length - 1
+                ? "text-brand-black dark:text-[#E5E5E5] cursor-default"
+                : "text-brand-teal-dark dark:text-[#4ADE80] hover:underline"
+            }`}
           >
-            {tab.icon}
-            {tab.label}
-            <span
-              className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold"
-              style={
-                active
-                  ? { background: "rgba(255,255,255,0.22)", color: "inherit" }
-                  : { background: "rgba(0,0,0,0.06)", color: "#999" }
-              }
-            >
-              {tab.count}
-            </span>
+            {s.label}
           </button>
-        );
-      })}
+        </span>
+      ))}
     </div>
   );
 }
 
 // ─── Main Page ───────────────────────────────────────────────
+type Step = "language" | "type" | "courses";
+
 export default function CoursesHomePage() {
   const { data, isLoading } = usePublicCourses({ page: 1, limit: 20 });
   const courses = data?.data || [];
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [search, setSearch] = useState("");
-  const [langFilter, setLangFilter] = useState(
-    searchParams.get("language")?.toLowerCase() || "all",
-  );
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
-  const { t, dir } = useLanguage();
+  const { t, dir, currentLang } = useLanguage();
 
-  useEffect(() => {
-    const urlLang = searchParams.get("language")?.toLowerCase();
-    if (urlLang && urlLang !== langFilter) setLangFilter(urlLang);
-  }, [langFilter, searchParams]);
+  const [step, setStep] = useState<Step>("language");
+  const [selectedLang, setSelectedLang] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<
+    "NORMAL" | "INTENSIVE" | null
+  >(null);
 
-  const handleLangFilter = (lang: string) => {
-    setLangFilter(lang);
-    if (lang === "all") searchParams.delete("language");
-    else searchParams.set("language", lang);
-    setSearchParams(searchParams, { replace: true });
-  };
+  // Group by language — normalize key to lowercase for consistent grouping
+  // regardless of how admin typed it ("French", "french", "FRENCH" all become "french")
+  const langMap: Record<string, PublicCourse[]> = {};
+  const langDisplayName: Record<string, string> = {}; // normalized key → display name
+  courses.forEach((c) => {
+    if (!c.language) return;
+    const key = c.language.toLowerCase().trim();
+    if (!langMap[key]) {
+      langMap[key] = [];
+      // Use the first occurrence as the display name (capitalize first letter)
+      langDisplayName[key] =
+        c.language.charAt(0).toUpperCase() + c.language.slice(1).toLowerCase();
+    }
+    langMap[key].push(c);
+  });
+  const languages = Object.keys(langMap).sort();
 
-  const languages = Array.from(
-    new Set(courses.map((c) => c.language?.toLowerCase()).filter(Boolean)),
-  );
-
-  const applyBaseFilters = (list: PublicCourse[]) =>
-    list.filter((c) => {
-      const matchSearch =
-        !search ||
-        c.course_name.toLowerCase().includes(search.toLowerCase()) ||
-        c.title_ar?.toLowerCase().includes(search.toLowerCase()) ||
-        c.language?.toLowerCase().includes(search.toLowerCase());
-      const matchLang =
-        langFilter === "all" || c.language?.toLowerCase() === langFilter;
-      return matchSearch && matchLang;
-    });
-
-  const allBase = applyBaseFilters(courses);
-  const filteredNormal = allBase.filter(
+  // Courses filtered by selected lang
+  const langCourses = selectedLang ? langMap[selectedLang] || [] : [];
+  const normalCourses = langCourses.filter(
     (c) => (c as any).course_type !== "INTENSIVE",
   );
-  const filteredIntensive = allBase.filter(
+  const intensiveCourses = langCourses.filter(
     (c) => (c as any).course_type === "INTENSIVE",
   );
-  const hasIntensive = courses.some(
-    (c) => (c as any).course_type === "INTENSIVE",
-  );
+  const hasIntensive = intensiveCourses.length > 0;
+  const hasNormal = normalCourses.length > 0;
 
-  const allFiltered =
-    typeFilter === "NORMAL"
-      ? filteredNormal
-      : typeFilter === "INTENSIVE"
-        ? filteredIntensive
-        : allBase;
+  // Final courses list
+  const finalCourses =
+    selectedType === "INTENSIVE"
+      ? intensiveCourses
+      : selectedType === "NORMAL"
+        ? normalCourses
+        : langCourses;
 
-  const totalCount = allFiltered.length;
+  // Handlers
+  const handleLangSelect = (lang: string) => {
+    setSelectedLang(lang);
+    const lc = langMap[lang] || [];
+    const hasInt = lc.some((c) => (c as any).course_type === "INTENSIVE");
+    const hasNorm = lc.some((c) => (c as any).course_type !== "INTENSIVE");
+    // Skip type step if only one type
+    if (hasInt && hasNorm) {
+      setStep("type");
+    } else {
+      setSelectedType(hasInt ? "INTENSIVE" : "NORMAL");
+      setStep("courses");
+    }
+  };
+
+  const handleTypeSelect = (type: "NORMAL" | "INTENSIVE") => {
+    setSelectedType(type);
+    setStep("courses");
+  };
+
+  const goToLanguages = () => {
+    setStep("language");
+    setSelectedLang(null);
+    setSelectedType(null);
+  };
+
+  const goToTypes = () => {
+    setStep("type");
+    setSelectedType(null);
+  };
+
+  // Breadcrumb steps
+  const breadcrumbSteps = [
+    { label: t("courses.pageTitle"), onClick: goToLanguages },
+    ...(selectedLang
+      ? [
+          {
+            label:
+              langDisplayName[selectedLang] ||
+              selectedLang.charAt(0).toUpperCase() + selectedLang.slice(1),
+            onClick:
+              step === "courses" && hasIntensive && hasNormal
+                ? goToTypes
+                : goToLanguages,
+          },
+        ]
+      : []),
+    ...(step === "courses" && selectedType
+      ? [
+          {
+            label: selectedType === "INTENSIVE" ? "مكثفة ⚡" : "عادية",
+            onClick: () => {},
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="min-h-screen bg-brand-gray dark:bg-[#0F0F0F]" dir={dir}>
@@ -600,55 +687,14 @@ export default function CoursesHomePage() {
           </p>
         </div>
 
-        {/* ── Controls ── */}
-        <div className="flex flex-col gap-3 mb-8">
-          {/* Search + language */}
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="relative flex-1 w-full sm:max-w-sm">
-              <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-brown/40 dark:text-[#555555]" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("courses.searchPlaceholder")}
-                className="w-full pr-11 pl-4 h-11 rounded-xl border border-brand-beige dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] text-sm text-brand-black dark:text-[#E5E5E5] placeholder:text-brand-brown/40 dark:placeholder:text-[#555555] focus:outline-none focus:border-brand-teal/40 dark:focus:border-[#4ADE80]/30 transition-all"
-              />
-            </div>
-            {languages.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => handleLangFilter("all")}
-                  className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all ${langFilter === "all" ? "bg-brand-teal-dark dark:bg-[#4ADE80] text-white dark:text-[#0F0F0F] shadow-md" : "bg-white dark:bg-[#1A1A1A] border border-brand-beige dark:border-[#2A2A2A] text-brand-brown dark:text-[#888888]"}`}
-                >
-                  {t("common.all")}
-                </button>
-                {languages.map((lang) => (
-                  <button
-                    key={lang}
-                    onClick={() => handleLangFilter(lang!)}
-                    className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all capitalize ${langFilter === lang ? "bg-brand-teal-dark dark:bg-[#4ADE80] text-white dark:text-[#0F0F0F] shadow-md" : "bg-white dark:bg-[#1A1A1A] border border-brand-beige dark:border-[#2A2A2A] text-brand-brown dark:text-[#888888]"}`}
-                  >
-                    {lang}
-                  </button>
-                ))}
-              </div>
-            )}
+        {/* ── Breadcrumb ── */}
+        {step !== "language" && (
+          <div className="mb-8">
+            <Breadcrumb steps={breadcrumbSteps} dir={dir} />
           </div>
+        )}
 
-          {/* Type tabs — only if intensive courses exist */}
-          {hasIntensive && (
-            <TypeTabs
-              value={typeFilter}
-              onChange={setTypeFilter}
-              normalCount={filteredNormal.length}
-              intensiveCount={filteredIntensive.length}
-              allCount={allBase.length}
-              t={t}
-            />
-          )}
-        </div>
-
-        {/* ── Content ── */}
+        {/* ── Loading ── */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <Loader2 className="w-10 h-10 animate-spin text-brand-teal-dark dark:text-[#4ADE80]" />
@@ -656,109 +702,120 @@ export default function CoursesHomePage() {
               {t("common.loading")}
             </p>
           </div>
-        ) : totalCount === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-20 h-20 rounded-2xl bg-brand-beige/50 dark:bg-[#2A2A2A] flex items-center justify-center">
-              <BookOpen className="w-10 h-10 text-brand-brown/30 dark:text-[#555555]" />
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-medium text-brand-black dark:text-[#E5E5E5]">
-                {t("courses.noCoursesFound")}
-              </p>
-              <p className="text-sm text-brand-brown dark:text-[#888888] mt-1">
-                {search || langFilter !== "all" || typeFilter !== "all"
-                  ? t("courses.tryDifferent")
-                  : t("courses.noCourses")}
-              </p>
-            </div>
-            {(search || langFilter !== "all" || typeFilter !== "all") && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearch("");
-                  handleLangFilter("all");
-                  setTypeFilter("all");
-                }}
-                className="rounded-xl border-brand-beige dark:border-[#2A2A2A] text-brand-brown dark:text-[#888888]"
-              >
-                {t("common.clearFilters")}
-              </Button>
+        ) : step === "language" ? (
+          /* ── STEP 1: Language Grid ── */
+          <div>
+            <p className="text-sm text-brand-brown dark:text-[#666] mb-6">
+              اختر لغة التكوين للبدء
+            </p>
+            {languages.length === 0 ? (
+              <div className="text-center py-24 text-brand-brown dark:text-[#666]">
+                <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p>{t("courses.noCourses")}</p>
+              </div>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {languages.map((lang) => (
+                  <LanguageCard
+                    key={lang}
+                    lang={lang}
+                    displayName={langDisplayName[lang]}
+                    courses={langMap[lang]}
+                    onSelect={() => handleLangSelect(lang)}
+                  />
+                ))}
+              </div>
             )}
           </div>
-        ) : typeFilter === "all" && hasIntensive ? (
-          /* ── Grouped view ── */
-          <div className="space-y-14">
-            {filteredNormal.length > 0 && (
-              <section>
-                <SectionHeader
-                  icon={<BookOpen className="w-5 h-5" />}
-                  title={t("courses.normalCourses")}
-                  count={filteredNormal.length}
-                  accent="teal"
+        ) : step === "type" ? (
+          /* ── STEP 2: Type Selection ── */
+          <div>
+            <p className="text-sm text-brand-brown dark:text-[#666] mb-8 text-center">
+              اختر نوع الدورة
+            </p>
+            <div className="grid gap-8 sm:grid-cols-2 max-w-2xl mx-auto">
+              {hasNormal && (
+                <TypeCard
+                  type="NORMAL"
+                  count={normalCourses.length}
+                  onSelect={() => handleTypeSelect("NORMAL")}
                 />
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredNormal.map((course, i) => (
-                    <CourseCard key={course.id} course={course} index={i} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {filteredIntensive.length > 0 && (
-              <section>
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <div
-                      className="w-full h-px"
-                      style={{
-                        background:
-                          "linear-gradient(to right, transparent, rgba(251,191,36,0.3), transparent)",
-                      }}
-                    />
-                  </div>
-                </div>
-                <SectionHeader
-                  icon={<Zap className="w-5 h-5" />}
-                  title={t("courses.intensiveCourses")}
-                  count={filteredIntensive.length}
-                  accent="amber"
+              )}
+              {hasIntensive && (
+                <TypeCard
+                  type="INTENSIVE"
+                  count={intensiveCourses.length}
+                  onSelect={() => handleTypeSelect("INTENSIVE")}
                 />
-                {/* Info banner */}
+              )}
+            </div>
+          </div>
+        ) : (
+          /* ── STEP 3: Courses Grid ── */
+          <div>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                {selectedType === "INTENSIVE" ? (
+                  <>
+                    <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+                      <Zap className="w-5 h-5 text-amber-500" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-brand-black dark:text-[#E5E5E5]">
+                        الدورات المكثفة
+                      </h2>
+                      <p className="text-xs text-brand-brown dark:text-[#666]">
+                        {finalCourses.length} دورة متاحة
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-9 h-9 rounded-xl bg-[#26423D]/8 dark:bg-[#26423D]/15 flex items-center justify-center">
+                      <BookOpen className="w-5 h-5 text-[#26423D] dark:text-[#4ADE80]" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-brand-black dark:text-[#E5E5E5]">
+                        الدورات العادية
+                      </h2>
+                      <p className="text-xs text-brand-brown dark:text-[#666]">
+                        {finalCourses.length} دورة متاحة
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+              {/* Intensive banner */}
+              {selectedType === "INTENSIVE" && (
                 <div
-                  className="mb-5 px-4 py-3 rounded-xl flex items-center gap-2.5"
+                  className="px-4 py-2.5 rounded-xl flex items-center gap-2"
                   style={{
-                    background: "rgba(251,191,36,0.06)",
+                    background: "rgba(251,191,36,0.07)",
                     border: "1px solid rgba(251,191,36,0.2)",
                   }}
                 >
-                  <Zap className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                  <p
-                    className="text-xs font-medium"
-                    style={{ color: "#B45309" }}
-                  >
-                    {t("courses.intensiveDescription")}
+                  <Zap className="w-4 h-4 text-amber-500 shrink-0" />
+                  <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                    دورات مكثفة لتحقيق تقدم سريع في وقت قصير
                   </p>
                 </div>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredIntensive.map((course, i) => (
-                    <CourseCard key={course.id} course={course} index={i} />
-                  ))}
-                </div>
-              </section>
+              )}
+            </div>
+
+            {finalCourses.length === 0 ? (
+              <div className="text-center py-24 text-brand-brown dark:text-[#666]">
+                <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p>{t("courses.noCoursesFound")}</p>
+              </div>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {finalCourses.map((course, i) => (
+                  <CourseCard key={course.id} course={course} index={i} />
+                ))}
+              </div>
             )}
           </div>
-        ) : (
-          /* ── Flat grid ── */
-          <>
-            <p className="text-xs text-brand-brown dark:text-[#666666] mb-5">
-              {t("courses.showing", { count: totalCount })}
-            </p>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {allFiltered.map((course, i) => (
-                <CourseCard key={course.id} course={course} index={i} />
-              ))}
-            </div>
-          </>
         )}
       </div>
     </div>

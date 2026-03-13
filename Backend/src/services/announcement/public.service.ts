@@ -152,7 +152,11 @@ export async function listPublicCourses(params: {
 
   const profileWhere: any = { is_published: true };
   if (params.language) {
-    profileWhere.language = params.language.toUpperCase();
+    // Case-insensitive — normalize to lowercase for consistent grouping
+    profileWhere.language = {
+      equals: params.language,
+      mode: "insensitive",
+    };
   }
 
   const [profiles, total] = await Promise.all([
