@@ -1108,10 +1108,6 @@ export const rejectDocumentController = async (req: Request, res: Response) => {
     return res.status(404).json({ message: "Document not found" });
   }
 
-  if (document.status === "REJECTED") {
-    return res.status(400).json({ message: "Document already rejected" });
-  }
-
   const fileName = document.file_path?.split("/").pop() ?? "الوثيقة";
 
   // ✅ يحفظ rejection_reason
