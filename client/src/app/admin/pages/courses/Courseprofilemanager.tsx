@@ -20,6 +20,9 @@ import {
   Languages,
   CheckCircle2,
   AlertCircle,
+  Zap,
+  Clock,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
@@ -443,6 +446,101 @@ export default function CourseProfileManager() {
             </div>
           </FieldGroup>
         </div>
+        {/* Course type info — read from course, not editable here */}
+        {course && (
+          <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+            <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
+              نوع الدورة ومدة الحصة
+            </p>
+            <div className="flex items-center gap-4 flex-wrap">
+              {/* Type badge */}
+              {(course as any).course_type === "INTENSIVE" ? (
+                <div
+                  className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border"
+                  style={{
+                    background: "rgba(251,191,36,0.07)",
+                    borderColor: "rgba(251,191,36,0.3)",
+                  }}
+                >
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{
+                      background: "linear-gradient(135deg, #D97706, #F59E0B)",
+                    }}
+                  >
+                    <Zap className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">النوع</p>
+                    <p className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                      مكثفة ⚡
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border"
+                  style={{
+                    background: "rgba(38,66,48,0.05)",
+                    borderColor: "rgba(38,66,48,0.2)",
+                  }}
+                >
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{
+                      background: "linear-gradient(135deg, #26423D, #4A7066)",
+                    }}
+                  >
+                    <BookOpen className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">النوع</p>
+                    <p className="text-sm font-bold text-[#26423D] dark:text-[#4ADE80]">
+                      عادية
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Session duration badge */}
+              {(course as any).session_duration ? (
+                <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-border/60 bg-muted/30">
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">مدة الحصة</p>
+                    <p className="text-sm font-bold text-foreground">
+                      {Math.floor((course as any).session_duration / 60) > 0
+                        ? `${Math.floor((course as any).session_duration / 60)} ساعة${(course as any).session_duration % 60 > 0 ? ` و${(course as any).session_duration % 60} دقيقة` : ""}`
+                        : `${(course as any).session_duration} دقيقة`}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-dashed border-border/50 bg-muted/10">
+                  <Clock className="w-4 h-4 text-muted-foreground/40" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">مدة الحصة</p>
+                    <p className="text-xs text-muted-foreground/60">
+                      غير محددة
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Link to edit course */}
+              <a
+                href={`/admin/courses/${course.course_id}`}
+                className="ms-auto text-xs text-primary hover:underline flex items-center gap-1"
+              >
+                تعديل من صفحة الدورة
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+          </div>
+        )}
+
         <FieldGroup
           label={t("admin.courseProfile.courseImage")}
           hint={t("admin.courseProfile.courseImageHint")}
