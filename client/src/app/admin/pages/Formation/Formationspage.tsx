@@ -11,6 +11,7 @@ import {
   Eye,
   FileX,
   PenLine,
+  Zap,
 } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
@@ -26,7 +27,6 @@ const StatusBadge = ({
   isPublished: boolean;
 }) => {
   const { t } = useTranslation();
-
   if (!hasProfile) {
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
@@ -47,6 +47,24 @@ const StatusBadge = ({
     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:ring-amber-800">
       <PenLine className="w-3 h-3" />
       {t("admin.formations.status.draft")}
+    </span>
+  );
+};
+
+// ─── Course Type Badge ───
+const CourseTypeBadge = ({ courseType }: { courseType?: string }) => {
+  if (courseType === "INTENSIVE") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-600 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:ring-amber-800/50 shrink-0">
+        <Zap className="w-2.5 h-2.5" />
+        مكثف
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#26423D]/8 text-[#26423D] ring-1 ring-[#26423D]/15 dark:bg-[#4ADE80]/10 dark:text-[#4ADE80] dark:ring-[#4ADE80]/20 shrink-0">
+      <BookOpen className="w-2.5 h-2.5" />
+      عادي
     </span>
   );
 };
@@ -94,21 +112,15 @@ const StatCard = ({
       dot: "bg-zinc-400",
     },
   };
-
   const c = colorMap[color];
-
   return (
     <button
       onClick={onClick}
-      className={`group relative rounded-2xl border p-5 text-left transition-all duration-200 ${
-        active ? c.active : c.idle
-      }`}
+      className={`group relative rounded-2xl border p-5 text-left transition-all duration-200 ${active ? c.active : c.idle}`}
     >
       <div className="flex items-center justify-between mb-2">
         <div
-          className={`w-2.5 h-2.5 rounded-full ${c.dot} ${
-            active ? "animate-pulse" : "opacity-60"
-          }`}
+          className={`w-2.5 h-2.5 rounded-full ${c.dot} ${active ? "animate-pulse" : "opacity-60"}`}
         />
       </div>
       <p className={`text-3xl font-bold tracking-tight ${c.text}`}>{count}</p>
@@ -131,7 +143,6 @@ export default function FormationsPage() {
     const matchSearch =
       course.course_name?.toLowerCase().includes(search.toLowerCase()) ||
       course.course_code?.toLowerCase().includes(search.toLowerCase());
-
     if (filter === "all") return matchSearch;
     if (filter === "published")
       return matchSearch && course.profile?.is_published;
@@ -266,13 +277,14 @@ export default function FormationsPage() {
               const profile = course.profile;
               const hasProfile = !!profile;
               const isPublished = profile?.is_published || false;
+              const courseType = course.course_type as string | undefined;
 
               return (
                 <div
                   key={course.course_id}
                   className="group grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr_1fr_1fr_140px] gap-4 items-center px-6 py-4 hover:bg-muted/20 transition-colors duration-150"
                 >
-                  {/* Course Name */}
+                  {/* Course Name + Type Badge */}
                   <div className="flex items-center gap-3.5">
                     <div
                       className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-lg transition-transform group-hover:scale-105 ${
@@ -283,17 +295,29 @@ export default function FormationsPage() {
                     >
                       {profile?.flag_emoji ? (
                         <span>{profile.flag_emoji}</span>
+                      ) : courseType === "INTENSIVE" ? (
+                        <Zap className="w-5 h-5 text-amber-500" />
                       ) : (
                         <BookOpen className="w-5 h-5 text-muted-foreground/60" />
                       )}
                     </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-foreground truncate">
-                        {course.course_name}
-                      </p>
-                      {profile?.title_ar && (
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-foreground truncate">
+                          {course.course_name}
+                        </p>
+                        <CourseTypeBadge courseType={courseType} />
+                      </div>
+                      {profile?.title_ar ? (
+                        <p
+                          className="text-xs text-muted-foreground truncate mt-0.5"
+                          dir="rtl"
+                        >
                           {profile.title_ar}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground/35 mt-0.5">
+                          بدون عنوان عربي
                         </p>
                       )}
                     </div>
