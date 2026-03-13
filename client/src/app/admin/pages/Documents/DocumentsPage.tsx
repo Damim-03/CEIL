@@ -58,17 +58,13 @@ type GroupedDocuments = {
     };
     documents: AdminDocument[];
     isComplete: boolean;
+    hasRejected: boolean;
   };
 };
 
 const AdminDocuments = () => {
   const { t } = useTranslation();
-  const {
-    data: documents = [],
-    isLoading,
-    isError,
-    error,
-  } = useAdminDocuments();
+  const { data: documents = [], isLoading, isError } = useAdminDocuments();
   const { mutate: deleteDocument, isPending: isDeleting } = useDeleteDocument();
   const { mutate: approveDocument, isPending: isApproving } =
     useApproveDocument();
@@ -77,7 +73,9 @@ const AdminDocuments = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"all" | "complete" | "pending">("all");
+  const [filter, setFilter] = useState<
+    "all" | "complete" | "pending" | "rejected"
+  >("all");
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -135,16 +133,22 @@ const AdminDocuments = () => {
     const groups = filtered.reduce((acc, doc) => {
       const sid = doc.student.id || doc.student.email;
       if (!acc[sid])
-        acc[sid] = { student: doc.student, documents: [], isComplete: false };
+        acc[sid] = {
+          student: doc.student,
+          documents: [],
+          isComplete: false,
+          hasRejected: false,
+        };
       acc[sid].documents.push(doc);
       return acc;
     }, {} as GroupedDocuments);
 
-    // Compute completeness: all docs approved
+    // Compute completeness and rejected status
     Object.values(groups).forEach((g) => {
       g.isComplete =
         g.documents.length > 0 &&
         g.documents.every((d) => d.status === "APPROVED");
+      g.hasRejected = g.documents.some((d) => d.status === "REJECTED");
     });
 
     return groups;
@@ -154,23 +158,26 @@ const AdminDocuments = () => {
     return Object.keys(groupedDocuments)
       .filter((sid) => {
         if (filter === "complete") return groupedDocuments[sid].isComplete;
-        if (filter === "pending") return !groupedDocuments[sid].isComplete;
+        if (filter === "pending")
+          return (
+            !groupedDocuments[sid].isComplete &&
+            !groupedDocuments[sid].hasRejected
+          );
+        if (filter === "rejected") return groupedDocuments[sid].hasRejected;
         return true;
       })
       .sort((a, b) => {
-        // Complete accounts go last (unless filter=complete)
-        const aComplete = groupedDocuments[a].isComplete;
-        const bComplete = groupedDocuments[b].isComplete;
-        if (aComplete !== bComplete) return aComplete ? 1 : -1;
+        const aG = groupedDocuments[a];
+        const bG = groupedDocuments[b];
+        // rejected first, then pending, then complete
+        const rank = (g: typeof aG) =>
+          g.hasRejected ? 0 : g.isComplete ? 2 : 1;
+        if (rank(aG) !== rank(bG)) return rank(aG) - rank(bG);
         const latestA = Math.max(
-          ...groupedDocuments[a].documents.map((d) =>
-            new Date(d.uploadDate).getTime(),
-          ),
+          ...aG.documents.map((d) => new Date(d.uploadDate).getTime()),
         );
         const latestB = Math.max(
-          ...groupedDocuments[b].documents.map((d) =>
-            new Date(d.uploadDate).getTime(),
-          ),
+          ...bG.documents.map((d) => new Date(d.uploadDate).getTime()),
         );
         return latestB - latestA;
       });
@@ -181,11 +188,15 @@ const AdminDocuments = () => {
       total: Object.keys(groupedDocuments).length,
       complete: Object.values(groupedDocuments).filter((g) => g.isComplete)
         .length,
-      pending: Object.values(groupedDocuments).filter((g) => !g.isComplete)
+      pending: Object.values(groupedDocuments).filter(
+        (g) => !g.isComplete && !g.hasRejected,
+      ).length,
+      rejected: Object.values(groupedDocuments).filter((g) => g.hasRejected)
         .length,
       totalDocs: documents.length,
       pendingDocs: documents.filter((d) => !d.status || d.status === "PENDING")
         .length,
+      rejectedDocs: documents.filter((d) => d.status === "REJECTED").length,
     }),
     [groupedDocuments, documents],
   );
@@ -198,8 +209,10 @@ const AdminDocuments = () => {
         setApproveDialogOpen(false);
         setDocumentToApprove(null);
       },
-      onError: (e: any) =>
-        toast.error(e?.message || t("admin.documents.toast.approveFailed")),
+      onError: (e: unknown) =>
+        toast.error(
+          (e as Error)?.message || t("admin.documents.toast.approveFailed"),
+        ),
     });
   };
 
@@ -213,7 +226,8 @@ const AdminDocuments = () => {
       {
         documentId: documentToReject.id,
         reason: rejectReason,
-        studentUserId: (documentToReject.student as any).userId, // user_id للطالب
+        studentUserId:
+          (documentToReject.student as { userId?: string }).userId ?? "",
         fileName: documentToReject.fileName,
       },
       {
@@ -223,10 +237,11 @@ const AdminDocuments = () => {
           setDocumentToReject(null);
           setRejectReason("");
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
           console.error("Error rejecting document:", error);
           toast.error(
-            error?.message || t("admin.documents.toast.rejectFailed"),
+            (error as Error)?.message ||
+              t("admin.documents.toast.rejectFailed"),
           );
         },
       },
@@ -241,8 +256,10 @@ const AdminDocuments = () => {
         setDeleteDialogOpen(false);
         setDocumentToDelete(null);
       },
-      onError: (e: any) =>
-        toast.error(e?.message || t("admin.documents.toast.deleteFailed")),
+      onError: (e: unknown) =>
+        toast.error(
+          (e as Error)?.message || t("admin.documents.toast.deleteFailed"),
+        ),
     });
   };
 
@@ -320,6 +337,13 @@ const AdminDocuments = () => {
               <Clock className="w-3 h-3" />
               {stats.pendingDocs} {t("admin.documents.statsPending")}
             </div>
+            {stats.rejectedDocs > 0 && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 dark:bg-red-900/20 text-xs font-semibold text-red-600 dark:text-red-400">
+                <XCircle className="w-3 h-3" />
+                {stats.rejectedDocs}{" "}
+                {t("admin.documents.statsRejected", "مرفوض")}
+              </div>
+            )}
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
               <ShieldCheck className="w-3 h-3" />
               {stats.complete} {t("admin.documents.statsComplete", "حساب كامل")}
@@ -340,8 +364,8 @@ const AdminDocuments = () => {
               className="pl-10 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222] dark:text-[#E5E5E5] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]"
             />
           </div>
-          <div className="flex gap-2">
-            {(["all", "pending", "complete"] as const).map((f) => (
+          <div className="flex gap-2 flex-wrap">
+            {(["all", "pending", "rejected", "complete"] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
@@ -350,9 +374,11 @@ const AdminDocuments = () => {
                   filter === f
                     ? f === "complete"
                       ? "bg-emerald-500 text-white shadow-sm"
-                      : f === "pending"
-                        ? "bg-amber-500 text-white shadow-sm"
-                        : "bg-[#2B6F5E] text-white shadow-sm"
+                      : f === "rejected"
+                        ? "bg-red-500 text-white shadow-sm"
+                        : f === "pending"
+                          ? "bg-amber-500 text-white shadow-sm"
+                          : "bg-[#2B6F5E] text-white shadow-sm"
                     : "bg-[#F0EBE5] dark:bg-[#1E1E1E] text-[#6B5D4F] dark:text-[#888] hover:bg-[#E8E0D8] dark:hover:bg-[#252525]",
                 )}
               >
@@ -360,13 +386,17 @@ const AdminDocuments = () => {
                   ? t("admin.documents.filterAll", "الكل")
                   : f === "pending"
                     ? t("admin.documents.filterPending", "قيد الانتظار")
-                    : t("admin.documents.filterComplete", "مكتمل")}
+                    : f === "rejected"
+                      ? t("admin.documents.filterRejected", "مرفوض")
+                      : t("admin.documents.filterComplete", "مكتمل")}
                 <span className="ml-1.5 opacity-70">
                   {f === "all"
                     ? stats.total
                     : f === "complete"
                       ? stats.complete
-                      : stats.pending}
+                      : f === "rejected"
+                        ? stats.rejected
+                        : stats.pending}
                 </span>
               </button>
             ))}
@@ -392,9 +422,13 @@ const AdminDocuments = () => {
                   student,
                   documents: sDocs,
                   isComplete,
+                  hasRejected,
                 } = groupedDocuments[sid];
                 const pending = sDocs.filter(
                   (d) => !d.status || d.status === "PENDING",
+                ).length;
+                const rejected = sDocs.filter(
+                  (d) => d.status === "REJECTED",
                 ).length;
                 const isSelected = selectedStudent === sid;
 
@@ -405,7 +439,9 @@ const AdminDocuments = () => {
                     className={cn(
                       "w-full px-4 py-3.5 text-left transition-all flex items-center gap-3",
                       isSelected
-                        ? "bg-[#2B6F5E]/8 dark:bg-[#2B6F5E]/15 border-r-2 border-[#2B6F5E]"
+                        ? hasRejected
+                          ? "bg-red-50/60 dark:bg-red-900/10 border-r-2 border-red-500"
+                          : "bg-[#2B6F5E]/8 dark:bg-[#2B6F5E]/15 border-r-2 border-[#2B6F5E]"
                         : "hover:bg-[#F8F5F2] dark:hover:bg-[#1E1E1E]",
                     )}
                   >
@@ -415,7 +451,11 @@ const AdminDocuments = () => {
                         <AvatarFallback
                           className={cn(
                             "text-xs font-bold text-white",
-                            isComplete ? "bg-emerald-500" : "bg-[#2B6F5E]",
+                            isComplete
+                              ? "bg-emerald-500"
+                              : hasRejected
+                                ? "bg-red-500"
+                                : "bg-[#2B6F5E]",
                           )}
                         >
                           {getInitials(student.name)}
@@ -426,10 +466,15 @@ const AdminDocuments = () => {
                           <CheckCircle2 className="w-2.5 h-2.5 text-white" />
                         </div>
                       )}
+                      {!isComplete && hasRejected && (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 border-2 border-white dark:border-[#1A1A1A] flex items-center justify-center">
+                          <XCircle className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
                           {student.name}
                         </p>
@@ -439,11 +484,17 @@ const AdminDocuments = () => {
                             {t("admin.documents.complete", "مكتمل")}
                           </span>
                         )}
+                        {!isComplete && hasRejected && (
+                          <span className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
+                            <XCircle className="w-2.5 h-2.5" />
+                            {t("admin.documents.hasRejected", "مرفوض")}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-[#BEB29E] dark:text-[#555] truncate mt-0.5">
                         {student.email}
                       </p>
-                      <div className="flex items-center gap-2 mt-1.5">
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         <span className="text-[11px] text-[#6B5D4F] dark:text-[#888]">
                           {sDocs.length} {t("admin.documents.files")}
                         </span>
@@ -453,6 +504,13 @@ const AdminDocuments = () => {
                             {pending} {t("admin.documents.statsPending")}
                           </span>
                         )}
+                        {rejected > 0 && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
+                            <XCircle className="w-2.5 h-2.5" />
+                            {rejected}{" "}
+                            {t("admin.documents.statsRejected", "مرفوض")}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -460,7 +518,9 @@ const AdminDocuments = () => {
                       className={cn(
                         "w-4 h-4 shrink-0 transition-colors",
                         isSelected
-                          ? "text-[#2B6F5E]"
+                          ? hasRejected
+                            ? "text-red-500"
+                            : "text-[#2B6F5E]"
                           : "text-[#D8CDC0] dark:text-[#333]",
                       )}
                     />
@@ -480,7 +540,9 @@ const AdminDocuments = () => {
                     "px-6 py-5 border-b border-[#D8CDC0]/40 dark:border-[#2A2A2A]",
                     selectedGroup.isComplete
                       ? "bg-gradient-to-r from-emerald-50/80 dark:from-emerald-900/10 to-transparent"
-                      : "bg-gradient-to-r from-[#2B6F5E]/5 dark:from-[#2B6F5E]/8 to-transparent",
+                      : selectedGroup.hasRejected
+                        ? "bg-gradient-to-r from-red-50/80 dark:from-red-900/10 to-transparent"
+                        : "bg-gradient-to-r from-[#2B6F5E]/5 dark:from-[#2B6F5E]/8 to-transparent",
                   )}
                 >
                   <div className="flex items-center gap-4">
@@ -494,7 +556,9 @@ const AdminDocuments = () => {
                             "text-base font-bold text-white",
                             selectedGroup.isComplete
                               ? "bg-emerald-500"
-                              : "bg-[#2B6F5E]",
+                              : selectedGroup.hasRejected
+                                ? "bg-red-500"
+                                : "bg-[#2B6F5E]",
                           )}
                         >
                           {getInitials(selectedGroup.student.name)}
@@ -505,6 +569,12 @@ const AdminDocuments = () => {
                           <ShieldCheck className="w-3.5 h-3.5 text-white" />
                         </div>
                       )}
+                      {!selectedGroup.isComplete &&
+                        selectedGroup.hasRejected && (
+                          <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-red-500 border-2 border-white dark:border-[#1A1A1A] flex items-center justify-center shadow-sm">
+                            <XCircle className="w-3.5 h-3.5 text-white" />
+                          </div>
+                        )}
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -518,6 +588,16 @@ const AdminDocuments = () => {
                             {t("admin.documents.completeAccount", "حساب كامل")}
                           </span>
                         )}
+                        {!selectedGroup.isComplete &&
+                          selectedGroup.hasRejected && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-red-500 text-white shadow-sm shadow-red-500/30">
+                              <XCircle className="w-3 h-3" />
+                              {t(
+                                "admin.documents.hasRejectedDocs",
+                                "وثائق مرفوضة",
+                              )}
+                            </span>
+                          )}
                       </div>
                       <p className="text-sm text-[#6B5D4F] dark:text-[#888] mt-0.5">
                         {selectedGroup.student.email}
@@ -556,7 +636,7 @@ const AdminDocuments = () => {
                               {rejected > 0 && (
                                 <span className="text-xs px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-medium">
                                   ✕ {rejected}{" "}
-                                  {t("admin.documents.statsRejected")}
+                                  {t("admin.documents.statsRejected", "مرفوض")}
                                 </span>
                               )}
                             </>
@@ -582,7 +662,11 @@ const AdminDocuments = () => {
                     return (
                       <div
                         key={doc.id}
-                        className="px-5 py-4 hover:bg-[#F8F5F2] dark:hover:bg-[#1E1E1E] transition-colors"
+                        className={cn(
+                          "px-5 py-4 hover:bg-[#F8F5F2] dark:hover:bg-[#1E1E1E] transition-colors",
+                          doc.status === "REJECTED" &&
+                            "border-r-2 border-red-400 dark:border-red-600",
+                        )}
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-xl bg-[#F0EBE5] dark:bg-[#222] flex items-center justify-center shrink-0">
