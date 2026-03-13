@@ -121,10 +121,6 @@ function LanguageCard({
 
       {/* Footer */}
       <div className="bg-white dark:bg-[#161616] p-4 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-xs text-brand-brown dark:text-[#666]">
-          <Users className="w-3.5 h-3.5" />
-          <span>{totalGroups} مجموعة</span>
-        </div>
         <div className="flex items-center gap-1 text-brand-teal-dark dark:text-[#4ADE80] text-xs font-semibold">
           <span>اختر</span>
           <ChevronLeft className="w-4 h-4" />
@@ -434,31 +430,6 @@ function CourseCard({
             </div>
           ))}
         </div>
-
-        {/* Capacity bar */}
-        {course.capacity > 0 && (
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-brand-brown dark:text-[#555555]">
-                {t("courses.enrolled")}
-              </span>
-              <span className="text-[10px] font-bold text-brand-black dark:text-[#E5E5E5]">
-                {course.enrolled}/{course.capacity}
-              </span>
-            </div>
-            <div className="h-1 rounded-full bg-brand-beige/60 dark:bg-[#2A2A2A] overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${Math.min(100, (course.enrolled / course.capacity) * 100)}%`,
-                  background: isIntensive
-                    ? "linear-gradient(to right, #D97706, #F59E0B)"
-                    : "linear-gradient(to right, #26423D, #4A7066)",
-                }}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="mx-5 h-px bg-brand-beige/50 dark:bg-[#222222]" />
