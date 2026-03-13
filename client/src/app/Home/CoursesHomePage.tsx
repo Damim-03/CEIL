@@ -565,8 +565,6 @@ function Breadcrumb({
 type Step = "language" | "type" | "courses";
 
 export default function CoursesHomePage() {
-  const { data, isLoading } = usePublicCourses({ page: 1, limit: 20 });
-  const courses = data?.data || [];
   const { t, dir, currentLang } = useLanguage();
 
   const [step, setStep] = useState<Step>("language");
@@ -575,16 +573,19 @@ export default function CoursesHomePage() {
     "NORMAL" | "INTENSIVE" | null
   >(null);
 
-  // Group by language — normalize key to lowercase for consistent grouping
-  // regardless of how admin typed it ("French", "french", "FRENCH" all become "french")
+  // Fetch ALL published courses once — limit 200 to cover all courses
+  // Filtering by language & type happens client-side
+  const { data, isLoading } = usePublicCourses({ page: 1, limit: 200 });
+  const allCourses = data?.data || [];
+
+  // ── Build language map (case-insensitive grouping) ──
   const langMap: Record<string, PublicCourse[]> = {};
-  const langDisplayName: Record<string, string> = {}; // normalized key → display name
-  courses.forEach((c) => {
+  const langDisplayName: Record<string, string> = {};
+  allCourses.forEach((c) => {
     if (!c.language) return;
     const key = c.language.toLowerCase().trim();
     if (!langMap[key]) {
       langMap[key] = [];
-      // Use the first occurrence as the display name (capitalize first letter)
       langDisplayName[key] =
         c.language.charAt(0).toUpperCase() + c.language.slice(1).toLowerCase();
     }
@@ -592,8 +593,12 @@ export default function CoursesHomePage() {
   });
   const languages = Object.keys(langMap).sort();
 
-  // Courses filtered by selected lang
-  const langCourses = selectedLang ? langMap[selectedLang] || [] : [];
+  // ── Courses for selected language ──
+  const langCourses: PublicCourse[] = selectedLang
+    ? (langMap[selectedLang] ?? [])
+    : [];
+
+  // ── Split by type ──
   const normalCourses = langCourses.filter(
     (c) => (c as any).course_type !== "INTENSIVE",
   );
@@ -603,7 +608,7 @@ export default function CoursesHomePage() {
   const hasIntensive = intensiveCourses.length > 0;
   const hasNormal = normalCourses.length > 0;
 
-  // Final courses list
+  // ── Final list based on selected type ──
   const finalCourses =
     selectedType === "INTENSIVE"
       ? intensiveCourses
