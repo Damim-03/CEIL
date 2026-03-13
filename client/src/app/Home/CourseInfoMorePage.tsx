@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { useState, useMemo } from "react";
 import {
   ChevronRight,
   Calendar,
@@ -410,53 +411,12 @@ export default function CourseInfoMorePage() {
             )}
 
             {course.groups && course.groups.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 px-1">
-                  <div className="w-10 h-10 rounded-xl bg-brand-teal-dark/8 dark:bg-[#4ADE80]/[0.08] flex items-center justify-center">
-                    <Users className="w-4.5 h-4.5 text-brand-teal-dark dark:text-[#4ADE80]" />
-                  </div>
-                  <div>
-                    <h2
-                      className="text-lg font-bold text-brand-black dark:text-[#E5E5E5]"
-                      style={{ fontFamily: "var(--font-sans)" }}
-                    >
-                      {t("courses.availableGroups")}
-                    </h2>
-                    <p className="text-brand-brown dark:text-[#888888] text-xs">
-                      {t("courses.groupsAvailable", {
-                        count: course.groups.length,
-                      })}
-                    </p>
-                  </div>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {course.groups.map((g: any) => {
-                    return (
-                      <div
-                        key={g.id}
-                        className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] p-5 hover:shadow-lg dark:hover:shadow-black/30 hover:border-brand-teal/25 dark:hover:border-[#4ADE80]/20 transition-all duration-300 hover:-translate-y-0.5"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-bold text-brand-black dark:text-[#E5E5E5] text-base leading-snug">
-                              {g.name}
-                            </h3>
-                            {g.teacher && (
-                              <p className="text-brand-brown dark:text-[#888888] text-xs mt-1 flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-brand-teal-dark/40 dark:bg-[#4ADE80]/40 shrink-0" />
-                                {g.teacher}
-                              </p>
-                            )}
-                          </div>
-                          <span className="inline-flex px-3 py-1.5 rounded-xl bg-brand-teal-dark/8 dark:bg-[#4ADE80]/[0.1] text-brand-teal-dark dark:text-[#4ADE80] text-xs font-bold shrink-0 border border-brand-teal/10 dark:border-[#4ADE80]/10">
-                            {g.level}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <GroupsSection
+                groups={course.groups}
+                t={t}
+                isRTL={isRTL}
+                currentLang={currentLang}
+              />
             )}
 
             {course.session_name && (
@@ -668,6 +628,233 @@ export default function CourseInfoMorePage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── Level order ──────────────────────────────────────────────────────────────
+const LEVEL_ORDER = ["PRE_A1", "A1", "A2", "B1", "B2", "C1", "C2"] as const;
+
+type LevelKey = (typeof LEVEL_ORDER)[number];
+
+const LEVEL_LABELS: Record<
+  LevelKey,
+  { label: string; color: string; bg: string; border: string }
+> = {
+  PRE_A1: {
+    label: "Pre-A1",
+    color: "text-purple-600 dark:text-purple-400",
+    bg: "bg-purple-50 dark:bg-purple-950/30",
+    border: "border-purple-200 dark:border-purple-800/40",
+  },
+  A1: {
+    label: "A1",
+    color: "text-sky-600 dark:text-sky-400",
+    bg: "bg-sky-50 dark:bg-sky-950/30",
+    border: "border-sky-200 dark:border-sky-800/40",
+  },
+  A2: {
+    label: "A2",
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-50 dark:bg-blue-950/30",
+    border: "border-blue-200 dark:border-blue-800/40",
+  },
+  B1: {
+    label: "B1",
+    color: "text-teal-600 dark:text-teal-400",
+    bg: "bg-teal-50 dark:bg-teal-950/30",
+    border: "border-teal-200 dark:border-teal-800/40",
+  },
+  B2: {
+    label: "B2",
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-50 dark:bg-emerald-950/30",
+    border: "border-emerald-200 dark:border-emerald-800/40",
+  },
+  C1: {
+    label: "C1",
+    color: "text-amber-600 dark:text-amber-400",
+    bg: "bg-amber-50 dark:bg-amber-950/30",
+    border: "border-amber-200 dark:border-amber-800/40",
+  },
+  C2: {
+    label: "C2",
+    color: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-50 dark:bg-orange-950/30",
+    border: "border-orange-200 dark:border-orange-800/40",
+  },
+};
+
+type PublicGroup = {
+  id: string;
+  name: string;
+  level?: string;
+  teacher?: string | null;
+  enrolled?: number;
+  capacity?: number;
+  status?: string;
+};
+
+function GroupsSection({
+  groups,
+  t,
+  isRTL,
+  currentLang,
+}: {
+  groups: PublicGroup[];
+  t: (key: string, opts?: Record<string, unknown>) => string;
+  isRTL: boolean;
+  currentLang: string;
+}) {
+  // Collect unique levels that exist in groups, sorted by LEVEL_ORDER
+  const availableLevels = useMemo(() => {
+    const seen = new Set(groups.map((g) => g.level ?? "").filter(Boolean));
+    return LEVEL_ORDER.filter((l) => seen.has(l));
+  }, [groups]);
+
+  const [activeLevel, setActiveLevel] = useState<string>("ALL");
+
+  const filtered = useMemo(
+    () =>
+      activeLevel === "ALL"
+        ? groups
+        : groups.filter((g) => g.level === activeLevel),
+    [groups, activeLevel],
+  );
+
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-1">
+        <div className="w-10 h-10 rounded-xl bg-brand-teal-dark/8 dark:bg-[#4ADE80]/[0.08] flex items-center justify-center">
+          <Users className="w-4 h-4 text-brand-teal-dark dark:text-[#4ADE80]" />
+        </div>
+        <div>
+          <h2
+            className="text-lg font-bold text-brand-black dark:text-[#E5E5E5]"
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
+            {t("courses.availableGroups")}
+          </h2>
+          <p className="text-brand-brown dark:text-[#888888] text-xs">
+            {t("courses.groupsAvailable", { count: groups.length })}
+          </p>
+        </div>
+      </div>
+
+      {/* Level filter pills */}
+      {availableLevels.length > 1 && (
+        <div
+          className={`flex flex-wrap gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
+        >
+          {/* ALL pill */}
+          <button
+            onClick={() => setActiveLevel("ALL")}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all duration-200
+              ${
+                activeLevel === "ALL"
+                  ? "bg-brand-teal-dark dark:bg-[#4ADE80] text-white dark:text-[#0F0F0F] border-transparent shadow-sm"
+                  : "bg-white dark:bg-[#1A1A1A] text-brand-brown dark:text-[#888888] border-brand-beige dark:border-[#2A2A2A] hover:border-brand-teal/40 dark:hover:border-[#4ADE80]/30"
+              }`}
+          >
+            {currentLang === "ar"
+              ? "الكل"
+              : currentLang === "fr"
+                ? "Tous"
+                : "All"}
+            <span className="ms-1.5 opacity-60">({groups.length})</span>
+          </button>
+
+          {availableLevels.map((lvl) => {
+            const meta = LEVEL_LABELS[lvl];
+            const count = groups.filter((g) => g.level === lvl).length;
+            const isActive = activeLevel === lvl;
+            return (
+              <button
+                key={lvl}
+                onClick={() => setActiveLevel(lvl)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all duration-200
+                  ${
+                    isActive
+                      ? `${meta.bg} ${meta.color} ${meta.border} shadow-sm scale-105`
+                      : "bg-white dark:bg-[#1A1A1A] text-brand-brown dark:text-[#888888] border-brand-beige dark:border-[#2A2A2A] hover:border-brand-teal/30 dark:hover:border-[#4ADE80]/20"
+                  }`}
+              >
+                {meta.label}
+                <span className="ms-1.5 opacity-60">({count})</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Groups grid */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-10 text-brand-brown dark:text-[#666666] text-sm">
+          {currentLang === "ar"
+            ? "لا توجد مجموعات لهذا المستوى"
+            : "No groups for this level"}
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {filtered.map((g) => {
+            const lvlMeta = g.level ? LEVEL_LABELS[g.level as LevelKey] : null;
+            return (
+              <div
+                key={g.id}
+                className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] p-5 hover:shadow-lg dark:hover:shadow-black/30 hover:border-brand-teal/25 dark:hover:border-[#4ADE80]/20 transition-all duration-300 hover:-translate-y-0.5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-brand-black dark:text-[#E5E5E5] text-base leading-snug">
+                      {g.name}
+                    </h3>
+                    {g.teacher && (
+                      <p className="text-brand-brown dark:text-[#888888] text-xs mt-1 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-brand-teal-dark/40 dark:bg-[#4ADE80]/40 shrink-0" />
+                        {g.teacher}
+                      </p>
+                    )}
+                    {typeof g.enrolled === "number" &&
+                      typeof g.capacity === "number" &&
+                      g.capacity > 0 && (
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between text-[10px] text-brand-brown dark:text-[#666666] mb-1">
+                            <span>
+                              {currentLang === "ar" ? "المقاعد" : "Capacity"}
+                            </span>
+                            <span>
+                              {g.enrolled}/{g.capacity}
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-brand-beige dark:bg-[#2A2A2A] overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-brand-teal-dark dark:bg-[#4ADE80] transition-all"
+                              style={{
+                                width: `${Math.min(100, (g.enrolled / g.capacity) * 100)}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                  </div>
+                  {lvlMeta ? (
+                    <span
+                      className={`inline-flex px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 border ${lvlMeta.bg} ${lvlMeta.color} ${lvlMeta.border}`}
+                    >
+                      {lvlMeta.label}
+                    </span>
+                  ) : g.level ? (
+                    <span className="inline-flex px-3 py-1.5 rounded-xl bg-brand-teal-dark/8 dark:bg-[#4ADE80]/[0.1] text-brand-teal-dark dark:text-[#4ADE80] text-xs font-bold shrink-0 border border-brand-teal/10 dark:border-[#4ADE80]/10">
+                      {g.level}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
