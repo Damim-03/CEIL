@@ -62,7 +62,9 @@ function LanguageCard({
   // pick first course with an image for the bg
   const sample = courses.find((c) => c.image_url) || courses[0];
   const flag = courses[0]?.flag_emoji;
-  const hasIntensive = courses.some((c) => c.course_type === "INTENSIVE");
+  const hasIntensive = courses.some(
+    (c) => (c as any).course_type === "INTENSIVE",
+  );
   const totalGroups = courses.reduce(
     (acc, c) => acc + (c.groups_count ?? 0),
     0,
@@ -244,8 +246,11 @@ function CourseCard({
   const { isLoggedIn } = useAuthRedirect();
   const { data: user } = useMe();
 
-  const isIntensive = course.course_type === "INTENSIVE";
-  const sessionDuration = course.session_duration as number | null | undefined;
+  const isIntensive = (course as any).course_type === "INTENSIVE";
+  const sessionDuration = (course as any).session_duration as
+    | number
+    | null
+    | undefined;
 
   const isOpen =
     course.registration_open &&
@@ -560,6 +565,8 @@ function Breadcrumb({
 type Step = "language" | "type" | "courses";
 
 export default function CoursesHomePage() {
+  const { data, isLoading } = usePublicCourses({ page: 1, limit: 20 });
+  const courses = data?.data || [];
   const { t, dir, currentLang } = useLanguage();
 
   const [step, setStep] = useState<Step>("language");
@@ -568,19 +575,16 @@ export default function CoursesHomePage() {
     "NORMAL" | "INTENSIVE" | null
   >(null);
 
-  // Fetch ALL published courses once — limit 200 to cover all courses
-  // Filtering by language & type happens client-side
-  const { data, isLoading } = usePublicCourses({ page: 1, limit: 200 });
-  const allCourses = data?.data || [];
-
-  // ── Build language map (case-insensitive grouping) ──
+  // Group by language — normalize key to lowercase for consistent grouping
+  // regardless of how admin typed it ("French", "french", "FRENCH" all become "french")
   const langMap: Record<string, PublicCourse[]> = {};
-  const langDisplayName: Record<string, string> = {};
-  allCourses.forEach((c) => {
+  const langDisplayName: Record<string, string> = {}; // normalized key → display name
+  courses.forEach((c) => {
     if (!c.language) return;
     const key = c.language.toLowerCase().trim();
     if (!langMap[key]) {
       langMap[key] = [];
+      // Use the first occurrence as the display name (capitalize first letter)
       langDisplayName[key] =
         c.language.charAt(0).toUpperCase() + c.language.slice(1).toLowerCase();
     }
@@ -588,22 +592,18 @@ export default function CoursesHomePage() {
   });
   const languages = Object.keys(langMap).sort();
 
-  // ── Courses for selected language ──
-  const langCourses: PublicCourse[] = selectedLang
-    ? (langMap[selectedLang] ?? [])
-    : [];
-
-  // ── Split by type ──
+  // Courses filtered by selected lang
+  const langCourses = selectedLang ? langMap[selectedLang] || [] : [];
   const normalCourses = langCourses.filter(
-    (c) => c.course_type !== "INTENSIVE",
+    (c) => (c as any).course_type !== "INTENSIVE",
   );
   const intensiveCourses = langCourses.filter(
-    (c) => c.course_type === "INTENSIVE",
+    (c) => (c as any).course_type === "INTENSIVE",
   );
   const hasIntensive = intensiveCourses.length > 0;
   const hasNormal = normalCourses.length > 0;
 
-  // ── Final list based on selected type ──
+  // Final courses list
   const finalCourses =
     selectedType === "INTENSIVE"
       ? intensiveCourses
@@ -615,8 +615,8 @@ export default function CoursesHomePage() {
   const handleLangSelect = (lang: string) => {
     setSelectedLang(lang);
     const lc = langMap[lang] || [];
-    const hasInt = lc.some((c) => c.course_type === "INTENSIVE");
-    const hasNorm = lc.some((c) => c.course_type !== "INTENSIVE");
+    const hasInt = lc.some((c) => (c as any).course_type === "INTENSIVE");
+    const hasNorm = lc.some((c) => (c as any).course_type !== "INTENSIVE");
     // Skip type step if only one type
     if (hasInt && hasNorm) {
       setStep("type");
