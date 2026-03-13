@@ -256,6 +256,7 @@ model Document {
   public_id   String?
   status      DocumentStatus @default(PENDING)
   reviewed_at DateTime?
+  rejection_reason  String?
   reviewed_by String?        @db.Uuid
   uploaded_at DateTime       @default(now())
   student     Student        @relation("StudentDocuments", fields: [student_id], references: [student_id])
