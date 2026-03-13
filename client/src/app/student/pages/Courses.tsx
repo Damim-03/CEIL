@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import {
@@ -134,6 +134,57 @@ const Courses = () => {
     selectedCourse?.course_id,
   );
 
+  const handleSelectCourse = useCallback(
+    (course: Course) => {
+      const enrollment = enrollments.find(
+        (e: Enrollment) => e.course_id === course.course_id,
+      );
+      if (enrollment) {
+        if (enrollment.group_id) {
+          toast.info(`You're already enrolled in ${course.course_name}!`, {
+            description: `Group: ${enrollment.group_name || "Assigned"} | Level: ${enrollment.level || "N/A"}`,
+          });
+          setTimeout(() => navigate("/student/enrollments"), 1500);
+          return;
+        } else {
+          if (enrollment.status === "pending") {
+            toast.warning(`Your enrollment is pending approval`, {
+              description:
+                "Please wait for admin to approve your enrollment before selecting a group.",
+            });
+            return;
+          } else if (enrollment.status === "rejected") {
+            toast.error(`Your enrollment was rejected`, {
+              description:
+                "Please contact administration for more information.",
+            });
+            return;
+          } else if (
+            enrollment.status === "validated" ||
+            enrollment.status === "approved"
+          ) {
+            toast.info(`Select a group for ${course.course_name}`, {
+              description:
+                "Your enrollment is approved. Choose your level and group!",
+            });
+            setSelectedCourse(course);
+            setStep("levels");
+            setSelectedLevel(null);
+            setSearchTerm("");
+            setSelectedStatus("ALL");
+            return;
+          }
+        }
+      }
+      setSelectedCourse(course);
+      setStep("levels");
+      setSelectedLevel(null);
+      setSearchTerm("");
+      setSelectedStatus("ALL");
+    },
+    [enrollments, navigate],
+  );
+
   // ── Auto-select course from ?courseId= query param ──────────────────
   useEffect(() => {
     if (
@@ -152,9 +203,7 @@ const Courses = () => {
     if (!course) return;
 
     setAutoNavigated(true);
-    // Clean up the query param FIRST before handleSelectCourse to avoid re-trigger
     navigate("/student/courses", { replace: true });
-    // Use setTimeout to ensure navigation completes before state updates
     setTimeout(() => {
       handleSelectCourse(course);
     }, 0);
@@ -167,55 +216,10 @@ const Courses = () => {
     isProfileComplete,
     isDocumentsComplete,
     autoNavigated,
+    handleSelectCourse,
+    navigate,
   ]);
   // ────────────────────────────────────────────────────────────────────
-
-  const handleSelectCourse = (course: Course) => {
-    const enrollment = enrollments.find(
-      (e: Enrollment) => e.course_id === course.course_id,
-    );
-    if (enrollment) {
-      if (enrollment.group_id) {
-        toast.info(`You're already enrolled in ${course.course_name}!`, {
-          description: `Group: ${enrollment.group_name || "Assigned"} | Level: ${enrollment.level || "N/A"}`,
-        });
-        setTimeout(() => navigate("/student/enrollments"), 1500);
-        return;
-      } else {
-        if (enrollment.status === "pending") {
-          toast.warning(`Your enrollment is pending approval`, {
-            description:
-              "Please wait for admin to approve your enrollment before selecting a group.",
-          });
-          return;
-        } else if (enrollment.status === "rejected") {
-          toast.error(`Your enrollment was rejected`, {
-            description: "Please contact administration for more information.",
-          });
-          return;
-        } else if (
-          enrollment.status === "validated" ||
-          enrollment.status === "approved"
-        ) {
-          toast.info(`Select a group for ${course.course_name}`, {
-            description:
-              "Your enrollment is approved. Choose your level and group!",
-          });
-          setSelectedCourse(course);
-          setStep("levels");
-          setSelectedLevel(null);
-          setSearchTerm("");
-          setSelectedStatus("ALL");
-          return;
-        }
-      }
-    }
-    setSelectedCourse(course);
-    setStep("levels");
-    setSelectedLevel(null);
-    setSearchTerm("");
-    setSelectedStatus("ALL");
-  };
 
   const handleSelectLevel = (level: Level) => {
     setSelectedLevel(level);
@@ -556,6 +560,97 @@ const CoursesList = ({
 
 /* ==================== LEVEL SELECTION ==================== */
 
+const LEVEL_META: Record<
+  Level,
+  {
+    desc: string;
+    dots: number;
+    badge: string;
+    badgeText: string;
+    border: string;
+    bg: string;
+    bar: string;
+    ring: string;
+    dotOn: string;
+  }
+> = {
+  PRE_A1: {
+    desc: "Starting from zero",
+    dots: 1,
+    badge: "bg-[#D3D1C7]",
+    badgeText: "text-[#444441]",
+    border: "border-[#B4B2A9]",
+    bg: "bg-gradient-to-br from-[#F1EFE8] to-white dark:from-[#1e1e1e] dark:to-[#1A1A1A]",
+    bar: "bg-[#B4B2A9]",
+    ring: "ring-[#888780]",
+    dotOn: "bg-[#888780]",
+  },
+  A1: {
+    desc: "Basic communication",
+    dots: 2,
+    badge: "bg-[#9FE1CB]",
+    badgeText: "text-[#085041]",
+    border: "border-[#9FE1CB]",
+    bg: "bg-gradient-to-br from-[#E1F5EE] to-white dark:from-[#0f2a1f] dark:to-[#1A1A1A]",
+    bar: "bg-[#5DCAA5]",
+    ring: "ring-[#1D9E75]",
+    dotOn: "bg-[#1D9E75]",
+  },
+  A2: {
+    desc: "Everyday topics",
+    dots: 3,
+    badge: "bg-[#5DCAA5]",
+    badgeText: "text-[#04342C]",
+    border: "border-[#5DCAA5]",
+    bg: "bg-gradient-to-br from-[#c8eee0] to-white dark:from-[#0a2419] dark:to-[#1A1A1A]",
+    bar: "bg-[#0F6E56]",
+    ring: "ring-[#0F6E56]",
+    dotOn: "bg-[#0F6E56]",
+  },
+  B1: {
+    desc: "Independent speaker",
+    dots: 4,
+    badge: "bg-[#FAC775]",
+    badgeText: "text-[#412402]",
+    border: "border-[#FAC775]",
+    bg: "bg-gradient-to-br from-[#FAEEDA] to-white dark:from-[#2a1a05] dark:to-[#1A1A1A]",
+    bar: "bg-[#EF9F27]",
+    ring: "ring-[#BA7517]",
+    dotOn: "bg-[#BA7517]",
+  },
+  B2: {
+    desc: "Fluent conversations",
+    dots: 5,
+    badge: "bg-[#AFA9EC]",
+    badgeText: "text-[#26215C]",
+    border: "border-[#AFA9EC]",
+    bg: "bg-gradient-to-br from-[#EEEDFE] to-white dark:from-[#1a1830] dark:to-[#1A1A1A]",
+    bar: "bg-[#7F77DD]",
+    ring: "ring-[#534AB7]",
+    dotOn: "bg-[#534AB7]",
+  },
+  C1: {
+    desc: "Near-native mastery",
+    dots: 5,
+    badge: "bg-[#F5C4B3]",
+    badgeText: "text-[#4A1B0C]",
+    border: "border-[#F5C4B3]",
+    bg: "bg-gradient-to-br from-[#FAECE7] to-white dark:from-[#2a1008] dark:to-[#1A1A1A]",
+    bar: "bg-[#D85A30]",
+    ring: "ring-[#993C1D]",
+    dotOn: "bg-[#993C1D]",
+  },
+};
+
+const PROGRESS_COLORS = [
+  "#D3D1C7",
+  "#9FE1CB",
+  "#5DCAA5",
+  "#EF9F27",
+  "#7F77DD",
+  "#D85A30",
+];
+
 const LevelSelection = ({
   levels,
   onSelectLevel,
@@ -566,32 +661,92 @@ const LevelSelection = ({
   selectedLevel: Level | null;
 }) => {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-      {levels.map((level) => (
-        <button
-          key={level}
-          onClick={() => onSelectLevel(level)}
-          className={`group relative overflow-hidden rounded-2xl p-8 transition-all duration-300 border-2 ${
-            selectedLevel === level
-              ? "ring-4 ring-offset-2 dark:ring-offset-[#0F0F0F] ring-[#2B6F5E] dark:ring-[#4ADE80] scale-105 shadow-xl dark:shadow-black/30"
-              : "hover:scale-105 hover:shadow-lg dark:hover:shadow-black/20"
-          } ${LEVEL_BG_COLORS[level]}`}
-        >
-          <div
-            className={`absolute inset-0 bg-gradient-to-br ${LEVEL_COLORS[level]} opacity-0 group-hover:opacity-10 transition-opacity`}
-          />
-          <div className="relative z-10 text-center">
-            <div
-              className={`inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${LEVEL_COLORS[level]} text-white text-3xl font-bold shadow-lg dark:shadow-black/30 mb-4`}
+    <div className="space-y-5">
+      {/* Progress strip */}
+      <div className="flex h-1.5 rounded-full overflow-hidden">
+        {PROGRESS_COLORS.map((c, i) => (
+          <div key={i} className="flex-1 h-full" style={{ background: c }} />
+        ))}
+      </div>
+
+      {/* Info row */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
+          Choose the level that matches your current proficiency
+        </p>
+        {selectedLevel && (
+          <span className="text-xs font-medium text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 px-3 py-1 rounded-full">
+            {selectedLevel} selected
+          </span>
+        )}
+      </div>
+
+      {/* Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {levels.map((level) => {
+          const meta = LEVEL_META[level];
+          const isSelected = selectedLevel === level;
+          return (
+            <button
+              key={level}
+              onClick={() => onSelectLevel(level)}
+              className={`
+                relative flex flex-col items-center gap-3 rounded-2xl p-6 border-2
+                transition-all duration-200 hover:-translate-y-1 text-center
+                ${meta.bg} ${meta.border}
+                ${
+                  isSelected
+                    ? `${meta.ring} ring-4 ring-offset-2 dark:ring-offset-[#0F0F0F] scale-[1.03]`
+                    : "hover:scale-[1.02]"
+                }
+              `}
             >
-              {level}
-            </div>
-            <h3 className="font-bold text-lg text-[#1B1B1B] dark:text-[#E5E5E5]">
-              Level {level}
-            </h3>
-          </div>
-        </button>
-      ))}
+              {/* Selected checkmark */}
+              {isSelected && (
+                <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-[#2B6F5E] dark:bg-[#4ADE80] flex items-center justify-center">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-white dark:text-[#0F0F0F]" />
+                </div>
+              )}
+
+              {/* Badge circle */}
+              <div
+                className={`w-16 h-16 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 ${meta.badge} ${meta.badgeText}`}
+              >
+                {level}
+              </div>
+
+              {/* Name */}
+              <span className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
+                Level {level}
+              </span>
+
+              {/* Description */}
+              <span className="text-[11px] text-[#6B5D4F] dark:text-[#888888] leading-relaxed">
+                {meta.desc}
+              </span>
+
+              {/* Difficulty dots */}
+              <div className="flex gap-1.5">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                      i <= meta.dots
+                        ? meta.dotOn
+                        : "bg-[#D8CDC0]/60 dark:bg-[#2A2A2A]"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Bottom accent bar */}
+              <div
+                className={`w-full h-1 rounded-full ${meta.bar} opacity-50`}
+              />
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };
