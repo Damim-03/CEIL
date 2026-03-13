@@ -24,6 +24,8 @@ export interface PublicAnnouncementDetail extends PublicAnnouncement {
   // ✅ inherited from PublicAnnouncement: attachment_url, attachment_name, attachment_type
 }
 
+export type CourseType = "NORMAL" | "INTENSIVE";
+
 export interface PublicCourse {
   id: string;
   course_name: string;
@@ -44,6 +46,10 @@ export interface PublicCourse {
   image_url: string | null;
   enrolled: number;
   capacity: number;
+  // ✅ CourseType feature
+  course_type: CourseType;
+  session_duration: number | null;
+  groups_count: number;
 }
 
 export interface PublicCourseGroup {

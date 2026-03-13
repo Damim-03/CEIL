@@ -62,9 +62,7 @@ function LanguageCard({
   // pick first course with an image for the bg
   const sample = courses.find((c) => c.image_url) || courses[0];
   const flag = courses[0]?.flag_emoji;
-  const hasIntensive = courses.some(
-    (c) => (c as any).course_type === "INTENSIVE",
-  );
+  const hasIntensive = courses.some((c) => c.course_type === "INTENSIVE");
   const totalGroups = courses.reduce(
     (acc, c) => acc + (c.groups_count ?? 0),
     0,
@@ -246,11 +244,8 @@ function CourseCard({
   const { isLoggedIn } = useAuthRedirect();
   const { data: user } = useMe();
 
-  const isIntensive = (course as any).course_type === "INTENSIVE";
-  const sessionDuration = (course as any).session_duration as
-    | number
-    | null
-    | undefined;
+  const isIntensive = course.course_type === "INTENSIVE";
+  const sessionDuration = course.session_duration as number | null | undefined;
 
   const isOpen =
     course.registration_open &&
@@ -600,10 +595,10 @@ export default function CoursesHomePage() {
 
   // ── Split by type ──
   const normalCourses = langCourses.filter(
-    (c) => (c as any).course_type !== "INTENSIVE",
+    (c) => c.course_type !== "INTENSIVE",
   );
   const intensiveCourses = langCourses.filter(
-    (c) => (c as any).course_type === "INTENSIVE",
+    (c) => c.course_type === "INTENSIVE",
   );
   const hasIntensive = intensiveCourses.length > 0;
   const hasNormal = normalCourses.length > 0;
@@ -620,8 +615,8 @@ export default function CoursesHomePage() {
   const handleLangSelect = (lang: string) => {
     setSelectedLang(lang);
     const lc = langMap[lang] || [];
-    const hasInt = lc.some((c) => (c as any).course_type === "INTENSIVE");
-    const hasNorm = lc.some((c) => (c as any).course_type !== "INTENSIVE");
+    const hasInt = lc.some((c) => c.course_type === "INTENSIVE");
+    const hasNorm = lc.some((c) => c.course_type !== "INTENSIVE");
     // Skip type step if only one type
     if (hasInt && hasNorm) {
       setStep("type");

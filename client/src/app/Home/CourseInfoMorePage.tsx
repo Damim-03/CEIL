@@ -19,6 +19,7 @@ import {
   BadgeCheck,
   LayoutDashboard,
   LogIn,
+  Zap,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { usePublicCourse } from "../../hooks/announce/Usepublic";
@@ -162,6 +163,17 @@ export default function CourseInfoMorePage() {
                     {course.level}
                   </span>
                 )}
+                {course.course_type === "INTENSIVE" ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/90 text-white text-xs font-bold backdrop-blur-sm border border-amber-300/30">
+                    <Zap className="w-3 h-3" />
+                    مكثفة
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-white text-xs font-semibold backdrop-blur-sm border border-white/20">
+                    <BookOpen className="w-3 h-3" />
+                    عادية
+                  </span>
+                )}
                 <span
                   className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${isOpen ? "bg-emerald-400/90 text-white" : "bg-red-400/90 text-white"}`}
                 >
@@ -284,6 +296,24 @@ export default function CourseInfoMorePage() {
                 color="teal"
               />
             </div>
+            {/* Course type banner */}
+            {course.course_type === "INTENSIVE" && (
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                  <Zap className="w-5 h-5 text-amber-500 dark:text-amber-400" />
+                </div>
+                <div>
+                  <p className="font-bold text-amber-700 dark:text-amber-400 text-sm">
+                    دورة مكثفة
+                  </p>
+                  <p className="text-xs text-amber-600/70 dark:text-amber-500/70 mt-0.5">
+                    {course.session_duration
+                      ? `${Math.floor(course.session_duration / 60) > 0 ? Math.floor(course.session_duration / 60) + " ساعة " : ""}${course.session_duration % 60 > 0 ? (course.session_duration % 60) + " دقيقة" : ""} / حصة`
+                      : "وتيرة مكثفة مع حصص مطوّلة"}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {course.level && (
               <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige dark:border-[#2A2A2A] p-6 shadow-sm dark:shadow-black/20">
@@ -623,6 +653,14 @@ export default function CourseInfoMorePage() {
                   icon={<Users className="w-3.5 h-3.5" />}
                   label={t("courses.groups")}
                   value={`${course.groups?.length || 0} ${currentLang === "ar" ? "متاحة" : currentLang === "fr" ? "disponible(s)" : "available"}`}
+                  isRTL={isRTL}
+                />
+                <QuickRow
+                  icon={<Zap className="w-3.5 h-3.5" />}
+                  label="نوع الدورة"
+                  value={
+                    course.course_type === "INTENSIVE" ? "مكثفة ⚡" : "عادية"
+                  }
                   isRTL={isRTL}
                 />
               </div>

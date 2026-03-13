@@ -146,6 +146,9 @@ export interface Course {
   course_code?: string | null; // VARCHAR(20), unique
   course_name: string; // VARCHAR(100)
   credits?: number | null;
+  fee_amount?: number | null;
+  course_type: CourseType;
+  session_duration?: number | null;
 
   // Relations
   enrollments?: Enrollment[];
@@ -1463,6 +1466,8 @@ export interface OwnerCourse {
   course_code: string | null;
   credits: number | null;
   fee_amount: number | null;
+  course_type: CourseType;
+  session_duration?: number | null;
   profile?: {
     is_published: boolean;
     language: string | null;
