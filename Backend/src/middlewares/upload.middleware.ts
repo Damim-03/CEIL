@@ -97,7 +97,7 @@ export const upload = multer({
  */
 export const uploadAnnouncement = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // ← 10MB بدل 20MB
+  limits: { fileSize: 30 * 1024 * 1024 }, // ← 10MB بدل 20MB
   fileFilter: (
     req: Request,
     file: Express.Multer.File,
