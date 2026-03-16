@@ -117,11 +117,7 @@ import {
   markBulkAttendanceController,
 } from "../../controllers/admin/admin.controller";
 import { reviewDocumentController } from "../../controllers/admin/document.controller";
-import {
-  handleUploadError,
-  upload,
-  uploadAnnouncement,
-} from "../../middlewares/upload.middleware";
+import { upload } from "../../middlewares/upload.middleware";
 import {
   createAnnouncementController,
   getAllAnnouncementsController,
@@ -838,16 +834,14 @@ adminRoutes.get(
     ANNOUNCEMENTS (الأخبار والإعلانات)
   ====================================================== */
 
-// POST /announcements
 adminRoutes.post(
   "/announcements",
   authMiddleware,
   roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
-  uploadAnnouncement.fields([
-    { name: "image", maxCount: 1 },
-    { name: "attachment", maxCount: 1 },
+  upload.fields([
+    { name: "image", maxCount: 1 }, // صورة الغلاف (اختياري)
+    { name: "attachment", maxCount: 1 }, // PDF / Word / صورة (اختياري)
   ]),
-  handleUploadError,
   createAnnouncementController,
 );
 
@@ -869,11 +863,10 @@ adminRoutes.put(
   "/announcements/:announcementId",
   authMiddleware,
   roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
-  uploadAnnouncement.fields([
+  upload.fields([
     { name: "image", maxCount: 1 },
     { name: "attachment", maxCount: 1 },
   ]),
-  handleUploadError,
   updateAnnouncementController,
 );
 
