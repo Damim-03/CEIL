@@ -1,39 +1,22 @@
-// app/index.tsx
-// إذا مسجّل → داشبورد دوره | إذا ضيف → Homepage العامة
 import { Redirect } from "expo-router";
-import { View, ActivityIndicator } from "react-native";
-import { useAuth } from "@/src/lib/Context/AuthContext";
+import { useAuth } from "@/src/context/AuthContext";
+import { PageLoader } from "@/src/components/ui";
 
 export default function Index() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { loading, isAuthenticated, user } = useAuth();
 
-  if (isLoading)
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#0D0D0D",
-        }}
-      >
-        <ActivityIndicator color="#2B6F5E" size="large" />
-      </View>
-    );
+  if (loading) return <PageLoader />;
 
-  // ✅ غير مسجّل → Homepage العامة (ليس login مباشرة)
-  if (!isAuthenticated) return <Redirect href="/(public)/home" />;
+  if (!isAuthenticated) return <Redirect href="/auth/login" />;
 
-  switch (user?.role) {
-    case "STUDENT":
-      return <Redirect href="/(student)/" />;
-    case "TEACHER":
-      return <Redirect href="/(teacher)/" />;
-    case "ADMIN":
-      return <Redirect href="/(admin)/" />;
-    case "OWNER":
-      return <Redirect href="/(owner)/" />;
-    default:
-      return <Redirect href="/(public)/home" />;
-  }
+  const redirectMap: Record<string, string> = {
+    STUDENT: "/(student)",
+    TEACHER: "/(teacher)",
+    ADMIN: "/(admin)",
+    OWNER: "/(owner)",
+  };
+
+  return (
+    <Redirect href={(redirectMap[user?.role ?? ""] ?? "/(student)") as any} />
+  );
 }

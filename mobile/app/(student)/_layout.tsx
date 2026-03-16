@@ -1,180 +1,89 @@
-// ================================================================
-// app/(student)/_layout.tsx — Student guard + Tab bar
-// ✅ Role guard: STUDENT only → redirect to /(auth)/login
-// ✅ Dark mode aware tab bar via useTheme()
-// ✅ Unread notifications badge
-// ✅ All 12 screens registered (visible + hidden)
-// ================================================================
-import { Tabs, Redirect } from "expo-router";
-import { Platform, View, ActivityIndicator } from "react-native";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { useAuth } from "@/src/lib/Context/AuthContext";
-import { useTheme } from "@/src/lib/Context/ThemeContext";
+import { Tabs } from "expo-router";
+import { View, Text, StyleSheet } from "react-native";
+import {
+  LayoutDashboard, User, FileText, BookOpen,
+  ClipboardList, DollarSign, Calendar, Award, Bell,
+} from "lucide-react-native";
+import { useTranslation } from "react-i18next";
+import { useStudentUnreadCount } from "@/src/hooks/student/Usestudent";
+import { COLORS } from "@/constants/theme";
 
-const TEAL = "#2B6F5E";
-const TEAL2 = "#3D8B76";
-
-// ── Guard ────────────────────────────────────────────────────────
-function Guard({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
-  const { theme: t } = useTheme();
-
-  if (isLoading)
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: t.bg,
-        }}
-      >
-        <ActivityIndicator color={TEAL} size="large" />
+function TabIcon({
+  Icon, focused, label, badge,
+}: {
+  Icon: any; focused: boolean; label: string; badge?: number;
+}) {
+  return (
+    <View style={ti.wrap}>
+      <View style={[ti.iconWrap, focused && ti.iconWrapActive]}>
+        <Icon size={20} color={focused ? COLORS.tealMid : COLORS.textMuted} />
+        {badge && badge > 0 ? (
+          <View style={ti.badge}>
+            <Text style={ti.badgeText}>{badge > 99 ? "99+" : badge}</Text>
+          </View>
+        ) : null}
       </View>
-    );
-
-  // ── DEV MODE: comment out these 2 lines to bypass auth during testing ──
-  if (!user) return <Redirect href="/(auth)/login" />;
-  if (user.role !== "STUDENT") return <Redirect href="/(public)/home" />;
-  // ────────────────────────────────────────────────────────────────────────
-
-  return <>{children}</>;
+      <Text style={[ti.label, focused && ti.labelActive]} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
+  );
 }
 
-// ── Tab bar ──────────────────────────────────────────────────────
-function StudentTabs() {
-  const { theme: t } = useTheme();
+const ti = StyleSheet.create({
+  wrap: { alignItems: "center", justifyContent: "center", paddingTop: 4 },
+  iconWrap: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  iconWrapActive: { backgroundColor: `${COLORS.tealMid}14` },
+  label: { fontSize: 10, color: COLORS.textMuted, marginTop: 2, fontWeight: "500" },
+  labelActive: { color: COLORS.tealMid, fontWeight: "600" },
+  badge: { position: "absolute", top: -4, right: -4, backgroundColor: COLORS.red, borderRadius: 8, minWidth: 16, height: 16, alignItems: "center", justifyContent: "center", paddingHorizontal: 3 },
+  badgeText: { color: "#fff", fontSize: 9, fontWeight: "700" },
+});
 
-  // TODO: replace with real hook when API connected:
-  // const { data } = useStudentUnreadCount();
-  const unread = 2; // mock — set to 0 or real value
+export default function StudentLayout() {
+  const { t } = useTranslation();
+  const { data: unreadData } = useStudentUnreadCount();
+  const unreadCount = unreadData?.count ?? 0;
 
-  const TAB_H = Platform.OS === "ios" ? 84 : 62;
-  const PAD_B = Platform.OS === "ios" ? 24 : 8;
+  const tabs = [
+    { name: "index", icon: LayoutDashboard, label: t("student.nav.dashboard") },
+    { name: "profile", icon: User, label: t("student.nav.profile") },
+    { name: "documents", icon: FileText, label: t("student.nav.documents") },
+    { name: "courses", icon: BookOpen, label: t("student.nav.courses") },
+    { name: "enrollments", icon: ClipboardList, label: t("student.nav.enrollments") },
+    { name: "fees", icon: DollarSign, label: t("student.nav.fees") },
+    { name: "attendance", icon: Calendar, label: t("student.nav.attendance") },
+    { name: "results", icon: Award, label: t("student.nav.results") },
+    { name: "notifications", icon: Bell, label: t("student.nav.notifications"), badge: unreadCount },
+  ];
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: TEAL2,
-        tabBarInactiveTintColor: t.text3,
         tabBarStyle: {
-          backgroundColor: t.navBg,
-          borderTopColor: t.navBorder,
+          backgroundColor: "#fff",
+          borderTopColor: COLORS.borderLight,
           borderTopWidth: 1,
-          height: TAB_H,
-          paddingBottom: PAD_B,
-          paddingTop: 8,
+          height: 72,
+          paddingBottom: 8,
         },
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: "700",
-        },
+        tabBarShowLabel: false,
       }}
     >
-      {/* ══ VISIBLE TABS ══ */}
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "الرئيسية",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={focused ? "home" : "home-outline"}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="courses"
-        options={{
-          title: "الدورات",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={focused ? "book" : "book-outline"}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="attendance"
-        options={{
-          title: "الحضور",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={focused ? "calendar" : "calendar-outline"}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="fees"
-        options={{
-          title: "الرسوم",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={focused ? "card" : "card-outline"}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          title: "الإشعارات",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={focused ? "notifications" : "notifications-outline"}
-              size={size}
-              color={color}
-            />
-          ),
-          tabBarBadge: unread > 0 ? unread : undefined,
-          tabBarBadgeStyle: {
-            backgroundColor: "#DC2626",
-            fontSize: 9,
-            minWidth: 16,
-            height: 16,
-          },
-        }}
-      />
-      <Tabs.Screen
-        name="more"
-        options={{
-          title: "المزيد",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={focused ? "grid" : "grid-outline"}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-
-      {/* ══ HIDDEN — push-accessible, not shown in tab bar ══ */}
-      <Tabs.Screen name="profile" options={{ href: null }} />
-      <Tabs.Screen name="documents" options={{ href: null }} />
-      <Tabs.Screen name="enrollments" options={{ href: null }} />
-      <Tabs.Screen name="results" options={{ href: null }} />
-      <Tabs.Screen name="settings" options={{ href: null }} />
+      {tabs.map((tab) => (
+        <Tabs.Screen
+          key={tab.name}
+          name={tab.name}
+          options={{
+            tabBarIcon: ({ focused }) => (
+              <TabIcon Icon={tab.icon} focused={focused} label={tab.label} badge={(tab as any).badge} />
+            ),
+          }}
+        />
+      ))}
+      {/* Hidden screens (dynamic routes) */}
       <Tabs.Screen name="group/[groupId]" options={{ href: null }} />
     </Tabs>
-  );
-}
-
-// ── Root export ──────────────────────────────────────────────────
-export default function StudentLayout() {
-  return (
-    <Guard>
-      <StudentTabs />
-    </Guard>
   );
 }

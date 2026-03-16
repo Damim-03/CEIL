@@ -117,7 +117,11 @@ import {
   markBulkAttendanceController,
 } from "../../controllers/admin/admin.controller";
 import { reviewDocumentController } from "../../controllers/admin/document.controller";
-import { upload } from "../../middlewares/upload.middleware";
+import {
+  upload,
+  uploadAnnouncement,
+  handleUploadError,
+} from "../../middlewares/upload.middleware";
 import {
   createAnnouncementController,
   getAllAnnouncementsController,
@@ -838,10 +842,12 @@ adminRoutes.post(
   "/announcements",
   authMiddleware,
   roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
-  upload.fields([
-    { name: "image", maxCount: 1 }, // صورة الغلاف (اختياري)
-    { name: "attachment", maxCount: 1 }, // PDF / Word / صورة (اختياري)
+  uploadAnnouncement.fields([
+    // ← uploadAnnouncement بدل upload
+    { name: "image", maxCount: 1 },
+    { name: "attachment", maxCount: 1 },
   ]),
+  handleUploadError, // ← أضف هذا
   createAnnouncementController,
 );
 
@@ -863,10 +869,12 @@ adminRoutes.put(
   "/announcements/:announcementId",
   authMiddleware,
   roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
-  upload.fields([
+  uploadAnnouncement.fields([
+    // ← uploadAnnouncement بدل upload
     { name: "image", maxCount: 1 },
     { name: "attachment", maxCount: 1 },
   ]),
+  handleUploadError, // ← أضف هذا
   updateAnnouncementController,
 );
 
@@ -901,6 +909,7 @@ adminRoutes.post(
   authMiddleware,
   roleGuard([Permissions.MANAGE_COURSES]),
   upload.single("image"),
+  handleUploadError, // ← أضف هذا
   createOrUpdateCourseProfileController,
 );
 
