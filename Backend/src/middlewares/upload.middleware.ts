@@ -97,12 +97,8 @@ export const upload = multer({
  */
 export const uploadAnnouncement = multer({
   storage,
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB ceiling (per file)
-  fileFilter: (
-    req: Request,
-    file: Express.Multer.File,
-    cb: FileFilterCallback,
-  ) => {
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
     if (file.fieldname === "image") {
       if (IMAGE_MIMES.includes(file.mimetype)) {
         cb(null, true);
@@ -130,7 +126,6 @@ export const uploadAnnouncement = multer({
         );
       }
     } else {
-      // Unknown field — silently ignore
       cb(null, false);
     }
   },

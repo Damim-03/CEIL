@@ -100,7 +100,6 @@ async function uploadAttachment(file: Express.Multer.File) {
   });
 }
 
-/** Delete a Cloudinary asset */
 async function deleteCloudinaryAsset(public_id: string, type: string | null) {
   const resource_type = type === "image" ? "image" : "raw";
   await cloudinary.uploader

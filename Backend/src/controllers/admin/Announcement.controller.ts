@@ -40,13 +40,9 @@ export const createAnnouncementController = async (
       message: "Announcement created successfully",
       data: announcement,
     });
-  } catch (error: any) {
-    console.error("❌ createAnnouncement error:", error?.message, error?.stack);
-    return res.status(500).json({
-      message: "Internal server error",
-      error: error?.message,
-      stack: error?.stack,
-    });
+  } catch (error) {
+    console.error("Error creating announcement:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 

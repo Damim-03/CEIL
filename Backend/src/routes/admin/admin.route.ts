@@ -843,11 +843,10 @@ adminRoutes.post(
   authMiddleware,
   roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
   uploadAnnouncement.fields([
-    // ← uploadAnnouncement بدل upload
     { name: "image", maxCount: 1 },
     { name: "attachment", maxCount: 1 },
   ]),
-  handleUploadError, // ← أضف هذا
+  handleUploadError,
   createAnnouncementController,
 );
 
@@ -870,11 +869,10 @@ adminRoutes.put(
   authMiddleware,
   roleGuard([Permissions.MANAGE_ANNOUNCEMENTS]),
   uploadAnnouncement.fields([
-    // ← uploadAnnouncement بدل upload
     { name: "image", maxCount: 1 },
     { name: "attachment", maxCount: 1 },
   ]),
-  handleUploadError, // ← أضف هذا
+  handleUploadError,
   updateAnnouncementController,
 );
 
