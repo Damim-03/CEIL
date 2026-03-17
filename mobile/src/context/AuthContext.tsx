@@ -6,6 +6,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiClient } from "../api/client";
 
 interface Student {
@@ -44,6 +45,12 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const KEYS = {
+  accessToken: "ceil_access_token",
+  refreshToken: "ceil_refresh_token",
+  user: "ceil_user",
+} as const;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -57,9 +64,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const restoreSession = async () => {
     try {
+      const [token, cached] = await Promise.all([
+        AsyncStorage.getItem(KEYS.accessToken),
+        AsyncStorage.getItem(KEYS.user),
+      ]);
+
+      if (!token) {
+        setState({ user: null, isLoading: false, isAuthenticated: false });
+        return;
+      }
+
+      if (cached) {
+        const user: User = JSON.parse(cached);
+        setState({ user, isLoading: false, isAuthenticated: true });
+      }
+
       const { data } = await apiClient.get("/auth/me");
+      await AsyncStorage.setItem(KEYS.user, JSON.stringify(data));
       setState({ user: data, isLoading: false, isAuthenticated: true });
     } catch {
+      await clearStorage();
       setState({ user: null, isLoading: false, isAuthenticated: false });
     }
   };
@@ -71,6 +95,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error("هذا التطبيق مخصص للطلاب فقط");
     }
 
+    await Promise.all([
+      AsyncStorage.setItem(KEYS.accessToken, data.accessToken),
+      AsyncStorage.setItem(KEYS.refreshToken, data.refreshToken ?? ""),
+      AsyncStorage.setItem(KEYS.user, JSON.stringify(data.user)),
+    ]);
+
     setState({ user: data.user, isLoading: false, isAuthenticated: true });
   }, []);
 
@@ -80,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // silent
     } finally {
+      await clearStorage();
       setState({ user: null, isLoading: false, isAuthenticated: false });
     }
   }, []);
@@ -87,11 +118,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = useCallback(async () => {
     try {
       const { data } = await apiClient.get("/auth/me");
+      await AsyncStorage.setItem(KEYS.user, JSON.stringify(data));
       setState((prev) => ({ ...prev, user: data }));
     } catch {
       // silent
     }
   }, []);
+
+  const clearStorage = async () => {
+    await Promise.all([
+      AsyncStorage.removeItem(KEYS.accessToken),
+      AsyncStorage.removeItem(KEYS.refreshToken),
+      AsyncStorage.removeItem(KEYS.user),
+    ]);
+  };
 
   return (
     <AuthContext.Provider value={{ ...state, login, logout, refreshUser }}>

@@ -22,7 +22,23 @@ const BASE_PATH = config.BASE_PATH;
 initSocketIO(server); // 🔌 NEW
 
 // ═══ 1. Middleware ═══
-app.use(cors({ origin: config.FRONTEND_ORIGIN, credentials: true }));
+app.use(cors({
+  origin: (origin, callback) => {
+    const allowed = [
+      config.FRONTEND_ORIGIN,       // https://www.ceil-eloued.com
+      "http://localhost:8081",       // Expo web
+      "http://localhost:3000",       // dev
+      "http://localhost:19006",      // Expo Go web
+    ];
+    // بدون origin = React Native / Expo Go على هاتف حقيقي
+    if (!origin || allowed.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

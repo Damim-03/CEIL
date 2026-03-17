@@ -1,6 +1,5 @@
-// src/api/client.ts
 import axios from "axios";
-import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const BASE_URL = "https://www.ceil-eloued.com/api";
 
@@ -11,33 +10,29 @@ export const apiClient = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// ── Request interceptor ──────────────────────────
 apiClient.interceptors.request.use(async (config) => {
-  const token = await SecureStore.getItemAsync("accessToken");
+  const token = await AsyncStorage.getItem("ceil_access_token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// ── Response interceptor (token refresh) ────────
 apiClient.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
-
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       try {
-        const refresh = await SecureStore.getItemAsync("refreshToken");
+        const refresh = await AsyncStorage.getItem("ceil_refresh_token");
         const { data } = await axios.post(`${BASE_URL}/auth/refresh`, {
           token: refresh,
         });
-        await SecureStore.setItemAsync("accessToken", data.accessToken);
+        await AsyncStorage.setItem("ceil_access_token", data.accessToken);
         original.headers.Authorization = `Bearer ${data.accessToken}`;
         return apiClient(original);
       } catch {
-        await SecureStore.deleteItemAsync("accessToken");
-        await SecureStore.deleteItemAsync("refreshToken");
-        // سيتعامل معه AuthContext
+        await AsyncStorage.removeItem("ceil_access_token");
+        await AsyncStorage.removeItem("ceil_refresh_token");
         return Promise.reject(error);
       }
     }
