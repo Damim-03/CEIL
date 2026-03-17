@@ -84,19 +84,13 @@ export function areDocumentsComplete(
   approvedTypes?: DocumentType[],
 ): { complete: boolean; missing: string[] } {
   const typesToCheck = approvedTypes || uploadedTypes;
-  const requirements = REQUIRED_DOCUMENTS_BY_CATEGORY[category];
-  const missing: string[] = [];
 
-  for (const req of requirements) {
-    const satisfied = req.alternatives.some((alt) =>
-      typesToCheck.includes(alt),
-    );
-    if (!satisfied) {
-      missing.push(req.label);
-    }
-  }
+  const hasAtLeastOneDocument = typesToCheck.length > 0;
 
-  return { complete: missing.length === 0, missing };
+  return {
+    complete: hasAtLeastOneDocument,
+    missing: hasAtLeastOneDocument ? [] : ["Upload at least one document"],
+  };
 }
 
 // ─── Legacy: Flat list of all possible required types ────
