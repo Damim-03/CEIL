@@ -1,218 +1,522 @@
+// app/(student)/attendance.tsx
 import {
-  View, Text, ScrollView, StyleSheet, RefreshControl,
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Platform,
+  RefreshControl,
+  TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "../../src/api/client";
 import {
-  Calendar, CheckCircle, XCircle, TrendingUp,
-  Clock, AlertCircle, BookOpen,
-} from "lucide-react-native";
-import { useStudentAttendance } from "@/src/hooks/student/Usestudent";
-import { PageLoader, ErrorState, EmptyState } from "@/src/components/ui";
-import { COLORS, SPACING, RADIUS } from "@/src/constants/theme";
+  Colors,
+  Spacing,
+  Radius,
+  FontSize,
+  FontWeight,
+  Shadow,
+} from "../../src/constants/theme";
 
-const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+// ── API ──────────────────────────────────────────────────────────
+const fetchAttendance = async () => {
+  const { data } = await apiClient.get("/student/attendance");
+  return data;
+};
 
-const formatTime = (d: string) =>
-  new Date(d).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+// ── Helpers ──────────────────────────────────────────────────────
+const formatDate = (d?: string) => {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("ar-DZ", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
 
-export default function AttendanceScreen() {
-  const { data, isLoading, isError, error, refetch, isRefetching } = useStudentAttendance();
+const formatTime = (d?: string) => {
+  if (!d) return "—";
+  return new Date(d).toLocaleTimeString("ar-DZ", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
-  if (isLoading) return <PageLoader />;
-  if (isError) return <ErrorState message={(error as any)?.message} onRetry={refetch} />;
+// ── Stat Card ─────────────────────────────────────────────────────
+interface StatCardProps {
+  emoji: string;
+  value: string | number;
+  label: string;
+  color: string;
+  bg: string;
+}
 
-  const records = data?.records || [];
-  const summary = data?.summary || { total_sessions: 0, present: 0, absent: 0, attendance_rate: 0 };
-  const rate = summary.attendance_rate;
-
-  const rateColor = rate >= 80 ? COLORS.tealMid : rate >= 60 ? COLORS.gold : COLORS.red;
-  const rateLabel = rate >= 80 ? "Excellent Attendance!" : rate >= 60 ? "Good Attendance" : "Attendance Warning";
-  const rateSub = rate >= 80 ? "Keep up the great work!" : rate >= 60 ? "Try to attend more classes to improve." : "Your rate is below acceptable levels.";
-
-  const statusBannerStyle = rate >= 80
-    ? { bg: "rgba(43,111,94,0.04)", border: "rgba(43,111,94,0.15)" }
-    : rate >= 60
-      ? { bg: "rgba(196,160,53,0.04)", border: "rgba(196,160,53,0.2)" }
-      : { bg: "rgba(239,68,68,0.04)", border: "rgba(239,68,68,0.2)" };
-
+function StatCard({ emoji, value, label, color, bg }: StatCardProps) {
   return (
-    <ScrollView
-      style={s.root}
-      contentContainerStyle={s.content}
-      showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={COLORS.tealMid} />}
-    >
-      {/* ── Header ── */}
-      <View style={s.headerCard}>
-        <View style={s.headerIcon}>
-          <Calendar size={24} color="#fff" />
-          <View style={s.headerIconDot} />
-        </View>
-        <View>
-          <Text style={s.headerTitle}>My Attendance</Text>
-          <Text style={s.headerSub}>Track your class attendance records</Text>
-        </View>
-      </View>
-
-      {/* ── Stats grid ── */}
-      <View style={s.statsRow}>
-        {/* Total */}
-        <View style={[s.statCard, { flex: 1 }]}>
-          <View style={[s.statIcon, { backgroundColor: `${COLORS.tealMid}12` }]}>
-            <Calendar size={16} color={COLORS.tealMid} />
-          </View>
-          <Text style={s.statValue}>{summary.total_sessions}</Text>
-          <Text style={s.statLabel}>Total</Text>
-        </View>
-
-        {/* Present */}
-        <View style={[s.statCard, s.statCardGreen, { flex: 1 }]}>
-          <View style={[s.statIcon, { backgroundColor: `${COLORS.tealMid}14` }]}>
-            <CheckCircle size={16} color={COLORS.tealMid} />
-          </View>
-          <Text style={[s.statValue, { color: COLORS.tealMid }]}>{summary.present}</Text>
-          <Text style={[s.statLabel, { color: `${COLORS.tealMid}99` }]}>Present</Text>
-        </View>
-
-        {/* Absent */}
-        <View style={[s.statCard, s.statCardRed, { flex: 1 }]}>
-          <View style={[s.statIcon, { backgroundColor: "rgba(239,68,68,0.1)" }]}>
-            <XCircle size={16} color={COLORS.red} />
-          </View>
-          <Text style={[s.statValue, { color: COLORS.red }]}>{summary.absent}</Text>
-          <Text style={[s.statLabel, { color: COLORS.red + "99" }]}>Absent</Text>
-        </View>
-
-        {/* Rate */}
-        <View style={[s.statCard, { flex: 1, backgroundColor: `${rateColor}08`, borderColor: `${rateColor}20` }]}>
-          <View style={[s.statIcon, { backgroundColor: `${rateColor}14` }]}>
-            <TrendingUp size={16} color={rateColor} />
-          </View>
-          <Text style={[s.statValue, { color: rateColor }]}>{rate.toFixed(0)}%</Text>
-          <Text style={[s.statLabel, { color: rateColor + "99" }]}>Rate</Text>
-          {/* mini progress bar */}
-          <View style={s.miniProgressTrack}>
-            <View style={[s.miniProgressFill, { width: `${rate}%` as any, backgroundColor: rateColor }]} />
-          </View>
-        </View>
-      </View>
-
-      {/* ── Status Banner ── */}
-      {summary.total_sessions > 0 && (
-        <View style={[s.statusBanner, { backgroundColor: statusBannerStyle.bg, borderColor: statusBannerStyle.border }]}>
-          <View style={[s.statusIcon, { backgroundColor: `${rateColor}14` }]}>
-            {rate >= 80
-              ? <CheckCircle size={16} color={rateColor} />
-              : rate >= 60
-                ? <Clock size={16} color={rateColor} />
-                : <AlertCircle size={16} color={rateColor} />
-            }
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={s.statusTitle}>{rateLabel}</Text>
-            <Text style={s.statusSub}>{rateSub}</Text>
-          </View>
-          <View style={[s.statusPill, { backgroundColor: `${rateColor}14` }]}>
-            <Text style={[s.statusPillText, { color: rateColor }]}>{rate.toFixed(0)}%</Text>
-          </View>
-        </View>
-      )}
-
-      {/* ── Records list ── */}
-      <View style={s.recordsCard}>
-        <View style={s.recordsHeader}>
-          <Text style={s.recordsTitle}>Attendance Records</Text>
-          <Text style={s.recordsSub}>Detailed history of all your class sessions</Text>
-        </View>
-
-        {records.length > 0 ? records.map((record: any, index: number) => {
-          const isPresent = record.status === "PRESENT";
-          return (
-            <View
-              key={record.attendance_id || index}
-              style={[s.recordRow, index < records.length - 1 && s.recordRowBorder]}
-            >
-              <View style={[s.recordIcon, { backgroundColor: isPresent ? `${COLORS.tealMid}10` : "rgba(239,68,68,0.06)" }]}>
-                {isPresent
-                  ? <CheckCircle size={18} color={COLORS.tealMid} />
-                  : <XCircle size={18} color={COLORS.red} />
-                }
-              </View>
-              <View style={s.recordInfo}>
-                <Text style={s.recordTopic} numberOfLines={1}>
-                  {record.session?.topic || "Class Session"}
-                </Text>
-                <View style={s.recordMeta}>
-                  <Calendar size={11} color={COLORS.textMuted} />
-                  <Text style={s.recordMetaText}>{formatDate(record.session?.session_date)}</Text>
-                  <Clock size={11} color={COLORS.textMuted} />
-                  <Text style={s.recordMetaText}>{formatTime(record.session?.session_date)}</Text>
-                  {record.session?.group && (
-                    <>
-                      <BookOpen size={11} color={COLORS.textMuted} />
-                      <Text style={s.recordMetaText} numberOfLines={1}>{record.session.group.name}</Text>
-                    </>
-                  )}
-                </View>
-              </View>
-              <View style={[s.recordBadge, { backgroundColor: isPresent ? `${COLORS.tealMid}10` : "rgba(239,68,68,0.1)" }]}>
-                <Text style={[s.recordBadgeText, { color: isPresent ? COLORS.tealMid : COLORS.red }]}>
-                  {record.status}
-                </Text>
-              </View>
-            </View>
-          );
-        }) : (
-          <EmptyState
-            icon={<Calendar size={24} color={COLORS.textMuted} />}
-            title="No Attendance Records"
-            subtitle="Your records will appear once you start attending classes"
-          />
-        )}
-      </View>
-    </ScrollView>
+    <View style={[styles.statCard, { backgroundColor: bg }]}>
+      <Text style={styles.statEmoji}>{emoji}</Text>
+      <Text style={[styles.statValue, { color }]}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
   );
 }
 
-const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F8F4F0" },
-  content: { padding: SPACING.lg, gap: SPACING.md, paddingBottom: 32 },
+// ── Record Row ────────────────────────────────────────────────────
+function RecordRow({ record }: { record: any }) {
+  const isPresent = record.status === "PRESENT";
+  return (
+    <View style={styles.recordRow}>
+      <View
+        style={[
+          styles.recordIcon,
+          {
+            backgroundColor: isPresent
+              ? Colors.primary + "12"
+              : Colors.error + "10",
+          },
+        ]}
+      >
+        <Text style={styles.recordIconText}>{isPresent ? "\u2705" : "\u274C"}</Text>
+      </View>
 
-  headerCard: { backgroundColor: "#fff", borderRadius: RADIUS.xl, borderWidth: 1, borderColor: COLORS.borderLight, padding: SPACING.lg, flexDirection: "row", alignItems: "center", gap: SPACING.md },
-  headerIcon: { width: 56, height: 56, borderRadius: 18, backgroundColor: COLORS.tealMid, alignItems: "center", justifyContent: "center", position: "relative" },
-  headerIconDot: { position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: 8, backgroundColor: COLORS.gold, borderWidth: 2, borderColor: "#fff" },
-  headerTitle: { fontSize: 20, fontWeight: "700", color: COLORS.text },
-  headerSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
+      <View style={styles.recordInfo}>
+        <Text style={styles.recordTopic} numberOfLines={1}>
+          {record.session?.topic ?? "حصة دراسية"}
+        </Text>
+        <Text style={styles.recordMeta}>
+          {formatDate(record.session?.session_date)}
+          {"  ·  "}
+          {formatTime(record.session?.session_date)}
+        </Text>
+        {record.session?.group?.name && (
+          <Text style={styles.recordGroup}>
+            {"\uD83D\uDC65"} {record.session.group.name}
+          </Text>
+        )}
+      </View>
 
-  statsRow: { flexDirection: "row", gap: SPACING.sm },
-  statCard: { backgroundColor: "#fff", borderRadius: RADIUS.xl, borderWidth: 1, borderColor: COLORS.borderLight, padding: SPACING.md, alignItems: "center", overflow: "hidden" },
-  statCardGreen: { backgroundColor: "rgba(43,111,94,0.04)", borderColor: "rgba(43,111,94,0.15)" },
-  statCardRed: { backgroundColor: "rgba(239,68,68,0.04)", borderColor: "rgba(239,68,68,0.2)" },
-  statIcon: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center", marginBottom: SPACING.sm },
-  statValue: { fontSize: 22, fontWeight: "700", color: COLORS.text },
-  statLabel: { fontSize: 10, color: COLORS.textMuted, fontWeight: "500", marginTop: 2 },
-  miniProgressTrack: { position: "absolute", bottom: 0, left: 0, right: 0, height: 3, backgroundColor: "rgba(0,0,0,0.05)" },
-  miniProgressFill: { height: "100%", borderRadius: 2 },
+      <View
+        style={[
+          styles.recordBadge,
+          {
+            backgroundColor: isPresent
+              ? Colors.primary + "12"
+              : Colors.error + "10",
+          },
+        ]}
+      >
+        <Text
+          style={[
+            styles.recordBadgeText,
+            { color: isPresent ? Colors.primary : Colors.error },
+          ]}
+        >
+          {isPresent ? "حاضر" : "غائب"}
+        </Text>
+      </View>
+    </View>
+  );
+}
 
-  statusBanner: { flexDirection: "row", alignItems: "center", gap: SPACING.md, borderRadius: RADIUS.xl, borderWidth: 1, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md },
-  statusIcon: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  statusTitle: { fontSize: 13, fontWeight: "600", color: COLORS.text },
-  statusSub: { fontSize: 11, color: COLORS.textMuted, marginTop: 2 },
-  statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14 },
-  statusPillText: { fontSize: 11, fontWeight: "700" },
+// ── Main ─────────────────────────────────────────────────────────
+export default function Attendance() {
+  const [refreshing, setRefreshing] = useState(false);
 
-  recordsCard: { backgroundColor: "#fff", borderRadius: RADIUS.xl, borderWidth: 1, borderColor: COLORS.borderLight, overflow: "hidden" },
-  recordsHeader: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: "rgba(232,221,212,0.4)" },
-  recordsTitle: { fontSize: 13, fontWeight: "600", color: COLORS.text },
-  recordsSub: { fontSize: 11, color: COLORS.textMuted, marginTop: 2 },
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["student-attendance"],
+    queryFn: fetchAttendance,
+  });
 
-  recordRow: { flexDirection: "row", alignItems: "center", gap: SPACING.md, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md },
-  recordRowBorder: { borderBottomWidth: 1, borderBottomColor: "rgba(232,221,212,0.3)" },
-  recordIcon: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  recordInfo: { flex: 1 },
-  recordTopic: { fontSize: 13, fontWeight: "500", color: COLORS.text },
-  recordMeta: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4, flexWrap: "wrap" },
-  recordMetaText: { fontSize: 10, color: COLORS.textMuted, marginRight: 4 },
-  recordBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 14 },
-  recordBadgeText: { fontSize: 10, fontWeight: "700", letterSpacing: 0.4 },
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
+
+  const records: any[] = data?.records ?? [];
+  const summary = data?.summary ?? {
+    total_sessions: 0,
+    present: 0,
+    absent: 0,
+    attendance_rate: 0,
+  };
+
+  const rate: number = summary.attendance_rate ?? 0;
+
+  const rateColor =
+    rate >= 80
+      ? Colors.primary
+      : rate >= 60
+        ? Colors.gold
+        : Colors.error;
+
+  const rateLabel =
+    rate >= 80
+      ? "ممتاز، واصل!"
+      : rate >= 60
+        ? "جيد، حاول التحسين"
+        : "تحذير: نسبة منخفضة";
+
+  const rateEmoji =
+    rate >= 80 ? "\uD83C\uDF1F" : rate >= 60 ? "\uD83D\uDCC8" : "\u26A0\uFE0F";
+
+  return (
+    <View style={styles.root}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.primary}
+          />
+        }
+      >
+        {/* ── Header ── */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>الحضور {"\uD83D\uDCC5"}</Text>
+          <Text style={styles.headerSub}>
+            {isLoading ? "جاري التحميل..." : `${records.length} سجل`}
+          </Text>
+        </View>
+
+        {/* ── Loading ── */}
+        {isLoading && (
+          <View style={styles.centerBox}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+          </View>
+        )}
+
+        {/* ── Error ── */}
+        {isError && (
+          <View style={styles.centerBox}>
+            <Text style={styles.centerEmoji}>{"\u26A0\uFE0F"}</Text>
+            <Text style={styles.centerText}>فشل تحميل البيانات</Text>
+            <TouchableOpacity
+              style={styles.retryBtn}
+              onPress={() => refetch()}
+            >
+              <Text style={styles.retryText}>إعادة المحاولة</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {!isLoading && !isError && (
+          <>
+            {/* ── Rate banner ── */}
+            <View
+              style={[
+                styles.rateBanner,
+                { backgroundColor: rateColor + "14",
+                  borderColor: rateColor + "30" },
+              ]}
+            >
+              <View style={styles.rateBannerLeft}>
+                <Text style={styles.rateBannerEmoji}>{rateEmoji}</Text>
+                <View>
+                  <Text
+                    style={[styles.rateBannerTitle, { color: rateColor }]}
+                  >
+                    {rateLabel}
+                  </Text>
+                  <Text style={styles.rateBannerSub}>
+                    نسبة الحضور الإجمالية
+                  </Text>
+                </View>
+              </View>
+              <Text style={[styles.rateBannerValue, { color: rateColor }]}>
+                {rate.toFixed(0)}%
+              </Text>
+            </View>
+
+            {/* ── Stats ── */}
+            <View style={styles.statsRow}>
+              <StatCard
+                emoji={"\uD83D\uDCC6"}
+                value={summary.total_sessions}
+                label="الكل"
+                color={Colors.textPrimary}
+                bg={Colors.surface}
+              />
+              <StatCard
+                emoji={"\u2705"}
+                value={summary.present}
+                label="حاضر"
+                color={Colors.primary}
+                bg={Colors.primary + "10"}
+              />
+              <StatCard
+                emoji={"\u274C"}
+                value={summary.absent}
+                label="غائب"
+                color={Colors.error}
+                bg={Colors.error + "10"}
+              />
+              <StatCard
+                emoji={"\uD83D\uDCCA"}
+                value={`${rate.toFixed(0)}%`}
+                label="النسبة"
+                color={rateColor}
+                bg={rateColor + "12"}
+              />
+            </View>
+
+            {/* ── Progress bar ── */}
+            <View style={styles.progressWrap}>
+              <View style={styles.progressTrack}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: `${Math.min(rate, 100)}%` as any,
+                      backgroundColor: rateColor,
+                    },
+                  ]}
+                />
+              </View>
+              <Text style={[styles.progressLabel, { color: rateColor }]}>
+                {rate.toFixed(1)}%
+              </Text>
+            </View>
+
+            {/* ── Records ── */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>سجل الحضور</Text>
+
+              {records.length === 0 ? (
+                <View style={styles.emptyBox}>
+                  <Text style={styles.centerEmoji}>{"\uD83D\uDCC5"}</Text>
+                  <Text style={styles.centerText}>
+                    لا توجد سجلات بعد
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.recordsList}>
+                  {records.map((record: any, index: number) => (
+                    <RecordRow
+                      key={record.attendance_id ?? index}
+                      record={record}
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
+          </>
+        )}
+
+        <View style={styles.bottomPad} />
+      </ScrollView>
+    </View>
+  );
+}
+
+// ── Styles ───────────────────────────────────────────────────────
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  scroll: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Platform.OS === "ios" ? 60 : 48,
+  },
+
+  // Header
+  header: {
+    marginBottom: Spacing.lg,
+    alignItems: "flex-end",
+  },
+  headerTitle: {
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
+  },
+  headerSub: {
+    fontSize: FontSize.sm,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+
+  // Rate banner
+  rateBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  rateBannerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  rateBannerEmoji: { fontSize: 28 },
+  rateBannerTitle: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+  },
+  rateBannerSub: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  rateBannerValue: {
+    fontSize: FontSize.xxxl,
+    fontWeight: FontWeight.bold,
+  },
+
+  // Stats
+  statsRow: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  statCard: {
+    flex: 1,
+    borderRadius: Radius.lg,
+    padding: Spacing.sm,
+    alignItems: "center",
+    gap: 3,
+  },
+  statEmoji: { fontSize: 20 },
+  statValue: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+  },
+  statLabel: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+  },
+
+  // Progress
+  progressWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 8,
+    backgroundColor: Colors.borderLight,
+    borderRadius: Radius.full,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: Radius.full,
+  },
+  progressLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    minWidth: 45,
+    textAlign: "right",
+  },
+
+  // Section
+  section: { marginBottom: Spacing.lg },
+  sectionTitle: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textPrimary,
+    textAlign: "right",
+    marginBottom: Spacing.sm,
+  },
+
+  // Records
+  recordsList: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.xl,
+    overflow: "hidden",
+    ...Shadow.sm,
+  },
+  recordRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+    gap: Spacing.sm,
+  },
+  recordIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  recordIconText: { fontSize: 18 },
+  recordInfo: {
+    flex: 1,
+    alignItems: "flex-end",
+  },
+  recordTopic: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textPrimary,
+    textAlign: "right",
+  },
+  recordMeta: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    marginTop: 2,
+    textAlign: "right",
+  },
+  recordGroup: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    marginTop: 2,
+    textAlign: "right",
+  },
+  recordBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+  },
+  recordBadgeText: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.semibold,
+  },
+
+  // States
+  centerBox: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.xxl,
+    gap: Spacing.md,
+  },
+  centerEmoji: { fontSize: 40 },
+  centerText: {
+    fontSize: FontSize.md,
+    color: Colors.textMuted,
+    textAlign: "center",
+  },
+  retryBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+  },
+  retryText: {
+    fontSize: FontSize.sm,
+    color: "#fff",
+    fontWeight: FontWeight.medium,
+  },
+  emptyBox: {
+    alignItems: "center",
+    paddingVertical: Spacing.xl,
+    gap: Spacing.sm,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.xl,
+  },
+
+  bottomPad: {
+    height: Platform.OS === "ios" ? 100 : 80,
+  },
 });

@@ -1,211 +1,448 @@
-import { useState } from "react";
+// app/(student)/notifications.tsx
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl,
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Platform,
+  RefreshControl,
+  TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
-import { Bell, CheckCheck, Filter, Megaphone, Info, AlertTriangle, BookOpen } from "lucide-react-native";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "../../src/api/client";
 import {
-  useStudentNotifications,
-  useMarkStudentNotificationRead,
-  useMarkAllStudentNotificationsRead,
-} from "@/src/hooks/student/Usestudent";
-import { PageLoader, ErrorState, EmptyState } from "@/src/components/ui";
-import { COLORS, SPACING, RADIUS } from "@/src/constants/theme";
-import { useTranslation } from "react-i18next";
+  Colors,
+  Spacing,
+  Radius,
+  FontSize,
+  FontWeight,
+  Shadow,
+} from "../../src/constants/theme";
 
-const categoryIcon = (cat: string) => {
-  switch (cat?.toUpperCase()) {
-    case "ANNOUNCEMENT": return Megaphone;
-    case "ALERT": return AlertTriangle;
-    case "ACADEMIC": return BookOpen;
-    default: return Info;
-  }
+// ── API ──────────────────────────────────────────────────────────
+const fetchNotifications = async () => {
+  const { data } = await apiClient.get("/student/notifications");
+  return data;
 };
 
-const categoryColor = (cat: string) => {
-  switch (cat?.toUpperCase()) {
-    case "ANNOUNCEMENT": return COLORS.tealMid;
-    case "ALERT": return COLORS.red;
-    case "ACADEMIC": return COLORS.gold;
-    default: return COLORS.textMuted;
-  }
+const markAsRead = async (recipientId: string) => {
+  const { data } = await apiClient.patch(
+    `/student/notifications/${recipientId}/read`
+  );
+  return data;
 };
 
-const formatRelative = (dateStr: string) => {
+const markAllAsRead = async () => {
+  const { data } = await apiClient.patch("/student/notifications/read-all");
+  return data;
+};
+
+// ── Priority config ───────────────────────────────────────────────
+const PRIORITY_CONFIG: {
+  [key: string]: { color: string; bg: string; label: string };
+} = {
+  LOW: {
+    color: Colors.textMuted,
+    bg: Colors.textMuted + "12",
+    label: "منخفضة",
+  },
+  NORMAL: {
+    color: Colors.primary,
+    bg: Colors.primary + "10",
+    label: "عادية",
+  },
+  HIGH: {
+    color: Colors.gold,
+    bg: Colors.gold + "12",
+    label: "مهمة",
+  },
+  URGENT: {
+    color: Colors.error,
+    bg: Colors.error + "10",
+    label: "عاجلة",
+  },
+};
+
+const PRIORITY_EMOJI: { [key: string]: string } = {
+  LOW: "\uD83D\uDD14",
+  NORMAL: "\uD83D\uDD14",
+  HIGH: "\u26A0\uFE0F",
+  URGENT: "\uD83D\uDEA8",
+};
+
+// ── Helpers ──────────────────────────────────────────────────────
+const timeAgo = (dateStr: string): string => {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (mins < 1) return "الآن";
+  if (mins < 60) return `منذ ${mins} دقيقة`;
+  if (hours < 24) return `منذ ${hours} ساعة`;
+  if (days < 7) return `منذ ${days} يوم`;
+  return new Date(dateStr).toLocaleDateString("ar-DZ", {
+    month: "short",
+    day: "numeric",
+  });
 };
 
-export default function NotificationsScreen() {
-  const { t } = useTranslation();
-  const [unreadOnly, setUnreadOnly] = useState(false);
-  const [page] = useState(1);
+// ── Notification Card ─────────────────────────────────────────────
+interface NotifCardProps {
+  item: any;
+  onRead: (id: string) => void;
+}
 
-  const { data, isLoading, isError, error, refetch, isRefetching } =
-    useStudentNotifications(page, unreadOnly);
-
-  const markRead = useMarkStudentNotificationRead();
-  const markAll = useMarkAllStudentNotificationsRead();
-
-  if (isLoading) return <PageLoader />;
-  if (isError) return <ErrorState message={(error as any)?.message} onRetry={refetch} />;
-
-  const notifications = data?.notifications || data || [];
-  const unreadCount = notifications.filter((n: any) => !n.is_read).length;
+function NotifCard({ item, onRead }: NotifCardProps) {
+  const priority = item.notification?.priority ?? "NORMAL";
+  const config = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG.NORMAL;
+  const emoji = PRIORITY_EMOJI[priority] ?? "\uD83D\uDD14";
+  const isUnread = !item.is_read;
 
   return (
-    <ScrollView
-      style={s.root}
-      contentContainerStyle={s.content}
-      showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={COLORS.tealMid} />}
+    <TouchableOpacity
+      style={[styles.card, isUnread && styles.cardUnread]}
+      onPress={() => isUnread && onRead(item.recipient_id)}
+      activeOpacity={0.8}
     >
-      {/* ── Header ── */}
-      <View style={s.headerCard}>
-        <View style={s.headerLeft}>
-          <View style={s.headerIcon}>
-            <Bell size={22} color="#fff" />
-          </View>
-          <View>
-            <Text style={s.headerTitle}>{t("student.nav.notifications")}</Text>
-            {unreadCount > 0 && (
-              <Text style={s.headerSub}>{unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}</Text>
-            )}
-          </View>
-        </View>
-        {unreadCount > 0 && (
-          <TouchableOpacity
-            style={s.markAllBtn}
-            onPress={() => markAll.mutate()}
-            disabled={markAll.isPending}
-            activeOpacity={0.8}
-          >
-            <CheckCheck size={14} color={COLORS.tealMid} />
-            <Text style={s.markAllText}>Mark all read</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      {/* Unread indicator */}
+      {isUnread && <View style={styles.unreadBar} />}
 
-      {/* ── Filter ── */}
-      <View style={s.filterRow}>
-        <Filter size={14} color={COLORS.textMuted} />
-        <TouchableOpacity
-          style={[s.filterBtn, !unreadOnly && s.filterBtnActive]}
-          onPress={() => setUnreadOnly(false)}
-          activeOpacity={0.8}
-        >
-          <Text style={[s.filterBtnText, !unreadOnly && s.filterBtnTextActive]}>All</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[s.filterBtn, unreadOnly && s.filterBtnActive]}
-          onPress={() => setUnreadOnly(true)}
-          activeOpacity={0.8}
-        >
-          <Text style={[s.filterBtnText, unreadOnly && s.filterBtnTextActive]}>Unread</Text>
-          {unreadCount > 0 && (
-            <View style={s.filterBadge}>
-              <Text style={s.filterBadgeText}>{unreadCount}</Text>
+      <View style={styles.cardInner}>
+        {/* Icon */}
+        <View style={[styles.cardIcon, { backgroundColor: config.bg }]}>
+          <Text style={styles.cardIconText}>{emoji}</Text>
+        </View>
+
+        {/* Content */}
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTime}>
+              {timeAgo(item.notification?.created_at)}
+            </Text>
+            <View
+              style={[
+                styles.priorityBadge,
+                { backgroundColor: config.bg },
+              ]}
+            >
+              <Text style={[styles.priorityText, { color: config.color }]}>
+                {config.label}
+              </Text>
             </View>
-          )}
-        </TouchableOpacity>
-      </View>
+          </View>
 
-      {/* ── Notifications list ── */}
-      {notifications.length > 0 ? (
-        <View style={s.listCard}>
-          {notifications.map((notif: any, index: number) => {
-            const Icon = categoryIcon(notif.announcement?.category || notif.category);
-            const color = categoryColor(notif.announcement?.category || notif.category);
-            const isUnread = !notif.is_read;
+          <Text
+            style={[styles.cardTitle, isUnread && styles.cardTitleUnread]}
+            numberOfLines={2}
+          >
+            {item.notification?.title_ar ?? item.notification?.title}
+          </Text>
 
-            return (
-              <TouchableOpacity
-                key={notif.recipient_id || notif.id || index}
-                style={[s.notifRow, index < notifications.length - 1 && s.notifRowBorder, isUnread && s.notifRowUnread]}
-                onPress={() => {
-                  if (isUnread) markRead.mutate(notif.recipient_id || notif.id);
-                }}
-                activeOpacity={0.75}
-              >
-                {/* unread dot */}
-                {isUnread && <View style={s.unreadDot} />}
-
-                <View style={[s.notifIcon, { backgroundColor: `${color}12` }]}>
-                  <Icon size={18} color={color} />
-                </View>
-
-                <View style={s.notifBody}>
-                  <View style={s.notifTitleRow}>
-                    <Text style={[s.notifTitle, isUnread && s.notifTitleUnread]} numberOfLines={1}>
-                      {notif.announcement?.title || notif.title || "Notification"}
-                    </Text>
-                    <Text style={s.notifTime}>
-                      {formatRelative(notif.created_at || notif.announcement?.created_at)}
-                    </Text>
-                  </View>
-                  {(notif.announcement?.content || notif.content) && (
-                    <Text style={s.notifContent} numberOfLines={2}>
-                      {notif.announcement?.content || notif.content}
-                    </Text>
-                  )}
-                  {(notif.announcement?.category || notif.category) && (
-                    <View style={[s.catBadge, { backgroundColor: `${color}10` }]}>
-                      <Text style={[s.catBadgeText, { color }]}>
-                        {notif.announcement?.category || notif.category}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+          <Text style={styles.cardMsg} numberOfLines={3}>
+            {item.notification?.message_ar ?? item.notification?.message}
+          </Text>
         </View>
-      ) : (
-        <EmptyState
-          icon={<Bell size={24} color={COLORS.textMuted} />}
-          title={unreadOnly ? "No unread notifications" : "No notifications yet"}
-          subtitle="You'll see your notifications here"
-        />
-      )}
-    </ScrollView>
+      </View>
+    </TouchableOpacity>
   );
 }
 
-const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F8F4F0" },
-  content: { padding: SPACING.lg, gap: SPACING.md, paddingBottom: 32 },
+// ── Main ─────────────────────────────────────────────────────────
+export default function Notifications() {
+  const [refreshing, setRefreshing] = useState(false);
+  const queryClient = useQueryClient();
 
-  headerCard: { backgroundColor: "#fff", borderRadius: RADIUS.xl, borderWidth: 1, borderColor: COLORS.borderLight, padding: SPACING.lg, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  headerLeft: { flexDirection: "row", alignItems: "center", gap: SPACING.md },
-  headerIcon: { width: 48, height: 48, borderRadius: 16, backgroundColor: COLORS.tealMid, alignItems: "center", justifyContent: "center" },
-  headerTitle: { fontSize: 18, fontWeight: "700", color: COLORS.text },
-  headerSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
-  markAllBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: `${COLORS.tealMid}30` },
-  markAllText: { fontSize: 12, color: COLORS.tealMid, fontWeight: "500" },
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["student-notifications"],
+    queryFn: fetchNotifications,
+  });
 
-  filterRow: { flexDirection: "row", alignItems: "center", gap: SPACING.sm, backgroundColor: "#fff", borderRadius: RADIUS.xl, borderWidth: 1, borderColor: COLORS.borderLight, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm },
-  filterBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: SPACING.md, paddingVertical: 6, borderRadius: 10 },
-  filterBtnActive: { backgroundColor: `${COLORS.tealMid}12` },
-  filterBtnText: { fontSize: 13, color: COLORS.textMuted, fontWeight: "500" },
-  filterBtnTextActive: { color: COLORS.tealMid, fontWeight: "600" },
-  filterBadge: { backgroundColor: COLORS.red, borderRadius: 8, minWidth: 18, height: 18, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
-  filterBadgeText: { color: "#fff", fontSize: 10, fontWeight: "700" },
+  const readMutation = useMutation({
+    mutationFn: markAsRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-notifications"] });
+    },
+  });
 
-  listCard: { backgroundColor: "#fff", borderRadius: RADIUS.xl, borderWidth: 1, borderColor: COLORS.borderLight, overflow: "hidden" },
-  notifRow: { flexDirection: "row", alignItems: "flex-start", gap: SPACING.md, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, position: "relative" },
-  notifRowBorder: { borderBottomWidth: 1, borderBottomColor: "rgba(232,221,212,0.3)" },
-  notifRowUnread: { backgroundColor: "rgba(43,111,94,0.02)" },
-  unreadDot: { position: "absolute", top: SPACING.lg + 8, left: 6, width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.tealMid },
-  notifIcon: { width: 40, height: 40, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 },
-  notifBody: { flex: 1 },
-  notifTitleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: SPACING.sm, marginBottom: 4 },
-  notifTitle: { flex: 1, fontSize: 13, fontWeight: "500", color: COLORS.text },
-  notifTitleUnread: { fontWeight: "700" },
-  notifTime: { fontSize: 10, color: COLORS.textMuted, flexShrink: 0 },
-  notifContent: { fontSize: 12, color: COLORS.textMuted, lineHeight: 18, marginBottom: 6 },
-  catBadge: { alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
-  catBadgeText: { fontSize: 10, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.4 },
+  const readAllMutation = useMutation({
+    mutationFn: markAllAsRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-notifications"] });
+    },
+  });
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
+
+  const notifications: any[] = data?.data ?? [];
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  return (
+    <View style={styles.root}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.primary}
+          />
+        }
+      >
+        {/* ── Header ── */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            {unreadCount > 0 && (
+              <TouchableOpacity
+                style={styles.readAllBtn}
+                onPress={() => readAllMutation.mutate()}
+                disabled={readAllMutation.isPending}
+              >
+                <Text style={styles.readAllText}>
+                  {readAllMutation.isPending ? "..." : "قراءة الكل"}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <View style={styles.headerRight}>
+            <Text style={styles.headerTitle}>
+              الإشعارات {"\uD83D\uDD14"}
+            </Text>
+            {unreadCount > 0 && (
+              <View style={styles.unreadCount}>
+                <Text style={styles.unreadCountText}>{unreadCount}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* ── Loading ── */}
+        {isLoading && (
+          <View style={styles.centerBox}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+          </View>
+        )}
+
+        {/* ── Error ── */}
+        {isError && (
+          <View style={styles.centerBox}>
+            <Text style={styles.centerEmoji}>{"\u26A0\uFE0F"}</Text>
+            <Text style={styles.centerText}>فشل تحميل الإشعارات</Text>
+            <TouchableOpacity
+              style={styles.retryBtn}
+              onPress={() => refetch()}
+            >
+              <Text style={styles.retryText}>إعادة المحاولة</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* ── Empty ── */}
+        {!isLoading && !isError && notifications.length === 0 && (
+          <View style={styles.centerBox}>
+            <Text style={styles.centerEmoji}>{"\uD83D\uDD14"}</Text>
+            <Text style={styles.centerText}>لا توجد إشعارات</Text>
+            <Text style={styles.centerSub}>
+              ستظهر الإشعارات الجديدة هنا
+            </Text>
+          </View>
+        )}
+
+        {/* ── List ── */}
+        {!isLoading && !isError && notifications.length > 0 && (
+          <View style={styles.list}>
+            {notifications.map((item: any) => (
+              <NotifCard
+                key={item.recipient_id}
+                item={item}
+                onRead={(id) => readMutation.mutate(id)}
+              />
+            ))}
+          </View>
+        )}
+
+        <View style={styles.bottomPad} />
+      </ScrollView>
+    </View>
+  );
+}
+
+// ── Styles ───────────────────────────────────────────────────────
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  scroll: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Platform.OS === "ios" ? 60 : 48,
+  },
+
+  // Header
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
+  },
+  unreadCount: {
+    backgroundColor: Colors.error,
+    borderRadius: Radius.full,
+    minWidth: 22,
+    height: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 6,
+  },
+  unreadCountText: {
+    fontSize: FontSize.xs,
+    color: "#fff",
+    fontWeight: FontWeight.bold,
+  },
+  readAllBtn: {
+    backgroundColor: Colors.primary + "14",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+  },
+  readAllText: {
+    fontSize: FontSize.xs,
+    color: Colors.primary,
+    fontWeight: FontWeight.semibold,
+  },
+
+  // List
+  list: { gap: Spacing.sm },
+
+  // Card
+  card: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.xl,
+    overflow: "hidden",
+    ...Shadow.sm,
+  },
+  cardUnread: {
+    backgroundColor: Colors.primary + "06",
+    borderWidth: 1,
+    borderColor: Colors.primary + "20",
+  },
+  unreadBar: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    backgroundColor: Colors.primary,
+    borderTopLeftRadius: Radius.xl,
+    borderBottomLeftRadius: Radius.xl,
+  },
+  cardInner: {
+    flexDirection: "row",
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  cardIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  cardIconText: { fontSize: 22 },
+  cardContent: { flex: 1 },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  cardTime: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+  },
+  priorityBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+  },
+  priorityText: {
+    fontSize: 10,
+    fontWeight: FontWeight.semibold,
+  },
+  cardTitle: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+    color: Colors.textSecondary,
+    textAlign: "right",
+    marginBottom: 4,
+    lineHeight: 20,
+  },
+  cardTitleUnread: {
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.semibold,
+  },
+  cardMsg: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    textAlign: "right",
+    lineHeight: 18,
+  },
+
+  // States
+  centerBox: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.xxl,
+    gap: Spacing.sm,
+  },
+  centerEmoji: { fontSize: 48 },
+  centerText: {
+    fontSize: FontSize.md,
+    color: Colors.textSecondary,
+    fontWeight: FontWeight.medium,
+    textAlign: "center",
+  },
+  centerSub: {
+    fontSize: FontSize.sm,
+    color: Colors.textMuted,
+    textAlign: "center",
+  },
+  retryBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    marginTop: Spacing.sm,
+  },
+  retryText: {
+    fontSize: FontSize.sm,
+    color: "#fff",
+    fontWeight: FontWeight.medium,
+  },
+
+  bottomPad: {
+    height: Platform.OS === "ios" ? 100 : 80,
+  },
 });

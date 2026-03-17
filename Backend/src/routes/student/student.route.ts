@@ -80,7 +80,6 @@ studentRoutes.put(
 studentRoutes.post(
   "/enroll",
   authMiddleware,
-  requireCompletedProfile,
   requireApprovedDocuments,
   createEnrollmentController,
 );

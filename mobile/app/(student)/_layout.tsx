@@ -1,89 +1,139 @@
+// app/(student)/_layout.tsx
 import { Tabs } from "expo-router";
-import { View, Text, StyleSheet } from "react-native";
-import {
-  LayoutDashboard, User, FileText, BookOpen,
-  ClipboardList, DollarSign, Calendar, Award, Bell,
-} from "lucide-react-native";
-import { useTranslation } from "react-i18next";
-import { useStudentUnreadCount } from "@/src/hooks/student/Usestudent";
-import { COLORS } from "@/constants/theme";
+import { View, Text, StyleSheet, Platform } from "react-native";
+import { Colors, FontSize } from "../../src/constants/theme";
 
-function TabIcon({
-  Icon, focused, label, badge,
-}: {
-  Icon: any; focused: boolean; label: string; badge?: number;
-}) {
+// ── Tab Icon ─────────────────────────────────────────────────────
+interface TabIconProps {
+  emoji: string;
+  label: string;
+  focused: boolean;
+}
+
+function TabIcon({ emoji, label, focused }: TabIconProps) {
   return (
-    <View style={ti.wrap}>
-      <View style={[ti.iconWrap, focused && ti.iconWrapActive]}>
-        <Icon size={20} color={focused ? COLORS.tealMid : COLORS.textMuted} />
-        {badge && badge > 0 ? (
-          <View style={ti.badge}>
-            <Text style={ti.badgeText}>{badge > 99 ? "99+" : badge}</Text>
-          </View>
-        ) : null}
+    <View style={styles.tabItem}>
+      <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
+        <Text style={styles.emoji}>{emoji}</Text>
       </View>
-      <Text style={[ti.label, focused && ti.labelActive]} numberOfLines={1}>
+      <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
         {label}
       </Text>
     </View>
   );
 }
 
-const ti = StyleSheet.create({
-  wrap: { alignItems: "center", justifyContent: "center", paddingTop: 4 },
-  iconWrap: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  iconWrapActive: { backgroundColor: `${COLORS.tealMid}14` },
-  label: { fontSize: 10, color: COLORS.textMuted, marginTop: 2, fontWeight: "500" },
-  labelActive: { color: COLORS.tealMid, fontWeight: "600" },
-  badge: { position: "absolute", top: -4, right: -4, backgroundColor: COLORS.red, borderRadius: 8, minWidth: 16, height: 16, alignItems: "center", justifyContent: "center", paddingHorizontal: 3 },
-  badgeText: { color: "#fff", fontSize: 9, fontWeight: "700" },
-});
-
+// ── Layout ───────────────────────────────────────────────────────
 export default function StudentLayout() {
-  const { t } = useTranslation();
-  const { data: unreadData } = useStudentUnreadCount();
-  const unreadCount = unreadData?.count ?? 0;
-
-  const tabs = [
-    { name: "index", icon: LayoutDashboard, label: t("student.nav.dashboard") },
-    { name: "profile", icon: User, label: t("student.nav.profile") },
-    { name: "documents", icon: FileText, label: t("student.nav.documents") },
-    { name: "courses", icon: BookOpen, label: t("student.nav.courses") },
-    { name: "enrollments", icon: ClipboardList, label: t("student.nav.enrollments") },
-    { name: "fees", icon: DollarSign, label: t("student.nav.fees") },
-    { name: "attendance", icon: Calendar, label: t("student.nav.attendance") },
-    { name: "results", icon: Award, label: t("student.nav.results") },
-    { name: "notifications", icon: Bell, label: t("student.nav.notifications"), badge: unreadCount },
-  ];
-
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: "#fff",
-          borderTopColor: COLORS.borderLight,
-          borderTopWidth: 1,
-          height: 72,
-          paddingBottom: 8,
-        },
         tabBarShowLabel: false,
+        tabBarStyle: styles.tabBar,
       }}
     >
-      {tabs.map((tab) => (
-        <Tabs.Screen
-          key={tab.name}
-          name={tab.name}
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <TabIcon Icon={tab.icon} focused={focused} label={tab.label} badge={(tab as any).badge} />
-            ),
-          }}
-        />
-      ))}
-      {/* Hidden screens (dynamic routes) */}
-      <Tabs.Screen name="group/[groupId]" options={{ href: null }} />
+      <Tabs.Screen
+        name="home"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="🏠" label="الرئيسية" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="courses"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="📚" label="دوراتي" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="schedule"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="📅" label="الجدول" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="attendance"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="✅" label="الحضور" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="🔔" label="الإشعارات" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="👤" label="الملف" focused={focused} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
+
+// ── Styles ───────────────────────────────────────────────────────
+const styles = StyleSheet.create({
+  tabBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: Platform.OS === "ios" ? 85 : 68,
+    backgroundColor: Colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+    paddingBottom: Platform.OS === "ios" ? 24 : 8,
+    paddingTop: 8,
+    elevation: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+  },
+
+  tabItem: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+  },
+
+  iconWrap: {
+    width: 40,
+    height: 32,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "transparent",
+  },
+  iconWrapActive: {
+    backgroundColor: Colors.primary + "14",
+  },
+
+  emoji: {
+    fontSize: 20,
+  },
+
+  tabLabel: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    fontWeight: "400",
+  },
+  tabLabelActive: {
+    color: Colors.primary,
+    fontWeight: "600",
+  },
+});

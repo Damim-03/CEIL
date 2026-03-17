@@ -1,22 +1,21 @@
+// app/index.tsx
 import { Redirect } from "expo-router";
-import { useAuth } from "@/src/context/AuthContext";
-import { PageLoader } from "@/src/components/ui";
+import { useAuth } from "../src/context/AuthContext";
+import { View, ActivityIndicator } from "react-native";
+import { Colors } from "../src/constants/theme";
 
 export default function Index() {
-  const { loading, isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
-  if (loading) return <PageLoader />;
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: Colors.background }}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
-  if (!isAuthenticated) return <Redirect href="/auth/login" />;
-
-  const redirectMap: Record<string, string> = {
-    STUDENT: "/(student)",
-    TEACHER: "/(teacher)",
-    ADMIN: "/(admin)",
-    OWNER: "/(owner)",
-  };
-
-  return (
-    <Redirect href={(redirectMap[user?.role ?? ""] ?? "/(student)") as any} />
-  );
+  return isAuthenticated
+    ? <Redirect href="/(student)/home" />
+    : <Redirect href="/(auth)/login" />;
 }
