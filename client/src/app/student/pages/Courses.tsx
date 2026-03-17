@@ -23,10 +23,7 @@ import {
   useEnrollInCourse,
   useStudentEnrollments,
 } from "../../../hooks/student/Usestudent";
-import {
-  useMyProfile,
-  useMyDocuments,
-} from "../../../hooks/student/Usestudent";
+import { useMyDocuments } from "../../../hooks/student/Usestudent";
 import PageLoader from "../../../components/PageLoader";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -35,6 +32,7 @@ import {
   areDocumentsComplete,
   type RegistrantCategory,
 } from "../../../constants/document.constants";
+
 type Level = (typeof LEVELS)[number];
 type Status = (typeof STATUSES)[number];
 type Step = "courses" | "levels" | "groups";
@@ -101,21 +99,10 @@ const Courses = () => {
   const [selectedGroupForEnrollment, setSelectedGroupForEnrollment] = useState<
     string | null
   >(null);
-  // Track if we already auto-navigated to avoid re-triggering
   const [autoNavigated, setAutoNavigated] = useState(false);
 
   const enrollMutation = useEnrollInCourse();
   const { data: courses = [], isLoading: coursesLoading } = useCourses();
-
-  const { data: profile, isLoading: profileLoading } = useMyProfile();
-  const isProfileComplete =
-    profile &&
-    profile.first_name &&
-    profile.last_name &&
-    profile.phone_number &&
-    profile.date_of_birth &&
-    profile.nationality &&
-    profile.education_level;
 
   const { data: documentsData, isLoading: documentsLoading } = useMyDocuments();
   const documents = Array.isArray(documentsData)
@@ -123,8 +110,9 @@ const Courses = () => {
     : documentsData?.documents || [];
 
   const uploadedTypes = documents.map((d: any) => d.type);
-  const registrantCategory: RegistrantCategory =
-    profile?.registrant_category || "STUDENT";
+
+  // ── استخدم فئة EXTERNAL كافتراضي إذا لم يكن هناك profile ──
+  const registrantCategory: RegistrantCategory = "EXTERNAL";
   const docCheck = areDocumentsComplete(registrantCategory, uploadedTypes);
   const isDocumentsComplete = docCheck.complete;
 
@@ -185,13 +173,11 @@ const Courses = () => {
     [enrollments, navigate],
   );
 
-  // ── Auto-select course from ?courseId= query param ──────────────────
   useEffect(() => {
     if (
       autoNavigated ||
       coursesLoading ||
       enrollmentsLoading ||
-      !isProfileComplete ||
       !isDocumentsComplete
     )
       return;
@@ -213,13 +199,11 @@ const Courses = () => {
     enrollments,
     coursesLoading,
     enrollmentsLoading,
-    isProfileComplete,
     isDocumentsComplete,
     autoNavigated,
     handleSelectCourse,
     navigate,
   ]);
-  // ────────────────────────────────────────────────────────────────────
 
   const handleSelectLevel = (level: Level) => {
     setSelectedLevel(level);
@@ -302,15 +286,11 @@ const Courses = () => {
     );
   };
 
-  if (
-    coursesLoading ||
-    enrollmentsLoading ||
-    profileLoading ||
-    documentsLoading
-  )
+  if (coursesLoading || enrollmentsLoading || documentsLoading)
     return <PageLoader />;
 
-  if (!isProfileComplete || !isDocumentsComplete) {
+  // ── التحقق من الوثائق فقط ──
+  if (!isDocumentsComplete) {
     return (
       <div className="space-y-6">
         <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
@@ -332,86 +312,26 @@ const Courses = () => {
             <AlertCircle className="w-8 h-8 text-[#C4A035] dark:text-[#D4A843]" />
           </div>
           <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-3">
-            Complete Your Profile to Enroll
+            Upload Required Documents to Enroll
           </h3>
 
           <div className="max-w-sm mx-auto space-y-3 mb-6">
-            {/* Profile Status */}
-            <div
-              className={`flex items-center gap-3 p-3 rounded-xl text-sm ${
-                isProfileComplete
-                  ? "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/5"
-                  : "bg-[#C4A035]/8 dark:bg-[#D4A843]/5"
-              }`}
-            >
-              {isProfileComplete ? (
-                <CheckCircle2 className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80] shrink-0" />
-              ) : (
-                <User className="w-5 h-5 text-[#C4A035] dark:text-[#D4A843] shrink-0" />
-              )}
-              <span
-                className={
-                  isProfileComplete
-                    ? "text-[#2B6F5E] dark:text-[#4ADE80] font-medium"
-                    : "text-[#C4A035] dark:text-[#D4A843] font-medium"
-                }
-              >
-                {isProfileComplete
-                  ? "Personal information completed"
-                  : "Complete your personal information"}
-              </span>
-            </div>
-
-            {/* Documents Status */}
-            <div
-              className={`flex items-center gap-3 p-3 rounded-xl text-sm ${
-                isDocumentsComplete
-                  ? "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/5"
-                  : "bg-[#C4A035]/8 dark:bg-[#D4A843]/5"
-              }`}
-            >
-              {isDocumentsComplete ? (
-                <CheckCircle2 className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80] shrink-0" />
-              ) : (
-                <FileText className="w-5 h-5 text-[#C4A035] dark:text-[#D4A843] shrink-0" />
-              )}
-              <span
-                className={
-                  isDocumentsComplete
-                    ? "text-[#2B6F5E] dark:text-[#4ADE80] font-medium"
-                    : "text-[#C4A035] dark:text-[#D4A843] font-medium"
-                }
-              >
-                {isDocumentsComplete
-                  ? "Required documents uploaded"
-                  : `Upload required documents (${docCheck.missing.length} missing)`}
+            <div className="flex items-center gap-3 p-3 rounded-xl text-sm bg-[#C4A035]/8 dark:bg-[#D4A843]/5">
+              <FileText className="w-5 h-5 text-[#C4A035] dark:text-[#D4A843] shrink-0" />
+              <span className="text-[#C4A035] dark:text-[#D4A843] font-medium">
+                {`Upload required documents (${docCheck.missing.length} missing)`}
               </span>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            {!isProfileComplete && (
-              <Button
-                onClick={() => navigate("/student/profile")}
-                className="bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white rounded-xl px-6 gap-2 shadow-lg shadow-[#2B6F5E]/20"
-              >
-                <User className="w-4 h-4" />
-                Complete Profile
-              </Button>
-            )}
-            {!isDocumentsComplete && (
-              <Button
-                onClick={() => navigate("/student/documents")}
-                className={`rounded-xl px-6 gap-2 shadow-lg ${
-                  isProfileComplete
-                    ? "bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white shadow-[#2B6F5E]/20"
-                    : "bg-[#6B5D4F] hover:bg-[#6B5D4F]/90 text-white shadow-[#6B5D4F]/20"
-                }`}
-              >
-                <FileText className="w-4 h-4" />
-                Upload Documents
-              </Button>
-            )}
+            <Button
+              onClick={() => navigate("/student/documents")}
+              className="bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 text-white rounded-xl px-6 gap-2 shadow-lg shadow-[#2B6F5E]/20"
+            >
+              <FileText className="w-4 h-4" />
+              Upload Documents
+            </Button>
           </div>
         </div>
       </div>
@@ -550,7 +470,8 @@ const CoursesList = ({
             </p>
           )}
           <div className="flex items-center gap-2 text-sm text-[#BEB29E] dark:text-[#666666]">
-            <BookOpen className="w-4 h-4" /> <span>Click to view levels</span>
+            <BookOpen className="w-4 h-4" />
+            <span>Click to view levels</span>
           </div>
         </div>
       ))}
@@ -560,20 +481,19 @@ const CoursesList = ({
 
 /* ==================== LEVEL SELECTION ==================== */
 
-const LEVEL_META: Record<
-  Level,
-  {
-    desc: string;
-    dots: number;
-    badge: string;
-    badgeText: string;
-    border: string;
-    bg: string;
-    bar: string;
-    ring: string;
-    dotOn: string;
-  }
-> = {
+interface LevelMeta {
+  desc: string;
+  dots: number;
+  badge: string;
+  badgeText: string;
+  border: string;
+  bg: string;
+  bar: string;
+  ring: string;
+  dotOn: string;
+}
+
+const LEVEL_META: { [key in Level]: LevelMeta } = {
   PRE_A1: {
     desc: "Starting from zero",
     dots: 1,
@@ -662,14 +582,12 @@ const LevelSelection = ({
 }) => {
   return (
     <div className="space-y-5">
-      {/* Progress strip */}
       <div className="flex h-1.5 rounded-full overflow-hidden">
         {PROGRESS_COLORS.map((c, i) => (
           <div key={i} className="flex-1 h-full" style={{ background: c }} />
         ))}
       </div>
 
-      {/* Info row */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
           Choose the level that matches your current proficiency
@@ -681,7 +599,6 @@ const LevelSelection = ({
         )}
       </div>
 
-      {/* Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {levels.map((level) => {
           const meta = LEVEL_META[level];
@@ -701,31 +618,26 @@ const LevelSelection = ({
                 }
               `}
             >
-              {/* Selected checkmark */}
               {isSelected && (
                 <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-[#2B6F5E] dark:bg-[#4ADE80] flex items-center justify-center">
                   <CheckCircle2 className="w-3.5 h-3.5 text-white dark:text-[#0F0F0F]" />
                 </div>
               )}
 
-              {/* Badge circle */}
               <div
                 className={`w-16 h-16 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 ${meta.badge} ${meta.badgeText}`}
               >
                 {level}
               </div>
 
-              {/* Name */}
               <span className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
                 Level {level}
               </span>
 
-              {/* Description */}
               <span className="text-[11px] text-[#6B5D4F] dark:text-[#888888] leading-relaxed">
                 {meta.desc}
               </span>
 
-              {/* Difficulty dots */}
               <div className="flex gap-1.5">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div
@@ -739,7 +651,6 @@ const LevelSelection = ({
                 ))}
               </div>
 
-              {/* Bottom accent bar */}
               <div
                 className={`w-full h-1 rounded-full ${meta.bar} opacity-50`}
               />
@@ -795,7 +706,6 @@ const GroupsList = ({
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
       <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="relative">
@@ -954,7 +864,6 @@ const GroupCard = ({
         </div>
       </div>
 
-      {/* Teacher */}
       <div className="mb-4 p-3 bg-white/70 dark:bg-[#1A1A1A]/70 rounded-xl">
         <p className="text-xs text-[#BEB29E] dark:text-[#666666] mb-1">
           Instructor
@@ -978,7 +887,6 @@ const GroupCard = ({
         </div>
       </div>
 
-      {/* Capacity */}
       <div className="mb-4">
         <div className="flex items-center justify-between text-sm mb-2">
           <span className="text-[#6B5D4F] dark:text-[#888888] flex items-center gap-1">
@@ -1013,7 +921,6 @@ const GroupCard = ({
         </p>
       </div>
 
-      {/* Enroll Button */}
       <Button
         onClick={() => onEnroll(group.group_id)}
         disabled={!isOpen || isEnrolling}
