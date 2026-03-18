@@ -90,15 +90,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // عرض cached فوراً ثم تحقق في الخلفية
+      // ✅ عرض cached فوراً
       if (cached) {
         const user: User = JSON.parse(cached);
         setState({ user, isLoading: false, isAuthenticated: true });
       }
 
-      const { data } = await apiClient.get("/auth/me");
-      await AsyncStorage.setItem(KEYS.user, JSON.stringify(data));
-      setState({ user: data, isLoading: false, isAuthenticated: true });
+      // ✅ تحقق في الخلفية — لا تمسح عند الفشل إذا عندك cached
+      try {
+        const { data } = await apiClient.get("/auth/me");
+        await AsyncStorage.setItem(KEYS.user, JSON.stringify(data));
+        setState({ user: data, isLoading: false, isAuthenticated: true });
+      } catch {
+        if (!cached) {
+          await clearStorage();
+          setState({ user: null, isLoading: false, isAuthenticated: false });
+        }
+        // إذا عندك cached — ابقى مسجل الدخول بدون مسح
+      }
     } catch {
       await clearStorage();
       setState({ user: null, isLoading: false, isAuthenticated: false });

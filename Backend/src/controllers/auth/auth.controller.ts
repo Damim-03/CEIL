@@ -71,7 +71,14 @@ export const loginController = async (req: Request, res: Response) => {
   res.cookie("accessToken", tokens.accessToken, cookieOptions);
   res.cookie("refreshToken", tokens.refreshToken, cookieOptions);
 
-  return res.json({ message: "Login successful" });
+  const user = await AuthService.getCurrentUser(result.data!.user_id);
+
+  return res.json({
+    message: "Login successful",
+    user,
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+  });
 };
 
 /**
