@@ -10,8 +10,6 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "../../src/api/client";
 import {
   Colors,
   Spacing,
@@ -20,12 +18,7 @@ import {
   FontWeight,
   Shadow,
 } from "../../src/constants/theme";
-
-// ── API ──────────────────────────────────────────────────────────
-const fetchAttendance = async () => {
-  const { data } = await apiClient.get("/student/attendance");
-  return data;
-};
+import { useAttendance } from "../../src/hooks/useStudent";
 
 // ── Helpers ──────────────────────────────────────────────────────
 const formatDate = (d?: string) => {
@@ -79,7 +72,9 @@ function RecordRow({ record }: { record: any }) {
           },
         ]}
       >
-        <Text style={styles.recordIconText}>{isPresent ? "\u2705" : "\u274C"}</Text>
+        <Text style={styles.recordIconText}>
+          {isPresent ? "\u2705" : "\u274C"}
+        </Text>
       </View>
 
       <View style={styles.recordInfo}>
@@ -125,10 +120,8 @@ function RecordRow({ record }: { record: any }) {
 export default function Attendance() {
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["student-attendance"],
-    queryFn: fetchAttendance,
-  });
+  // ✅ Hook داخل الـ component
+  const { data, isLoading, isError, refetch } = useAttendance();
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -147,11 +140,7 @@ export default function Attendance() {
   const rate: number = summary.attendance_rate ?? 0;
 
   const rateColor =
-    rate >= 80
-      ? Colors.primary
-      : rate >= 60
-        ? Colors.gold
-        : Colors.error;
+    rate >= 80 ? Colors.primary : rate >= 60 ? Colors.gold : Colors.error;
 
   const rateLabel =
     rate >= 80
@@ -161,7 +150,11 @@ export default function Attendance() {
         : "تحذير: نسبة منخفضة";
 
   const rateEmoji =
-    rate >= 80 ? "\uD83C\uDF1F" : rate >= 60 ? "\uD83D\uDCC8" : "\u26A0\uFE0F";
+    rate >= 80
+      ? "\uD83C\uDF1F"
+      : rate >= 60
+        ? "\uD83D\uDCC8"
+        : "\u26A0\uFE0F";
 
   return (
     <View style={styles.root}>
@@ -211,21 +204,19 @@ export default function Attendance() {
             <View
               style={[
                 styles.rateBanner,
-                { backgroundColor: rateColor + "14",
-                  borderColor: rateColor + "30" },
+                {
+                  backgroundColor: rateColor + "14",
+                  borderColor: rateColor + "30",
+                },
               ]}
             >
               <View style={styles.rateBannerLeft}>
                 <Text style={styles.rateBannerEmoji}>{rateEmoji}</Text>
                 <View>
-                  <Text
-                    style={[styles.rateBannerTitle, { color: rateColor }]}
-                  >
+                  <Text style={[styles.rateBannerTitle, { color: rateColor }]}>
                     {rateLabel}
                   </Text>
-                  <Text style={styles.rateBannerSub}>
-                    نسبة الحضور الإجمالية
-                  </Text>
+                  <Text style={styles.rateBannerSub}>نسبة الحضور الإجمالية</Text>
                 </View>
               </View>
               <Text style={[styles.rateBannerValue, { color: rateColor }]}>
@@ -286,13 +277,10 @@ export default function Attendance() {
             {/* ── Records ── */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>سجل الحضور</Text>
-
               {records.length === 0 ? (
                 <View style={styles.emptyBox}>
                   <Text style={styles.centerEmoji}>{"\uD83D\uDCC5"}</Text>
-                  <Text style={styles.centerText}>
-                    لا توجد سجلات بعد
-                  </Text>
+                  <Text style={styles.centerText}>لا توجد سجلات بعد</Text>
                 </View>
               ) : (
                 <View style={styles.recordsList}>
@@ -316,32 +304,18 @@ export default function Attendance() {
 
 // ── Styles ───────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
+  root: { flex: 1, backgroundColor: Colors.background },
   scroll: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Platform.OS === "ios" ? 60 : 48,
   },
-
-  // Header
-  header: {
-    marginBottom: Spacing.lg,
-    alignItems: "flex-end",
-  },
+  header: { marginBottom: Spacing.lg, alignItems: "flex-end" },
   headerTitle: {
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
   },
-  headerSub: {
-    fontSize: FontSize.sm,
-    color: Colors.textMuted,
-    marginTop: 2,
-  },
-
-  // Rate banner
+  headerSub: { fontSize: FontSize.sm, color: Colors.textMuted, marginTop: 2 },
   rateBanner: {
     flexDirection: "row",
     alignItems: "center",
@@ -357,26 +331,10 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   rateBannerEmoji: { fontSize: 28 },
-  rateBannerTitle: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.semibold,
-  },
-  rateBannerSub: {
-    fontSize: FontSize.xs,
-    color: Colors.textMuted,
-    marginTop: 2,
-  },
-  rateBannerValue: {
-    fontSize: FontSize.xxxl,
-    fontWeight: FontWeight.bold,
-  },
-
-  // Stats
-  statsRow: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-  },
+  rateBannerTitle: { fontSize: FontSize.md, fontWeight: FontWeight.semibold },
+  rateBannerSub: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 2 },
+  rateBannerValue: { fontSize: FontSize.xxxl, fontWeight: FontWeight.bold },
+  statsRow: { flexDirection: "row", gap: Spacing.sm, marginBottom: Spacing.md },
   statCard: {
     flex: 1,
     borderRadius: Radius.lg,
@@ -385,16 +343,8 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   statEmoji: { fontSize: 20 },
-  statValue: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-  },
-  statLabel: {
-    fontSize: FontSize.xs,
-    color: Colors.textMuted,
-  },
-
-  // Progress
+  statValue: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
+  statLabel: { fontSize: FontSize.xs, color: Colors.textMuted },
   progressWrap: {
     flexDirection: "row",
     alignItems: "center",
@@ -408,18 +358,13 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
     overflow: "hidden",
   },
-  progressFill: {
-    height: "100%",
-    borderRadius: Radius.full,
-  },
+  progressFill: { height: "100%", borderRadius: Radius.full },
   progressLabel: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     minWidth: 45,
     textAlign: "right",
   },
-
-  // Section
   section: { marginBottom: Spacing.lg },
   sectionTitle: {
     fontSize: FontSize.md,
@@ -428,8 +373,6 @@ const styles = StyleSheet.create({
     textAlign: "right",
     marginBottom: Spacing.sm,
   },
-
-  // Records
   recordsList: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.xl,
@@ -452,10 +395,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   recordIconText: { fontSize: 18 },
-  recordInfo: {
-    flex: 1,
-    alignItems: "flex-end",
-  },
+  recordInfo: { flex: 1, alignItems: "flex-end" },
   recordTopic: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
@@ -479,12 +419,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: Radius.full,
   },
-  recordBadgeText: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.semibold,
-  },
-
-  // States
+  recordBadgeText: { fontSize: FontSize.xs, fontWeight: FontWeight.semibold },
   centerBox: {
     alignItems: "center",
     justifyContent: "center",
@@ -503,11 +438,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: Radius.md,
   },
-  retryText: {
-    fontSize: FontSize.sm,
-    color: "#fff",
-    fontWeight: FontWeight.medium,
-  },
+  retryText: { fontSize: FontSize.sm, color: "#fff", fontWeight: FontWeight.medium },
   emptyBox: {
     alignItems: "center",
     paddingVertical: Spacing.xl,
@@ -515,8 +446,5 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderRadius: Radius.xl,
   },
-
-  bottomPad: {
-    height: Platform.OS === "ios" ? 100 : 80,
-  },
+  bottomPad: { height: Platform.OS === "ios" ? 100 : 80 },
 });

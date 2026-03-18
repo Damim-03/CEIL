@@ -15,9 +15,17 @@ export type AuthenticatedRequest = Request & {
 export const authMiddleware = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
-  const token = req.cookies.accessToken;
+  // ✅ Bearer token للموبايل أولاً، ثم Cookie للويب
+  let token: string | undefined;
+
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) {
+    token = authHeader.substring(7);
+  } else {
+    token = req.cookies?.accessToken;
+  }
 
   if (!token) {
     return res.status(401).json({ message: "Unauthorized" });

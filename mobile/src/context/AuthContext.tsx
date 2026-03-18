@@ -7,8 +7,9 @@ import {
   type ReactNode,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiClient } from "../api/client";
+import { apiClient, sessionEvents, SESSION_EXPIRED_EVENT } from "../api/client";
 
+// ── Types ────────────────────────────────────────────────────────
 interface Student {
   student_id: string;
   first_name: string;
@@ -43,6 +44,7 @@ interface AuthContextType extends AuthState {
   refreshUser: () => Promise<void>;
 }
 
+// ── Context ──────────────────────────────────────────────────────
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const KEYS = {
@@ -51,6 +53,7 @@ const KEYS = {
   user: "ceil_user",
 } as const;
 
+// ── Provider ─────────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -58,10 +61,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: false,
   });
 
+  // ── Boot ──────────────────────────────────────────────────────
   useEffect(() => {
     restoreSession();
+
+    // ✅ استمع لانتهاء الجلسة — نفس SessionGuard في الويب
+    const handleExpired = async () => {
+      await clearStorage();
+      setState({ user: null, isLoading: false, isAuthenticated: false });
+    };
+
+    sessionEvents.on(SESSION_EXPIRED_EVENT, handleExpired);
+    return () => {
+      sessionEvents.off(SESSION_EXPIRED_EVENT, handleExpired);
+    };
   }, []);
 
+  // ── Restore session ───────────────────────────────────────────
   const restoreSession = async () => {
     try {
       const [token, cached] = await Promise.all([
@@ -74,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // عرض cached فوراً ثم تحقق في الخلفية
       if (cached) {
         const user: User = JSON.parse(cached);
         setState({ user, isLoading: false, isAuthenticated: true });
@@ -88,12 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // ── Login ─────────────────────────────────────────────────────
   const login = useCallback(async (email: string, password: string) => {
     const { data } = await apiClient.post("/auth/login", { email, password });
-
-    if (data.user?.role !== "STUDENT") {
-      throw new Error("هذا التطبيق مخصص للطلاب فقط");
-    }
 
     await Promise.all([
       AsyncStorage.setItem(KEYS.accessToken, data.accessToken),
@@ -104,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ user: data.user, isLoading: false, isAuthenticated: true });
   }, []);
 
+  // ── Logout ────────────────────────────────────────────────────
   const logout = useCallback(async () => {
     try {
       await apiClient.post("/auth/logout");
@@ -115,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // ── Refresh user ──────────────────────────────────────────────
   const refreshUser = useCallback(async () => {
     try {
       const { data } = await apiClient.get("/auth/me");
@@ -125,6 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // ── Clear storage ─────────────────────────────────────────────
   const clearStorage = async () => {
     await Promise.all([
       AsyncStorage.removeItem(KEYS.accessToken),
@@ -140,6 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// ── Hooks ─────────────────────────────────────────────────────────
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");

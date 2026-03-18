@@ -10,9 +10,8 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useAuth, useStudent } from "../../src/context/AuthContext";
-import { apiClient } from "../../src/api/client";
+import { useStudent } from "../../src/context/AuthContext";
+import { useDashboard, useNotifications } from "../../src/hooks/useStudent";
 import {
   Colors,
   Spacing,
@@ -22,18 +21,7 @@ import {
   Shadow,
 } from "../../src/constants/theme";
 
-// ── API calls ────────────────────────────────────────────────────
-const fetchDashboard = async () => {
-  const { data } = await apiClient.get("/student/dashboard");
-  return data;
-};
-
-const fetchNotifications = async () => {
-  const { data } = await apiClient.get("/student/notifications?limit=3");
-  return data;
-};
-
-// ── Quick link item ───────────────────────────────────────────────
+// ── Quick links ───────────────────────────────────────────────────
 interface QuickLink {
   emoji: string;
   label: string;
@@ -68,7 +56,6 @@ const QUICK_LINKS: QuickLink[] = [
   },
 ];
 
-// ── Greeting ─────────────────────────────────────────────────────
 function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return "صباح الخير";
@@ -82,23 +69,18 @@ export default function Home() {
   const student = useStudent();
   const [refreshing, setRefreshing] = useState(false);
 
+  // ✅ hooks من useStudent
   const {
     data: dashboard,
     isLoading: dashLoading,
     refetch: refetchDash,
-  } = useQuery({
-    queryKey: ["student-dashboard"],
-    queryFn: fetchDashboard,
-  });
+  } = useDashboard();
 
   const {
     data: notifData,
     isLoading: notifLoading,
     refetch: refetchNotif,
-  } = useQuery({
-    queryKey: ["student-notifications-preview"],
-    queryFn: fetchNotifications,
-  });
+  } = useNotifications();
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -113,7 +95,7 @@ export default function Home() {
 
   const rateColor =
     attendanceRate >= 80
-      ? Colors.primaryLight
+      ? Colors.primary
       : attendanceRate >= 60
         ? Colors.gold
         : Colors.error;
@@ -158,7 +140,7 @@ export default function Home() {
         <View style={[styles.card, styles.attendanceCard]}>
           <View style={styles.attendanceLeft}>
             <Text style={styles.attendanceLabel}>نسبة الحضور</Text>
-            <Text style={[styles.attendanceRate, { color: rateColor }]}>
+            <Text style={[styles.attendanceRate, { color: "#fff" }]}>
               {dashLoading ? "—" : `${attendanceRate.toFixed(0)}%`}
             </Text>
             <Text style={styles.attendanceSub}>
@@ -174,10 +156,10 @@ export default function Home() {
               <View
                 style={[styles.rateCircleInner, { borderColor: rateColor }]}
               >
-                <Text style={[styles.rateCircleText, { color: rateColor }]}>
+                <Text style={[styles.rateCircleText, { color: "#fff" }]}>
                   {dashLoading ? "…" : `${attendanceRate.toFixed(0)}`}
                 </Text>
-                <Text style={[styles.rateCirclePercent, { color: rateColor }]}>
+                <Text style={[styles.rateCirclePercent, { color: "#fff" }]}>
                   %
                 </Text>
               </View>
@@ -185,9 +167,8 @@ export default function Home() {
           </View>
         </View>
 
-        {/* ── Status row (fees + docs) ── */}
+        {/* ── Status row ── */}
         <View style={styles.statusRow}>
-          {/* Fees */}
           <View style={[styles.statusCard, styles.flex1]}>
             <Text style={styles.statusEmoji}>
               {feeStatus === "PAID" ? "✅" : "⏳"}
@@ -217,7 +198,6 @@ export default function Home() {
             </View>
           </View>
 
-          {/* Docs */}
           <View style={[styles.statusCard, styles.flex1]}>
             <Text style={styles.statusEmoji}>
               {docStatus === "APPROVED"
@@ -342,20 +322,13 @@ export default function Home() {
 
 // ── Styles ───────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
+  root: { flex: 1, backgroundColor: Colors.background },
   scroll: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Platform.OS === "ios" ? 60 : 48,
   },
   flex1: { flex: 1 },
-
-  // Header
-  header: {
-    marginBottom: Spacing.lg,
-  },
+  header: { marginBottom: Spacing.lg },
   headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -393,8 +366,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: FontWeight.bold,
   },
-
-  // Attendance card
   card: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.xl,
@@ -416,7 +387,6 @@ const styles = StyleSheet.create({
   attendanceRate: {
     fontSize: 40,
     fontWeight: FontWeight.bold,
-    color: "#fff",
     textAlign: "right",
     lineHeight: 48,
   },
@@ -442,7 +412,6 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: Radius.full,
     borderWidth: 3,
-    borderColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.1)",
@@ -451,15 +420,8 @@ const styles = StyleSheet.create({
   rateCircleText: {
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
-    color: "#fff",
   },
-  rateCirclePercent: {
-    fontSize: FontSize.xs,
-    color: "#fff",
-    marginTop: 4,
-  },
-
-  // Status row
+  rateCirclePercent: { fontSize: FontSize.xs, marginTop: 4 },
   statusRow: {
     flexDirection: "row",
     gap: Spacing.sm,
@@ -483,12 +445,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: Radius.full,
   },
-  statusBadgeText: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.semibold,
-  },
-
-  // Section
+  statusBadgeText: { fontSize: FontSize.xs, fontWeight: FontWeight.semibold },
   section: { marginBottom: Spacing.lg },
   sectionHeader: {
     flexDirection: "row",
@@ -508,18 +465,8 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontWeight: FontWeight.medium,
   },
-
-  // Quick links
-  quickGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.sm,
-  },
-  quickItem: {
-    width: "22%",
-    alignItems: "center",
-    gap: 6,
-  },
+  quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.sm },
+  quickItem: { width: "22%", alignItems: "center", gap: 6 },
   quickIcon: {
     width: 56,
     height: 56,
@@ -533,8 +480,6 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: "center",
   },
-
-  // Notifications
   notifList: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.lg,
@@ -549,14 +494,8 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.borderLight,
     gap: Spacing.sm,
   },
-  notifUnread: {
-    backgroundColor: Colors.primary + "06",
-  },
-  notifDot: {
-    width: 8,
-    paddingTop: 6,
-    alignItems: "center",
-  },
+  notifUnread: { backgroundColor: Colors.primary + "06" },
+  notifDot: { width: 8, paddingTop: 6, alignItems: "center" },
   unreadDot: {
     width: 7,
     height: 7,
@@ -577,8 +516,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
     lineHeight: 18,
   },
-
-  // Empty
   emptyBox: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.lg,
@@ -588,12 +525,6 @@ const styles = StyleSheet.create({
     ...Shadow.sm,
   },
   emptyEmoji: { fontSize: 32 },
-  emptyText: {
-    fontSize: FontSize.sm,
-    color: Colors.textMuted,
-  },
-
-  bottomPad: {
-    height: Platform.OS === "ios" ? 100 : 80,
-  },
+  emptyText: { fontSize: FontSize.sm, color: Colors.textMuted },
+  bottomPad: { height: Platform.OS === "ios" ? 100 : 80 },
 });
