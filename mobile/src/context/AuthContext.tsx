@@ -1,3 +1,4 @@
+// src/context/AuthContext.tsx
 import {
   createContext,
   useContext,
@@ -7,7 +8,13 @@ import {
   type ReactNode,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
+import * as AuthSession from "expo-auth-session";
 import { apiClient, sessionEvents, SESSION_EXPIRED_EVENT } from "../api/client";
+import { Platform } from "react-native";
+
+WebBrowser.maybeCompleteAuthSession();
 
 // ── Types ────────────────────────────────────────────────────────
 interface Student {
@@ -17,11 +24,6 @@ interface Student {
   email: string;
   avatar_url: string | null;
   phone_number: string | null;
-  nationality: string | null;
-  education_level: string | null;
-  study_location: string | null;
-  registrant_category: string;
-  status: string;
 }
 
 interface User {
@@ -38,10 +40,20 @@ interface AuthState {
   isAuthenticated: boolean;
 }
 
+interface RegisterPayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password: string;
+}
+
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
+  register: (data: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  loginWithGoogle: () => Promise<void>; // ✅
 }
 
 // ── Context ──────────────────────────────────────────────────────
@@ -53,6 +65,11 @@ const KEYS = {
   user: "ceil_user",
 } as const;
 
+// ── Google Client IDs ─────────────────────────────────────────────
+// 🔑 ضع هنا الـ Client IDs من Google Cloud Console
+const GOOGLE_WEB_CLIENT_ID =
+  "631352520680-u904t4var3ud8ko1pk312mrthbdd8msq.apps.googleusercontent.com";
+
 // ── Provider ─────────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
@@ -61,11 +78,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: false,
   });
 
+  // ── Google Auth Request ───────────────────────────────────────
+  const [_, googleResponse, googlePromptAsync] = Google.useAuthRequest({
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    androidClientId:
+      Platform.OS === "android" ? GOOGLE_WEB_CLIENT_ID : undefined,
+    iosClientId: Platform.OS === "ios" ? GOOGLE_WEB_CLIENT_ID : undefined,
+  });
+
+  console.log("Redirect URI:", AuthSession.makeRedirectUri({ scheme: "ceil" }));
+
+  // ── Handle Google Response ────────────────────────────────────
+  useEffect(() => {
+    if (googleResponse?.type === "success") {
+      const token = googleResponse.authentication?.accessToken;
+      if (token) handleGoogleMobile(token);
+    }
+  }, [googleResponse]);
+
   // ── Boot ──────────────────────────────────────────────────────
   useEffect(() => {
     restoreSession();
 
-    // ✅ استمع لانتهاء الجلسة — نفس SessionGuard في الويب
     const handleExpired = async () => {
       await clearStorage();
       setState({ user: null, isLoading: false, isAuthenticated: false });
@@ -90,13 +124,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // ✅ عرض cached فوراً
       if (cached) {
         const user: User = JSON.parse(cached);
         setState({ user, isLoading: false, isAuthenticated: true });
       }
 
-      // ✅ تحقق في الخلفية — لا تمسح عند الفشل إذا عندك cached
       try {
         const { data } = await apiClient.get("/auth/me");
         await AsyncStorage.setItem(KEYS.user, JSON.stringify(data));
@@ -106,7 +138,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await clearStorage();
           setState({ user: null, isLoading: false, isAuthenticated: false });
         }
-        // إذا عندك cached — ابقى مسجل الدخول بدون مسح
       }
     } catch {
       await clearStorage();
@@ -127,12 +158,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ user: data.user, isLoading: false, isAuthenticated: true });
   }, []);
 
+  // ── Register ──────────────────────────────────────────────────
+  const register = useCallback(async (payload: RegisterPayload) => {
+    const { data } = await apiClient.post("/auth/register", {
+      first_name: payload.firstName,
+      last_name: payload.lastName,
+      email: payload.email,
+      phone_number: payload.phone,
+      password: payload.password,
+    });
+
+    if (data.accessToken) {
+      await Promise.all([
+        AsyncStorage.setItem(KEYS.accessToken, data.accessToken),
+        AsyncStorage.setItem(KEYS.refreshToken, data.refreshToken ?? ""),
+        AsyncStorage.setItem(KEYS.user, JSON.stringify(data.user)),
+      ]);
+      setState({ user: data.user, isLoading: false, isAuthenticated: true });
+    } else {
+      throw new Error("تم إنشاء الحساب، يرجى تسجيل الدخول");
+    }
+  }, []);
+
+  // ── Google Mobile Login ───────────────────────────────────────
+  const handleGoogleMobile = async (googleToken: string) => {
+    try {
+      const { data } = await apiClient.post("/auth/google/mobile", {
+        accessToken: googleToken,
+      });
+
+      await Promise.all([
+        AsyncStorage.setItem(KEYS.accessToken, data.accessToken),
+        AsyncStorage.setItem(KEYS.refreshToken, data.refreshToken ?? ""),
+        AsyncStorage.setItem(KEYS.user, JSON.stringify(data.user)),
+      ]);
+
+      setState({ user: data.user, isLoading: false, isAuthenticated: true });
+    } catch (e) {
+      console.error("Google mobile login failed:", e);
+      throw e;
+    }
+  };
+
+  const loginWithGoogle = useCallback(async () => {
+    await googlePromptAsync();
+  }, [googlePromptAsync]);
+
   // ── Logout ────────────────────────────────────────────────────
   const logout = useCallback(async () => {
     try {
       await apiClient.post("/auth/logout");
-    } catch {
-      // silent
     } finally {
       await clearStorage();
       setState({ user: null, isLoading: false, isAuthenticated: false });
@@ -145,9 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data } = await apiClient.get("/auth/me");
       await AsyncStorage.setItem(KEYS.user, JSON.stringify(data));
       setState((prev) => ({ ...prev, user: data }));
-    } catch {
-      // silent
-    }
+    } catch {}
   }, []);
 
   // ── Clear storage ─────────────────────────────────────────────
@@ -160,7 +233,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{
+        ...state,
+        login,
+        register,
+        logout,
+        refreshUser,
+        loginWithGoogle,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

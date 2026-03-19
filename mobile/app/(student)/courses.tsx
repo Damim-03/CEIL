@@ -22,9 +22,12 @@ import {
 } from "../../src/constants/theme";
 
 // ── API ──────────────────────────────────────────────────────────
-const fetchEnrollments = async () => {
+const fetchEnrollments = async (): Promise<any[]> => {
   const { data } = await apiClient.get("/student/enrollments");
-  return data;
+  // Handle both { data: [...] } and [...] response shapes
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  return [];
 };
 
 // ── Status config ────────────────────────────────────────────────
@@ -35,38 +38,39 @@ interface StatusConfig {
   emoji: string;
 }
 
-const STATUS_CONFIG: { [key: string]: StatusConfig } = {
+const STATUS_CONFIG: Record<string, StatusConfig> = {
   PENDING: {
     label: "قيد الانتظار",
     color: Colors.gold,
     bg: Colors.gold + "15",
-    emoji: "\u23F3",
+    emoji: "⏳",
   },
   VALIDATED: {
     label: "مقبول",
     color: "#1565C0",
-    bg: "#1565C0" + "12",
-    emoji: "\u2705",
+    bg: "#1565C015",
+    emoji: "✅",
   },
   PAID: {
     label: "مدفوع",
     color: Colors.primary,
     bg: Colors.primary + "12",
-    emoji: "\uD83D\uDCB3",
+    emoji: "💳",
   },
   FINISHED: {
     label: "منتهي",
     color: Colors.textMuted,
     bg: Colors.textMuted + "15",
-    emoji: "\uD83C\uDF93",
+    emoji: "🎓",
   },
   REJECTED: {
     label: "مرفوض",
     color: Colors.error,
     bg: Colors.error + "12",
-    emoji: "\u274C",
+    emoji: "❌",
   },
 };
+
 // ── Helpers ──────────────────────────────────────────────────────
 const formatDate = (d?: string) => {
   if (!d) return "—";
@@ -103,9 +107,7 @@ function EnrollmentCard({ enrollment }: { enrollment: any }) {
       onPress={() => setExpanded((p) => !p)}
       activeOpacity={0.85}
     >
-      {/* ── Top row ── */}
       <View style={styles.cardTop}>
-        {/* Flag + name */}
         <View style={styles.cardLeft}>
           <View style={styles.flagWrap}>
             <Text style={styles.flag}>{profile?.flag_emoji ?? "🌐"}</Text>
@@ -119,8 +121,6 @@ function EnrollmentCard({ enrollment }: { enrollment: any }) {
             )}
           </View>
         </View>
-
-        {/* Status badge */}
         <View style={[styles.badge, { backgroundColor: status.bg }]}>
           <Text style={[styles.badgeText, { color: status.color }]}>
             {status.emoji} {status.label}
@@ -128,7 +128,6 @@ function EnrollmentCard({ enrollment }: { enrollment: any }) {
         </View>
       </View>
 
-      {/* ── Quick info ── */}
       <View style={styles.quickRow}>
         {group && (
           <View style={styles.chip}>
@@ -151,12 +150,9 @@ function EnrollmentCard({ enrollment }: { enrollment: any }) {
         )}
       </View>
 
-      {/* ── Expanded details ── */}
       {expanded && (
         <View style={styles.details}>
           <View style={styles.divider} />
-
-          {/* Teacher */}
           {teacher && (
             <View style={styles.detailRow}>
               <Text style={styles.detailValue}>
@@ -165,8 +161,6 @@ function EnrollmentCard({ enrollment }: { enrollment: any }) {
               <Text style={styles.detailLabel}>الأستاذ</Text>
             </View>
           )}
-
-          {/* Dates */}
           {(profile?.start_date || profile?.end_date) && (
             <View style={styles.detailRow}>
               <Text style={styles.detailValue}>
@@ -176,24 +170,18 @@ function EnrollmentCard({ enrollment }: { enrollment: any }) {
               <Text style={styles.detailLabel}>مدة الدورة</Text>
             </View>
           )}
-
-          {/* Session name */}
           {profile?.session_name && (
             <View style={styles.detailRow}>
               <Text style={styles.detailValue}>{profile.session_name}</Text>
               <Text style={styles.detailLabel}>الدورة</Text>
             </View>
           )}
-
-          {/* Enrollment date */}
           <View style={styles.detailRow}>
             <Text style={styles.detailValue}>
               {formatDate(enrollment.enrollment_date)}
             </Text>
             <Text style={styles.detailLabel}>تاريخ التسجيل</Text>
           </View>
-
-          {/* Pricing */}
           {enrollment.pricing && (
             <View style={styles.detailRow}>
               <Text style={styles.detailValue}>
@@ -203,8 +191,6 @@ function EnrollmentCard({ enrollment }: { enrollment: any }) {
               <Text style={styles.detailLabel}>الرسوم</Text>
             </View>
           )}
-
-          {/* Group max students */}
           {group && (
             <View style={styles.detailRow}>
               <Text style={styles.detailValue}>{group.max_students} طالب</Text>
@@ -214,7 +200,6 @@ function EnrollmentCard({ enrollment }: { enrollment: any }) {
         </View>
       )}
 
-      {/* ── Expand hint ── */}
       <View style={styles.expandHint}>
         <Text style={styles.expandText}>
           {expanded ? "▲ إخفاء التفاصيل" : "▼ عرض التفاصيل"}
@@ -239,7 +224,8 @@ export default function Courses() {
     setRefreshing(false);
   };
 
-  const enrollments: any[] = data?.data ?? data ?? [];
+  // data is already normalized to [] by fetchEnrollments
+  const enrollments: any[] = data ?? [];
 
   return (
     <View style={styles.root}>
@@ -254,7 +240,6 @@ export default function Courses() {
           />
         }
       >
-        {/* ── Header ── */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>دوراتي 📚</Text>
           <Text style={styles.headerSub}>
@@ -262,14 +247,12 @@ export default function Courses() {
           </Text>
         </View>
 
-        {/* ── Loading ── */}
         {isLoading && (
           <View style={styles.centerBox}>
             <ActivityIndicator size="large" color={Colors.primary} />
           </View>
         )}
 
-        {/* ── Error ── */}
         {isError && (
           <View style={styles.centerBox}>
             <Text style={styles.errorEmoji}>⚠️</Text>
@@ -280,7 +263,6 @@ export default function Courses() {
           </View>
         )}
 
-        {/* ── Empty ── */}
         {!isLoading && !isError && enrollments.length === 0 && (
           <View style={styles.centerBox}>
             <Text style={styles.errorEmoji}>📭</Text>
@@ -288,12 +270,11 @@ export default function Courses() {
           </View>
         )}
 
-        {/* ── List ── */}
         {!isLoading &&
           !isError &&
           enrollments.map((enrollment: any) => (
             <EnrollmentCard
-              key={enrollment.enrollment_id}
+              key={enrollment.enrollment_id ?? enrollment.id ?? Math.random()}
               enrollment={enrollment}
             />
           ))}
@@ -306,32 +287,18 @@ export default function Courses() {
 
 // ── Styles ───────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
+  root: { flex: 1, backgroundColor: Colors.background },
   scroll: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Platform.OS === "ios" ? 60 : 48,
   },
-
-  // Header
-  header: {
-    marginBottom: Spacing.lg,
-    alignItems: "flex-end",
-  },
+  header: { marginBottom: Spacing.lg, alignItems: "flex-end" },
   headerTitle: {
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
   },
-  headerSub: {
-    fontSize: FontSize.sm,
-    color: Colors.textMuted,
-    marginTop: 2,
-  },
-
-  // Card
+  headerSub: { fontSize: FontSize.sm, color: Colors.textMuted, marginTop: 2 },
   card: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.xl,
@@ -373,20 +340,13 @@ const styles = StyleSheet.create({
     textAlign: "right",
     marginTop: 2,
   },
-
-  // Badge
   badge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: Radius.full,
     marginLeft: Spacing.sm,
   },
-  badgeText: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.semibold,
-  },
-
-  // Chips
+  badgeText: { fontSize: FontSize.xs, fontWeight: FontWeight.semibold },
   quickRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -401,12 +361,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.borderLight,
   },
-  chipText: {
-    fontSize: FontSize.xs,
-    color: Colors.textSecondary,
-  },
-
-  // Details
+  chipText: { fontSize: FontSize.xs, color: Colors.textSecondary },
   details: { marginTop: Spacing.sm },
   divider: {
     height: 1,
@@ -432,19 +387,12 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: Spacing.sm,
   },
-
-  // Expand
-  expandHint: {
-    alignItems: "center",
-    paddingTop: Spacing.sm,
-  },
+  expandHint: { alignItems: "center", paddingTop: Spacing.sm },
   expandText: {
     fontSize: FontSize.xs,
     color: Colors.primary,
     fontWeight: FontWeight.medium,
   },
-
-  // States
   centerBox: {
     alignItems: "center",
     justifyContent: "center",
@@ -468,8 +416,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: FontWeight.medium,
   },
-
-  bottomPad: {
-    height: Platform.OS === "ios" ? 100 : 80,
-  },
+  bottomPad: { height: Platform.OS === "ios" ? 100 : 80 },
 });

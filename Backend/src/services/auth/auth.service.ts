@@ -173,3 +173,54 @@ export async function getCurrentUser(userId: string) {
     },
   });
 }
+
+export const loginOrRegisterWithGoogle = async (payload: {
+  email: string;
+  firstName: string;
+  lastName: string;
+  avatar: string;
+  googleId: string;
+}) => {
+  try {
+    // ابحث عن مستخدم موجود
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [{ email: payload.email }, { google_id: payload.googleId }],
+      },
+    });
+
+    if (!user) {
+      // 1. أنشئ User
+      user = await prisma.user.create({
+        data: {
+          email: payload.email,
+          google_avatar: payload.avatar,
+          google_id: payload.googleId,
+          google_email: payload.email,
+          role: "STUDENT",
+        },
+      });
+
+      // 2. أنشئ Student مع user_id
+      const student = await prisma.student.create({
+        data: {
+          first_name: payload.firstName,
+          last_name: payload.lastName,
+          registrant_category: "STUDENT",
+          status: "ACTIVE",
+          user_id: user.user_id,
+        },
+      });
+
+      // 3. اربط student_id بالـ User
+      user = await prisma.user.update({
+        where: { user_id: user.user_id },
+        data: { student_id: student.student_id },
+      });
+    }
+
+    return { data: user };
+  } catch (error) {
+    return { error: "google_login_failed" };
+  }
+};

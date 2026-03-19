@@ -4,6 +4,7 @@ export const Colors = {
   primaryLight: "#2B6F5E", // teal فاتح
   gold: "#C4A035",         // ذهبي
   goldLight: "#D8B84E",
+  secondary: "#C4A035",    // ذهبي
 
   // ── Neutrals ────────────────────────────
   background: "#F5F4F0",
@@ -70,6 +71,7 @@ export const FontWeight = {
   regular: "400" as const,
   medium: "500" as const,
   semibold: "600" as const,
+  light: "300" as const,
   bold: "700" as const,
 };
 

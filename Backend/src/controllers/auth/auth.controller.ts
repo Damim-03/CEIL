@@ -177,3 +177,74 @@ export const refreshController = async (req: Request, res: Response) => {
   res.cookie("accessToken", result.data, AuthService.getCookieOptions());
   return res.json({ message: "Access token refreshed" });
 };
+
+
+/**
+ * =========================
+ * GOOGLE LOGIN — MOBILE
+ * يستقبل Google accessToken ويرجع JWT tokens
+ * =========================
+ */
+
+// ✅ أضف الـ type
+interface GoogleUserInfo {
+  id: string;
+  email: string;
+  given_name: string;
+  family_name: string;
+  picture: string;
+  name: string;
+}
+
+export const googleMobileController = async (req: Request, res: Response) => {
+  try {
+    const { accessToken: googleToken } = req.body;
+
+    if (!googleToken) {
+      return res.status(400).json({ message: "Google token is required" });
+    }
+
+    // تحقق من الـ token مع Google وجلب بيانات المستخدم
+    const googleRes = await fetch(
+      `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${googleToken}`
+    );
+
+    if (!googleRes.ok) {
+      return res.status(401).json({ message: "Invalid Google token" });
+    }
+
+    const googleUser = await googleRes.json() as GoogleUserInfo;
+    // googleUser: { id, email, name, given_name, family_name, picture }
+
+    // ابحث عن المستخدم أو أنشئه عبر AuthService
+    const result = await AuthService.loginOrRegisterWithGoogle({
+      email: googleUser.email,
+      firstName: googleUser.given_name,
+      lastName: googleUser.family_name,
+      avatar: googleUser.picture,
+      googleId: googleUser.id,
+    });
+
+    if ("error" in result) {
+      return res.status(403).json({ message: "Google login failed" });
+    }
+
+    const tokens = AuthService.generateTokens(
+      result.data!.user_id,
+      result.data!.role,
+    );
+
+    const user = await AuthService.getCurrentUser(result.data!.user_id);
+
+    // ✅ رجّع tokens في الـ response body (لا cookies — الموبايل يحفظها في AsyncStorage)
+    return res.json({
+      message: "Google login successful",
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user,
+    });
+  } catch (error) {
+    console.error("Google mobile login error:", error);
+    return res.status(500).json({ message: "Google login failed" });
+  }
+};

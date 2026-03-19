@@ -17,6 +17,14 @@ export interface Student {
   created_at?: string;
 }
 
+export interface RegisterPayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password: string;
+}
+
 export interface User {
   user_id: string;
   email: string;

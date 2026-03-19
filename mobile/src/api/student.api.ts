@@ -9,10 +9,9 @@ import type {
   Fee,
 } from "../types";
 
-// ── Profile ──────────────────────────────────────────────────
 export const studentApi = {
-
   // ── Profile ────────────────────────────────────────────────
+
   getProfile: async (): Promise<Student> => {
     const { data } = await apiClient.get("/students/me/profile");
     return data;
@@ -23,12 +22,18 @@ export const studentApi = {
     return data;
   },
 
+  uploadAvatar: async (formData: FormData) => {
+    const { data } = await apiClient.post("/students/avatar", formData);
+    return data;
+  },
+
   getDashboard: async () => {
     const { data } = await apiClient.get("/students/me/dashboard");
     return data;
   },
 
   // ── Enrollments ────────────────────────────────────────────
+
   getEnrollments: async (): Promise<Enrollment[]> => {
     const { data } = await apiClient.get("/students/me/enrollments");
     return data?.data ?? data;
@@ -54,22 +59,89 @@ export const studentApi = {
   },
 
   // ── Courses ────────────────────────────────────────────────
+
   getCourses: async () => {
     const { data } = await apiClient.get("/students/courses");
     return data?.data ?? data;
   },
 
   getCourseGroups: async (courseId: string) => {
-    const { data } = await apiClient.get(`/students/courses/${courseId}/groups`);
+    const { data } = await apiClient.get(
+      `/students/courses/${courseId}/groups`,
+    );
     return data?.data ?? data;
   },
 
   getCoursePricing: async (courseId: string) => {
-    const { data } = await apiClient.get(`/students/courses/${courseId}/pricing`);
+    const { data } = await apiClient.get(
+      `/students/courses/${courseId}/pricing`,
+    );
     return data;
   },
 
+  // ── Groups ─────────────────────────────────────────────────
+
+  joinGroup: async (body: { group_id: string }) => {
+    const { data } = await apiClient.post("/students/groups/join", body);
+    return data;
+  },
+
+  leaveGroup: async (body: { group_id: string }) => {
+    const { data } = await apiClient.post("/students/groups/leave", body);
+    return data;
+  },
+
+  // ── Documents ──────────────────────────────────────────────
+
+  getDocuments: async () => {
+    const { data } = await apiClient.get("/students/documents");
+    if (Array.isArray(data)) {
+      return {
+        documents: data,
+        registrant_category: "STUDENT",
+        required_documents: [],
+        is_complete: false,
+        missing: [],
+      };
+    }
+    return data?.data ?? data;
+  },
+
+  uploadDocument: async (formData: FormData) => {
+    const { data } = await apiClient.post("/students/documents", formData);
+    return data;
+  },
+
+  deleteDocument: async (documentId: string) => {
+    const { data } = await apiClient.delete(
+      `/students/documents/${documentId}`,
+    );
+    return data;
+  },
+
+  reuploadDocument: async ({
+    documentId,
+    formData,
+  }: {
+    documentId: string;
+    formData: FormData;
+  }) => {
+    const { data } = await apiClient.put(
+      `/students/documents/${documentId}/reupload`,
+      formData,
+    );
+    return data;
+  },
+
+  // ── Fees ───────────────────────────────────────────────────
+
+  getFees: async (): Promise<Fee[]> => {
+    const { data } = await apiClient.get("/students/me/fees");
+    return data?.data ?? data;
+  },
+
   // ── Attendance ─────────────────────────────────────────────
+
   getAttendance: async (): Promise<{
     records: AttendanceRecord[];
     summary: AttendanceSummary;
@@ -78,32 +150,35 @@ export const studentApi = {
     return data;
   },
 
-  // ── Fees ───────────────────────────────────────────────────
-  getFees: async (): Promise<Fee[]> => {
-    const { data } = await apiClient.get("/students/me/fees");
-    return data?.data ?? data;
-  },
-
   // ── Results ────────────────────────────────────────────────
+
   getResults: async () => {
     const { data } = await apiClient.get("/students/me/results");
     return data?.data ?? data;
   },
 
+  // ── Schedule ───────────────────────────────────────────────
+
+  getActiveTimetable: async (): Promise<Timetable> => {
+    const { data } = await apiClient.get("/timetables/active");
+    return data;
+  },
+
   // ── Notifications ──────────────────────────────────────────
+
   getNotifications: async (params?: {
     page?: number;
     limit?: number;
     unread?: boolean;
   }): Promise<{ data: NotificationRecipient[]; unread_count: number }> => {
-    const { data } = await apiClient.get("/students/notifications", {
-      params,
-    });
+    const { data } = await apiClient.get("/students/notifications", { params });
     return data;
   },
 
   getUnreadCount: async (): Promise<number> => {
-    const { data } = await apiClient.get("/students/notifications/unread-count");
+    const { data } = await apiClient.get(
+      "/students/notifications/unread-count",
+    );
     return data?.unread_count ?? 0;
   },
 
@@ -116,43 +191,6 @@ export const studentApi = {
 
   markAllAsRead: async () => {
     const { data } = await apiClient.patch("/students/notifications/read-all");
-    return data;
-  },
-
-  // ── Schedule ───────────────────────────────────────────────
-  getActiveTimetable: async (): Promise<Timetable> => {
-    const { data } = await apiClient.get("/timetables/active");
-    return data;
-  },
-
-  // ── Documents ──────────────────────────────────────────────
-  getDocuments: async () => {
-    const { data } = await apiClient.get("/students/documents");
-    return data?.data ?? data;
-  },
-
-  uploadDocument: async (formData: FormData) => {
-    const { data } = await apiClient.post("/students/documents", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return data;
-  },
-
-  deleteDocument: async (documentId: string) => {
-    const { data } = await apiClient.delete(
-      `/students/documents/${documentId}`,
-    );
-    return data;
-  },
-
-  // ── Groups ─────────────────────────────────────────────────
-  joinGroup: async (body: { group_id: string }) => {
-    const { data } = await apiClient.post("/students/groups/join", body);
-    return data;
-  },
-
-  leaveGroup: async (body: { group_id: string }) => {
-    const { data } = await apiClient.post("/students/groups/leave", body);
     return data;
   },
 };

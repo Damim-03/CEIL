@@ -3,6 +3,7 @@ import passport from "passport";
 import { config } from "../../config/app.config";
 import {
   googleLoginCallback,
+  googleMobileController,
   loginController,
   logOutController,
   meController,
@@ -22,6 +23,7 @@ authRoutes.post("/register", registerUserController); // STUDENT / TEACHER
 authRoutes.post("/login", loginController);
 authRoutes.post("/refresh", refreshController);
 
+authRoutes.post("/google/mobile", googleMobileController);
 
 /**
  * PROTECTED
