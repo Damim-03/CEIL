@@ -1,17 +1,19 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "CEIL",
+    "slug": "CEIL",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "icon": "./assets/logo-2.png",
+    "scheme": "CEIL",
+    "owner": "damim-03",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "package": "com.damim03.ceil",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -23,14 +25,14 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/logo-2.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/logo-2.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -44,6 +46,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "57c9ec71-df38-4bd8-95b2-7306c4395b02"
+      }
     }
   }
 }

@@ -7,6 +7,7 @@
 import { Request, Response } from "express";
 import { config } from "../../config/app.config";
 import * as AuthService from "../../services/auth/auth.service";
+import { prisma } from "../../prisma/client";
 
 /**
  * =========================
@@ -178,7 +179,6 @@ export const refreshController = async (req: Request, res: Response) => {
   return res.json({ message: "Access token refreshed" });
 };
 
-
 /**
  * =========================
  * GOOGLE LOGIN — MOBILE
@@ -204,23 +204,26 @@ export const googleMobileController = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Google token is required" });
     }
 
-    // تحقق من الـ token مع Google وجلب بيانات المستخدم
     const googleRes = await fetch(
-      `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${googleToken}`
+      `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${googleToken}`,
     );
 
     if (!googleRes.ok) {
       return res.status(401).json({ message: "Invalid Google token" });
     }
 
-    const googleUser = await googleRes.json() as GoogleUserInfo;
-    // googleUser: { id, email, name, given_name, family_name, picture }
+    const googleUser = (await googleRes.json()) as {
+      id: string;
+      email: string;
+      given_name: string;
+      family_name: string;
+      picture: string;
+    };
 
-    // ابحث عن المستخدم أو أنشئه عبر AuthService
     const result = await AuthService.loginOrRegisterWithGoogle({
       email: googleUser.email,
-      firstName: googleUser.given_name,
-      lastName: googleUser.family_name,
+      firstName: googleUser.given_name || googleUser.email.split("@")[0],
+      lastName: googleUser.family_name || "",
       avatar: googleUser.picture,
       googleId: googleUser.id,
     });
@@ -234,9 +237,27 @@ export const googleMobileController = async (req: Request, res: Response) => {
       result.data!.role,
     );
 
-    const user = await AuthService.getCurrentUser(result.data!.user_id);
+    // ✅ جلب بيانات المستخدم مع الـ student
+    const user = await prisma.user.findUnique({
+      where: { user_id: result.data!.user_id },
+      select: {
+        user_id: true,
+        email: true,
+        role: true,
+        google_avatar: true,
+        student: {
+          select: {
+            student_id: true,
+            first_name: true,
+            last_name: true,
+            email: true,
+            avatar_url: true,
+            phone_number: true,
+          },
+        },
+      },
+    });
 
-    // ✅ رجّع tokens في الـ response body (لا cookies — الموبايل يحفظها في AsyncStorage)
     return res.json({
       message: "Google login successful",
       accessToken: tokens.accessToken,

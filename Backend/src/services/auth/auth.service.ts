@@ -182,7 +182,6 @@ export const loginOrRegisterWithGoogle = async (payload: {
   googleId: string;
 }) => {
   try {
-    // ابحث عن مستخدم موجود
     let user = await prisma.user.findFirst({
       where: {
         OR: [{ email: payload.email }, { google_id: payload.googleId }],
@@ -190,37 +189,68 @@ export const loginOrRegisterWithGoogle = async (payload: {
     });
 
     if (!user) {
-      // 1. أنشئ User
-      user = await prisma.user.create({
-        data: {
-          email: payload.email,
-          google_avatar: payload.avatar,
-          google_id: payload.googleId,
-          google_email: payload.email,
-          role: "STUDENT",
-        },
-      });
+      // ✅ مستخدم جديد — transaction كاملة
+      user = await prisma.$transaction(async (tx) => {
+        const createdUser = await tx.user.create({
+          data: {
+            email: payload.email,
+            google_avatar: payload.avatar,
+            google_id: payload.googleId,
+            google_email: payload.email,
+            role: "STUDENT",
+            is_active: true,
+          },
+        });
 
-      // 2. أنشئ Student مع user_id
-      const student = await prisma.student.create({
-        data: {
-          first_name: payload.firstName,
-          last_name: payload.lastName,
-          registrant_category: "STUDENT",
-          status: "ACTIVE",
-          user_id: user.user_id,
-        },
-      });
+        const student = await tx.student.create({
+          data: {
+            user_id: createdUser.user_id,
+            first_name: payload.firstName || payload.email.split("@")[0],
+            last_name: payload.lastName || "",
+            email: payload.email,
+          },
+        });
 
-      // 3. اربط student_id بالـ User
-      user = await prisma.user.update({
-        where: { user_id: user.user_id },
-        data: { student_id: student.student_id },
+        return tx.user.update({
+          where: { user_id: createdUser.user_id },
+          data: { student_id: student.student_id },
+        });
       });
+    } else {
+      // ✅ مستخدم موجود — ربط Google إن لم يكن مرتبطاً
+      if (!user.google_id) {
+        user = await prisma.user.update({
+          where: { user_id: user.user_id },
+          data: {
+            google_id: payload.googleId,
+            google_avatar: payload.avatar,
+            google_email: payload.email,
+          },
+        });
+      }
+
+      // ✅ إنشاء Student إن لم يكن موجوداً
+      if (!user.student_id) {
+        await prisma.$transaction(async (tx) => {
+          const student = await tx.student.create({
+            data: {
+              user_id: user!.user_id,
+              first_name: payload.firstName || payload.email.split("@")[0],
+              last_name: payload.lastName || "",
+              email: payload.email,
+            },
+          });
+          user = await tx.user.update({
+            where: { user_id: user!.user_id },
+            data: { student_id: student.student_id },
+          });
+        });
+      }
     }
 
     return { data: user };
   } catch (error) {
+    console.error("loginOrRegisterWithGoogle error:", error);
     return { error: "google_login_failed" };
   }
 };

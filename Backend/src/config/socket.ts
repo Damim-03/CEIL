@@ -200,3 +200,8 @@ function parseCookie(cookieHeader: string, name: string): string | null {
   const match = cookieHeader.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : null;
 }
+
+export function emitToUser(userId: string, event: string, data?: any) {
+  if (!io) return;
+  io.to(`user:${userId}`).emit(event, data);
+}

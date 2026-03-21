@@ -107,6 +107,7 @@ export const studentApi = {
     return data?.data ?? data;
   },
 
+  // ✅ Fixed: multipart headers + transformRequest
   uploadDocument: async (formData: FormData) => {
     const { data } = await apiClient.post("/students/documents", formData);
     return data;
@@ -119,6 +120,7 @@ export const studentApi = {
     return data;
   },
 
+  // ✅ Fixed: multipart headers + transformRequest
   reuploadDocument: async ({
     documentId,
     formData,

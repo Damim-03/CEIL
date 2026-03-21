@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { View, ActivityIndicator } from "react-native";
+import AlertModal from "../src/components/common/AlertModal"; // ✅
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,7 +18,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// ── Auth Guard ───────────────────────────────────────────────────
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   const segments = useSegments();
@@ -25,15 +25,9 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isLoading) return;
-
     const inAuth = segments[0] === "(auth)";
-
-    // في AuthGuard
-    if (!isAuthenticated && !inAuth) {
-      router.replace("/(auth)" as any);
-    } else if (isAuthenticated && inAuth) {
-      router.replace("/(student)/home");
-    }
+    if (!isAuthenticated && !inAuth) router.replace("/(auth)" as any);
+    else if (isAuthenticated && inAuth) router.replace("/(student)/home");
   }, [isAuthenticated, isLoading, router, segments]);
 
   if (isLoading) {
@@ -54,7 +48,6 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// ── Root Layout ──────────────────────────────────────────────────
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -69,6 +62,7 @@ export default function RootLayout() {
               <Stack.Screen name="(auth)" />
               <Stack.Screen name="(student)" />
             </Stack>
+            <AlertModal />
           </AuthGuard>
         </AuthProvider>
       </QueryClientProvider>

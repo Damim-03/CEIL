@@ -17,16 +17,17 @@ import {
   StatusBar,
   Animated,
   PanResponder,
+  Image,
 } from "react-native";
 import { useState, useRef } from "react";
 import { useAuth, useStudent } from "../../src/context/AuthContext";
-import { useProfile, useUpdateProfile } from "../../src/hooks/useStudent";
+import {
+  useProfile,
+  useUpdateProfile,
+  useDocuments,
+} from "../../src/hooks/useStudent";
 import StudentIDCard from "../../src/components/student/StudentIDCard";
 import { FontWeight } from "../../src/constants/theme";
-
-// ─────────────────────────────────────────────
-// Design tokens
-// ─────────────────────────────────────────────
 
 const TEAL = "#264230";
 const TEAL2 = "#4A7065";
@@ -36,10 +37,6 @@ const MUTED = "#8A7A6A";
 const INK = "#1B1B1B";
 const WHITE = "#FFFFFF";
 const ERR = "#C0392B";
-
-// ─────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────
 
 type TabKey = "account" | "card";
 
@@ -52,10 +49,6 @@ interface EditForm {
   education_level: string;
   study_location: string;
 }
-
-// ─────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────
 
 function getInitials(p: any): string {
   const f = p?.first_name?.[0] ?? "";
@@ -77,10 +70,7 @@ function formatDate(d?: string | null): string | null {
   });
 }
 
-// ─────────────────────────────────────────────
-// Edit Profile Modal
-// ─────────────────────────────────────────────
-
+// ── Edit Modal (unchanged) ────────────────────────────────────────
 const EDIT_FIELDS: {
   key: keyof EditForm;
   label: string;
@@ -129,11 +119,10 @@ const EDIT_FIELDS: {
 ];
 
 const SH = Dimensions.get("window").height;
-// Sheet starts at 50% height, can expand to 92%
 const SHEET_MIN_H = SH * 0.5;
 const SHEET_MAX_H = SH * 0.92;
-const CLOSE_THRESHOLD = 80; // drag down this much → close
-const EXPAND_THRESHOLD = 60; // drag up this much   → expand to max
+const CLOSE_THRESHOLD = 80;
+const EXPAND_THRESHOLD = 60;
 
 function EditProfileModal({
   visible,
@@ -145,14 +134,9 @@ function EditProfileModal({
   onClose: () => void;
 }) {
   const { mutateAsync: updateProfile, isPending } = useUpdateProfile();
-
-  // Sheet height as animated value
   const sheetH = useRef(new Animated.Value(SHEET_MIN_H)).current;
-  // Translate Y for dismiss animation
   const translateY = useRef(new Animated.Value(0)).current;
-  // Track current height between gestures
   const currentH = useRef(SHEET_MIN_H);
-  // Whether scrollview is at top (allow drag-to-close)
   const scrollAtTop = useRef(true);
 
   const [form, setForm] = useState<EditForm>({
@@ -168,7 +152,6 @@ function EditProfileModal({
     {},
   );
 
-  // Reset on open
   const prevVisible = useRef(false);
   if (visible && !prevVisible.current) {
     currentH.current = SHEET_MIN_H;
@@ -177,36 +160,26 @@ function EditProfileModal({
   }
   prevVisible.current = visible;
 
-  // PanResponder on the drag handle
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dy) > 4,
       onPanResponderMove: (_, gs) => {
-        const dy = gs.dy;
-        if (dy > 0) {
-          // Dragging DOWN — only allow if scrollView is at top
+        if (gs.dy > 0) {
           if (!scrollAtTop.current) return;
-          translateY.setValue(dy);
+          translateY.setValue(gs.dy);
         } else {
-          // Dragging UP — expand sheet
-          const newH = Math.min(SHEET_MAX_H, currentH.current - dy);
-          sheetH.setValue(newH);
+          sheetH.setValue(Math.min(SHEET_MAX_H, currentH.current - gs.dy));
         }
       },
       onPanResponderRelease: (_, gs) => {
-        const dy = gs.dy;
-        const vy = gs.vy;
-
-        if (dy > CLOSE_THRESHOLD || vy > 0.8) {
-          // Dismiss — slide down off screen
+        if (gs.dy > CLOSE_THRESHOLD || gs.vy > 0.8) {
           Animated.timing(translateY, {
             toValue: SH,
             duration: 280,
             useNativeDriver: false,
           }).start(onClose);
-        } else if (dy < -EXPAND_THRESHOLD) {
-          // Snap to full height
+        } else if (gs.dy < -EXPAND_THRESHOLD) {
           Animated.spring(sheetH, {
             toValue: SHEET_MAX_H,
             useNativeDriver: false,
@@ -216,7 +189,6 @@ function EditProfileModal({
           currentH.current = SHEET_MAX_H;
           translateY.setValue(0);
         } else {
-          // Snap back to current height
           Animated.parallel([
             Animated.spring(sheetH, {
               toValue: currentH.current,
@@ -241,9 +213,9 @@ function EditProfileModal({
     if (!form.first_name.trim()) e.first_name = "مطلوب";
     if (!form.last_name.trim()) e.last_name = "مطلوب";
     if (form.phone_number && !/^0[5-7]\d{8}$/.test(form.phone_number))
-      e.phone_number = "رقم غير صحيح (مثال: 0551234567)";
+      e.phone_number = "رقم غير صحيح";
     if (form.date_of_birth && !/^\d{4}-\d{2}-\d{2}$/.test(form.date_of_birth))
-      e.date_of_birth = "الصيغة الصحيحة: YYYY-MM-DD";
+      e.date_of_birth = "الصيغة: YYYY-MM-DD";
     setErrors(e);
     return !Object.keys(e).length;
   }
@@ -257,14 +229,10 @@ function EditProfileModal({
       await updateProfile(payload);
       onClose();
     } catch (err: any) {
-      Alert.alert(
-        "خطأ",
-        err?.response?.data?.message ?? "فشل الحفظ، حاول مرة أخرى",
-      );
+      Alert.alert("خطأ", err?.response?.data?.message ?? "فشل الحفظ");
     }
   }
 
-  // Overlay opacity linked to translateY
   const overlayOpacity = translateY.interpolate({
     inputRange: [0, SH * 0.5],
     outputRange: [1, 0],
@@ -281,25 +249,15 @@ function EditProfileModal({
       <Animated.View style={[em.overlay, { opacity: overlayOpacity }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
       </Animated.View>
-
       <Animated.View
-        style={[
-          em.sheet,
-          {
-            height: sheetH,
-            transform: [{ translateY }],
-          },
-        ]}
+        style={[em.sheet, { height: sheetH, transform: [{ translateY }] }]}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{ flex: 1 }}
         >
-          {/* ── Drag handle (gesture zone) ── */}
           <View style={em.dragZone} {...panResponder.panHandlers}>
             <View style={em.drag} />
-
-            {/* Header bar */}
             <View style={em.hdr}>
               <TouchableOpacity onPress={onClose} hitSlop={12}>
                 <Text style={em.cancel}>إلغاء</Text>
@@ -321,8 +279,6 @@ function EditProfileModal({
               </TouchableOpacity>
             </View>
           </View>
-
-          {/* ── Scrollable fields ── */}
           <ScrollView
             contentContainerStyle={em.body}
             showsVerticalScrollIndicator={false}
@@ -385,10 +341,7 @@ const em = StyleSheet.create({
     elevation: 24,
     overflow: "hidden",
   },
-  dragZone: {
-    // Taller hit area for the gesture
-    paddingBottom: 4,
-  },
+  dragZone: { paddingBottom: 4 },
   drag: {
     width: 40,
     height: 4.5,
@@ -445,10 +398,7 @@ const em = StyleSheet.create({
   errTxt: { fontSize: 11, color: ERR, textAlign: "right", marginTop: 5 },
 });
 
-// ─────────────────────────────────────────────
-// Info item component
-// ─────────────────────────────────────────────
-
+// ── Info Item ─────────────────────────────────────────────────────
 function InfoItem({
   label,
   value,
@@ -466,7 +416,6 @@ function InfoItem({
     </View>
   );
 }
-
 const ii = StyleSheet.create({
   row: {
     flexDirection: "row",
@@ -488,10 +437,7 @@ const ii = StyleSheet.create({
   },
 });
 
-// ─────────────────────────────────────────────
-// Section block
-// ─────────────────────────────────────────────
-
+// ── Block ─────────────────────────────────────────────────────────
 function Block({
   title,
   children,
@@ -506,7 +452,6 @@ function Block({
     </View>
   );
 }
-
 const bl = StyleSheet.create({
   wrap: { marginBottom: 20 },
   title: {
@@ -533,17 +478,16 @@ const bl = StyleSheet.create({
   },
 });
 
-// ─────────────────────────────────────────────
-// Hero banner
-// ─────────────────────────────────────────────
-
+// ── Hero Banner — ✅ يعرض صورة حقيقية ────────────────────────────
 function HeroBanner({
   profile,
+  avatarUrl,
   activeTab,
   onTabChange,
   onEdit,
 }: {
   profile: any;
+  avatarUrl: string | null;
   activeTab: TabKey;
   onTabChange: (t: TabKey) => void;
   onEdit: () => void;
@@ -554,23 +498,26 @@ function HeroBanner({
 
   return (
     <View style={hb.root}>
-      {/* Layered background */}
       <View style={hb.bgBase} />
       <View style={hb.bgAccent} />
-
-      {/* Gold line bottom */}
       <View style={hb.goldLine} />
 
-      {/* Content */}
       <View style={hb.content}>
-        {/* Avatar */}
+        {/* ✅ Avatar — صورة حقيقية أو أحرف */}
         <View style={hb.avatarShell}>
           <View style={hb.avatarRing}>
-            <View style={hb.avatar}>
-              <Text style={hb.avatarTxt}>{initials}</Text>
-            </View>
+            {avatarUrl ? (
+              <Image
+                source={{ uri: avatarUrl }}
+                style={hb.avatarImg}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={hb.avatar}>
+                <Text style={hb.avatarTxt}>{initials}</Text>
+              </View>
+            )}
           </View>
-          {/* Status dot */}
           <View
             style={[
               hb.statusDot,
@@ -579,11 +526,9 @@ function HeroBanner({
           />
         </View>
 
-        {/* Name & email */}
         <Text style={hb.name}>{fullName}</Text>
         <Text style={hb.email}>{profile?.email ?? ""}</Text>
 
-        {/* Edit button */}
         <TouchableOpacity
           style={hb.editPill}
           onPress={onEdit}
@@ -593,7 +538,6 @@ function HeroBanner({
         </TouchableOpacity>
       </View>
 
-      {/* Tab row */}
       <View style={hb.tabs}>
         {(
           [
@@ -620,10 +564,7 @@ function HeroBanner({
 
 const hb = StyleSheet.create({
   root: { overflow: "hidden" },
-  bgBase: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: TEAL,
-  },
+  bgBase: { ...StyleSheet.absoluteFillObject, backgroundColor: TEAL },
   bgAccent: {
     position: "absolute",
     top: -60,
@@ -650,7 +591,6 @@ const hb = StyleSheet.create({
     paddingHorizontal: 24,
   },
 
-  // Avatar
   avatarShell: { position: "relative", marginBottom: 14 },
   avatarRing: {
     width: 88,
@@ -661,7 +601,11 @@ const hb = StyleSheet.create({
     padding: 3,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
+  // ✅ صورة حقيقية
+  avatarImg: { width: 82, height: 82, borderRadius: 41 },
+  // fallback حروف
   avatar: {
     flex: 1,
     width: "100%",
@@ -689,7 +633,6 @@ const hb = StyleSheet.create({
     marginBottom: 4,
   },
   email: { fontSize: 12, color: WHITE + "99", marginBottom: 16 },
-
   editPill: {
     backgroundColor: WHITE + "18",
     borderWidth: 1,
@@ -700,7 +643,6 @@ const hb = StyleSheet.create({
   },
   editPillTxt: { fontSize: 12, color: WHITE, fontWeight: FontWeight.semibold },
 
-  // Tabs
   tabs: {
     flexDirection: "row",
     backgroundColor: TEAL + "CC",
@@ -727,10 +669,7 @@ const hb = StyleSheet.create({
   },
 });
 
-// ─────────────────────────────────────────────
-// Account tab
-// ─────────────────────────────────────────────
-
+// ── Tabs content ──────────────────────────────────────────────────
 function AccountTab({ profile }: { profile: any }) {
   return (
     <>
@@ -746,7 +685,6 @@ function AccountTab({ profile }: { profile: any }) {
           last
         />
       </Block>
-
       <Block title="المعلومات الشخصية">
         <InfoItem label="رقم الهاتف" value={profile.phone_number} />
         <InfoItem label="الجنسية" value={profile.nationality} />
@@ -761,11 +699,53 @@ function AccountTab({ profile }: { profile: any }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// Card tab
-// ─────────────────────────────────────────────
-
 function CardTab({ profile }: { profile: any }) {
+  const { data: docsData } = useDocuments();
+  const documents: any[] =
+    docsData?.documents ?? (Array.isArray(docsData) ? docsData : []);
+  const hasApproved = documents.some((d) => d.status === "APPROVED");
+
+  if (!hasApproved) {
+    return (
+      <View style={ct.wrap}>
+        {/* Icon */}
+        <View style={ct.iconWrap}>
+          <Text style={ct.iconEmoji}>🪪</Text>
+        </View>
+
+        {/* Title */}
+        <Text style={ct.title}>البطاقة غير متاحة بعد</Text>
+        <Text style={ct.sub}>يجب قبول وثائقك أولاً لعرض البطاقة الشخصية</Text>
+
+        {/* Steps */}
+        <View style={ct.stepsCard}>
+          {[
+            { num: "١", text: "ارفع الوثائق المطلوبة من صفحة «وثائقي»" },
+            { num: "٢", text: "انتظر مراجعة الإدارة وقبول الوثائق" },
+            { num: "٣", text: "ستظهر بطاقتك تلقائياً بعد القبول" },
+          ].map((s, i) => (
+            <View key={i} style={[ct.step, i < 2 && ct.stepBorder]}>
+              <View style={ct.stepNum}>
+                <Text style={ct.stepNumText}>{s.num}</Text>
+              </View>
+              <Text style={ct.stepText}>{s.text}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Status pill */}
+        <View style={ct.statusPill}>
+          <View style={ct.statusDot} />
+          <Text style={ct.statusText}>
+            {documents.length === 0
+              ? "لم يتم رفع أي وثيقة بعد"
+              : "الوثائق قيد المراجعة"}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={{ alignItems: "center", paddingTop: 8 }}>
       <StudentIDCard profile={profile} />
@@ -773,9 +753,96 @@ function CardTab({ profile }: { profile: any }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// Logout button
-// ─────────────────────────────────────────────
+const ct = StyleSheet.create({
+  wrap: {
+    alignItems: "center",
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  iconWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: "#26423010",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: "#26423018",
+    marginBottom: 4,
+  },
+  iconEmoji: { fontSize: 38 },
+  title: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#1B1B1B",
+    textAlign: "center",
+  },
+  sub: {
+    fontSize: 12,
+    color: "#8A7A6A",
+    textAlign: "center",
+    lineHeight: 18,
+    maxWidth: 260,
+    marginBottom: 8,
+  },
+  stepsCard: {
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#F5F0E8",
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  step: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
+  },
+  stepBorder: { borderBottomWidth: 1, borderBottomColor: "#F5F0E8" },
+  stepNum: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    backgroundColor: "#26423012",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepNumText: { fontSize: 13, fontWeight: "700", color: "#264230" },
+  stepText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#1B1B1B",
+    textAlign: "right",
+    lineHeight: 19,
+  },
+  statusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#C4A03512",
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderWidth: 1,
+    borderColor: "#C4A03525",
+    marginTop: 4,
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#C4A035",
+  },
+  statusText: { fontSize: 11, fontWeight: "600", color: "#8A6A00" },
+});
 
 function LogoutButton({ onPress }: { onPress: () => void }) {
   return (
@@ -785,7 +852,6 @@ function LogoutButton({ onPress }: { onPress: () => void }) {
     </TouchableOpacity>
   );
 }
-
 const lo = StyleSheet.create({
   btn: {
     flexDirection: "row",
@@ -803,19 +869,20 @@ const lo = StyleSheet.create({
   txt: { fontSize: 14, fontWeight: FontWeight.bold, color: ERR },
 });
 
-// ─────────────────────────────────────────────
-// Main screen
-// ─────────────────────────────────────────────
-
+// ── Main ──────────────────────────────────────────────────────────
 export default function Profile() {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("account");
   const [editVisible, setEditVisible] = useState(false);
 
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const student = useStudent();
   const { data, isLoading, isError, refetch } = useProfile();
   const profile = data ?? student;
+
+  // ✅ الأولوية: avatar_url من الـ profile → google_avatar من الـ user
+  const avatarUrl: string | null =
+    (profile as any)?.avatar_url || user?.google_avatar || null;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -840,7 +907,6 @@ export default function Profile() {
   return (
     <View style={pg.root}>
       <StatusBar barStyle="light-content" backgroundColor={TEAL} />
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={pg.scroll}
@@ -853,10 +919,10 @@ export default function Profile() {
         }
         stickyHeaderIndices={profile ? [0] : undefined}
       >
-        {/* ── Sticky hero ── */}
         {profile ? (
           <HeroBanner
             profile={profile}
+            avatarUrl={avatarUrl}
             activeTab={activeTab}
             onTabChange={setActiveTab}
             onEdit={() => setEditVisible(true)}
@@ -865,14 +931,12 @@ export default function Profile() {
           <View />
         )}
 
-        {/* ── Loading ── */}
         {isLoading && !profile && (
           <View style={pg.center}>
             <ActivityIndicator size="large" color={TEAL} />
           </View>
         )}
 
-        {/* ── Error ── */}
         {isError && !profile && (
           <View style={pg.center}>
             <Text style={pg.errIcon}>⚠</Text>
@@ -883,14 +947,11 @@ export default function Profile() {
           </View>
         )}
 
-        {/* ── Tabs ── */}
         {profile && (
           <View style={pg.body}>
             {activeTab === "account" && <AccountTab profile={profile} />}
             {activeTab === "card" && <CardTab profile={profile} />}
-
             {activeTab === "account" && <LogoutButton onPress={handleLogout} />}
-
             <Text style={pg.version}>CEIL Mobile v1.0.0</Text>
           </View>
         )}
@@ -898,7 +959,6 @@ export default function Profile() {
         <View style={pg.pad} />
       </ScrollView>
 
-      {/* ── Edit modal ── */}
       {profile && (
         <EditProfileModal
           visible={editVisible}

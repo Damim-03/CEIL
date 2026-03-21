@@ -10,9 +10,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
-import * as AuthSession from "expo-auth-session";
 import { apiClient, sessionEvents, SESSION_EXPIRED_EVENT } from "../api/client";
-import { Platform } from "react-native";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -53,7 +51,7 @@ interface AuthContextType extends AuthState {
   register: (data: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  loginWithGoogle: () => Promise<void>; // ✅
+  loginWithGoogle: () => Promise<void>;
 }
 
 // ── Context ──────────────────────────────────────────────────────
@@ -66,9 +64,10 @@ const KEYS = {
 } as const;
 
 // ── Google Client IDs ─────────────────────────────────────────────
-// 🔑 ضع هنا الـ Client IDs من Google Cloud Console
 const GOOGLE_WEB_CLIENT_ID =
   "631352520680-u904t4var3ud8ko1pk312mrthbdd8msq.apps.googleusercontent.com";
+const GOOGLE_ANDROID_CLIENT_ID =
+  "631352520680-qvvnf6ds6uah1r9qvu0uabtvgtef09fe.apps.googleusercontent.com";
 
 // ── Provider ─────────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -80,18 +79,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Google Auth Request ───────────────────────────────────────
   const [_, googleResponse, googlePromptAsync] = Google.useAuthRequest({
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
     webClientId: GOOGLE_WEB_CLIENT_ID,
-    androidClientId:
-      Platform.OS === "android" ? GOOGLE_WEB_CLIENT_ID : undefined,
-    iosClientId: Platform.OS === "ios" ? GOOGLE_WEB_CLIENT_ID : undefined,
   });
-
-  console.log("Redirect URI:", AuthSession.makeRedirectUri({ scheme: "ceil" }));
 
   // ── Handle Google Response ────────────────────────────────────
   useEffect(() => {
+    console.log("🔷 googleResponse changed:", googleResponse?.type);
     if (googleResponse?.type === "success") {
       const token = googleResponse.authentication?.accessToken;
+      console.log("🔷 token exists:", !!token);
       if (token) handleGoogleMobile(token);
     }
   }, [googleResponse]);
@@ -183,9 +180,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ── Google Mobile Login ───────────────────────────────────────
   const handleGoogleMobile = async (googleToken: string) => {
     try {
+      console.log("🔵 Calling /auth/google/mobile...");
       const { data } = await apiClient.post("/auth/google/mobile", {
         accessToken: googleToken,
       });
+      console.log("🟢 Response:", JSON.stringify(data));
 
       await Promise.all([
         AsyncStorage.setItem(KEYS.accessToken, data.accessToken),
@@ -194,14 +193,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ]);
 
       setState({ user: data.user, isLoading: false, isAuthenticated: true });
-    } catch (e) {
-      console.error("Google mobile login failed:", e);
+    } catch (e: any) {
+      console.error(
+        "🔴 Google mobile login failed:",
+        e?.response?.data || e?.message || e,
+      );
       throw e;
     }
   };
 
   const loginWithGoogle = useCallback(async () => {
-    await googlePromptAsync();
+    console.log("🟡 googlePromptAsync called");
+    const result = await googlePromptAsync();
+    console.log("🟡 promptAsync result type:", result?.type);
   }, [googlePromptAsync]);
 
   // ── Logout ────────────────────────────────────────────────────

@@ -4,54 +4,160 @@ import {
   View,
   StyleSheet,
   Animated,
-  Easing,
   Dimensions,
   PanResponder,
+  TouchableOpacity,
+  Text,
 } from "react-native";
-import { Tabs } from "expo-router";
+import { Tabs, usePathname, useRouter } from "expo-router";
 import { FloatingTabBar } from "../../src/components/layout/TabBar";
-import { TAB_SCREENS } from "../../src/constants/tabs";
+import type { WheelItem } from "../../src/components/layout/TabBar";
+import { TAB_SCREENS, HIDDEN_SCREENS } from "../../src/constants/tabs";
 import PageLoader from "../../src/components/common/PageLoader";
+import {
+  IconArrowRight,
+  IconHome,
+  IconBook,
+  IconSettings,
+  IconUser,
+  IconBell,
+  IconFileText,
+  IconClipboardList,
+  IconCoin,
+} from "@tabler/icons-react-native";
 
 import HomeScreen from "./home";
 import CoursesScreen from "./courses";
 import SettingsScreen from "./settings";
 import ProfileScreen from "./profile";
+import DocumentsScreen from "./documents";
+import NotificationsScreen from "./notifications";
+import AttendanceScreen from "./attendance";
+import ScheduleScreen from "./schedule";
+import EnrollmentsScreen from "./enrollments";
+import FeesScreen from "./fees";
+import { useSocket } from "../../src/hooks/useSocket";
 
 const { width: SW } = Dimensions.get("window");
 
-const SCREENS = [HomeScreen, CoursesScreen, SettingsScreen, ProfileScreen];
-const COUNT = SCREENS.length;
+const TAB_SCREENS_LIST = [
+  HomeScreen,
+  CoursesScreen,
+  SettingsScreen,
+  ProfileScreen,
+];
+const COUNT = TAB_SCREENS_LIST.length;
+const SWIPE_THRESHOLD = SW * 0.12;
+const SWIPE_VELOCITY = 0.25;
+const TEAL = "#264230";
 
-const SWIPE_THRESHOLD = SW * 0.22;
-const SWIPE_VELOCITY = 0.35;
+const OVERLAY_MAP: Record<string, React.ComponentType<any>> = {
+  documents: DocumentsScreen,
+  notifications: NotificationsScreen,
+  attendance: AttendanceScreen,
+  schedule: ScheduleScreen,
+  enrollments: EnrollmentsScreen,
+  fees: FeesScreen,
+};
+
+const OVERLAY_TITLES: Record<string, string> = {
+  documents: "وثائقي",
+  notifications: "الإشعارات",
+  attendance: "الحضور",
+  schedule: "الجدول",
+  enrollments: "تسجيلاتي",
+  fees: "رسومي",
+};
+
+// ✅ 4 tabs + 6 hidden screens
+const WHEEL_ITEMS: WheelItem[] = [
+  { name: "home", Icon: IconHome, label: "الرئيسية", isTab: true },
+  { name: "documents", Icon: IconFileText, label: "وثائقي", isTab: false },
+  { name: "courses", Icon: IconBook, label: "الخدمات", isTab: true },
+  { name: "notifications", Icon: IconBell, label: "الإشعارات", isTab: false },
+  { name: "settings", Icon: IconSettings, label: "الإعدادات", isTab: true },
+  { name: "fees", Icon: IconCoin, label: "رسومي", isTab: false },
+  { name: "profile", Icon: IconUser, label: "الملف", isTab: true },
+  {
+    name: "enrollments",
+    Icon: IconClipboardList,
+    label: "تسجيلاتي",
+    isTab: false,
+  },
+];
 
 export default function StudentLayout() {
+  useSocket();
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [overlay, setOverlay] = useState<string | null>(null);
 
   const isAnimating = useRef(false);
   const currentIndex = useRef(0);
-
-  // One animated value — represents the "page offset" in screen widths
-  // 0 = first screen, -SW = second screen, -2*SW = third, etc.
   const scrollX = useRef(new Animated.Value(0)).current;
+  const overlayX = useRef(new Animated.Value(SW)).current;
+  const ignorePathname = useRef(false);
+
+  const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 2900);
     return () => clearTimeout(t);
   }, []);
 
-  // ── Animate scrollX to target index ──
-  function animateTo(index: number, velocity = 0) {
-    isAnimating.current = true;
-    Animated.spring(scrollX, {
-      toValue: -index * SW,
+  useEffect(() => {
+    if (ignorePathname.current) return;
+    const parts = pathname.split("/").filter(Boolean);
+    const last = parts[parts.length - 1];
+    const isHidden = HIDDEN_SCREENS.includes(last as any);
+    if (isHidden && last !== overlay) {
+      setOverlay(last);
+      overlayX.setValue(SW);
+      Animated.timing(overlayX, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [overlay, overlayX, pathname]);
+
+  const openOverlay = (name: string) => {
+    if (overlay === name) return;
+    ignorePathname.current = true;
+    setOverlay(name);
+    overlayX.setValue(SW);
+    Animated.timing(overlayX, {
+      toValue: 0,
+      duration: 250,
       useNativeDriver: true,
-      tension: 72,
-      friction: 13,
-      overshootClamping: true,
-      velocity,
+    }).start(() => {
+      ignorePathname.current = false;
+    });
+  };
+
+  const closeOverlay = () => {
+    ignorePathname.current = true;
+    Animated.timing(overlayX, {
+      toValue: SW,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setOverlay(null);
+      overlayX.setValue(SW);
+      setTimeout(() => {
+        ignorePathname.current = false;
+        router.replace("/(student)/home");
+      }, 50);
+    });
+  };
+
+  function animateTo(index: number) {
+    isAnimating.current = true;
+    Animated.timing(scrollX, {
+      toValue: -index * SW,
+      duration: 160,
+      useNativeDriver: true,
     }).start(() => {
       isAnimating.current = false;
       currentIndex.current = index;
@@ -59,35 +165,32 @@ export default function StudentLayout() {
     });
   }
 
-  // ── Tab press ──
   function navigateTab(index: number) {
     if (index === currentIndex.current || isAnimating.current) return;
+    if (overlay) closeOverlay();
     animateTo(index);
-    // Update indicator immediately for responsiveness
     setActiveIndex(index);
   }
 
-  // ── PanResponder ──
   const startScrollX = useRef(0);
 
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gs) =>
         !isAnimating.current &&
+        !overlay &&
         Math.abs(gs.dx) > 6 &&
         Math.abs(gs.dx) > Math.abs(gs.dy) * 1.5,
 
       onPanResponderGrant: () => {
-        // Capture current scrollX value
-        scrollX.stopAnimation((val) => {
-          startScrollX.current = val;
-        });
+        scrollX.stopAnimation();
+        startScrollX.current = (scrollX as any)._value;
       },
 
       onPanResponderMove: (_, gs) => {
         const atStart = currentIndex.current === 0 && gs.dx > 0;
         const atEnd = currentIndex.current === COUNT - 1 && gs.dx < 0;
-        const dampen = atStart || atEnd ? 0.1 : 1;
+        const dampen = atStart || atEnd ? 0.08 : 1;
         scrollX.setValue(startScrollX.current + gs.dx * dampen);
       },
 
@@ -95,25 +198,22 @@ export default function StudentLayout() {
         const { dx, vx } = gs;
         const swipedLeft = dx < -SWIPE_THRESHOLD || vx < -SWIPE_VELOCITY;
         const swipedRight = dx > SWIPE_THRESHOLD || vx > SWIPE_VELOCITY;
-
         let target = currentIndex.current;
-
         if (swipedLeft && currentIndex.current < COUNT - 1) target++;
         if (swipedRight && currentIndex.current > 0) target--;
-
+        isAnimating.current = false;
         setActiveIndex(target);
-        animateTo(target, -vx * SW * 0.5);
+        animateTo(target);
       },
 
-      onPanResponderTerminate: () => {
-        animateTo(currentIndex.current);
-      },
+      onPanResponderTerminate: () => animateTo(currentIndex.current),
     }),
   ).current;
 
+  const OverlayScreen = overlay ? OVERLAY_MAP[overlay] : null;
+
   return (
     <View style={s.root}>
-      {/* Hidden Tabs — required by Expo Router for file-based routing */}
       <View style={s.hidden}>
         <Tabs
           screenOptions={{
@@ -124,16 +224,18 @@ export default function StudentLayout() {
           {TAB_SCREENS.map(({ name }) => (
             <Tabs.Screen key={name} name={name} />
           ))}
+          {HIDDEN_SCREENS.map((name) => (
+            <Tabs.Screen key={name} name={name} options={{ href: null }} />
+          ))}
         </Tabs>
       </View>
 
-      {/* All screens rendered side by side — only after loading */}
       {!loading && (
         <Animated.View
           style={[s.rail, { transform: [{ translateX: scrollX }] }]}
           {...panResponder.panHandlers}
         >
-          {SCREENS.map((Screen, i) => (
+          {TAB_SCREENS_LIST.map((Screen, i) => (
             <View key={i} style={[s.page, { left: i * SW }]}>
               <Screen />
             </View>
@@ -141,7 +243,6 @@ export default function StudentLayout() {
         </Animated.View>
       )}
 
-      {/* Floating tab bar */}
       {!loading && (
         <FloatingTabBar
           tabs={
@@ -153,7 +254,39 @@ export default function StudentLayout() {
           }
           activeIndex={activeIndex}
           onPress={navigateTab}
+          wheelItems={WHEEL_ITEMS}
+          onWheelSelect={(name) => openOverlay(name)}
         />
+      )}
+
+      {OverlayScreen && (
+        <Animated.View
+          style={[s.overlay, { transform: [{ translateX: overlayX }] }]}
+        >
+          <TouchableOpacity
+            style={s.backBtn}
+            onPress={closeOverlay}
+            activeOpacity={0.8}
+          >
+            <IconArrowRight size={20} color={TEAL} strokeWidth={2.5} />
+            <Text style={s.backTitle}>
+              {overlay ? (OVERLAY_TITLES[overlay] ?? "") : ""}
+            </Text>
+          </TouchableOpacity>
+          <View style={{ flex: 1 }}>
+            {overlay === "enrollments" ? (
+              <OverlayScreen
+                onNavigateCourses={() => {
+                  closeOverlay();
+                  // انتقل للـ tab index 1 (courses) بعد إغلاق الـ overlay
+                  setTimeout(() => navigateTab(1), 300);
+                }}
+              />
+            ) : (
+              <OverlayScreen />
+            )}
+          </View>
+        </Animated.View>
       )}
 
       {loading && <PageLoader />}
@@ -162,28 +295,27 @@ export default function StudentLayout() {
 }
 
 const s = StyleSheet.create({
-  root: {
-    flex: 1,
-    overflow: "hidden",
-  },
-  // The rail holds all screens side by side
-  rail: {
+  root: { flex: 1, overflow: "hidden" },
+  rail: { position: "absolute", top: 0, bottom: 0, width: SW * COUNT },
+  page: { position: "absolute", top: 0, bottom: 0, width: SW },
+  hidden: { position: "absolute", width: 0, height: 0, overflow: "hidden" },
+  overlay: {
     position: "absolute",
     top: 0,
+    left: 0,
+    right: 0,
     bottom: 0,
-    width: SW * COUNT,
+    backgroundColor: "#F7F3EC",
+    zIndex: 100,
   },
-  // Each page occupies one screen width
-  page: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    width: SW,
+  backBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingTop: 52,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    backgroundColor: "#F7F3EC",
   },
-  hidden: {
-    position: "absolute",
-    width: 0,
-    height: 0,
-    overflow: "hidden",
-  },
+  backTitle: { fontSize: 16, fontWeight: "700", color: TEAL },
 });
