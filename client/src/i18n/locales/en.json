@@ -24,6 +24,12 @@
     "student": "Student",
     "noResults": "No results found"
   },
+  "download": {
+    "title": "Download the App",
+    "subtitle": "The full CEIL experience in your pocket — available on Android & iOS",
+    "availableOn": "Available on",
+    "downloadOn": "Download on the"
+  },
   "header": {
     "universityName": "Université Echahid Hamma Lakhdar - El Oued",
     "centerName": "CEIL - Centre d'Enseignement Intensif des Langues",
@@ -2106,6 +2112,21 @@
     }
   },
   "platform.badge": "CEIL Digital Platform",
+  "platform.download.title": "Download the App",
+  "platform.download.subtitle": "The full CEIL experience in your pocket — available on Android & iOS",
+  "platform.download.availableOn": "Available on",
+  "platform.download.downloadOn": "Download on the",
+  "platform.download.android.title": "Download CEIL App",
+  "platform.download.android.stepsTitle": "Installation Steps",
+  "platform.download.android.step1": "Tap the download button below to get the APK file",
+  "platform.download.android.step2": "Open the file from your notification bar or Downloads folder",
+  "platform.download.android.step3": "Allow installation from unknown sources when prompted, then install",
+  "platform.download.android.warning": "Your phone may ask you to allow installation from external sources — this is normal since the app is outside the Play Store",
+  "platform.download.android.downloadBtn": "Download APK",
+  "platform.download.ios.title": "CEIL App on iOS",
+  "platform.download.ios.comingSoonTitle": "Coming Soon on App Store",
+  "platform.download.ios.comingSoonDesc": "We're working on launching the app on Apple's store. It will be available soon for iPhone users.",
+  "platform.download.ios.inDevelopment": "In Development",
   "platform.title.line1": "Manage Your Center",
   "platform.title.line2": "With One Platform",
   "platform.subtitle": "A comprehensive digital system for managing the Intensive Language Teaching Center — from enrollment to results, everything in one place.",

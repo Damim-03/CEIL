@@ -86,6 +86,7 @@ import { useScreenSaver } from "./hooks/Usescreensaver";
 import ScreenSaver from "./components/Screensaver";
 import NetworkToast from "./components/Networktoast";
 import AdminGroupsPage from "./app/admin/pages/group/AdminGroupsPage";
+import TimetablePage from "./app/admin/pages/TimetablePage";
 
 const App = () => {
   const { isIdle, resetTimer } = useScreenSaver();
@@ -313,6 +314,7 @@ const App = () => {
             path="formations/:courseId/edit"
             element={<CourseProfileManager />}
           />
+          <Route path="/admin/timetable" element={<TimetablePage />} />
           <Route path="rooms" element={<RoomsPage />} />
           <Route path="rooms/timetable" element={<RoomsTimetablePage />} />
         </Route>

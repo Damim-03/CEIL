@@ -24,6 +24,7 @@
     "student": "طالب",
     "noResults": "لا توجد نتائج"
   },
+
   "header": {
     "universityName": "Université Echahid Hamma Lakhdar - El Oued",
     "centerName": "CEIL - Centre d'Enseignement Intensif des Langues",
@@ -2107,6 +2108,21 @@
     }
   },
   "platform.badge": "المنصة الرقمية لـ CEIL",
+  "platform.download.title": "حمّل التطبيق",
+  "platform.download.subtitle": "تجربة CEIL كاملة في جيبك — متاح على Android و iOS",
+  "platform.download.availableOn": "متاح على",
+  "platform.download.downloadOn": "حمّل من",
+  "platform.download.android.title": "تحميل تطبيق CEIL",
+  "platform.download.android.stepsTitle": "خطوات التثبيت",
+  "platform.download.android.step1": "اضغط على زر التحميل أدناه لتنزيل ملف APK",
+  "platform.download.android.step2": "افتح الملف من إشعارات التحميل أو مجلد Downloads",
+  "platform.download.android.step3": "اسمح بتثبيت التطبيقات من مصادر غير معروفة ثم ثبّت",
+  "platform.download.android.warning": "قد يطلب منك الهاتف السماح بالتثبيت من مصادر خارجية — هذا طبيعي لأن التطبيق خارج متجر Play",
+  "platform.download.android.downloadBtn": "تحميل APK",
+  "platform.download.ios.title": "تطبيق CEIL على iOS",
+  "platform.download.ios.comingSoonTitle": "قريباً على App Store",
+  "platform.download.ios.comingSoonDesc": "نعمل على إطلاق التطبيق على متجر Apple. سيكون متاحاً قريباً لمستخدمي iPhone.",
+  "platform.download.ios.inDevelopment": "قيد التطوير",
   "platform.title.line1": "أدِر مركزك",
   "platform.title.line2": "بمنصة واحدة",
   "platform.subtitle": "نظام رقمي شامل لإدارة مركز التعليم المكثف للغات — من التسجيل إلى النتائج، كل شيء في مكان واحد.",

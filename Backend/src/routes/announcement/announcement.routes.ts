@@ -1,18 +1,28 @@
 import { Router } from "express";
-import { getPublicHomeStatsController, getPublicAnnouncementsController, getPublicAnnouncementByIdController, getPublicCoursesController, getPublicCourseByIdController } from "../../controllers/announcement/announcement.controller"
-
-
+import {
+  getPublicHomeStatsController,
+  getPublicAnnouncementsController,
+  getPublicAnnouncementByIdController,
+  getPublicCoursesController,
+  getPublicCourseByIdController,
+} from "../../controllers/announcement/announcement.controller";
+import { getPublicTimetableController } from "../../controllers/admin/timetable.controller";
 
 const publicRoutes = Router();
 
 // ─── No authMiddleware! Anyone can access these ───
+
+publicRoutes.get("/timetable", getPublicTimetableController);
 
 // Home page stats
 publicRoutes.get("/home/stats", getPublicHomeStatsController);
 
 // Announcements (published only)
 publicRoutes.get("/announcements", getPublicAnnouncementsController);
-publicRoutes.get("/announcements/:announcementId", getPublicAnnouncementByIdController);
+publicRoutes.get(
+  "/announcements/:announcementId",
+  getPublicAnnouncementByIdController,
+);
 
 // Courses (published only)
 publicRoutes.get("/courses", getPublicCoursesController);

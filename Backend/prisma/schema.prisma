@@ -137,6 +137,7 @@ model Group {
   teacher       Teacher?       @relation(fields: [teacher_id], references: [teacher_id])
   notifications Notification[]
   sessions      Session[]
+  timetable TimetableEntry[]
 
   @@map("Group")
 }
@@ -185,6 +186,7 @@ model Room {
   is_active  Boolean   @default(true)
   created_at DateTime  @default(now())
   sessions   Session[]
+  timetable TimetableEntry[]
 
   @@map("Room")
 }
@@ -413,6 +415,31 @@ model SystemSettings {
   updated_at DateTime @updatedAt
 
   @@map("SystemSettings")
+}
+
+model TimetableEntry {
+  entry_id     String   @id @default(uuid()) @db.Uuid
+  room_id      String   @db.Uuid
+  group_id     String?  @db.Uuid
+  day_of_week  Int
+  start_time   String   @db.VarChar(5)
+  end_time     String   @db.VarChar(5)
+  level        String   @db.VarChar(20)
+  language     String   @db.VarChar(5)
+  group_label  String   @db.VarChar(50)
+  session_name String?  @db.VarChar(100)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  created_by   String?  @db.Uuid
+
+  room  Room   @relation(fields: [room_id], references: [room_id])
+  group Group? @relation(fields: [group_id], references: [group_id])
+
+  @@unique([room_id, day_of_week, start_time])
+  @@index([room_id])
+  @@index([day_of_week])
+  @@index([language])
+  @@map("TimetableEntry")
 }
 
 enum NotificationTarget {

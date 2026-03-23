@@ -24,6 +24,12 @@
     "student": "Étudiant",
     "noResults": "Aucun résultat trouvé"
   },
+  "download": {
+    "title": "Télécharger l'application",
+    "subtitle": "L'expérience CEIL complète dans votre poche — disponible sur Android et iOS",
+    "availableOn": "Disponible sur",
+    "downloadOn": "Télécharger sur"
+  },
   "header": {
     "universityName": "Université Echahid Hamma Lakhdar - El Oued",
     "centerName": "CEIL - Centre d'Enseignement Intensif des Langues",
@@ -2106,6 +2112,21 @@
     }
   },
   "platform.badge": "Plateforme Numérique CEIL",
+  "platform.download.title": "Télécharger l'application",
+  "platform.download.subtitle": "L'expérience CEIL complète dans votre poche — disponible sur Android et iOS",
+  "platform.download.availableOn": "Disponible sur",
+  "platform.download.downloadOn": "Télécharger sur",
+  "platform.download.android.title": "Télécharger l'app CEIL",
+  "platform.download.android.stepsTitle": "Étapes d'installation",
+  "platform.download.android.step1": "Appuyez sur le bouton ci-dessous pour télécharger le fichier APK",
+  "platform.download.android.step2": "Ouvrez le fichier depuis la barre de notifications ou le dossier Téléchargements",
+  "platform.download.android.step3": "Autorisez l'installation depuis des sources inconnues, puis installez",
+  "platform.download.android.warning": "Votre téléphone peut vous demander d'autoriser l'installation depuis des sources externes — c'est normal car l'app est hors du Play Store",
+  "platform.download.android.downloadBtn": "Télécharger APK",
+  "platform.download.ios.title": "App CEIL sur iOS",
+  "platform.download.ios.comingSoonTitle": "Bientôt sur l'App Store",
+  "platform.download.ios.comingSoonDesc": "Nous travaillons au lancement de l'app sur l'App Store d'Apple. Elle sera disponible prochainement pour les utilisateurs iPhone.",
+  "platform.download.ios.inDevelopment": "En développement",
   "platform.title.line1": "Gérez Votre Centre",
   "platform.title.line2": "Avec Une Seule Plateforme",
   "platform.subtitle": "Un système numérique complet pour la gestion du Centre d'Enseignement Intensif des Langues — de l'inscription aux résultats, tout en un seul endroit.",

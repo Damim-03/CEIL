@@ -168,12 +168,15 @@ import {
   transferStudent as transferStudentController,
   getTransferRequests as getTransferRequestsController,
 } from "../../controllers/admin/group.controller";
+import timetableRoutes from "./timetable.route";
 
 const adminRoutes = Router();
 
 /* ======================================================
     admin
   ====================================================== */
+
+adminRoutes.use("/timetable", timetableRoutes);
 
 adminRoutes.patch(
   "/me/avatar",

@@ -28,6 +28,7 @@ import {
   BellRing,
   DoorOpen,
   Layers,
+  Timer,
 } from "lucide-react";
 
 interface NavItem {
@@ -57,6 +58,7 @@ const navItems: NavItem[] = [
   },
   { icon: Calendar, labelKey: "admin.nav.sessions", href: "/admin/sessions" },
   { icon: DoorOpen, labelKey: "admin.nav.rooms", href: "/admin/rooms" },
+  { icon: Timer, labelKey: "التوزيع الزمني", href: "/admin/timetable" },
   { icon: DollarSign, labelKey: "admin.nav.fees", href: "/admin/fees" },
   {
     icon: ClipboardList,
