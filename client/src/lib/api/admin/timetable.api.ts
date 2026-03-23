@@ -148,7 +148,7 @@ export async function checkTimetableConflict(params: {
 
 /** جلب كل القاعات النشطة */
 export async function fetchRooms() {
-  const { data } = await axiosInstance.get("/admin/rooms");
+  const { data } = await axiosInstance.get("/api/admin/rooms");
   // الـ response هو array مباشرة: [ { room_id, name, ... }, ... ]
   const list: Room[] = Array.isArray(data)
     ? data

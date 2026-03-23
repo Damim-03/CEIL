@@ -1,5 +1,4 @@
-// src/middlewares/timetable.validation.ts
-// (نفس مجلد middlewares الموجود في مشروعك)
+// src/validations/timetable.validation.ts
 
 import { Request, Response, NextFunction } from "express";
 import { VALID_LANGUAGES, VALID_LEVELS } from "../types/timetable.types";
@@ -31,14 +30,19 @@ export function validateCreateEntry(
 
   if (!room_id || typeof room_id !== "string") errors.push("room_id مطلوب");
 
+  // ✅ إصلاح: نحول لـ number أولاً ثم نتحقق
+  // day_of_week: 0 هو falsy لكن صالح!
+  const dayNum = Number(day_of_week);
   if (
     day_of_week === undefined ||
     day_of_week === null ||
-    typeof day_of_week !== "number" ||
-    day_of_week < 0 ||
-    day_of_week > 5
+    day_of_week === "" ||
+    isNaN(dayNum) ||
+    dayNum < 0 ||
+    dayNum > 5
   )
     errors.push("day_of_week يجب أن يكون رقمًا بين 0 (السبت) و 5 (الخميس)");
+  else req.body.day_of_week = dayNum; // ← نضمن أنه number في الـ controller
 
   if (!start_time || !isValidTime(start_time))
     errors.push("start_time يجب أن يكون بصيغة HH:MM");
@@ -80,11 +84,12 @@ export function validateUpdateEntry(
   const { day_of_week, start_time, end_time, level, language } = req.body;
   const errors: string[] = [];
 
-  if (
-    day_of_week !== undefined &&
-    (typeof day_of_week !== "number" || day_of_week < 0 || day_of_week > 5)
-  )
-    errors.push("day_of_week يجب أن يكون بين 0 و 5");
+  if (day_of_week !== undefined && day_of_week !== null && day_of_week !== "") {
+    const dayNum = Number(day_of_week);
+    if (isNaN(dayNum) || dayNum < 0 || dayNum > 5)
+      errors.push("day_of_week يجب أن يكون بين 0 و 5");
+    else req.body.day_of_week = dayNum;
+  }
 
   if (start_time !== undefined && !isValidTime(start_time))
     errors.push("start_time بصيغة HH:MM");
