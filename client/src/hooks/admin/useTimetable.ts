@@ -31,7 +31,7 @@ export function useAdminTimetable(filters?: TimetableFilters) {
   return useQuery({
     queryKey: timetableKeys.list(filters),
     queryFn: () => fetchAllEntries(filters),
-    staleTime: 1000 * 60 * 5, // 5 دقائق
+    staleTime: 0, // يُعيد الجلب فوراً عند invalidate
   });
 }
 
@@ -88,8 +88,12 @@ export function useCreateEntry() {
     mutationFn: (payload: CreateEntryPayload) => createTimetableEntry(payload),
 
     onSuccess: (data) => {
-      // إعادة جلب كل قوائم التوقيت
-      qc.invalidateQueries({ queryKey: timetableKeys.all });
+      // إعادة جلب كل queries التي تبدأ بـ "timetable"
+      qc.invalidateQueries({
+        queryKey: timetableKeys.all,
+        refetchType: "active",
+        exact: false,
+      });
       toast.success(data.message ?? "تمت إضافة الحصة بنجاح");
     },
 
@@ -192,7 +196,11 @@ export function useDeleteEntry() {
     },
 
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: timetableKeys.all });
+      qc.invalidateQueries({
+        queryKey: timetableKeys.all,
+        refetchType: "active",
+        exact: false,
+      });
     },
   });
 }
