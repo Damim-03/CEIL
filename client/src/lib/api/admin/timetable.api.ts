@@ -58,7 +58,7 @@ export async function fetchAllEntries(filters?: TimetableFilters) {
       if (v !== undefined && v !== null) params.set(k, String(v));
     });
   }
-  const { data } = await axiosInstance.get(`/api/admin/timetable?${params}`);
+  const { data } = await axiosInstance.get(`/admin/timetable?${params}`);
   return data as {
     success: boolean;
     total: number;
@@ -69,9 +69,7 @@ export async function fetchAllEntries(filters?: TimetableFilters) {
 
 /** توقيت قاعة معينة */
 export async function fetchRoomTimetable(roomId: string) {
-  const { data } = await axiosInstance.get(
-    `/api/admin/timetable/room/${roomId}`,
-  );
+  const { data } = await axiosInstance.get(`/admin/timetable/room/${roomId}`);
   return data as {
     success: boolean;
     room: { room_id: string; name: string; capacity: number };
@@ -86,13 +84,13 @@ export async function fetchPublicTimetable(filters?: {
   level?: string;
 }) {
   const params = new URLSearchParams(filters as any);
-  const { data } = await axiosInstance.get(`/api/timetable?${params}`);
+  const { data } = await axiosInstance.get(`/timetable?${params}`);
   return data as { success: boolean; data: TimetableEntry[] };
 }
 
 /** إنشاء حصة جديدة */
 export async function createTimetableEntry(payload: CreateEntryPayload) {
-  const { data } = await axiosInstance.post("/api/admin/timetable", payload);
+  const { data } = await axiosInstance.post("/admin/timetable", payload);
   return data as { success: boolean; message: string; data: TimetableEntry };
 }
 
@@ -101,22 +99,19 @@ export async function updateTimetableEntry(
   id: string,
   payload: Partial<CreateEntryPayload>,
 ) {
-  const { data } = await axiosInstance.put(
-    `/api/admin/timetable/${id}`,
-    payload,
-  );
+  const { data } = await axiosInstance.put(`/admin/timetable/${id}`, payload);
   return data as { success: boolean; message: string; data: TimetableEntry };
 }
 
 /** حذف حصة */
 export async function deleteTimetableEntry(id: string) {
-  const { data } = await axiosInstance.delete(`/api/admin/timetable/${id}`);
+  const { data } = await axiosInstance.delete(`/admin/timetable/${id}`);
   return data as { success: boolean; message: string };
 }
 
 /** حذف جماعي */
 export async function bulkDeleteEntries(ids: string[]) {
-  const { data } = await axiosInstance.delete("/api/admin/timetable/bulk", {
+  const { data } = await axiosInstance.delete("/admin/timetable/bulk", {
     data: { ids },
   });
   return data as { success: boolean; message: string; deleted: number };
@@ -132,7 +127,7 @@ export async function checkTimetableConflict(params: {
 }) {
   const q = new URLSearchParams(params as any);
   const { data } = await axiosInstance.get(
-    `/api/admin/timetable/check-conflict?${q}`,
+    `/admin/timetable/check-conflict?${q}`,
   );
   return data as {
     success: boolean;
@@ -148,7 +143,7 @@ export async function checkTimetableConflict(params: {
 
 /** جلب كل القاعات النشطة */
 export async function fetchRooms() {
-  const { data } = await axiosInstance.get("/api/admin/rooms");
+  const { data } = await axiosInstance.get("/admin/rooms");
   // الـ response هو array مباشرة: [ { room_id, name, ... }, ... ]
   const list: Room[] = Array.isArray(data)
     ? data
