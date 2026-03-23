@@ -21,6 +21,13 @@ export interface TimetableEntry {
   group?: { name: string } | null;
 }
 
+export interface Room {
+  room_id: string;
+  name: string;
+  capacity: number;
+  is_active: boolean;
+}
+
 export interface CreateEntryPayload {
   room_id: string;
   group_id?: string;
@@ -137,4 +144,12 @@ export async function checkTimetableConflict(params: {
       slot: string;
     };
   };
+}
+
+/** جلب كل القاعات النشطة */
+export async function fetchRooms() {
+  const { data } = await axiosInstance.get("/admin/rooms");
+  // يدعم كلا الشكلين: { data: [...] } أو { rooms: [...] }
+  const list: Room[] = data?.data ?? data?.rooms ?? [];
+  return list.filter((r) => r.is_active !== false);
 }

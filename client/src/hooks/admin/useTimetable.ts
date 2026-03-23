@@ -5,6 +5,7 @@ import { toast } from "sonner"; // نفس مكتبة الـ toast الموجود
 import {
   fetchAllEntries,
   fetchRoomTimetable,
+  fetchRooms,
   createTimetableEntry,
   updateTimetableEntry,
   deleteTimetableEntry,
@@ -31,6 +32,17 @@ export function useAdminTimetable(filters?: TimetableFilters) {
     queryKey: timetableKeys.list(filters),
     queryFn: () => fetchAllEntries(filters),
     staleTime: 1000 * 60 * 5, // 5 دقائق
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  useRooms — قائمة القاعات النشطة
+// ══════════════════════════════════════════════════════════════
+export function useRooms() {
+  return useQuery({
+    queryKey: ["admin-rooms"],
+    queryFn: fetchRooms,
+    staleTime: 1000 * 60 * 10, // 10 دقائق — القاعات لا تتغير كثيراً
   });
 }
 

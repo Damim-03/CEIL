@@ -6,6 +6,7 @@ import {
   useAdminTimetable,
   useCreateEntry,
   useDeleteEntry,
+  useRooms,
 } from "../../../hooks/admin/useTimetable";
 import type { TimetableEntry } from "../../../lib/api/admin/timetable.api";
 
@@ -478,15 +479,8 @@ export default function TimetablePage() {
   const grouped = groupEntries(entries);
   const displayDays = activeDay === "all" ? DAYS : [activeDay];
 
-  // Rooms — extraits des données (ou tu peux faire un appel séparé)
-  const roomsMap = new Map<string, string>();
-  entries.forEach((e) => {
-    if (e.room) roomsMap.set(e.room_id, e.room.name);
-  });
-  const rooms = Array.from(roomsMap.entries()).map(([room_id, name]) => ({
-    room_id,
-    name,
-  }));
+  // ── القاعات عبر hook ───────────────────────────────────────
+  const { data: rooms = [] } = useRooms();
 
   // Stats par langue
   const langCounts: Record<string, number> = {};
