@@ -1,11 +1,11 @@
 {
   "expo": {
     "name": "CEIL",
-    "slug": "CEIL",
+    "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo-2.png",
-    "scheme": "CEIL",
+    "scheme": "ceil",
     "owner": "damim-03",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,11 +14,21 @@
     },
     "android": {
       "package": "com.damim03.ceil",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "com.damim03.ceil"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/logo-2.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
@@ -29,6 +39,7 @@
     },
     "plugins": [
       "expo-router",
+      "@react-native-google-signin/google-signin",
       [
         "expo-splash-screen",
         {

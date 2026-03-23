@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { useRef, useState } from "react";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import Svg, { Path, G } from "react-native-svg";
+import Svg, { Path } from "react-native-svg";
 import { useAuth } from "../../src/context/AuthContext";
 import {
   Colors,

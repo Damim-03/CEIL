@@ -10,9 +10,12 @@ import {
   Dimensions,
   Image,
   StatusBar,
+  Animated,
+  Modal,
+  Pressable,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   IconCalendarEvent,
   IconBell,
@@ -28,6 +31,7 @@ import {
   IconSchool,
 } from "@tabler/icons-react-native";
 import { useAuth } from "../../src/context/AuthContext";
+import { useTheme } from "../../src/context/ThemeContext";
 import {
   useDashboard,
   useNotifications,
@@ -35,20 +39,12 @@ import {
   useDocuments,
   useFees,
 } from "../../src/hooks/useStudent";
-import {
-  Colors,
-  Spacing,
-  FontSize,
-  FontWeight,
-} from "../../src/constants/theme";
 
 const { width: SW } = Dimensions.get("window");
 
 const TEAL = "#264230";
-const TEAL2 = "#3D6B55";
 const GOLD = "#C4A035";
 const WHITE = "#FFFFFF";
-const CREAM = "#F7F3EC";
 const CREAM2 = "#EDE8DF";
 
 // ─────────────────────────────────────────────
@@ -295,6 +291,7 @@ function StatsRow({
   docStatus: string;
   loading: boolean;
 }) {
+  const { colors } = useTheme();
   const pct = Math.min(Math.max(rate, 0), 100);
   const rateColor = pct >= 80 ? "#22c55e" : pct >= 60 ? GOLD : "#ef4444";
   const rateMsg = pct >= 80 ? "ممتاز" : pct >= 60 ? "جيد" : "منخفضة";
@@ -306,10 +303,17 @@ function StatsRow({
   if (docOk) {
     return (
       <View style={st.row}>
-        <View style={[st.halfCard, { borderColor: rateColor + "30" }]}>
+        <View
+          style={[
+            st.halfCard,
+            { borderColor: rateColor + "30", backgroundColor: colors.surface },
+          ]}
+        >
           <View style={[st.halfTop, { backgroundColor: rateColor + "12" }]}>
             <IconTrendingUp size={14} color={rateColor} strokeWidth={2} />
-            <Text style={st.halfTopLabel}>الحضور</Text>
+            <Text style={[st.halfTopLabel, { color: colors.textMuted }]}>
+              الحضور
+            </Text>
           </View>
           <View style={st.halfBody}>
             <Text style={[st.halfPct, { color: rateColor }]}>
@@ -340,7 +344,9 @@ function StatsRow({
               color={feeOk ? "#22c55e" : GOLD}
               strokeWidth={1.8}
             />
-            <Text style={st.halfTopLabel}>الرسوم</Text>
+            <Text style={[st.halfTopLabel, { color: colors.textMuted }]}>
+              الرسوم
+            </Text>
           </View>
           <View style={st.halfBody}>
             <Text style={[st.halfPct, { color: feeOk ? "#22c55e" : GOLD }]}>
@@ -367,14 +373,19 @@ function StatsRow({
   // ── الحالة العادية: حضور + عمود مربعين ───────────────────────
   return (
     <View style={st.row}>
-      <View style={[st.attCard, { borderColor: rateColor + "30" }]}>
+      <View
+        style={[
+          st.attCard,
+          { borderColor: rateColor + "30", backgroundColor: colors.surface },
+        ]}
+      >
         <View style={[st.attTop, { backgroundColor: rateColor + "12" }]}>
           <IconTrendingUp size={16} color={rateColor} strokeWidth={2} />
         </View>
         <Text style={[st.attPct, { color: rateColor }]}>
           {loading ? "—" : `${pct.toFixed(0)}%`}
         </Text>
-        <Text style={st.attLabel}>الحضور</Text>
+        <Text style={[st.attLabel, { color: colors.textMuted }]}>الحضور</Text>
         <View style={[st.attBadge, { backgroundColor: rateColor + "15" }]}>
           <Text style={[st.attBadgeText, { color: rateColor }]}>{rateMsg}</Text>
         </View>
@@ -384,7 +395,10 @@ function StatsRow({
         <View
           style={[
             st.miniCard,
-            { borderColor: feeOk ? "#22c55e30" : GOLD + "30" },
+            {
+              borderColor: feeOk ? "#22c55e30" : GOLD + "30",
+              backgroundColor: colors.surface,
+            },
           ]}
         >
           <View
@@ -400,7 +414,9 @@ function StatsRow({
             />
           </View>
           <View style={st.miniText}>
-            <Text style={st.miniLabel}>الرسوم</Text>
+            <Text style={[st.miniLabel, { color: colors.textMuted }]}>
+              الرسوم
+            </Text>
             <Text style={[st.miniValue, { color: feeOk ? "#22c55e" : GOLD }]}>
               {feeOk ? "مدفوعة" : "معلقة"}
             </Text>
@@ -415,7 +431,10 @@ function StatsRow({
         <View
           style={[
             st.miniCard,
-            { borderColor: docBad ? "#ef444430" : GOLD + "30" },
+            {
+              borderColor: docBad ? "#ef444430" : GOLD + "30",
+              backgroundColor: colors.surface,
+            },
           ]}
         >
           <View
@@ -431,7 +450,9 @@ function StatsRow({
             />
           </View>
           <View style={st.miniText}>
-            <Text style={st.miniLabel}>الوثائق</Text>
+            <Text style={[st.miniLabel, { color: colors.textMuted }]}>
+              الوثائق
+            </Text>
             <Text style={[st.miniValue, { color: docBad ? "#ef4444" : GOLD }]}>
               {docBad ? "مرفوضة" : "قيد المراجعة"}
             </Text>
@@ -453,7 +474,6 @@ const st = StyleSheet.create({
   // مربعان متساويان عند docOk
   halfCard: {
     flex: 1,
-    backgroundColor: WHITE,
     borderRadius: 20,
     borderWidth: 1,
     overflow: "hidden",
@@ -484,7 +504,6 @@ const st = StyleSheet.create({
   // الحالة العادية
   attCard: {
     width: SW * 0.36,
-    backgroundColor: WHITE,
     borderRadius: 20,
     padding: 14,
     alignItems: "center",
@@ -512,7 +531,6 @@ const st = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: WHITE,
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -572,21 +590,27 @@ const LINKS = [
 ];
 
 function QuickLinks({ onPress }: { onPress: (r: string) => void }) {
+  const { colors } = useTheme();
   return (
     <View style={ql.wrap}>
-      <Text style={ql.title}>روابط سريعة</Text>
+      <Text style={[ql.title, { color: colors.text }]}>روابط سريعة</Text>
       <View style={ql.row}>
         {LINKS.map((l) => (
           <TouchableOpacity
             key={l.route}
-            style={ql.btn}
+            style={[
+              ql.btn,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
             onPress={() => onPress(l.route)}
             activeOpacity={0.72}
           >
             <View style={[ql.icon, { backgroundColor: l.bg }]}>
               <l.Icon size={22} color={l.color} strokeWidth={1.8} />
             </View>
-            <Text style={ql.label}>{l.label}</Text>
+            <Text style={[ql.label, { color: colors.textMuted }]}>
+              {l.label}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -608,7 +632,6 @@ const ql = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     gap: 6,
-    backgroundColor: WHITE,
     borderRadius: 18,
     paddingVertical: 14,
     borderWidth: 0.5,
@@ -633,6 +656,164 @@ const ql = StyleSheet.create({
 // Notifications
 // ─────────────────────────────────────────────
 
+// ── Mini Notification Modal ──────────────────────────────────────
+function NotifMiniModal({
+  item,
+  visible,
+  onClose,
+}: {
+  item: any | null;
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const { colors } = useTheme();
+  const slideY = useRef(new Animated.Value(500)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const lastItem = useRef<any>(null);
+  if (item) lastItem.current = item;
+  const d = item ?? lastItem.current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideY, {
+          toValue: 0,
+          tension: 80,
+          friction: 12,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 160,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideY, {
+          toValue: 500,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [opacity, slideY, visible]);
+
+  if (!d) return null;
+
+  const title =
+    d.notification?.title_ar ??
+    d.notification?.title ??
+    d.title_ar ??
+    d.title ??
+    "إشعار";
+  const message =
+    d.notification?.message_ar ??
+    d.notification?.message ??
+    d.message_ar ??
+    d.message ??
+    "";
+  const isUnread = !d.is_read;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      onRequestClose={onClose}
+    >
+      <Animated.View style={[nfm.backdrop, { opacity }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+      </Animated.View>
+      <Animated.View
+        style={[
+          nfm.sheet,
+          {
+            backgroundColor: colors.surface,
+            transform: [{ translateY: slideY }],
+          },
+        ]}
+      >
+        <View style={[nfm.handle, { backgroundColor: colors.border }]} />
+        {isUnread && (
+          <View style={[nfm.unreadStrip, { backgroundColor: colors.teal }]} />
+        )}
+        <ScrollView
+          contentContainerStyle={nfm.content}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={[nfm.title, { color: colors.text }]}>{title}</Text>
+          <View
+            style={[nfm.divider, { backgroundColor: colors.borderLight }]}
+          />
+          <Text style={[nfm.message, { color: colors.textMuted }]}>
+            {message}
+          </Text>
+        </ScrollView>
+        <View style={[nfm.footer, { borderTopColor: colors.borderLight }]}>
+          <TouchableOpacity
+            style={[nfm.closeBtn, { backgroundColor: colors.teal }]}
+            onPress={onClose}
+            activeOpacity={0.85}
+          >
+            <Text style={nfm.closeBtnText}>إغلاق</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const nfm = StyleSheet.create({
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.50)",
+  },
+  sheet: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: "70%",
+    paddingBottom: Platform.OS === "ios" ? 34 : 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 20,
+    overflow: "hidden",
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  unreadStrip: { position: "absolute", top: 0, left: 0, right: 0, height: 3 },
+  content: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 },
+  title: {
+    fontSize: 18,
+    fontWeight: "700",
+    textAlign: "right",
+    lineHeight: 28,
+    marginBottom: 14,
+  },
+  divider: { height: 1, marginBottom: 14 },
+  message: { fontSize: 14, textAlign: "right", lineHeight: 24 },
+  footer: { paddingHorizontal: 24, paddingTop: 14, borderTopWidth: 1 },
+  closeBtn: { paddingVertical: 13, borderRadius: 14, alignItems: "center" },
+  closeBtnText: { fontSize: 14, fontWeight: "700", color: "#fff" },
+});
+
 function Notifications({
   items,
   loading,
@@ -642,25 +823,50 @@ function Notifications({
   loading: boolean;
   onSeeAll: () => void;
 }) {
+  const { colors } = useTheme();
+  const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const handleItemPress = (n: any) => {
+    setSelectedItem(n);
+    setModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setTimeout(() => setSelectedItem(null), 280);
+  };
+
   return (
     <View style={nf.wrap}>
       <View style={nf.header}>
         <TouchableOpacity onPress={onSeeAll} style={nf.seeAll}>
-          <Text style={nf.seeAllText}>كل الإشعارات</Text>
-          <IconChevronLeft size={13} color={TEAL} strokeWidth={2.5} />
+          <Text style={[nf.seeAllText, { color: colors.teal }]}>
+            كل الإشعارات
+          </Text>
+          <IconChevronLeft size={13} color={colors.teal} strokeWidth={2.5} />
         </TouchableOpacity>
-        <Text style={nf.title}>آخر الإشعارات</Text>
+        <Text style={[nf.title, { color: colors.text }]}>آخر الإشعارات</Text>
       </View>
 
-      <View style={nf.card}>
+      <View
+        style={[
+          nf.card,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
+      >
         {loading ? (
           <View style={nf.empty}>
-            <Text style={nf.emptyText}>جاري التحميل...</Text>
+            <Text style={[nf.emptyText, { color: colors.textMuted }]}>
+              جاري التحميل...
+            </Text>
           </View>
         ) : items.length === 0 ? (
           <View style={nf.empty}>
             <Text style={{ fontSize: 28, marginBottom: 6 }}>🔔</Text>
-            <Text style={nf.emptyText}>لا توجد إشعارات جديدة</Text>
+            <Text style={[nf.emptyText, { color: colors.textMuted }]}>
+              لا توجد إشعارات جديدة
+            </Text>
           </View>
         ) : (
           items.map((n: any, i: number) => (
@@ -668,28 +874,57 @@ function Notifications({
               key={n.recipient_id ?? i}
               style={[
                 nf.item,
-                !n.is_read && nf.unread,
+                !n.is_read && { backgroundColor: colors.teal + "08" },
+                { borderBottomColor: colors.borderLight },
                 i === items.length - 1 && { borderBottomWidth: 0 },
               ]}
-              onPress={onSeeAll}
+              onPress={() => handleItemPress(n)}
               activeOpacity={0.7}
             >
               <View style={nf.indicatorWrap}>
-                {!n.is_read && <View style={nf.unreadBar} />}
+                {!n.is_read && (
+                  <View
+                    style={[nf.unreadBar, { backgroundColor: colors.teal }]}
+                  />
+                )}
               </View>
               <View style={nf.itemBody}>
-                <Text style={nf.itemTitle} numberOfLines={1}>
-                  {n.notification?.title_ar || n.notification?.title || "إشعار"}
+                <Text
+                  style={[nf.itemTitle, { color: colors.text }]}
+                  numberOfLines={1}
+                >
+                  {n.notification?.title_ar ||
+                    n.notification?.title ||
+                    n.title_ar ||
+                    n.title ||
+                    "إشعار"}
                 </Text>
-                <Text style={nf.itemMsg} numberOfLines={1}>
-                  {n.notification?.message_ar || n.notification?.message || ""}
+                <Text
+                  style={[nf.itemMsg, { color: colors.textMuted }]}
+                  numberOfLines={1}
+                >
+                  {n.notification?.message_ar ||
+                    n.notification?.message ||
+                    n.message_ar ||
+                    n.message ||
+                    ""}
                 </Text>
               </View>
-              <IconChevronLeft size={14} color="#8A9E94" strokeWidth={1.5} />
+              <IconChevronLeft
+                size={14}
+                color={colors.textMuted}
+                strokeWidth={1.5}
+              />
             </TouchableOpacity>
           ))
         )}
       </View>
+
+      <NotifMiniModal
+        item={selectedItem}
+        visible={modalVisible}
+        onClose={handleCloseModal}
+      />
     </View>
   );
 }
@@ -702,11 +937,10 @@ const nf = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-  title: { fontSize: 14, fontWeight: "600", color: TEAL },
+  title: { fontSize: 14, fontWeight: "600" },
   seeAll: { flexDirection: "row", alignItems: "center", gap: 2 },
-  seeAllText: { fontSize: 12, color: TEAL, fontWeight: "500" },
+  seeAllText: { fontSize: 12, fontWeight: "500" },
   card: {
-    backgroundColor: WHITE,
     borderRadius: 20,
     overflow: "hidden",
     borderWidth: 0.5,
@@ -724,22 +958,21 @@ const nf = StyleSheet.create({
     paddingRight: 16,
     paddingLeft: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: "#EDE8DF",
+    borderBottomColor: "transparent",
     gap: 10,
   },
   unread: { backgroundColor: TEAL + "05" },
   indicatorWrap: { width: 14, alignItems: "center" },
-  unreadBar: { width: 3, height: 28, borderRadius: 2, backgroundColor: TEAL },
+  unreadBar: { width: 3, height: 28, borderRadius: 2 },
   itemBody: { flex: 1 },
   itemTitle: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#1C1C18",
     textAlign: "right",
   },
-  itemMsg: { fontSize: 11, color: "#8A9E94", textAlign: "right", marginTop: 2 },
+  itemMsg: { fontSize: 11, textAlign: "right", marginTop: 2 },
   empty: { padding: 28, alignItems: "center" },
-  emptyText: { fontSize: 13, color: "#8A9E94" },
+  emptyText: { fontSize: 13 },
 });
 
 // ─────────────────────────────────────────────
@@ -747,24 +980,28 @@ const nf = StyleSheet.create({
 // ─────────────────────────────────────────────
 
 function BentoSection({ rate, loading }: { rate: number; loading: boolean }) {
+  const { colors } = useTheme();
   const pct = Math.min(Math.max(rate, 0), 100);
   const rateColor = pct >= 80 ? "#22c55e" : pct >= 60 ? GOLD : "#ef4444";
-  // SVG circle params
-  const R = 44;
-  const CIRCUM = 2 * Math.PI * R;
-  const offset = CIRCUM * (1 - pct / 100);
 
   return (
     <View style={bn.wrap}>
-      <Text style={bn.sectionTitle}>نظرة عامة</Text>
+      <Text style={[bn.sectionTitle, { color: colors.text }]}>نظرة عامة</Text>
 
       {/* Attendance large card */}
-      <View style={bn.attCard}>
+      <View
+        style={[
+          bn.attCard,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
+      >
         <View style={bn.attHeader}>
           <IconSchool size={24} color={TEAL} strokeWidth={1.8} />
           <View>
-            <Text style={bn.attTitle}>الحضور</Text>
-            <Text style={bn.attSub}>السنة الدراسية 2024</Text>
+            <Text style={[bn.attTitle, { color: colors.text }]}>الحضور</Text>
+            <Text style={[bn.attSub, { color: colors.textMuted }]}>
+              السنة الدراسية 2024
+            </Text>
           </View>
         </View>
 
@@ -795,7 +1032,9 @@ function BentoSection({ rate, loading }: { rate: number; loading: boolean }) {
           <View style={bn.attStats}>
             <View style={bn.statRow}>
               <View style={[bn.statDot, { backgroundColor: rateColor }]} />
-              <Text style={bn.statLabel}>نسبة الحضور</Text>
+              <Text style={[bn.statLabel, { color: colors.textMuted }]}>
+                نسبة الحضور
+              </Text>
               <Text style={[bn.statVal, { color: rateColor }]}>
                 {loading ? "—" : `${pct.toFixed(0)}%`}
               </Text>
@@ -808,7 +1047,7 @@ function BentoSection({ rate, loading }: { rate: number; loading: boolean }) {
                 ]}
               />
             </View>
-            <Text style={bn.statHint}>
+            <Text style={[bn.statHint, { color: colors.textMuted }]}>
               {pct >= 80
                 ? "أداء ممتاز، استمر!"
                 : pct >= 60
@@ -832,7 +1071,6 @@ const bn = StyleSheet.create({
     marginBottom: 12,
   },
   attCard: {
-    backgroundColor: WHITE,
     borderRadius: 20,
     padding: 18,
     borderWidth: 0.5,
@@ -915,6 +1153,7 @@ const bn = StyleSheet.create({
 // ─────────────────────────────────────────────
 
 export default function Home() {
+  const { colors } = useTheme();
   const router = useRouter();
   const { user } = useAuth();
 
@@ -956,6 +1195,13 @@ export default function Home() {
   };
 
   const notifications = notifData?.data?.slice(0, 3) ?? [];
+  // DEBUG — remove after checking
+  if (__DEV__ && notifications.length > 0)
+    console.log(
+      "HOME notif[0] keys:",
+      Object.keys(notifications[0]),
+      JSON.stringify(notifications[0]).slice(0, 300),
+    );
   const attendanceRate = dashboard?.attendance_rate ?? 0;
 
   // ✅ احسب حالة الرسوم من البيانات الحقيقية
@@ -982,8 +1228,8 @@ export default function Home() {
   })();
 
   return (
-    <View style={s.root}>
-      <StatusBar barStyle="dark-content" backgroundColor={CREAM} />
+    <View style={[s.root, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={s.scroll}
@@ -1025,7 +1271,7 @@ export default function Home() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: CREAM },
+  root: { flex: 1 },
   scroll: {
     paddingHorizontal: 20,
     paddingTop: Platform.OS === "ios" ? 56 : 40,

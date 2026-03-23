@@ -40,13 +40,16 @@ import {
   useCoursePricing,
 } from "../../src/hooks/useStudent";
 import { useAlert } from "../../src/hooks/useAlert";
+import { useTheme } from "../../src/context/ThemeContext";
+import { Colors } from "../../src/constants/theme";
+import { router } from "expo-router";
 
 const T = {
   teal: "#264230",
   teal2: "#3D6B55",
   teal3: "#1A2E22",
   gold: "#C4A035",
-  cream: "#F7F3EC",
+  cream: Colors.background,
   cream2: "#EDE8DF",
   white: "#FFFFFF",
   dark: "#111818",
@@ -154,6 +157,7 @@ function PricingModal({
     isLoading,
     isError,
   } = useCoursePricing(courseId ?? "");
+  const { colors: C } = useTheme();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showWarning, setShowWarning] = useState(false);
   const slideY = useRef(new Animated.Value(700)).current;
@@ -194,16 +198,27 @@ function PricingModal({
           activeOpacity={1}
         />
         <Animated.View
-          style={[pm.sheet, { transform: [{ translateY: slideY }] }]}
+          style={[
+            pm.sheet,
+            {
+              backgroundColor: C.background,
+              transform: [{ translateY: slideY }],
+            },
+          ]}
         >
           <View style={pm.handle} />
-          <View style={pm.header}>
-            <TouchableOpacity style={pm.closeBtn} onPress={onClose}>
+          <View style={[pm.header, { borderBottomColor: C.border }]}>
+            <TouchableOpacity
+              style={[pm.closeBtn, { backgroundColor: C.cream2 }]}
+              onPress={onClose}
+            >
               <IconX size={18} color={T.muted} strokeWidth={2.5} />
             </TouchableOpacity>
             <View style={{ flex: 1, alignItems: "center" }}>
-              <Text style={pm.title}>التسعيرة والمعلومات</Text>
-              <Text style={pm.sub} numberOfLines={1}>
+              <Text style={[pm.title, { color: C.text }]}>
+                التسعيرة والمعلومات
+              </Text>
+              <Text style={[pm.sub, { color: C.textMuted }]} numberOfLines={1}>
                 {courseName} — {groupName}
               </Text>
             </View>
@@ -267,7 +282,9 @@ function PricingModal({
 
                 <View style={pm.sectionRow}>
                   <IconCoin size={18} color={T.teal2} strokeWidth={2} />
-                  <Text style={pm.sectionTitle}>اختر فئتك</Text>
+                  <Text style={[pm.sectionTitle, { color: C.text }]}>
+                    اختر فئتك
+                  </Text>
                 </View>
                 {showWarning && (
                   <View style={pm.warning}>
@@ -282,9 +299,11 @@ function PricingModal({
                   </View>
                 )}
                 {pricing.length === 0 ? (
-                  <View style={pm.noPricing}>
+                  <View style={[pm.noPricing, { backgroundColor: C.cream2 }]}>
                     <IconCoin size={36} color={T.gold} strokeWidth={1.3} />
-                    <Text style={pm.noPricingTitle}>لا توجد تسعيرات متاحة</Text>
+                    <Text style={[pm.noPricingTitle, { color: C.text }]}>
+                      لا توجد تسعيرات متاحة
+                    </Text>
                   </View>
                 ) : (
                   pricing.map((p: any, i: number) => {
@@ -294,6 +313,7 @@ function PricingModal({
                         key={p.pricing_id}
                         style={[
                           pm.pricingCard,
+                          { backgroundColor: C.surface, borderColor: C.border },
                           isSelected && pm.pricingCardSelected,
                         ]}
                         onPress={() => {
@@ -310,12 +330,14 @@ function PricingModal({
                         <View
                           style={[
                             pm.numBadge,
+                            { backgroundColor: C.cream2 },
                             isSelected && pm.numBadgeSelected,
                           ]}
                         >
                           <Text
                             style={[
                               pm.numText,
+                              { color: C.textMuted },
                               isSelected && { color: T.white },
                             ]}
                           >
@@ -326,18 +348,27 @@ function PricingModal({
                           <Text
                             style={[
                               pm.pricingName,
+                              { color: C.text },
                               isSelected && { color: T.blue },
                             ]}
                           >
                             {p.status_fr}
                           </Text>
                           {p.status_ar && (
-                            <Text style={pm.pricingNameAr}>{p.status_ar}</Text>
+                            <Text
+                              style={[pm.pricingNameAr, { color: C.textMuted }]}
+                            >
+                              {p.status_ar}
+                            </Text>
                           )}
                         </View>
                         <View style={{ alignItems: "flex-end" }}>
                           <Text
-                            style={[pm.price, isSelected && { color: T.blue }]}
+                            style={[
+                              pm.price,
+                              { color: C.text },
+                              isSelected && { color: T.blue },
+                            ]}
                           >
                             {Number(p.price).toLocaleString()} {p.currency}
                           </Text>
@@ -393,13 +424,13 @@ function PricingModal({
             )}
           </ScrollView>
 
-          <View style={pm.footer}>
+          <View style={[pm.footer, { borderTopColor: C.border }]}>
             <TouchableOpacity
-              style={pm.cancelBtn}
+              style={[pm.cancelBtn, { borderColor: C.border }]}
               onPress={onClose}
               disabled={isEnrolling}
             >
-              <Text style={pm.cancelText}>إلغاء</Text>
+              <Text style={[pm.cancelText, { color: C.textMuted }]}>إلغاء</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
@@ -444,7 +475,6 @@ const pm = StyleSheet.create({
     justifyContent: "flex-end",
   },
   sheet: {
-    backgroundColor: T.cream,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     maxHeight: "92%",
@@ -464,18 +494,16 @@ const pm = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: T.border,
   },
   closeBtn: {
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: T.cream2,
     alignItems: "center",
     justifyContent: "center",
   },
-  title: { fontSize: 18, fontWeight: "800", color: T.dark },
-  sub: { fontSize: 11, color: T.muted, marginTop: 2 },
+  title: { fontSize: 18, fontWeight: "800" },
+  sub: { fontSize: 11, marginTop: 2 },
   scroll: { padding: 20, gap: 12, paddingBottom: 8 },
   center: { alignItems: "center", paddingVertical: 40, gap: 12 },
   errorText: { fontSize: 14, color: T.red, fontWeight: "700" },
@@ -515,7 +543,7 @@ const pm = StyleSheet.create({
     gap: 8,
     marginTop: 4,
   },
-  sectionTitle: { fontSize: 16, fontWeight: "800", color: T.dark },
+  sectionTitle: { fontSize: 16, fontWeight: "800" },
   warning: {
     flexDirection: "row",
     alignItems: "center",
@@ -529,21 +557,18 @@ const pm = StyleSheet.create({
   warningText: { fontSize: 12, color: "#A16207", fontWeight: "600", flex: 1 },
   noPricing: {
     alignItems: "center",
-    backgroundColor: T.cream2,
     borderRadius: 18,
     padding: 24,
     gap: 8,
   },
-  noPricingTitle: { fontSize: 15, fontWeight: "800", color: T.dark },
+  noPricingTitle: { fontSize: 15, fontWeight: "800" },
   pricingCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    backgroundColor: T.white,
     borderRadius: 18,
     padding: 14,
     borderWidth: 1.5,
-    borderColor: T.border,
     position: "relative",
   },
   pricingCardSelected: {
@@ -565,25 +590,22 @@ const pm = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: T.cream2,
     alignItems: "center",
     justifyContent: "center",
   },
   numBadgeSelected: { backgroundColor: T.blue },
-  numText: { fontSize: 14, fontWeight: "800", color: T.muted },
+  numText: { fontSize: 14, fontWeight: "800" },
   pricingName: {
     fontSize: 14,
     fontWeight: "700",
-    color: T.dark,
     textAlign: "right",
   },
   pricingNameAr: {
     fontSize: 12,
-    color: T.muted,
     textAlign: "right",
     marginTop: 1,
   },
-  price: { fontSize: 16, fontWeight: "800", color: T.dark },
+  price: { fontSize: 16, fontWeight: "800" },
   discountBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -641,17 +663,15 @@ const pm = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: T.border,
   },
   cancelBtn: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: T.border,
     alignItems: "center",
   },
-  cancelText: { fontSize: 14, fontWeight: "700", color: T.muted },
+  cancelText: { fontSize: 14, fontWeight: "700" },
   confirmBtn: {
     flex: 2,
     flexDirection: "row",
@@ -862,6 +882,7 @@ function CourseCard({
   index: number;
   enrolled?: any;
 }) {
+  const { colors: C } = useTheme();
   const fadeIn = useRef(new Animated.Value(0)).current;
   const slideY = useRef(new Animated.Value(20)).current;
   useEffect(() => {
@@ -894,22 +915,33 @@ function CourseCard({
         marginBottom: 12,
       }}
     >
-      <TouchableOpacity style={cc.card} onPress={onPress} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={[cc.card, { backgroundColor: C.surface, borderColor: C.border }]}
+        onPress={onPress}
+        activeOpacity={0.85}
+      >
         {/* Left accent bar */}
         <View style={cc.accent} />
 
         <View style={cc.body}>
           {/* Flag + info */}
           <View style={cc.top}>
-            <View style={cc.flagWrap}>
+            <View
+              style={[
+                cc.flagWrap,
+                { backgroundColor: C.background, borderColor: C.border },
+              ]}
+            >
               <Text style={cc.flag}>{course?.profile?.flag_emoji ?? "🌐"}</Text>
             </View>
             <View style={cc.info}>
-              <Text style={cc.name} numberOfLines={1}>
+              <Text style={[cc.name, { color: C.text }]} numberOfLines={1}>
                 {course.course_name}
               </Text>
               {course.course_code && (
-                <Text style={cc.code}>{course.course_code}</Text>
+                <Text style={[cc.code, { color: C.textMuted }]}>
+                  {course.course_code}
+                </Text>
               )}
             </View>
             <View style={cc.right}>
@@ -925,7 +957,7 @@ function CourseCard({
             </View>
           </View>
           {course.description && (
-            <Text style={cc.desc} numberOfLines={1}>
+            <Text style={[cc.desc, { color: C.textMuted }]} numberOfLines={1}>
               {course.description}
             </Text>
           )}
@@ -937,7 +969,6 @@ function CourseCard({
 
 const cc = StyleSheet.create({
   card: {
-    backgroundColor: T.white,
     borderRadius: 20,
     flexDirection: "row",
     overflow: "hidden",
@@ -956,16 +987,14 @@ const cc = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 14,
-    backgroundColor: T.cream,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: T.border,
   },
   flag: { fontSize: 26 },
   info: { flex: 1 },
-  name: { fontSize: 15, fontWeight: "800", color: T.dark, textAlign: "right" },
-  code: { fontSize: 10, color: T.muted, textAlign: "right", marginTop: 2 },
+  name: { fontSize: 15, fontWeight: "800", textAlign: "right" },
+  code: { fontSize: 10, textAlign: "right", marginTop: 2 },
   right: { alignItems: "flex-end", gap: 6 },
   statusBadge: {
     flexDirection: "row",
@@ -977,7 +1006,7 @@ const cc = StyleSheet.create({
   },
   dot: { width: 5, height: 5, borderRadius: 3 },
   statusText: { fontSize: 9, fontWeight: "700" },
-  desc: { fontSize: 11, color: T.muted, textAlign: "right", lineHeight: 16 },
+  desc: { fontSize: 11, textAlign: "right", lineHeight: 16 },
 });
 
 // ── Level Grid (square tiles inspired by HTML) ────────────────────
@@ -1066,6 +1095,7 @@ function GroupCard({
   enrolling: boolean;
   index: number;
 }) {
+  const { colors: C } = useTheme();
   const fadeIn = useRef(new Animated.Value(0)).current;
   const slideX = useRef(new Animated.Value(-20)).current;
   useEffect(() => {
@@ -1103,7 +1133,13 @@ function GroupCard({
         marginBottom: 12,
       }}
     >
-      <View style={[gc.card, !isOpen && { opacity: 0.72 }]}>
+      <View
+        style={[
+          gc.card,
+          { backgroundColor: C.surface, borderColor: C.border },
+          !isOpen && { opacity: 0.72 },
+        ]}
+      >
         {/* Left color bar */}
         <View
           style={[
@@ -1116,7 +1152,7 @@ function GroupCard({
           {/* Header */}
           <View style={gc.header}>
             <View style={gc.nameRow}>
-              <Text style={gc.name} numberOfLines={1}>
+              <Text style={[gc.name, { color: C.text }]} numberOfLines={1}>
                 {group.name}
               </Text>
               <View
@@ -1152,7 +1188,7 @@ function GroupCard({
             </View>
             <View style={gc.teacher}>
               <IconUser size={12} color={T.teal2} strokeWidth={2} />
-              <Text style={gc.teacherText}>
+              <Text style={[gc.teacherText, { color: C.textMuted }]}>
                 {group.teacher
                   ? `${group.teacher.first_name} ${group.teacher.last_name}`
                   : "غير محدد"}
@@ -1161,12 +1197,12 @@ function GroupCard({
           </View>
 
           {/* Capacity */}
-          <View style={gc.cap}>
+          <View style={[gc.cap, { backgroundColor: C.background }]}>
             <View style={gc.capRow}>
-              <Text style={gc.capVal}>
+              <Text style={[gc.capVal, { color: C.text }]}>
                 {group.current_capacity} / {group.max_students}
               </Text>
-              <Text style={gc.capLabel}>السعة</Text>
+              <Text style={[gc.capLabel, { color: C.textMuted }]}>السعة</Text>
             </View>
             <View style={gc.barBg}>
               <View
@@ -1216,7 +1252,6 @@ function GroupCard({
 
 const gc = StyleSheet.create({
   card: {
-    backgroundColor: T.white,
     borderRadius: 20,
     flexDirection: "row",
     overflow: "hidden",
@@ -1239,7 +1274,6 @@ const gc = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: "800",
-    color: T.dark,
     flex: 1,
     textAlign: "right",
   },
@@ -1259,11 +1293,11 @@ const gc = StyleSheet.create({
     gap: 5,
     justifyContent: "flex-end",
   },
-  teacherText: { fontSize: 11, color: T.muted, fontWeight: "600" },
-  cap: { backgroundColor: T.cream, borderRadius: 12, padding: 10, gap: 5 },
+  teacherText: { fontSize: 11, fontWeight: "600" },
+  cap: { borderRadius: 12, padding: 10, gap: 5 },
   capRow: { flexDirection: "row", justifyContent: "space-between" },
-  capLabel: { fontSize: 10, color: T.muted, fontWeight: "600" },
-  capVal: { fontSize: 13, fontWeight: "800", color: T.dark },
+  capLabel: { fontSize: 10, fontWeight: "600" },
+  capVal: { fontSize: 13, fontWeight: "800" },
   barBg: {
     height: 5,
     backgroundColor: T.border,
@@ -1295,15 +1329,18 @@ function SearchBar({
   onChange: (t: string) => void;
   placeholder: string;
 }) {
+  const { colors: C } = useTheme();
   return (
-    <View style={sb.wrap}>
+    <View
+      style={[sb.wrap, { backgroundColor: C.surface, borderColor: C.border }]}
+    >
       <IconSearch size={16} color={T.muted} strokeWidth={2} />
       <TextInput
-        style={sb.input}
+        style={[sb.input, { color: C.text }]}
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor={T.muted}
+        placeholderTextColor={C.textMuted}
       />
     </View>
   );
@@ -1313,7 +1350,6 @@ const sb = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: T.white,
     borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: 11,
@@ -1321,10 +1357,11 @@ const sb = StyleSheet.create({
     borderColor: T.border,
     marginBottom: 14,
   },
-  input: { flex: 1, fontSize: 13, color: T.dark, textAlign: "right" },
+  input: { flex: 1, fontSize: 13, textAlign: "right" },
 });
 
 function SectionLabel({ text, count }: { text: string; count: number }) {
+  const { colors: C } = useTheme();
   return (
     <View
       style={{
@@ -1334,19 +1371,19 @@ function SectionLabel({ text, count }: { text: string; count: number }) {
         marginBottom: 14,
       }}
     >
-      <View style={{ flex: 1, height: 1, backgroundColor: T.border }} />
+      <View style={{ flex: 1, height: 1, backgroundColor: C.border }} />
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
           gap: 6,
-          backgroundColor: T.cream2,
+          backgroundColor: C.cream2,
           paddingHorizontal: 10,
           paddingVertical: 4,
           borderRadius: 20,
         }}
       >
-        <Text style={{ fontSize: 10, fontWeight: "700", color: T.muted }}>
+        <Text style={{ fontSize: 10, fontWeight: "700", color: C.textMuted }}>
           {text}
         </Text>
         <View
@@ -1362,12 +1399,13 @@ function SectionLabel({ text, count }: { text: string; count: number }) {
           </Text>
         </View>
       </View>
-      <View style={{ flex: 1, height: 1, backgroundColor: T.border }} />
+      <View style={{ flex: 1, height: 1, backgroundColor: C.border }} />
     </View>
   );
 }
 
 function EmptyState({ title, sub }: { title: string; sub: string }) {
+  const { colors: C } = useTheme();
   const float = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.loop(
@@ -1409,13 +1447,13 @@ function EmptyState({ title, sub }: { title: string; sub: string }) {
         style={{
           fontSize: 16,
           fontWeight: "800",
-          color: T.dark,
+          color: C.text,
           marginBottom: 6,
         }}
       >
         {title}
       </Text>
-      <Text style={{ fontSize: 12, color: T.muted, textAlign: "center" }}>
+      <Text style={{ fontSize: 12, color: C.textMuted, textAlign: "center" }}>
         {sub}
       </Text>
     </View>
@@ -1424,6 +1462,7 @@ function EmptyState({ title, sub }: { title: string; sub: string }) {
 
 // ── Main Screen ───────────────────────────────────────────────────
 export default function CoursesScreen() {
+  const { colors } = useTheme();
   const alert = useAlert();
   const [step, setStep] = useState<Step>("courses");
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
@@ -1465,14 +1504,8 @@ export default function CoursesScreen() {
       (e: any) => e.course_id === course.course_id,
     );
     if (existing) {
-      if (existing.registration_status === "PENDING") {
-        alert.warning("تسجيل قيد الانتظار", "انتظر موافقة الإدارة");
-        return;
-      }
-      if (existing.registration_status === "REJECTED") {
-        alert.error("تم رفض التسجيل", "تواصل مع الإدارة");
-        return;
-      }
+      router.push("/(student)/enrollments");
+      return;
     }
     setSelectedCourse(course);
     setStep("levels");
@@ -1514,15 +1547,16 @@ export default function CoursesScreen() {
         onSuccess: () => {
           setEnrollingId(null);
           setPricingVisible(false);
-          alert.success(
-            "تم التسجيل بنجاح",
-            `تم تسجيلك في ${selectedGroup.name}`,
-          );
           setStep("courses");
           setSelectedCourse(null);
           setSelectedLevel(null);
           setSelectedGroup(null);
           eRefetch();
+          alert.success(
+            "تم التسجيل بنجاح! 🎉",
+            `تم تسجيلك في ${selectedGroup.name}`,
+          );
+          setTimeout(() => router.push("/(student)/enrollments"), 800);
         },
         onError: (e: any) => {
           setEnrollingId(null);
@@ -1544,7 +1578,7 @@ export default function CoursesScreen() {
   );
 
   return (
-    <View style={s.root}>
+    <View style={[s.root, { backgroundColor: colors.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={s.scroll}
@@ -1694,7 +1728,7 @@ export default function CoursesScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: T.cream },
+  root: { flex: 1 },
   scroll: {
     paddingHorizontal: 16,
     paddingTop: Platform.OS === "ios" ? 56 : 40,

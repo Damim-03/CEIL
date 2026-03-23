@@ -24,20 +24,16 @@ import {
   IconRefresh,
 } from "@tabler/icons-react-native";
 import { useEnrollments } from "../../src/hooks/useStudent";
+import { useTheme } from "../../src/context/ThemeContext";
+import { type AppColors } from "../../src/constants/theme";
 
+// ── Static brand tokens (intentionally always dark — hero/banner) ─
 const T = {
   teal: "#264230",
   teal2: "#3D6B55",
   teal3: "#1A2E22",
   gold: "#C4A035",
-  cream: "#F7F3EC",
-  cream2: "#EDE8DF",
   white: "#FFFFFF",
-  dark: "#111818",
-  muted: "#8A9E94",
-  border: "#DDD8CE",
-  green: "#22C55E",
-  red: "#EF4444",
 };
 
 type Status = "PENDING" | "VALIDATED" | "PAID" | "REJECTED" | "FINISHED";
@@ -48,7 +44,9 @@ const STATUS_CFG: Record<
     label: string;
     color: string;
     bg: string;
+    bgDark: string;
     border: string;
+    borderDark: string;
     dot: string;
     message: string;
     icon: any;
@@ -58,7 +56,9 @@ const STATUS_CFG: Record<
     label: "قيد الانتظار",
     color: "#A16207",
     bg: "#FEF9C3",
+    bgDark: "#2A2000",
     border: "#FDE047",
+    borderDark: "#5A4500",
     dot: "#EAB308",
     message: "طلبك قيد المراجعة من الإدارة",
     icon: IconClock,
@@ -67,7 +67,9 @@ const STATUS_CFG: Record<
     label: "مقبول",
     color: "#15803D",
     bg: "#DCFCE7",
+    bgDark: "#0A2010",
     border: "#86EFAC",
+    borderDark: "#1A5030",
     dot: "#22C55E",
     message: "تم قبولك. يمكنك الانضمام لمجموعة!",
     icon: IconCircleCheck,
@@ -76,16 +78,20 @@ const STATUS_CFG: Record<
     label: "مدفوع ونشط",
     color: "#15803D",
     bg: "#DCFCE7",
+    bgDark: "#0A2010",
     border: "#86EFAC",
+    borderDark: "#1A5030",
     dot: "#22C55E",
     message: "تم تأكيد الدفع. جاهز للتعلم!",
     icon: IconCircleCheck,
   },
   REJECTED: {
     label: "مرفوض",
-    color: "#B91C1C",
+    color: "#EF4444",
     bg: "#FEE2E2",
+    bgDark: "#2A0808",
     border: "#FCA5A5",
+    borderDark: "#6B1414",
     dot: "#EF4444",
     message: "تم رفض طلبك. تواصل مع الإدارة.",
     icon: IconX,
@@ -94,7 +100,9 @@ const STATUS_CFG: Record<
     label: "منتهي",
     color: "#6B7280",
     bg: "#F3F4F6",
+    bgDark: "#1A1C1E",
     border: "#D1D5DB",
+    borderDark: "#374151",
     dot: "#9CA3AF",
     message: "تهانينا! أتممت هذه الدورة.",
     icon: IconSchool,
@@ -106,7 +114,7 @@ function getCount(enrollments: any[], statuses: Status[]) {
     .length;
 }
 
-// ── Hero ──────────────────────────────────────────────────────────
+// ── Hero — intentionally always dark ─────────────────────────────
 function Hero() {
   return (
     <View style={hr.card}>
@@ -195,31 +203,41 @@ const hr = StyleSheet.create({
 });
 
 // ── Stats Row ─────────────────────────────────────────────────────
-function StatsRow({ enrollments }: { enrollments: any[] }) {
+function StatsRow({
+  enrollments,
+  colors,
+}: {
+  enrollments: any[];
+  colors: AppColors;
+}) {
   const stats = [
     {
       label: "نشط",
       value: getCount(enrollments, ["VALIDATED", "PAID"]),
-      color: T.teal2,
-      bg: T.teal2 + "15",
+      color: colors.teal2,
+      bg: colors.teal2 + "20",
+      bc: colors.teal2 + "35",
     },
     {
       label: "انتظار",
       value: getCount(enrollments, ["PENDING"]),
       color: "#A16207",
-      bg: "#FEF9C3",
+      bg: colors.isDark ? "#2A200010" : "#FEF9C380",
+      bc: "#A1620730",
     },
     {
       label: "مدفوع",
       value: getCount(enrollments, ["PAID"]),
-      color: T.teal,
-      bg: T.teal + "12",
+      color: colors.teal,
+      bg: colors.teal + "18",
+      bc: colors.teal + "30",
     },
     {
       label: "مرفوض",
       value: getCount(enrollments, ["REJECTED"]),
-      color: "#B91C1C",
-      bg: "#FEE2E2",
+      color: colors.error,
+      bg: colors.error + "18",
+      bc: colors.error + "30",
     },
   ];
   return (
@@ -227,13 +245,10 @@ function StatsRow({ enrollments }: { enrollments: any[] }) {
       {stats.map((s, i) => (
         <View
           key={i}
-          style={[
-            st.card,
-            { backgroundColor: s.bg, borderColor: s.color + "30" },
-          ]}
+          style={[st.card, { backgroundColor: s.bg, borderColor: s.bc }]}
         >
           <Text style={[st.val, { color: s.color }]}>{s.value}</Text>
-          <Text style={[st.label, { color: s.color }]}>{s.label}</Text>
+          <Text style={[st.lbl, { color: s.color }]}>{s.label}</Text>
         </View>
       ))}
     </View>
@@ -250,10 +265,10 @@ const st = StyleSheet.create({
     gap: 4,
   },
   val: { fontSize: 22, fontWeight: "800" },
-  label: { fontSize: 9, fontWeight: "700" },
+  lbl: { fontSize: 9, fontWeight: "700" },
 });
 
-// ── Action Banner — جاهز للانضمام ────────────────────────────────
+// ── Ready Banner — intentionally always dark ──────────────────────
 function ReadyBanner({
   count,
   onPress,
@@ -348,11 +363,15 @@ function EnrollmentCard({
   enrollment,
   index,
   onJoinGroup,
+  isNew,
 }: {
   enrollment: any;
   index: number;
   onJoinGroup: () => void;
+  isNew?: boolean;
 }) {
+  const { colors, isDark } = useTheme();
+
   const fadeIn = useRef(new Animated.Value(0)).current;
   const slideY = useRef(new Animated.Value(20)).current;
   useEffect(() => {
@@ -378,6 +397,10 @@ function EnrollmentCard({
   const hasGroup = !!enrollment.group_id;
   const canJoin = (status === "VALIDATED" || status === "PAID") && !hasGroup;
 
+  // ── dark-aware status colors ──────────────────────────────────
+  const statusBg = isDark ? cfg.bgDark : cfg.bg;
+  const statusBorder = isDark ? cfg.borderDark : cfg.border;
+
   const enrollDate = enrollment.enrollment_date
     ? new Date(enrollment.enrollment_date).toLocaleDateString("ar-DZ", {
         year: "numeric",
@@ -394,12 +417,21 @@ function EnrollmentCard({
         marginBottom: 12,
       }}
     >
-      <View style={ec.card}>
+      <View
+        style={[
+          ec.card,
+          {
+            backgroundColor: colors.surface,
+            borderColor: isNew ? colors.teal : colors.border,
+            borderWidth: isNew ? 2 : 0.5,
+          },
+        ]}
+      >
         {/* Status header */}
         <View
           style={[
             ec.statusBar,
-            { backgroundColor: cfg.bg, borderBottomColor: cfg.border },
+            { backgroundColor: statusBg, borderBottomColor: statusBorder },
           ]}
         >
           <View style={ec.statusLeft}>
@@ -408,25 +440,30 @@ function EnrollmentCard({
               {cfg.label}
             </Text>
           </View>
-          <Text style={ec.enrollId}>
+          <Text style={[ec.enrollId, { color: colors.textMuted }]}>
             #{enrollment.enrollment_id?.slice(0, 8)}
           </Text>
         </View>
 
         <View style={ec.body}>
           {/* Course name */}
-          <Text style={ec.courseName} numberOfLines={1}>
+          <Text
+            style={[ec.courseName, { color: colors.text }]}
+            numberOfLines={1}
+          >
             {enrollment.course?.course_name || "دورة غير محددة"}
           </Text>
           {enrollment.course?.course_code && (
-            <Text style={ec.courseCode}>{enrollment.course.course_code}</Text>
+            <Text style={[ec.courseCode, { color: colors.textMuted }]}>
+              {enrollment.course.course_code}
+            </Text>
           )}
 
           {/* Status message */}
           <View
             style={[
               ec.msgBox,
-              { backgroundColor: cfg.bg, borderColor: cfg.border },
+              { backgroundColor: statusBg, borderColor: statusBorder },
             ]}
           >
             <Text style={[ec.msgText, { color: cfg.color }]}>
@@ -436,16 +473,24 @@ function EnrollmentCard({
 
           {/* Group info */}
           {hasGroup && enrollment.group && (
-            <View style={ec.groupBox}>
+            <View
+              style={[
+                ec.groupBox,
+                {
+                  backgroundColor: colors.teal2 + "12",
+                  borderColor: colors.teal2 + "25",
+                },
+              ]}
+            >
               <View style={ec.groupRow}>
-                <IconUsers size={14} color={T.teal2} strokeWidth={2} />
-                <Text style={ec.groupLabel}>
+                <IconUsers size={14} color={colors.teal2} strokeWidth={2} />
+                <Text style={[ec.groupLabel, { color: colors.text }]}>
                   {status === "PENDING"
                     ? "مجموعة مخصصة (انتظار الموافقة)"
                     : "مسجل في مجموعة"}
                 </Text>
               </View>
-              <Text style={ec.groupName}>
+              <Text style={[ec.groupName, { color: colors.textMuted }]}>
                 المستوى {enrollment.level || enrollment.group.level} —{" "}
                 {enrollment.group.name}
               </Text>
@@ -456,22 +501,34 @@ function EnrollmentCard({
           <View style={ec.metaRow}>
             {enrollDate && (
               <View style={ec.metaItem}>
-                <IconCalendar size={12} color={T.muted} strokeWidth={2} />
-                <Text style={ec.metaText}>{enrollDate}</Text>
+                <IconCalendar
+                  size={12}
+                  color={colors.textMuted}
+                  strokeWidth={2}
+                />
+                <Text style={[ec.metaText, { color: colors.textMuted }]}>
+                  {enrollDate}
+                </Text>
               </View>
             )}
             {enrollment.level && (
               <View style={ec.metaItem}>
-                <IconSchool size={12} color={T.muted} strokeWidth={2} />
-                <Text style={ec.metaText}>{enrollment.level}</Text>
+                <IconSchool
+                  size={12}
+                  color={colors.textMuted}
+                  strokeWidth={2}
+                />
+                <Text style={[ec.metaText, { color: colors.textMuted }]}>
+                  {enrollment.level}
+                </Text>
               </View>
             )}
           </View>
 
-          {/* Action */}
+          {/* Join button */}
           {canJoin && (
             <TouchableOpacity
-              style={ec.joinBtn}
+              style={[ec.joinBtn, { backgroundColor: colors.teal }]}
               onPress={onJoinGroup}
               activeOpacity={0.85}
             >
@@ -495,11 +552,8 @@ function EnrollmentCard({
 
 const ec = StyleSheet.create({
   card: {
-    backgroundColor: T.white,
     borderRadius: 20,
     overflow: "hidden",
-    borderWidth: 0.5,
-    borderColor: T.border,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -516,15 +570,10 @@ const ec = StyleSheet.create({
   },
   statusLeft: { flexDirection: "row", alignItems: "center", gap: 6 },
   statusLabel: { fontSize: 12, fontWeight: "700" },
-  enrollId: { fontSize: 10, color: T.muted },
+  enrollId: { fontSize: 10 },
   body: { padding: 14, gap: 10 },
-  courseName: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: T.dark,
-    textAlign: "right",
-  },
-  courseCode: { fontSize: 11, color: T.muted, textAlign: "right" },
+  courseName: { fontSize: 16, fontWeight: "800", textAlign: "right" },
+  courseCode: { fontSize: 11, textAlign: "right" },
   msgBox: { borderRadius: 12, padding: 10, borderWidth: 1 },
   msgText: {
     fontSize: 12,
@@ -532,26 +581,18 @@ const ec = StyleSheet.create({
     textAlign: "right",
     lineHeight: 18,
   },
-  groupBox: {
-    backgroundColor: T.teal2 + "10",
-    borderRadius: 12,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: T.teal2 + "25",
-    gap: 4,
-  },
+  groupBox: { borderRadius: 12, padding: 10, borderWidth: 1, gap: 4 },
   groupRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  groupLabel: { fontSize: 12, fontWeight: "700", color: T.dark },
-  groupName: { fontSize: 11, color: T.muted, textAlign: "right" },
+  groupLabel: { fontSize: 12, fontWeight: "700" },
+  groupName: { fontSize: 11, textAlign: "right" },
   metaRow: { flexDirection: "row", gap: 16, justifyContent: "flex-end" },
   metaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
-  metaText: { fontSize: 11, color: T.muted },
+  metaText: { fontSize: 11 },
   joinBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: T.teal,
     borderRadius: 14,
     paddingVertical: 12,
   },
@@ -566,7 +607,13 @@ const ec = StyleSheet.create({
 });
 
 // ── Empty State ───────────────────────────────────────────────────
-function EmptyState({ onBrowse }: { onBrowse: () => void }) {
+function EmptyState({
+  onBrowse,
+  colors,
+}: {
+  onBrowse: () => void;
+  colors: AppColors;
+}) {
   const float = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.loop(
@@ -584,6 +631,7 @@ function EmptyState({ onBrowse }: { onBrowse: () => void }) {
       ]),
     ).start();
   }, [float]);
+
   return (
     <View style={{ alignItems: "center", paddingVertical: 56, gap: 16 }}>
       <Animated.View
@@ -592,25 +640,26 @@ function EmptyState({ onBrowse }: { onBrowse: () => void }) {
             width: 110,
             height: 110,
             borderRadius: 30,
-            backgroundColor: T.teal + "12",
+            backgroundColor: colors.teal + "15",
             alignItems: "center",
             justifyContent: "center",
             borderWidth: 1.5,
-            borderColor: T.teal + "18",
+            borderColor: colors.teal + "25",
           },
           { transform: [{ translateY: float }] },
         ]}
       >
-        <IconSchool size={52} color={T.teal2} strokeWidth={1.1} />
+        <IconSchool size={52} color={colors.teal2} strokeWidth={1.1} />
       </Animated.View>
+
       <View style={{ alignItems: "center", gap: 6 }}>
-        <Text style={{ fontSize: 18, fontWeight: "800", color: T.dark }}>
+        <Text style={{ fontSize: 18, fontWeight: "800", color: colors.text }}>
           لا توجد تسجيلات بعد
         </Text>
         <Text
           style={{
             fontSize: 13,
-            color: T.muted,
+            color: colors.textMuted,
             textAlign: "center",
             lineHeight: 20,
           }}
@@ -618,16 +667,17 @@ function EmptyState({ onBrowse }: { onBrowse: () => void }) {
           لم تسجل في أي دورة بعد. ابدأ رحلتك التعليمية اليوم!
         </Text>
       </View>
+
       <TouchableOpacity
         style={{
           flexDirection: "row",
           alignItems: "center",
           gap: 8,
-          backgroundColor: T.teal,
+          backgroundColor: colors.teal,
           borderRadius: 16,
           paddingHorizontal: 24,
           paddingVertical: 14,
-          shadowColor: T.teal,
+          shadowColor: colors.teal,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.3,
           shadowRadius: 10,
@@ -640,11 +690,25 @@ function EmptyState({ onBrowse }: { onBrowse: () => void }) {
         <Text style={{ fontSize: 14, fontWeight: "800", color: T.white }}>
           تصفح الدورات
         </Text>
-        <IconArrowRight size={16} color={T.gold} strokeWidth={2.5} />
+        <IconArrowRight size={16} color={colors.gold} strokeWidth={2.5} />
       </TouchableOpacity>
     </View>
   );
 }
+
+const jb = StyleSheet.create({
+  banner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1,
+    marginBottom: 14,
+  },
+  title: { fontSize: 14, fontWeight: "800" },
+  sub: { fontSize: 11, marginTop: 2 },
+});
 
 // ── Main ──────────────────────────────────────────────────────────
 export default function EnrollmentsScreen({
@@ -653,10 +717,18 @@ export default function EnrollmentsScreen({
   onNavigateCourses?: () => void;
 }) {
   const router = useRouter();
+  const { colors } = useTheme();
+
   const [refreshing, setRefreshing] = useState(false);
+  const [justEnrolled, setJustEnrolled] = useState(false);
+
+  useEffect(() => {
+    setJustEnrolled(true);
+    const t = setTimeout(() => setJustEnrolled(false), 3000);
+    return () => clearTimeout(t);
+  }, []);
 
   const { data, isLoading, isError, refetch } = useEnrollments();
-
   const enrollments: any[] = Array.isArray(data) ? data : [];
 
   const readyForGroup = enrollments.filter(
@@ -673,7 +745,7 @@ export default function EnrollmentsScreen({
   };
 
   return (
-    <View style={s.root}>
+    <View style={[s.root, { backgroundColor: colors.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={s.scroll}
@@ -681,7 +753,7 @@ export default function EnrollmentsScreen({
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={T.teal}
+            tintColor={colors.teal}
           />
         }
       >
@@ -695,14 +767,20 @@ export default function EnrollmentsScreen({
                 width: 64,
                 height: 64,
                 borderRadius: 20,
-                backgroundColor: T.teal + "15",
+                backgroundColor: colors.teal + "18",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <ActivityIndicator size="large" color={T.teal} />
+              <ActivityIndicator size="large" color={colors.teal} />
             </View>
-            <Text style={{ fontSize: 13, color: T.muted, fontWeight: "600" }}>
+            <Text
+              style={{
+                fontSize: 13,
+                color: colors.textMuted,
+                fontWeight: "600",
+              }}
+            >
               جاري تحميل التسجيلات...
             </Text>
           </View>
@@ -716,14 +794,20 @@ export default function EnrollmentsScreen({
                 width: 64,
                 height: 64,
                 borderRadius: 20,
-                backgroundColor: "#FEE2E2",
+                backgroundColor: colors.error + "20",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <IconAlertCircle size={32} color={T.red} strokeWidth={1.5} />
+              <IconAlertCircle
+                size={32}
+                color={colors.error}
+                strokeWidth={1.5}
+              />
             </View>
-            <Text style={{ fontSize: 15, fontWeight: "700", color: T.dark }}>
+            <Text
+              style={{ fontSize: 15, fontWeight: "700", color: colors.text }}
+            >
               فشل تحميل التسجيلات
             </Text>
             <TouchableOpacity
@@ -731,7 +815,7 @@ export default function EnrollmentsScreen({
                 flexDirection: "row",
                 alignItems: "center",
                 gap: 6,
-                backgroundColor: T.teal,
+                backgroundColor: colors.teal,
                 borderRadius: 14,
                 paddingHorizontal: 20,
                 paddingVertical: 12,
@@ -750,10 +834,35 @@ export default function EnrollmentsScreen({
         {!isLoading && !isError && (
           <>
             {enrollments.length === 0 ? (
-              <EmptyState onBrowse={() => router.push("/(student)/courses")} />
+              <EmptyState
+                onBrowse={() => router.push("/(student)/courses")}
+                colors={colors}
+              />
             ) : (
               <>
-                <StatsRow enrollments={enrollments} />
+                {justEnrolled && (
+                  <View
+                    style={[
+                      jb.banner,
+                      {
+                        backgroundColor: colors.teal + "15",
+                        borderColor: colors.teal + "30",
+                      },
+                    ]}
+                  >
+                    <Text style={{ fontSize: 20 }}>🎉</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[jb.title, { color: colors.teal }]}>
+                        تم التسجيل بنجاح!
+                      </Text>
+                      <Text style={[jb.sub, { color: colors.textMuted }]}>
+                        يمكنك متابعة حالة تسجيلك هنا
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                <StatsRow enrollments={enrollments} colors={colors} />
 
                 {readyForGroup.length > 0 && (
                   <ReadyBanner
@@ -762,18 +871,34 @@ export default function EnrollmentsScreen({
                   />
                 )}
 
+                {/* Section header */}
                 <View style={s.listHeader}>
                   <View
-                    style={{ flex: 1, height: 1, backgroundColor: T.border }}
+                    style={[s.divider, { backgroundColor: colors.border }]}
                   />
-                  <View style={s.listBadge}>
-                    <Text style={s.listBadgeText}>جميع التسجيلات</Text>
-                    <View style={s.countBadge}>
+                  <View
+                    style={[
+                      s.listBadge,
+                      {
+                        backgroundColor: colors.surfaceHigh,
+                        borderColor: colors.border,
+                        borderWidth: 1,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[s.listBadgeText, { color: colors.textMuted }]}
+                    >
+                      جميع التسجيلات
+                    </Text>
+                    <View
+                      style={[s.countBadge, { backgroundColor: colors.teal2 }]}
+                    >
                       <Text style={s.countText}>{enrollments.length}</Text>
                     </View>
                   </View>
                   <View
-                    style={{ flex: 1, height: 1, backgroundColor: T.border }}
+                    style={[s.divider, { backgroundColor: colors.border }]}
                   />
                 </View>
 
@@ -782,6 +907,7 @@ export default function EnrollmentsScreen({
                     key={e.enrollment_id}
                     enrollment={e}
                     index={i}
+                    isNew={justEnrolled && i === 0}
                     onJoinGroup={() => router.push("/(student)/courses")}
                   />
                 ))}
@@ -797,7 +923,7 @@ export default function EnrollmentsScreen({
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: T.cream },
+  root: { flex: 1 },
   scroll: {
     paddingHorizontal: 16,
     paddingTop: Platform.OS === "ios" ? 56 : 40,
@@ -808,21 +934,16 @@ const s = StyleSheet.create({
     gap: 10,
     marginBottom: 14,
   },
+  divider: { flex: 1, height: 1 },
   listBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: T.cream2,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
   },
-  listBadgeText: { fontSize: 10, fontWeight: "700", color: T.muted },
-  countBadge: {
-    backgroundColor: T.teal2,
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-  },
+  listBadgeText: { fontSize: 10, fontWeight: "700" },
+  countBadge: { borderRadius: 10, paddingHorizontal: 6, paddingVertical: 1 },
   countText: { fontSize: 9, fontWeight: "800", color: T.white },
 });

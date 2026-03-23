@@ -21,6 +21,7 @@ import {
   IconBuildingBank,
 } from "@tabler/icons-react-native";
 import { useFees } from "../../src/hooks/useStudent";
+import { useTheme } from "../../src/context/ThemeContext";
 
 const T = {
   teal: "#264230",
@@ -193,7 +194,7 @@ const hr = StyleSheet.create({
 });
 
 // ── Summary Cards ─────────────────────────────────────────────────
-function SummaryCards({ summary }: { summary: any }) {
+function SummaryCards({ summary, colors }: { summary: any; colors: any }) {
   const cards = [
     {
       label: "الإجمالي",
@@ -220,7 +221,13 @@ function SummaryCards({ summary }: { summary: any }) {
   return (
     <View style={sc.row}>
       {cards.map((c, i) => (
-        <View key={i} style={[sc.card, { borderColor: c.color + "25" }]}>
+        <View
+          key={i}
+          style={[
+            sc.card,
+            { borderColor: c.color + "25", backgroundColor: colors.surface },
+          ]}
+        >
           <View style={[sc.iconWrap, { backgroundColor: c.bg }]}>
             <c.Icon size={16} color={c.color} strokeWidth={1.8} />
           </View>
@@ -332,7 +339,15 @@ const sb = StyleSheet.create({
 });
 
 // ── Fee Card ──────────────────────────────────────────────────────
-function FeeCard({ fee, index }: { fee: any; index: number }) {
+function FeeCard({
+  fee,
+  index,
+  colors: C,
+}: {
+  fee: any;
+  index: number;
+  colors: any;
+}) {
   const fadeIn = useRef(new Animated.Value(0)).current;
   const slideY = useRef(new Animated.Value(20)).current;
   useEffect(() => {
@@ -370,7 +385,9 @@ function FeeCard({ fee, index }: { fee: any; index: number }) {
         marginBottom: 12,
       }}
     >
-      <View style={fc.card}>
+      <View
+        style={[fc.card, { backgroundColor: C.surface, borderColor: C.border }]}
+      >
         {/* Accent line top */}
         {!isPaid && (
           <View style={[fc.accentLine, { backgroundColor: accentColor }]} />
@@ -383,7 +400,10 @@ function FeeCard({ fee, index }: { fee: any; index: number }) {
               <IconCoin size={20} color={accentColor} strokeWidth={1.8} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={fc.courseName} numberOfLines={1}>
+              <Text
+                style={[fc.courseName, { color: C.text }]}
+                numberOfLines={1}
+              >
                 {fee.enrollment?.course?.course_name || "رسوم التسجيل"}
               </Text>
               {fee.enrollment?.level && (
@@ -399,7 +419,7 @@ function FeeCard({ fee, index }: { fee: any; index: number }) {
           </View>
 
           {/* Details grid */}
-          <View style={fc.grid}>
+          <View style={[fc.grid, { backgroundColor: C.cream2 }]}>
             <View style={fc.gridItem}>
               <Text style={fc.gridLabel}>المبلغ</Text>
               <Text style={[fc.gridVal, { color: accentColor }]}>
@@ -438,7 +458,7 @@ function FeeCard({ fee, index }: { fee: any; index: number }) {
             {isPaid && fee.reference_code && (
               <View style={fc.gridItem}>
                 <Text style={fc.gridLabel}>المرجع</Text>
-                <View style={fc.refWrap}>
+                <View style={[fc.refWrap, { backgroundColor: C.borderLight }]}>
                   <Text style={fc.refText} numberOfLines={1}>
                     {fee.reference_code}
                   </Text>
@@ -474,11 +494,9 @@ function FeeCard({ fee, index }: { fee: any; index: number }) {
 }
 const fc = StyleSheet.create({
   card: {
-    backgroundColor: T.white,
     borderRadius: 20,
     overflow: "hidden",
     borderWidth: 0.5,
-    borderColor: T.border,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -639,6 +657,7 @@ function EmptyState() {
 
 // ── Main ──────────────────────────────────────────────────────────
 export default function FeesScreen() {
+  const { colors } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
   const { data, isLoading, isError, refetch } = useFees();
 
@@ -658,7 +677,7 @@ export default function FeesScreen() {
   };
 
   return (
-    <View style={s.root}>
+    <View style={[s.root, { backgroundColor: colors.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={s.scroll}
@@ -720,7 +739,9 @@ export default function FeesScreen() {
 
         {!isLoading && !isError && (
           <>
-            {fees.length > 0 && <SummaryCards summary={summary} />}
+            {fees.length > 0 && (
+              <SummaryCards summary={summary} colors={colors} />
+            )}
             {fees.length > 0 && <StatusBanner summary={summary} />}
 
             {/* Section label */}
@@ -745,7 +766,12 @@ export default function FeesScreen() {
               <EmptyState />
             ) : (
               fees.map((fee: any, i: number) => (
-                <FeeCard key={fee.fee_id ?? i} fee={fee} index={i} />
+                <FeeCard
+                  key={fee.fee_id ?? i}
+                  fee={fee}
+                  index={i}
+                  colors={colors}
+                />
               ))
             )}
           </>
@@ -758,7 +784,7 @@ export default function FeesScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: T.cream },
+  root: { flex: 1 },
   scroll: {
     paddingHorizontal: 16,
     paddingTop: Platform.OS === "ios" ? 56 : 40,

@@ -37,6 +37,7 @@ import ScheduleScreen from "./schedule";
 import EnrollmentsScreen from "./enrollments";
 import FeesScreen from "./fees";
 import { useSocket } from "../../src/hooks/useSocket";
+import { useTheme } from "../../src/context/ThemeContext";
 
 const { width: SW } = Dimensions.get("window");
 
@@ -88,6 +89,7 @@ const WHEEL_ITEMS: WheelItem[] = [
 
 export default function StudentLayout() {
   useSocket();
+  const { colors } = useTheme();
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [overlay, setOverlay] = useState<string | null>(null);
@@ -98,6 +100,8 @@ export default function StudentLayout() {
   const overlayX = useRef(new Animated.Value(SW)).current;
   const ignorePathname = useRef(false);
 
+  const isMounted = useRef(false);
+
   const pathname = usePathname();
   const router = useRouter();
 
@@ -107,6 +111,11 @@ export default function StudentLayout() {
   }, []);
 
   useEffect(() => {
+    if (loading) return;
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
     if (ignorePathname.current) return;
     const parts = pathname.split("/").filter(Boolean);
     const last = parts[parts.length - 1];
@@ -120,7 +129,7 @@ export default function StudentLayout() {
         useNativeDriver: true,
       }).start();
     }
-  }, [overlay, overlayX, pathname]);
+  }, [pathname, loading]);
 
   const openOverlay = (name: string) => {
     if (overlay === name) return;
@@ -261,15 +270,21 @@ export default function StudentLayout() {
 
       {OverlayScreen && (
         <Animated.View
-          style={[s.overlay, { transform: [{ translateX: overlayX }] }]}
+          style={[
+            s.overlay,
+            {
+              transform: [{ translateX: overlayX }],
+              backgroundColor: colors.background,
+            },
+          ]}
         >
           <TouchableOpacity
-            style={s.backBtn}
+            style={[s.backBtn, { backgroundColor: colors.background }]}
             onPress={closeOverlay}
             activeOpacity={0.8}
           >
-            <IconArrowRight size={20} color={TEAL} strokeWidth={2.5} />
-            <Text style={s.backTitle}>
+            <IconArrowRight size={20} color={colors.teal} strokeWidth={2.5} />
+            <Text style={[s.backTitle, { color: colors.teal }]}>
               {overlay ? (OVERLAY_TITLES[overlay] ?? "") : ""}
             </Text>
           </TouchableOpacity>
@@ -305,7 +320,6 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#F7F3EC",
     zIndex: 100,
   },
   backBtn: {
@@ -315,7 +329,6 @@ const s = StyleSheet.create({
     paddingTop: 52,
     paddingHorizontal: 16,
     paddingBottom: 12,
-    backgroundColor: "#F7F3EC",
   },
-  backTitle: { fontSize: 16, fontWeight: "700", color: TEAL },
+  backTitle: { fontSize: 16, fontWeight: "700" },
 });

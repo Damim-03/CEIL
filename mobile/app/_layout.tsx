@@ -6,7 +6,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { View, ActivityIndicator } from "react-native";
-import AlertModal from "../src/components/common/AlertModal"; // ✅
+import AlertModal from "../src/components/common/AlertModal";
+import { ThemeProvider, useTheme } from "../src/context/ThemeContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,8 +19,16 @@ const queryClient = new QueryClient({
   },
 });
 
+// ── StatusBar يتبع الثيم ──────────────────────────────────────────
+function ThemedStatusBar() {
+  const { isDark } = useTheme();
+  return <StatusBar style={isDark ? "light" : "dark"} />;
+}
+
+// ── Auth Guard ────────────────────────────────────────────────────
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
+  const { colors } = useTheme();
   const segments = useSegments();
   const router = useRouter();
 
@@ -37,10 +46,10 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: "#0A0A0A",
+          backgroundColor: colors.background,
         }}
       >
-        <ActivityIndicator size="large" color="#4A7065" />
+        <ActivityIndicator size="large" color={colors.teal2} />
       </View>
     );
   }
@@ -48,23 +57,26 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// ── Root Layout ───────────────────────────────────────────────────
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <StatusBar style="light" />
-          <AuthGuard>
-            <Stack
-              screenOptions={{ headerShown: false, animation: "fade" }}
-              initialRouteName="(auth)"
-            >
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="(student)" />
-            </Stack>
-            <AlertModal />
-          </AuthGuard>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ThemedStatusBar />
+            <AuthGuard>
+              <Stack
+                screenOptions={{ headerShown: false, animation: "fade" }}
+                initialRouteName="(auth)"
+              >
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(student)" />
+              </Stack>
+              <AlertModal />
+            </AuthGuard>
+          </AuthProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

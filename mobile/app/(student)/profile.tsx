@@ -21,6 +21,7 @@ import {
 } from "react-native";
 import { useState, useRef } from "react";
 import { useAuth, useStudent } from "../../src/context/AuthContext";
+import { useTheme } from "../../src/context/ThemeContext";
 import {
   useProfile,
   useUpdateProfile,
@@ -32,9 +33,7 @@ import { FontWeight } from "../../src/constants/theme";
 const TEAL = "#264230";
 const TEAL2 = "#4A7065";
 const GOLD = "#C4A035";
-const CREAM = "#F5F0E8";
 const MUTED = "#8A7A6A";
-const INK = "#1B1B1B";
 const WHITE = "#FFFFFF";
 const ERR = "#C0392B";
 
@@ -70,7 +69,6 @@ function formatDate(d?: string | null): string | null {
   });
 }
 
-// ── Edit Modal (unchanged) ────────────────────────────────────────
 const EDIT_FIELDS: {
   key: keyof EditForm;
   label: string;
@@ -124,6 +122,7 @@ const SHEET_MAX_H = SH * 0.92;
 const CLOSE_THRESHOLD = 80;
 const EXPAND_THRESHOLD = 60;
 
+// ── Edit Modal ────────────────────────────────────────────────────
 function EditProfileModal({
   visible,
   profile,
@@ -133,6 +132,7 @@ function EditProfileModal({
   profile: any;
   onClose: () => void;
 }) {
+  const { colors: C } = useTheme();
   const { mutateAsync: updateProfile, isPending } = useUpdateProfile();
   const sheetH = useRef(new Animated.Value(SHEET_MIN_H)).current;
   const translateY = useRef(new Animated.Value(0)).current;
@@ -250,21 +250,32 @@ function EditProfileModal({
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
       </Animated.View>
       <Animated.View
-        style={[em.sheet, { height: sheetH, transform: [{ translateY }] }]}
+        style={[
+          em.sheet,
+          {
+            backgroundColor: C.surface,
+            height: sheetH,
+            transform: [{ translateY }],
+          },
+        ]}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{ flex: 1 }}
         >
           <View style={em.dragZone} {...panResponder.panHandlers}>
-            <View style={em.drag} />
-            <View style={em.hdr}>
+            <View style={[em.drag, { backgroundColor: C.border }]} />
+            <View style={[em.hdr, { borderBottomColor: C.borderLight }]}>
               <TouchableOpacity onPress={onClose} hitSlop={12}>
-                <Text style={em.cancel}>إلغاء</Text>
+                <Text style={[em.cancel, { color: C.textMuted }]}>إلغاء</Text>
               </TouchableOpacity>
               <View style={em.hdrCenter}>
-                <Text style={em.hdrTitle}>تعديل الملف الشخصي</Text>
-                <Text style={em.hdrHint}>↕ اسحب للتوسيع أو الإغلاق</Text>
+                <Text style={[em.hdrTitle, { color: C.text }]}>
+                  تعديل الملف الشخصي
+                </Text>
+                <Text style={[em.hdrHint, { color: C.textMuted }]}>
+                  ↕ اسحب للتوسيع أو الإغلاق
+                </Text>
               </View>
               <TouchableOpacity
                 onPress={handleSave}
@@ -291,11 +302,19 @@ function EditProfileModal({
             {EDIT_FIELDS.map((f, i) => (
               <View key={f.key} style={em.row}>
                 <View style={em.labelRow}>
-                  <Text style={em.icon}>{f.icon}</Text>
-                  <Text style={em.lbl}>{f.label}</Text>
+                  <Text style={[em.icon, { color: C.teal2 }]}>{f.icon}</Text>
+                  <Text style={[em.lbl, { color: C.text }]}>{f.label}</Text>
                 </View>
                 <TextInput
-                  style={[em.inp, errors[f.key] ? em.inpErr : null]}
+                  style={[
+                    em.inp,
+                    {
+                      backgroundColor: C.background,
+                      color: C.text,
+                      borderColor: C.borderLight,
+                    },
+                    errors[f.key] ? em.inpErr : null,
+                  ]}
                   value={form[f.key]}
                   onChangeText={(v) => {
                     setForm((p) => ({ ...p, [f.key]: v }));
@@ -303,7 +322,7 @@ function EditProfileModal({
                       setErrors((p) => ({ ...p, [f.key]: undefined }));
                   }}
                   placeholder={f.placeholder}
-                  placeholderTextColor={MUTED + "60"}
+                  placeholderTextColor={C.textMuted}
                   keyboardType={f.keyboard ?? "default"}
                   returnKeyType={i < EDIT_FIELDS.length - 1 ? "next" : "done"}
                   textAlign="right"
@@ -331,7 +350,6 @@ const em = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: WHITE,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     shadowColor: "#000",
@@ -346,7 +364,6 @@ const em = StyleSheet.create({
     width: 40,
     height: 4.5,
     borderRadius: 2.5,
-    backgroundColor: "#C8BEB4",
     alignSelf: "center",
     marginTop: 12,
     marginBottom: 8,
@@ -358,12 +375,11 @@ const em = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: CREAM,
   },
   hdrCenter: { alignItems: "center", flex: 1 },
-  hdrTitle: { fontSize: 15, fontWeight: FontWeight.bold, color: INK },
-  hdrHint: { fontSize: 10, color: MUTED + "90", marginTop: 2 },
-  cancel: { fontSize: 14, color: MUTED, fontWeight: FontWeight.medium },
+  hdrTitle: { fontSize: 15, fontWeight: FontWeight.bold },
+  hdrHint: { fontSize: 10, marginTop: 2 },
+  cancel: { fontSize: 14, fontWeight: FontWeight.medium },
   saveBtn: {
     backgroundColor: TEAL,
     paddingHorizontal: 18,
@@ -382,17 +398,14 @@ const em = StyleSheet.create({
     marginBottom: 8,
     justifyContent: "flex-end",
   },
-  icon: { fontSize: 13, color: TEAL2 },
-  lbl: { fontSize: 13, fontWeight: FontWeight.semibold, color: INK },
+  icon: { fontSize: 13 },
+  lbl: { fontSize: 13, fontWeight: FontWeight.semibold },
   inp: {
-    backgroundColor: CREAM,
     borderWidth: 1.5,
-    borderColor: "transparent",
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 13,
     fontSize: 14,
-    color: INK,
   },
   inpErr: { borderColor: ERR, backgroundColor: "#FEF2F2" },
   errTxt: { fontSize: 11, color: ERR, textAlign: "right", marginTop: 5 },
@@ -408,11 +421,18 @@ function InfoItem({
   value?: string | null;
   last?: boolean;
 }) {
+  const { colors: C } = useTheme();
   if (!value) return null;
   return (
-    <View style={[ii.row, last && { borderBottomWidth: 0 }]}>
-      <Text style={ii.val}>{value}</Text>
-      <Text style={ii.lbl}>{label}</Text>
+    <View
+      style={[
+        ii.row,
+        { borderBottomColor: C.borderLight },
+        last && { borderBottomWidth: 0 },
+      ]}
+    >
+      <Text style={[ii.val, { color: C.text }]}>{value}</Text>
+      <Text style={[ii.lbl, { color: C.textMuted }]}>{label}</Text>
     </View>
   );
 }
@@ -424,12 +444,10 @@ const ii = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 18,
     borderBottomWidth: 1,
-    borderBottomColor: CREAM,
   },
-  lbl: { fontSize: 12, color: MUTED, fontWeight: FontWeight.medium },
+  lbl: { fontSize: 12, fontWeight: FontWeight.medium },
   val: {
     fontSize: 14,
-    color: INK,
     fontWeight: FontWeight.semibold,
     flex: 1,
     textAlign: "left",
@@ -445,10 +463,15 @@ function Block({
   title: string;
   children: React.ReactNode;
 }) {
+  const { colors: C } = useTheme();
   return (
     <View style={bl.wrap}>
-      <Text style={bl.title}>{title}</Text>
-      <View style={bl.card}>{children}</View>
+      <Text style={[bl.title, { color: C.teal2 }]}>{title}</Text>
+      <View
+        style={[bl.card, { backgroundColor: C.surface, borderColor: C.border }]}
+      >
+        {children}
+      </View>
     </View>
   );
 }
@@ -457,7 +480,6 @@ const bl = StyleSheet.create({
   title: {
     fontSize: 11,
     fontWeight: FontWeight.bold,
-    color: TEAL2,
     textTransform: "uppercase",
     letterSpacing: 1.2,
     textAlign: "right",
@@ -465,11 +487,9 @@ const bl = StyleSheet.create({
     paddingRight: 4,
   },
   card: {
-    backgroundColor: WHITE,
     borderRadius: 20,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: CREAM,
     shadowColor: TEAL,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -478,7 +498,7 @@ const bl = StyleSheet.create({
   },
 });
 
-// ── Hero Banner — ✅ يعرض صورة حقيقية ────────────────────────────
+// ── Hero Banner ───────────────────────────────────────────────────
 function HeroBanner({
   profile,
   avatarUrl,
@@ -501,9 +521,7 @@ function HeroBanner({
       <View style={hb.bgBase} />
       <View style={hb.bgAccent} />
       <View style={hb.goldLine} />
-
       <View style={hb.content}>
-        {/* ✅ Avatar — صورة حقيقية أو أحرف */}
         <View style={hb.avatarShell}>
           <View style={hb.avatarRing}>
             {avatarUrl ? (
@@ -525,10 +543,8 @@ function HeroBanner({
             ]}
           />
         </View>
-
         <Text style={hb.name}>{fullName}</Text>
         <Text style={hb.email}>{profile?.email ?? ""}</Text>
-
         <TouchableOpacity
           style={hb.editPill}
           onPress={onEdit}
@@ -537,7 +553,6 @@ function HeroBanner({
           <Text style={hb.editPillTxt}>✦ تعديل الملف</Text>
         </TouchableOpacity>
       </View>
-
       <View style={hb.tabs}>
         {(
           [
@@ -590,7 +605,6 @@ const hb = StyleSheet.create({
     paddingBottom: 20,
     paddingHorizontal: 24,
   },
-
   avatarShell: { position: "relative", marginBottom: 14 },
   avatarRing: {
     width: 88,
@@ -603,9 +617,7 @@ const hb = StyleSheet.create({
     justifyContent: "center",
     overflow: "hidden",
   },
-  // ✅ صورة حقيقية
   avatarImg: { width: 82, height: 82, borderRadius: 41 },
-  // fallback حروف
   avatar: {
     flex: 1,
     width: "100%",
@@ -625,7 +637,6 @@ const hb = StyleSheet.create({
     borderWidth: 2,
     borderColor: TEAL,
   },
-
   name: {
     fontSize: 20,
     fontWeight: FontWeight.bold,
@@ -642,7 +653,6 @@ const hb = StyleSheet.create({
     paddingVertical: 7,
   },
   editPillTxt: { fontSize: 12, color: WHITE, fontWeight: FontWeight.semibold },
-
   tabs: {
     flexDirection: "row",
     backgroundColor: TEAL + "CC",
@@ -669,7 +679,7 @@ const hb = StyleSheet.create({
   },
 });
 
-// ── Tabs content ──────────────────────────────────────────────────
+// ── Account Tab ───────────────────────────────────────────────────
 function AccountTab({ profile }: { profile: any }) {
   return (
     <>
@@ -699,7 +709,9 @@ function AccountTab({ profile }: { profile: any }) {
   );
 }
 
+// ── Card Tab ──────────────────────────────────────────────────────
 function CardTab({ profile }: { profile: any }) {
+  const { colors: C } = useTheme();
   const { data: docsData } = useDocuments();
   const documents: any[] =
     docsData?.documents ?? (Array.isArray(docsData) ? docsData : []);
@@ -708,33 +720,39 @@ function CardTab({ profile }: { profile: any }) {
   if (!hasApproved) {
     return (
       <View style={ct.wrap}>
-        {/* Icon */}
-        <View style={ct.iconWrap}>
+        <View style={[ct.iconWrap, { backgroundColor: C.teal + "10" }]}>
           <Text style={ct.iconEmoji}>🪪</Text>
         </View>
-
-        {/* Title */}
-        <Text style={ct.title}>البطاقة غير متاحة بعد</Text>
-        <Text style={ct.sub}>يجب قبول وثائقك أولاً لعرض البطاقة الشخصية</Text>
-
-        {/* Steps */}
-        <View style={ct.stepsCard}>
+        <Text style={[ct.title, { color: C.text }]}>البطاقة غير متاحة بعد</Text>
+        <Text style={[ct.sub, { color: C.textMuted }]}>
+          يجب قبول وثائقك أولاً لعرض البطاقة الشخصية
+        </Text>
+        <View
+          style={[
+            ct.stepsCard,
+            { backgroundColor: C.surface, borderColor: C.borderLight },
+          ]}
+        >
           {[
             { num: "١", text: "ارفع الوثائق المطلوبة من صفحة «وثائقي»" },
             { num: "٢", text: "انتظر مراجعة الإدارة وقبول الوثائق" },
             { num: "٣", text: "ستظهر بطاقتك تلقائياً بعد القبول" },
           ].map((s, i) => (
-            <View key={i} style={[ct.step, i < 2 && ct.stepBorder]}>
-              <View style={ct.stepNum}>
-                <Text style={ct.stepNumText}>{s.num}</Text>
+            <View
+              key={i}
+              style={[
+                ct.step,
+                i < 2 && [ct.stepBorder, { borderBottomColor: C.borderLight }],
+              ]}
+            >
+              <View style={[ct.stepNum, { backgroundColor: C.teal + "12" }]}>
+                <Text style={[ct.stepNumText, { color: C.teal }]}>{s.num}</Text>
               </View>
-              <Text style={ct.stepText}>{s.text}</Text>
+              <Text style={[ct.stepText, { color: C.text }]}>{s.text}</Text>
             </View>
           ))}
         </View>
-
-        {/* Status pill */}
-        <View style={ct.statusPill}>
+        <View style={[ct.statusPill, { backgroundColor: C.gold + "12" }]}>
           <View style={ct.statusDot} />
           <Text style={ct.statusText}>
             {documents.length === 0
@@ -764,7 +782,6 @@ const ct = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 24,
-    backgroundColor: "#26423010",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
@@ -772,15 +789,9 @@ const ct = StyleSheet.create({
     marginBottom: 4,
   },
   iconEmoji: { fontSize: 38 },
-  title: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#1B1B1B",
-    textAlign: "center",
-  },
+  title: { fontSize: 17, fontWeight: "700", textAlign: "center" },
   sub: {
     fontSize: 12,
-    color: "#8A7A6A",
     textAlign: "center",
     lineHeight: 18,
     maxWidth: 260,
@@ -788,10 +799,8 @@ const ct = StyleSheet.create({
   },
   stepsCard: {
     width: "100%",
-    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#F5F0E8",
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -806,28 +815,20 @@ const ct = StyleSheet.create({
     paddingVertical: 14,
     gap: 12,
   },
-  stepBorder: { borderBottomWidth: 1, borderBottomColor: "#F5F0E8" },
+  stepBorder: { borderBottomWidth: 1 },
   stepNum: {
     width: 30,
     height: 30,
     borderRadius: 10,
-    backgroundColor: "#26423012",
     alignItems: "center",
     justifyContent: "center",
   },
-  stepNumText: { fontSize: 13, fontWeight: "700", color: "#264230" },
-  stepText: {
-    flex: 1,
-    fontSize: 13,
-    color: "#1B1B1B",
-    textAlign: "right",
-    lineHeight: 19,
-  },
+  stepNumText: { fontSize: 13, fontWeight: "700" },
+  stepText: { flex: 1, fontSize: 13, textAlign: "right", lineHeight: 19 },
   statusPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#C4A03512",
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 7,
@@ -844,6 +845,7 @@ const ct = StyleSheet.create({
   statusText: { fontSize: 11, fontWeight: "600", color: "#8A6A00" },
 });
 
+// ── Logout Button ─────────────────────────────────────────────────
 function LogoutButton({ onPress }: { onPress: () => void }) {
   return (
     <TouchableOpacity style={lo.btn} onPress={onPress} activeOpacity={0.8}>
@@ -871,6 +873,7 @@ const lo = StyleSheet.create({
 
 // ── Main ──────────────────────────────────────────────────────────
 export default function Profile() {
+  const { colors } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("account");
   const [editVisible, setEditVisible] = useState(false);
@@ -880,7 +883,6 @@ export default function Profile() {
   const { data, isLoading, isError, refetch } = useProfile();
   const profile = data ?? student;
 
-  // ✅ الأولوية: avatar_url من الـ profile → google_avatar من الـ user
   const avatarUrl: string | null =
     (profile as any)?.avatar_url || user?.google_avatar || null;
 
@@ -905,7 +907,7 @@ export default function Profile() {
     ]);
 
   return (
-    <View style={pg.root}>
+    <View style={[pg.root, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="light-content" backgroundColor={TEAL} />
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -914,7 +916,7 @@ export default function Profile() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={TEAL}
+            tintColor={colors.teal}
           />
         }
         stickyHeaderIndices={profile ? [0] : undefined}
@@ -940,7 +942,9 @@ export default function Profile() {
         {isError && !profile && (
           <View style={pg.center}>
             <Text style={pg.errIcon}>⚠</Text>
-            <Text style={pg.errTxt}>تعذّر تحميل البيانات</Text>
+            <Text style={[pg.errTxt, { color: colors.textMuted }]}>
+              تعذّر تحميل البيانات
+            </Text>
             <TouchableOpacity style={pg.retryBtn} onPress={() => refetch()}>
               <Text style={pg.retryTxt}>إعادة المحاولة</Text>
             </TouchableOpacity>
@@ -952,7 +956,9 @@ export default function Profile() {
             {activeTab === "account" && <AccountTab profile={profile} />}
             {activeTab === "card" && <CardTab profile={profile} />}
             {activeTab === "account" && <LogoutButton onPress={handleLogout} />}
-            <Text style={pg.version}>CEIL Mobile v1.0.0</Text>
+            <Text style={[pg.version, { color: colors.textMuted }]}>
+              CEIL Mobile v1.0.0
+            </Text>
           </View>
         )}
 
@@ -974,7 +980,7 @@ export default function Profile() {
 }
 
 const pg = StyleSheet.create({
-  root: { flex: 1, backgroundColor: CREAM },
+  root: { flex: 1 },
   scroll: {},
   body: { paddingHorizontal: 18, paddingTop: 22 },
   center: {
@@ -984,7 +990,7 @@ const pg = StyleSheet.create({
     gap: 12,
   },
   errIcon: { fontSize: 36, color: MUTED },
-  errTxt: { fontSize: 15, color: MUTED, textAlign: "center" },
+  errTxt: { fontSize: 15, textAlign: "center" },
   retryBtn: {
     backgroundColor: TEAL,
     paddingHorizontal: 28,
@@ -992,12 +998,6 @@ const pg = StyleSheet.create({
     borderRadius: 20,
   },
   retryTxt: { fontSize: 13, color: WHITE, fontWeight: FontWeight.semibold },
-  version: {
-    fontSize: 11,
-    color: MUTED + "80",
-    textAlign: "center",
-    marginTop: 6,
-    marginBottom: 4,
-  },
+  version: { fontSize: 11, textAlign: "center", marginTop: 6, marginBottom: 4 },
   pad: { height: Platform.OS === "ios" ? 100 : 80 },
 });

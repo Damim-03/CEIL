@@ -19,6 +19,7 @@ import {
   FontWeight,
   Shadow,
 } from "../../src/constants/theme";
+import { useTheme } from "../../src/context/ThemeContext";
 
 // ── Day config ───────────────────────────────────────────────────
 const DAYS: { key: string; label: string; short: string }[] = [
@@ -42,7 +43,7 @@ const TODAY_KEY = (() => {
   return map[new Date().getDay()] ?? "SATURDAY";
 })();
 
-// ── Language colors ───────────────────────────────────────────────
+// ── Language Colors ───────────────────────────────────────────────
 const LANG_COLOR: { [key: string]: { bg: string; color: string } } = {
   FR: { bg: "#1565C0" + "14", color: "#1565C0" },
   EN: { bg: Colors.primary + "12", color: Colors.primary },
@@ -68,7 +69,12 @@ function SlotCard({ slot }: { slot: any }) {
         <View style={styles.slotTimeLine} />
         <Text style={styles.slotTimeEnd}>{slot.end_time}</Text>
       </View>
-      <View style={[styles.slotContent, { borderLeftColor: langColor.color }]}>
+      <View
+        style={[
+          styles.slotContent,
+          { backgroundColor: Colors.surface, borderLeftColor: langColor.color },
+        ]}
+      >
         <View style={styles.slotHeader}>
           {slot.language && (
             <View style={[styles.langBadge, { backgroundColor: langColor.bg }]}>
@@ -84,7 +90,9 @@ function SlotCard({ slot }: { slot: any }) {
           )}
         </View>
         {slot.group_label && (
-          <Text style={styles.slotGroup}>{slot.group_label}</Text>
+          <Text style={[styles.slotGroup, { color: Colors.text }]}>
+            {slot.group_label}
+          </Text>
         )}
         {slot.room?.name && (
           <View style={styles.slotRoomRow}>
@@ -113,6 +121,7 @@ function EmptyDay() {
 
 // ── Main ─────────────────────────────────────────────────────────
 export default function Schedule() {
+  const { colors: Colors } = useTheme();
   const [selectedDay, setSelectedDay] = useState(TODAY_KEY);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -138,7 +147,7 @@ export default function Schedule() {
   const currentSlots = slotsByDay[selectedDay] ?? [];
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: Colors.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
@@ -146,13 +155,15 @@ export default function Schedule() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.primary}
+            tintColor={Colors.teal}
           />
         }
       >
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>الجدول الزمني {"\uD83D\uDCC5"}</Text>
-          <Text style={styles.headerSub}>
+          <Text style={[styles.headerTitle, { color: Colors.text }]}>
+            الجدول الزمني {"\uD83D\uDCC5"}
+          </Text>
+          <Text style={[styles.headerSub, { color: Colors.textMuted }]}>
             {isLoading ? "جاري التحميل..." : `${slots.length} حصة`}
           </Text>
         </View>
@@ -173,8 +184,16 @@ export default function Schedule() {
                 key={day.key}
                 style={[
                   styles.dayBtn,
-                  isSelected && styles.dayBtnActive,
-                  isToday && !isSelected && styles.dayBtnToday,
+                  { backgroundColor: Colors.surface },
+                  isSelected && [
+                    styles.dayBtnActive,
+                    { backgroundColor: Colors.teal },
+                  ],
+                  isToday &&
+                    !isSelected && [
+                      styles.dayBtnToday,
+                      { borderColor: Colors.teal + "40" },
+                    ],
                 ]}
                 onPress={() => setSelectedDay(day.key)}
                 activeOpacity={0.75}
@@ -213,7 +232,7 @@ export default function Schedule() {
 
         {/* ── Selected day label ── */}
         <View style={styles.selectedDayRow}>
-          <Text style={styles.selectedDayText}>
+          <Text style={[styles.selectedDayText, { color: Colors.text }]}>
             {DAYS.find((d) => d.key === selectedDay)?.label}
             {selectedDay === TODAY_KEY && (
               <Text style={styles.todayTag}> · اليوم</Text>
@@ -224,7 +243,7 @@ export default function Schedule() {
 
         {isLoading && (
           <View style={styles.centerBox}>
-            <ActivityIndicator size="large" color={Colors.primary} />
+            <ActivityIndicator size="large" color={Colors.teal} />
           </View>
         )}
 
@@ -232,7 +251,10 @@ export default function Schedule() {
           <View style={styles.centerBox}>
             <Text style={styles.centerEmoji}>{"\u26A0\uFE0F"}</Text>
             <Text style={styles.centerText}>فشل تحميل الجدول</Text>
-            <TouchableOpacity style={styles.retryBtn} onPress={() => refetch()}>
+            <TouchableOpacity
+              style={[styles.retryBtn, { backgroundColor: Colors.teal }]}
+              onPress={() => refetch()}
+            >
               <Text style={styles.retryText}>إعادة المحاولة</Text>
             </TouchableOpacity>
           </View>
@@ -262,7 +284,7 @@ export default function Schedule() {
 
 // ── Styles ───────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1 },
   scroll: { paddingTop: Platform.OS === "ios" ? 60 : 48 },
   header: {
     alignItems: "flex-end",
@@ -282,13 +304,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
     minWidth: 64,
     gap: 3,
     ...Shadow.sm,
   },
-  dayBtnActive: { backgroundColor: Colors.primary },
-  dayBtnToday: { borderWidth: 1.5, borderColor: Colors.primary + "40" },
+  dayBtnActive: {},
+  dayBtnToday: { borderWidth: 1.5 },
   dayShort: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
@@ -353,7 +374,6 @@ const styles = StyleSheet.create({
   },
   slotContent: {
     flex: 1,
-    backgroundColor: Colors.surface,
     borderRadius: Radius.lg,
     padding: Spacing.md,
     borderLeftWidth: 3,

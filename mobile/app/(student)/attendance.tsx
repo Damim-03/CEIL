@@ -18,6 +18,7 @@ import {
   FontWeight,
   Shadow,
 } from "../../src/constants/theme";
+import { useTheme } from "../../src/context/ThemeContext";
 import { useAttendance } from "../../src/hooks/useStudent";
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -48,27 +49,27 @@ interface StatCardProps {
 }
 
 function StatCard({ emoji, value, label, color, bg }: StatCardProps) {
+  const { colors: C } = useTheme();
   return (
     <View style={[styles.statCard, { backgroundColor: bg }]}>
       <Text style={styles.statEmoji}>{emoji}</Text>
       <Text style={[styles.statValue, { color }]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statLabel, { color: C.textMuted }]}>{label}</Text>
     </View>
   );
 }
 
 // ── Record Row ────────────────────────────────────────────────────
 function RecordRow({ record }: { record: any }) {
+  const { colors: C } = useTheme();
   const isPresent = record.status === "PRESENT";
   return (
-    <View style={styles.recordRow}>
+    <View style={[styles.recordRow, { borderBottomColor: C.borderLight }]}>
       <View
         style={[
           styles.recordIcon,
           {
-            backgroundColor: isPresent
-              ? Colors.primary + "12"
-              : Colors.error + "10",
+            backgroundColor: isPresent ? C.teal + "15" : C.error + "10",
           },
         ]}
       >
@@ -78,16 +79,16 @@ function RecordRow({ record }: { record: any }) {
       </View>
 
       <View style={styles.recordInfo}>
-        <Text style={styles.recordTopic} numberOfLines={1}>
+        <Text style={[styles.recordTopic, { color: C.text }]} numberOfLines={1}>
           {record.session?.topic ?? "حصة دراسية"}
         </Text>
-        <Text style={styles.recordMeta}>
+        <Text style={[styles.recordMeta, { color: C.textMuted }]}>
           {formatDate(record.session?.session_date)}
           {"  ·  "}
           {formatTime(record.session?.session_date)}
         </Text>
         {record.session?.group?.name && (
-          <Text style={styles.recordGroup}>
+          <Text style={[styles.recordGroup, { color: C.textMuted }]}>
             {"\uD83D\uDC65"} {record.session.group.name}
           </Text>
         )}
@@ -97,16 +98,14 @@ function RecordRow({ record }: { record: any }) {
         style={[
           styles.recordBadge,
           {
-            backgroundColor: isPresent
-              ? Colors.primary + "12"
-              : Colors.error + "10",
+            backgroundColor: isPresent ? C.teal + "15" : C.error + "10",
           },
         ]}
       >
         <Text
           style={[
             styles.recordBadgeText,
-            { color: isPresent ? Colors.primary : Colors.error },
+            { color: isPresent ? C.teal : C.error },
           ]}
         >
           {isPresent ? "حاضر" : "غائب"}
@@ -118,6 +117,8 @@ function RecordRow({ record }: { record: any }) {
 
 // ── Main ─────────────────────────────────────────────────────────
 export default function Attendance() {
+  const { colors } = useTheme();
+  const C = colors;
   const [refreshing, setRefreshing] = useState(false);
 
   // ✅ Hook داخل الـ component
@@ -150,14 +151,10 @@ export default function Attendance() {
         : "تحذير: نسبة منخفضة";
 
   const rateEmoji =
-    rate >= 80
-      ? "\uD83C\uDF1F"
-      : rate >= 60
-        ? "\uD83D\uDCC8"
-        : "\u26A0\uFE0F";
+    rate >= 80 ? "\uD83C\uDF1F" : rate >= 60 ? "\uD83D\uDCC8" : "\u26A0\uFE0F";
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
@@ -165,14 +162,16 @@ export default function Attendance() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.primary}
+            tintColor={colors.teal}
           />
         }
       >
         {/* ── Header ── */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>الحضور {"\uD83D\uDCC5"}</Text>
-          <Text style={styles.headerSub}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
+            الحضور {"\uD83D\uDCC5"}
+          </Text>
+          <Text style={[styles.headerSub, { color: colors.textMuted }]}>
             {isLoading ? "جاري التحميل..." : `${records.length} سجل`}
           </Text>
         </View>
@@ -180,7 +179,7 @@ export default function Attendance() {
         {/* ── Loading ── */}
         {isLoading && (
           <View style={styles.centerBox}>
-            <ActivityIndicator size="large" color={Colors.primary} />
+            <ActivityIndicator size="large" color={colors.teal} />
           </View>
         )}
 
@@ -188,9 +187,11 @@ export default function Attendance() {
         {isError && (
           <View style={styles.centerBox}>
             <Text style={styles.centerEmoji}>{"\u26A0\uFE0F"}</Text>
-            <Text style={styles.centerText}>فشل تحميل البيانات</Text>
+            <Text style={[styles.centerText, { color: C.textMuted }]}>
+              فشل تحميل البيانات
+            </Text>
             <TouchableOpacity
-              style={styles.retryBtn}
+              style={[styles.retryBtn, { backgroundColor: colors.teal }]}
               onPress={() => refetch()}
             >
               <Text style={styles.retryText}>إعادة المحاولة</Text>
@@ -216,7 +217,9 @@ export default function Attendance() {
                   <Text style={[styles.rateBannerTitle, { color: rateColor }]}>
                     {rateLabel}
                   </Text>
-                  <Text style={styles.rateBannerSub}>نسبة الحضور الإجمالية</Text>
+                  <Text style={[styles.rateBannerSub, { color: C.textMuted }]}>
+                    نسبة الحضور الإجمالية
+                  </Text>
                 </View>
               </View>
               <Text style={[styles.rateBannerValue, { color: rateColor }]}>
@@ -231,7 +234,7 @@ export default function Attendance() {
                 value={summary.total_sessions}
                 label="الكل"
                 color={Colors.textPrimary}
-                bg={Colors.surface}
+                bg={colors.surface}
               />
               <StatCard
                 emoji={"\u2705"}
@@ -258,7 +261,12 @@ export default function Attendance() {
 
             {/* ── Progress bar ── */}
             <View style={styles.progressWrap}>
-              <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressTrack,
+                  { backgroundColor: C.borderLight },
+                ]}
+              >
                 <View
                   style={[
                     styles.progressFill,
@@ -276,14 +284,23 @@ export default function Attendance() {
 
             {/* ── Records ── */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>سجل الحضور</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                سجل الحضور
+              </Text>
               {records.length === 0 ? (
                 <View style={styles.emptyBox}>
                   <Text style={styles.centerEmoji}>{"\uD83D\uDCC5"}</Text>
-                  <Text style={styles.centerText}>لا توجد سجلات بعد</Text>
+                  <Text style={[styles.centerText, { color: C.textMuted }]}>
+                    لا توجد سجلات بعد
+                  </Text>
                 </View>
               ) : (
-                <View style={styles.recordsList}>
+                <View
+                  style={[
+                    styles.recordsList,
+                    { backgroundColor: colors.surface },
+                  ]}
+                >
                   {records.map((record: any, index: number) => (
                     <RecordRow
                       key={record.attendance_id ?? index}
@@ -304,7 +321,7 @@ export default function Attendance() {
 
 // ── Styles ───────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1 },
   scroll: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Platform.OS === "ios" ? 60 : 48,
@@ -313,9 +330,8 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
   },
-  headerSub: { fontSize: FontSize.sm, color: Colors.textMuted, marginTop: 2 },
+  headerSub: { fontSize: FontSize.sm, marginTop: 2 },
   rateBanner: {
     flexDirection: "row",
     alignItems: "center",
@@ -332,7 +348,10 @@ const styles = StyleSheet.create({
   },
   rateBannerEmoji: { fontSize: 28 },
   rateBannerTitle: { fontSize: FontSize.md, fontWeight: FontWeight.semibold },
-  rateBannerSub: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 2 },
+  rateBannerSub: {
+    fontSize: FontSize.xs,
+    marginTop: 2,
+  },
   rateBannerValue: { fontSize: FontSize.xxxl, fontWeight: FontWeight.bold },
   statsRow: { flexDirection: "row", gap: Spacing.sm, marginBottom: Spacing.md },
   statCard: {
@@ -344,7 +363,7 @@ const styles = StyleSheet.create({
   },
   statEmoji: { fontSize: 20 },
   statValue: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
-  statLabel: { fontSize: FontSize.xs, color: Colors.textMuted },
+  statLabel: { fontSize: FontSize.xs },
   progressWrap: {
     flexDirection: "row",
     alignItems: "center",
@@ -354,7 +373,6 @@ const styles = StyleSheet.create({
   progressTrack: {
     flex: 1,
     height: 8,
-    backgroundColor: Colors.borderLight,
     borderRadius: Radius.full,
     overflow: "hidden",
   },
@@ -374,7 +392,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   recordsList: {
-    backgroundColor: Colors.surface,
     borderRadius: Radius.xl,
     overflow: "hidden",
     ...Shadow.sm,
@@ -384,7 +401,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: "#EDE8DF",
     gap: Spacing.sm,
   },
   recordIcon: {
@@ -399,7 +416,6 @@ const styles = StyleSheet.create({
   recordTopic: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Colors.textPrimary,
     textAlign: "right",
   },
   recordMeta: {
@@ -429,21 +445,20 @@ const styles = StyleSheet.create({
   centerEmoji: { fontSize: 40 },
   centerText: {
     fontSize: FontSize.md,
-    color: Colors.textMuted,
     textAlign: "center",
   },
   retryBtn: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
     borderRadius: Radius.md,
   },
-  retryText: { fontSize: FontSize.sm, color: "#fff", fontWeight: FontWeight.medium },
+  retryText: {
+    fontSize: FontSize.sm,
+    color: "#fff",
+    fontWeight: FontWeight.medium,
+  },
   emptyBox: {
     alignItems: "center",
     paddingVertical: Spacing.xl,
     gap: Spacing.sm,
-    backgroundColor: Colors.surface,
     borderRadius: Radius.xl,
   },
   bottomPad: { height: Platform.OS === "ios" ? 100 : 80 },

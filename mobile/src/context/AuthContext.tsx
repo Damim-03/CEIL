@@ -8,13 +8,24 @@ import {
   type ReactNode,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Google from "expo-auth-session/providers/google";
-import * as WebBrowser from "expo-web-browser";
+import {
+  GoogleSignin,
+  statusCodes,
+} from "@react-native-google-signin/google-signin";
 import { apiClient, sessionEvents, SESSION_EXPIRED_EVENT } from "../api/client";
 
-WebBrowser.maybeCompleteAuthSession();
+// ── Google Client IDs ─────────────────────────────────────────────
+const GOOGLE_WEB_CLIENT_ID =
+  "631352520680-u904t4var3ud8ko1pk312mrthbdd8msq.apps.googleusercontent.com";
 
-// ── Types ────────────────────────────────────────────────────────
+// إعداد Google Sign-In مرة واحدة عند تحميل الملف
+GoogleSignin.configure({
+  webClientId: GOOGLE_WEB_CLIENT_ID,
+  offlineAccess: true,
+  scopes: ["profile", "email"],
+});
+
+// ── Types ─────────────────────────────────────────────────────────
 interface Student {
   student_id: string;
   first_name: string;
@@ -54,7 +65,7 @@ interface AuthContextType extends AuthState {
   loginWithGoogle: () => Promise<void>;
 }
 
-// ── Context ──────────────────────────────────────────────────────
+// ── Context ───────────────────────────────────────────────────────
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const KEYS = {
@@ -63,13 +74,7 @@ const KEYS = {
   user: "ceil_user",
 } as const;
 
-// ── Google Client IDs ─────────────────────────────────────────────
-const GOOGLE_WEB_CLIENT_ID =
-  "631352520680-u904t4var3ud8ko1pk312mrthbdd8msq.apps.googleusercontent.com";
-const GOOGLE_ANDROID_CLIENT_ID =
-  "631352520680-qvvnf6ds6uah1r9qvu0uabtvgtef09fe.apps.googleusercontent.com";
-
-// ── Provider ─────────────────────────────────────────────────────
+// ── Provider ──────────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -77,23 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: false,
   });
 
-  // ── Google Auth Request ───────────────────────────────────────
-  const [_, googleResponse, googlePromptAsync] = Google.useAuthRequest({
-    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
-    webClientId: GOOGLE_WEB_CLIENT_ID,
-  });
-
-  // ── Handle Google Response ────────────────────────────────────
-  useEffect(() => {
-    console.log("🔷 googleResponse changed:", googleResponse?.type);
-    if (googleResponse?.type === "success") {
-      const token = googleResponse.authentication?.accessToken;
-      console.log("🔷 token exists:", !!token);
-      if (token) handleGoogleMobile(token);
-    }
-  }, [googleResponse]);
-
-  // ── Boot ──────────────────────────────────────────────────────
+  // ── Boot ────────────────────────────────────────────────────────
   useEffect(() => {
     restoreSession();
 
@@ -108,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // ── Restore session ───────────────────────────────────────────
+  // ── Restore session ──────────────────────────────────────────────
   const restoreSession = async () => {
     try {
       const [token, cached] = await Promise.all([
@@ -142,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // ── Login ─────────────────────────────────────────────────────
+  // ── Login ────────────────────────────────────────────────────────
   const login = useCallback(async (email: string, password: string) => {
     const { data } = await apiClient.post("/auth/login", { email, password });
 
@@ -155,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ user: data.user, isLoading: false, isAuthenticated: true });
   }, []);
 
-  // ── Register ──────────────────────────────────────────────────
+  // ── Register ─────────────────────────────────────────────────────
   const register = useCallback(async (payload: RegisterPayload) => {
     const { data } = await apiClient.post("/auth/register", {
       first_name: payload.firstName,
@@ -177,7 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // ── Google Mobile Login ───────────────────────────────────────
+  // ── Google Mobile Login ───────────────────────────────────────────
   const handleGoogleMobile = async (googleToken: string) => {
     try {
       console.log("🔵 Calling /auth/google/mobile...");
@@ -202,23 +191,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // ── Login with Google ─────────────────────────────────────────────
   const loginWithGoogle = useCallback(async () => {
-    console.log("🟡 googlePromptAsync called");
-    const result = await googlePromptAsync();
-    console.log("🟡 promptAsync result type:", result?.type);
-  }, [googlePromptAsync]);
+    try {
+      console.log("🟡 GoogleSignin.signIn called");
 
-  // ── Logout ────────────────────────────────────────────────────
+      await GoogleSignin.hasPlayServices({
+        showPlayServicesUpdateDialog: true,
+      });
+
+      await GoogleSignin.signOut(); // نظّف أي جلسة سابقة
+      const userInfo = await GoogleSignin.signIn();
+      console.log("🟡 GoogleSignin success, getting tokens...");
+
+      const tokens = await GoogleSignin.getTokens();
+      console.log("🟡 accessToken exists:", !!tokens.accessToken);
+
+      if (tokens.accessToken) {
+        await handleGoogleMobile(tokens.accessToken);
+      } else {
+        throw new Error("لم يتم الحصول على accessToken من Google");
+      }
+    } catch (e: any) {
+      if (e.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log("🟡 User cancelled Google Sign-In");
+      } else if (e.code === statusCodes.IN_PROGRESS) {
+        console.log("🟡 Google Sign-In already in progress");
+      } else if (e.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        console.error("🔴 Play Services not available");
+        throw new Error("خدمات Google غير متاحة على هذا الجهاز");
+      } else {
+        console.error("🔴 Google Sign-In error:", e?.message || e);
+        throw e;
+      }
+    }
+  }, []);
+
+  // ── Logout ────────────────────────────────────────────────────────
   const logout = useCallback(async () => {
     try {
       await apiClient.post("/auth/logout");
+      // أيضاً سجّل خروج من Google إذا كان مسجّلاً
+      const isSignedIn = await GoogleSignin.getCurrentUser();
+      if (isSignedIn) await GoogleSignin.signOut();
     } finally {
       await clearStorage();
       setState({ user: null, isLoading: false, isAuthenticated: false });
     }
   }, []);
 
-  // ── Refresh user ──────────────────────────────────────────────
+  // ── Refresh user ──────────────────────────────────────────────────
   const refreshUser = useCallback(async () => {
     try {
       const { data } = await apiClient.get("/auth/me");
@@ -227,7 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, []);
 
-  // ── Clear storage ─────────────────────────────────────────────
+  // ── Clear storage ─────────────────────────────────────────────────
   const clearStorage = async () => {
     await Promise.all([
       AsyncStorage.removeItem(KEYS.accessToken),
@@ -252,7 +274,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// ── Hooks ─────────────────────────────────────────────────────────
+// ── Hooks ──────────────────────────────────────────────────────────
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");

@@ -38,11 +38,12 @@ import {
   IconShield,
   IconAlertTriangle,
   IconPlus,
-  IconDeviceMobile,
   IconId,
 } from "@tabler/icons-react-native";
 import { useDocuments, useDeleteDocument } from "../../src/hooks/useStudent";
 import { useAlert } from "../../src/hooks/useAlert";
+import { useTheme } from "../../src/context/ThemeContext";
+import { Colors } from "../../src/constants/theme";
 
 const API_BASE = "https://www.ceil-eloued.com/api";
 const { width: SW, height: SH } = Dimensions.get("window");
@@ -52,7 +53,7 @@ const T = {
   teal2: "#3D6B55",
   teal3: "#1A2E22",
   gold: "#C4A035",
-  cream: "#F7F3EC",
+  cream: Colors.background,
   cream2: "#EDE8DF",
   white: "#FFFFFF",
   red: "#EF4444",
@@ -467,7 +468,6 @@ const cm = StyleSheet.create({
     padding: 32,
   },
   permCard: {
-    backgroundColor: T.cream,
     borderRadius: 28,
     padding: 28,
     alignItems: "center",
@@ -841,6 +841,7 @@ function DocCard({
   onReupload: () => void;
   index: number;
 }) {
+  const { colors: C } = useTheme();
   const fadeIn = useRef(new Animated.Value(0)).current;
   const slideY = useRef(new Animated.Value(16)).current;
   useEffect(() => {
@@ -872,7 +873,7 @@ function DocCard({
         { opacity: fadeIn, transform: [{ translateY: slideY }] },
       ]}
     >
-      <View style={dc.card}>
+      <View style={[dc.card, { backgroundColor: C.surface }]}>
         <View
           style={[
             dc.topBar,
@@ -882,7 +883,7 @@ function DocCard({
           <cfg.Icon size={12} color={cfg.text} strokeWidth={2.5} />
           <Text style={[dc.statusLabel, { color: cfg.text }]}>{cfg.label}</Text>
           {doc.uploaded_at && (
-            <Text style={dc.date}>
+            <Text style={[dc.date, { color: C.textMuted }]}>
               {new Date(doc.uploaded_at).toLocaleDateString("ar-DZ")}
             </Text>
           )}
@@ -896,7 +897,7 @@ function DocCard({
             )}
           </View>
           <View style={dc.info}>
-            <Text style={dc.docTitle} numberOfLines={1}>
+            <Text style={[dc.docTitle, { color: C.text }]} numberOfLines={1}>
               {formatDocType(doc.type)}
             </Text>
             {doc.rejection_reason && (
@@ -937,7 +938,6 @@ function DocCard({
 const dc = StyleSheet.create({
   wrap: { marginBottom: 12 },
   card: {
-    backgroundColor: T.white,
     borderRadius: 20,
     overflow: "hidden",
     shadowColor: "#000",
@@ -1004,6 +1004,7 @@ const dc = StyleSheet.create({
 
 // ── Empty State ───────────────────────────────────────────────────
 function EmptyState({ onUpload }: { onUpload: () => void }) {
+  const { colors: C } = useTheme();
   const float = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.loop(
@@ -1028,8 +1029,10 @@ function EmptyState({ onUpload }: { onUpload: () => void }) {
       >
         <IconFileText size={48} color={T.teal2} strokeWidth={1.2} />
       </Animated.View>
-      <Text style={es.title}>لا توجد وثائق بعد</Text>
-      <Text style={es.sub}>ارفع وثائقك المطلوبة لإتمام تسجيلك في البرنامج</Text>
+      <Text style={[es.title, { color: C.text }]}>لا توجد وثائق بعد</Text>
+      <Text style={[es.sub, { color: C.textMuted }]}>
+        ارفع وثائقك المطلوبة لإتمام تسجيلك في البرنامج
+      </Text>
       <TouchableOpacity style={es.btn} onPress={onUpload} activeOpacity={0.85}>
         <IconUpload size={18} color={T.teal} strokeWidth={2} />
         <Text style={es.btnText}>ارفع أول وثيقة</Text>
@@ -1051,10 +1054,9 @@ const es = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: T.teal + "20",
   },
-  title: { fontSize: 20, fontWeight: "800", color: T.dark, marginBottom: 8 },
+  title: { fontSize: 20, fontWeight: "800", marginBottom: 8 },
   sub: {
     fontSize: 13,
-    color: T.muted,
     textAlign: "center",
     lineHeight: 20,
     paddingHorizontal: 24,
@@ -1074,11 +1076,14 @@ const es = StyleSheet.create({
 
 // ── Section Label ─────────────────────────────────────────────────
 function SectionLabel({ count }: { count: number }) {
+  const { colors: C } = useTheme();
   return (
     <View style={sl.wrap}>
-      <View style={sl.line} />
-      <Text style={sl.text}>الوثائق المرفوعة ({count})</Text>
-      <View style={sl.line} />
+      <View style={[sl.line, { backgroundColor: C.border }]} />
+      <Text style={[sl.text, { color: C.textMuted }]}>
+        الوثائق المرفوعة ({count})
+      </Text>
+      <View style={[sl.line, { backgroundColor: C.border }]} />
     </View>
   );
 }
@@ -1089,8 +1094,8 @@ const sl = StyleSheet.create({
     gap: 10,
     marginBottom: 14,
   },
-  line: { flex: 1, height: 1, backgroundColor: T.border },
-  text: { fontSize: 11, fontWeight: "700", color: T.muted, letterSpacing: 0.5 },
+  line: { flex: 1, height: 1 },
+  text: { fontSize: 11, fontWeight: "700", letterSpacing: 0.5 },
 });
 
 // ── Upload Sheet ──────────────────────────────────────────────────
@@ -1107,6 +1112,7 @@ function UploadSheet({
   reuploadDoc?: any;
   onSuccess: () => void;
 }) {
+  const { colors: C } = useTheme();
   const queryClient = useQueryClient();
   const alert = useAlert();
 
@@ -1272,13 +1278,16 @@ function UploadSheet({
             onPress={onClose}
             activeOpacity={1}
           />
-          <View style={sh.sheet}>
-            <View style={sh.handle} />
-            <View style={sh.header}>
-              <TouchableOpacity onPress={onClose} style={sh.closeBtn}>
+          <View style={[sh.sheet, { backgroundColor: C.background }]}>
+            <View style={[sh.handle, { backgroundColor: C.border }]} />
+            <View style={[sh.header, { borderBottomColor: C.border }]}>
+              <TouchableOpacity
+                onPress={onClose}
+                style={[sh.closeBtn, { backgroundColor: C.cream2 }]}
+              >
                 <IconX size={18} color={T.muted} strokeWidth={2.5} />
               </TouchableOpacity>
-              <Text style={sh.title}>
+              <Text style={[sh.title, { color: C.text }]}>
                 {isReupload ? "إعادة رفع وثيقة" : "رفع وثيقة جديدة"}
               </Text>
               {!isReupload && (
@@ -1307,7 +1316,9 @@ function UploadSheet({
               {/* Step 1 */}
               {!isReupload && step === "category" && (
                 <View style={sh.section}>
-                  <Text style={sh.sectionTitle}>من أنت؟</Text>
+                  <Text style={[sh.sectionTitle, { color: C.text }]}>
+                    من أنت؟
+                  </Text>
                   <View style={sh.catGrid}>
                     {cats.map((c) => {
                       const active = category === c.value;
@@ -1379,7 +1390,9 @@ function UploadSheet({
               {/* Step 2 */}
               {!isReupload && step === "type" && (
                 <View style={sh.section}>
-                  <Text style={sh.sectionTitle}>نوع الوثيقة</Text>
+                  <Text style={[sh.sectionTitle, { color: C.text }]}>
+                    نوع الوثيقة
+                  </Text>
                   {allTypes.map((t) => {
                     const fType = DOC_FRAME_TYPE[t.value] ?? "a4";
                     const fColor =
@@ -1416,12 +1429,15 @@ function UploadSheet({
                           <Text
                             style={[
                               sh.typeLabel,
-                              docType === t.value && { color: T.teal },
+                              { color: C.text },
+                              docType === t.value && { color: C.teal },
                             ]}
                           >
                             {t.label_ar}
                           </Text>
-                          <Text style={sh.typeEn}>{t.label}</Text>
+                          <Text style={[sh.typeEn, { color: C.textMuted }]}>
+                            {t.label}
+                          </Text>
                         </View>
                         {/* badge حجم الوثيقة */}
                         <View
@@ -1479,7 +1495,7 @@ function UploadSheet({
               {/* Step 3 */}
               {step === "file" && (
                 <View style={sh.section}>
-                  <Text style={sh.sectionTitle}>
+                  <Text style={[sh.sectionTitle, { color: C.text }]}>
                     {isReupload ? "اختر الملف الجديد" : "اختر الملف"}
                   </Text>
                   {/* badge حجم الوثيقة المختارة */}
@@ -1514,7 +1530,9 @@ function UploadSheet({
                     </View>
                   )}
                   {file ? (
-                    <View style={sh.previewCard}>
+                    <View
+                      style={[sh.previewCard, { backgroundColor: C.cream2 }]}
+                    >
                       {file.type.startsWith("image/") ? (
                         <Image
                           source={{ uri: file.uri }}
@@ -1528,7 +1546,10 @@ function UploadSheet({
                             color={T.teal}
                             strokeWidth={1.3}
                           />
-                          <Text style={sh.previewFileName} numberOfLines={2}>
+                          <Text
+                            style={[sh.previewFileName, { color: C.text }]}
+                            numberOfLines={2}
+                          >
                             {file.name}
                           </Text>
                         </View>
@@ -1591,8 +1612,12 @@ function UploadSheet({
                               strokeWidth={1.4}
                             />
                           </View>
-                          <Text style={sh.pickerLabel}>{p.label}</Text>
-                          <Text style={sh.pickerSub}>{p.sub}</Text>
+                          <Text style={[sh.pickerLabel, { color: C.text }]}>
+                            {p.label}
+                          </Text>
+                          <Text style={[sh.pickerSub, { color: C.textMuted }]}>
+                            {p.sub}
+                          </Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -1600,7 +1625,7 @@ function UploadSheet({
                   <View style={sh.row}>
                     {!isReupload && (
                       <TouchableOpacity
-                        style={sh.ghostBtn}
+                        style={[sh.ghostBtn, { borderColor: C.border }]}
                         onPress={() => setStep("type")}
                         activeOpacity={0.8}
                       >
@@ -1661,7 +1686,6 @@ const sh = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.55)",
   },
   sheet: {
-    backgroundColor: T.cream,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     maxHeight: "92%",
@@ -1688,7 +1712,6 @@ const sh = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: T.cream2,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1723,8 +1746,6 @@ const sh = StyleSheet.create({
     padding: 14,
     borderRadius: 18,
     borderWidth: 1.5,
-    borderColor: T.border,
-    backgroundColor: T.white,
     position: "relative",
   },
   catDot: {
@@ -1753,8 +1774,6 @@ const sh = StyleSheet.create({
     padding: 14,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: T.border,
-    backgroundColor: T.white,
   },
   typeRowActive: { borderColor: T.teal, backgroundColor: T.teal + "06" },
   radio: {
@@ -1800,8 +1819,6 @@ const sh = StyleSheet.create({
     padding: 14,
     borderRadius: 18,
     borderWidth: 1.5,
-    borderColor: T.border,
-    backgroundColor: T.white,
   },
   pickerIconBox: {
     width: 52,
@@ -1816,7 +1833,6 @@ const sh = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
     position: "relative",
-    backgroundColor: T.cream2,
     minHeight: 180,
   },
   previewImg: { width: "100%", height: 220 },
@@ -1893,6 +1909,7 @@ const sh = StyleSheet.create({
 
 // ── Main Screen ───────────────────────────────────────────────────
 export default function DocumentsScreen() {
+  const { colors: C } = useTheme();
   const { data, isLoading, refetch } = useDocuments();
   const deleteDoc = useDeleteDocument();
   const alert = useAlert();
@@ -1933,14 +1950,14 @@ export default function DocumentsScreen() {
 
   if (isLoading) {
     return (
-      <View style={s.center}>
+      <View style={[s.center, { backgroundColor: C.background }]}>
         <ActivityIndicator size="large" color={T.teal} />
       </View>
     );
   }
 
   return (
-    <View style={s.root}>
+    <View style={[s.root, { backgroundColor: C.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={s.scroll}
@@ -1999,7 +2016,7 @@ export default function DocumentsScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: T.cream },
+  root: { flex: 1 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   scroll: {
     paddingHorizontal: 16,
