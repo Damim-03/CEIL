@@ -442,6 +442,15 @@ model TimetableEntry {
   @@map("TimetableEntry")
 }
 
+model TimetableConfig {
+  config_id  String   @id @default(uuid()) @db.Uuid
+  key        String   @unique @db.VarChar(50)
+  value      Json
+  updated_by String?  @db.Uuid
+  updated_at DateTime @updatedAt
+  @@map("TimetableConfig")
+}
+
 enum NotificationTarget {
   ALL_STUDENTS
   ALL_TEACHERS

@@ -11,6 +11,10 @@ import {
   deleteTimetableEntry,
   bulkDeleteEntries,
   checkTimetableConflict,
+  fetchTimetableConfig,
+  saveTimetableConfig,
+  resetTimetableConfig,
+  type SlotConfig,
   type TimetableFilters,
   type CreateEntryPayload,
 } from "../../lib/api/admin/timetable.api";
@@ -223,6 +227,51 @@ export function useBulkDelete() {
       toast.error(
         error?.response?.data?.message ?? "حدث خطأ أثناء الحذف الجماعي",
       );
+    },
+  });
+}
+
+// ── Hook: جلب الفترات ─────────────────────────────────────────
+export function useTimetableConfig() {
+  return useQuery({
+    queryKey: ["timetable-config"],
+    queryFn: fetchTimetableConfig,
+    staleTime: 1000 * 60 * 30, // 30 دقيقة
+  });
+}
+
+// ── Hook: حفظ الفترات ─────────────────────────────────────────
+export function useSaveConfig() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (slots: SlotConfig[]) => saveTimetableConfig(slots),
+
+    onSuccess: (data) => {
+      qc.setQueryData(["timetable-config"], data.slots);
+      toast.success(data.message ?? "تم حفظ الفترات");
+    },
+
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message ?? "حدث خطأ أثناء الحفظ");
+    },
+  });
+}
+
+// ── Hook: إعادة التعيين ───────────────────────────────────────
+export function useResetConfig() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: resetTimetableConfig,
+
+    onSuccess: (data) => {
+      qc.setQueryData(["timetable-config"], data.slots);
+      toast.success(data.message ?? "تمت إعادة التعيين");
+    },
+
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message ?? "حدث خطأ");
     },
   });
 }

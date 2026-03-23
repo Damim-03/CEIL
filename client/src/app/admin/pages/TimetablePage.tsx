@@ -1,12 +1,15 @@
 // src/pages/admin/TimetablePage.tsx
 // صفحة التوزيع الزمني — مربوطة بالـ Backend عبر TanStack Query
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   useAdminTimetable,
   useCreateEntry,
   useDeleteEntry,
   useRooms,
+  useTimetableConfig,
+  useSaveConfig,
+  useResetConfig,
 } from "../../../hooks/admin/useTimetable";
 import type { TimetableEntry } from "../../../lib/api/admin/timetable.api";
 
@@ -23,15 +26,374 @@ const DAYS_AR: Record<number, string> = {
 
 const DAYS = [0, 1, 2, 3, 4, 5];
 
-const SLOTS = [
-  { start: "08:00", end: "09:30" },
-  { start: "09:30", end: "11:00" },
-  { start: "11:00", end: "12:30" },
-  { start: "12:30", end: "14:00" },
-  { start: "14:00", end: "15:30" },
-  { start: "15:30", end: "17:00" },
-  { start: "17:00", end: "19:00" },
+// الفترات الافتراضية — يمكن للأدمين تعديلها
+const DEFAULT_SLOTS = [
+  { id: "s1", start: "08:00", end: "09:30" },
+  { id: "s2", start: "09:30", end: "11:00" },
+  { id: "s3", start: "11:00", end: "12:30" },
+  { id: "s4", start: "12:30", end: "14:00" },
+  { id: "s5", start: "14:00", end: "15:30" },
+  { id: "s6", start: "15:30", end: "17:00" },
+  { id: "s7", start: "17:00", end: "19:00" },
 ];
+
+type Slot = { id: string; start: string; end: string };
+
+// ── Slot Manager Modal ────────────────────────────────────────
+
+function SlotManagerModal({
+  slots,
+  onSave,
+  onReset,
+  onClose,
+  isSaving = false,
+}: {
+  slots: Slot[];
+  onSave: (slots: Slot[]) => void;
+  onReset: () => void;
+  onClose: () => void;
+  isSaving?: boolean;
+}) {
+  const [draft, setDraft] = useState<Slot[]>(slots.map((s) => ({ ...s })));
+  const [error, setError] = useState<string | null>(null);
+
+  function timeToMinutes(t: string) {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  }
+
+  function addSlot() {
+    const last = draft[draft.length - 1];
+    const newStart = last?.end ?? "08:00";
+    const [h, m] = newStart.split(":").map(Number);
+    const endMin = h * 60 + m + 90;
+    const newEnd = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
+    setDraft([
+      ...draft,
+      {
+        id: `s${Date.now()}`,
+        start: newStart,
+        end: endMin <= 1440 ? newEnd : "23:59",
+      },
+    ]);
+  }
+
+  function removeSlot(id: string) {
+    setDraft(draft.filter((s) => s.id !== id));
+  }
+
+  function updateSlot(id: string, field: "start" | "end", value: string) {
+    setDraft(draft.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
+  }
+
+  function validate(): boolean {
+    setError(null);
+    for (const s of draft) {
+      if (!/^\d{2}:\d{2}$/.test(s.start) || !/^\d{2}:\d{2}$/.test(s.end)) {
+        setError("تأكد من صيغة الوقت HH:MM");
+        return false;
+      }
+      if (timeToMinutes(s.start) >= timeToMinutes(s.end)) {
+        setError(
+          `الفترة ${s.start} - ${s.end}: وقت البداية يجب أن يكون قبل النهاية`,
+        );
+        return false;
+      }
+    }
+    // check overlaps
+    const sorted = [...draft].sort(
+      (a, b) => timeToMinutes(a.start) - timeToMinutes(b.start),
+    );
+    for (let i = 0; i < sorted.length - 1; i++) {
+      if (timeToMinutes(sorted[i].end) > timeToMinutes(sorted[i + 1].start)) {
+        setError(
+          `تعارض بين ${sorted[i].start}-${sorted[i].end} و ${sorted[i + 1].start}-${sorted[i + 1].end}`,
+        );
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function handleSave() {
+    if (!validate()) return;
+    const sorted = [...draft].sort(
+      (a, b) => timeToMinutes(a.start) - timeToMinutes(b.start),
+    );
+    onSave(sorted);
+    onClose();
+  }
+
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 2000,
+        backdropFilter: "blur(2px)",
+      }}
+    >
+      <div
+        style={{
+          background: "#fff",
+          borderRadius: 16,
+          padding: 28,
+          width: 460,
+          maxHeight: "85vh",
+          overflowY: "auto",
+          direction: "rtl",
+          fontFamily: "'Tajawal', sans-serif",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20,
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: "#111827" }}>
+              إدارة الفترات الزمنية
+            </div>
+            <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>
+              تخصيص أوقات الحصص
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: "#f3f4f6",
+              border: "none",
+              borderRadius: 8,
+              padding: "4px 10px",
+              cursor: "pointer",
+              fontSize: 16,
+              color: "#374151",
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Slots list */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+            marginBottom: 16,
+          }}
+        >
+          {draft.map((slot, i) => (
+            <div
+              key={slot.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                background: "#f9fafb",
+                borderRadius: 10,
+                padding: "10px 12px",
+                border: "1px solid #e5e7eb",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 12,
+                  color: "#6b7280",
+                  minWidth: 24,
+                  textAlign: "center",
+                }}
+              >
+                {i + 1}
+              </span>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  flex: 1,
+                }}
+              >
+                <input
+                  type="time"
+                  value={slot.start}
+                  onChange={(e) => updateSlot(slot.id, "start", e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: "6px 8px",
+                    borderRadius: 8,
+                    border: "1.5px solid #d1d5db",
+                    fontSize: 13,
+                    fontFamily: "'Tajawal', sans-serif",
+                    outline: "none",
+                    direction: "ltr",
+                  }}
+                />
+                <span style={{ color: "#9ca3af", fontSize: 12 }}>←</span>
+                <input
+                  type="time"
+                  value={slot.end}
+                  onChange={(e) => updateSlot(slot.id, "end", e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: "6px 8px",
+                    borderRadius: 8,
+                    border: "1.5px solid #d1d5db",
+                    fontSize: 13,
+                    fontFamily: "'Tajawal', sans-serif",
+                    outline: "none",
+                    direction: "ltr",
+                  }}
+                />
+              </div>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "#6b7280",
+                  background: "#f0fdf4",
+                  borderRadius: 6,
+                  padding: "2px 6px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {(() => {
+                  const diff =
+                    slot.end && slot.start
+                      ? (() => {
+                          const [sh, sm] = slot.start.split(":").map(Number);
+                          const [eh, em] = slot.end.split(":").map(Number);
+                          return eh * 60 + em - (sh * 60 + sm);
+                        })()
+                      : 0;
+                  return diff > 0 ? `${diff} د` : "—";
+                })()}
+              </span>
+              <button
+                onClick={() => removeSlot(slot.id)}
+                disabled={draft.length <= 1}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: draft.length > 1 ? "pointer" : "not-allowed",
+                  color: draft.length > 1 ? "#ef4444" : "#d1d5db",
+                  fontSize: 16,
+                  padding: "2px 4px",
+                }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div
+            style={{
+              background: "#fef2f2",
+              border: "1px solid #fecaca",
+              borderRadius: 8,
+              padding: "8px 12px",
+              marginBottom: 12,
+              fontSize: 12,
+              color: "#dc2626",
+            }}
+          >
+            ⚠️ {error}
+          </div>
+        )}
+
+        {/* Add slot */}
+        <button
+          onClick={addSlot}
+          style={{
+            width: "100%",
+            padding: "8px",
+            borderRadius: 10,
+            border: "1.5px dashed #264230",
+            background: "#f0fdf4",
+            color: "#264230",
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: "pointer",
+            fontFamily: "'Tajawal', sans-serif",
+            marginBottom: 16,
+          }}
+        >
+          + إضافة فترة جديدة
+        </button>
+
+        {/* Reset + Save */}
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            style={{
+              flex: 1,
+              padding: "10px",
+              borderRadius: 10,
+              border: "none",
+              background: isSaving ? "#9ca3af" : "#264230",
+              color: "#fff",
+              fontWeight: 700,
+              fontSize: 14,
+              cursor: isSaving ? "not-allowed" : "pointer",
+              fontFamily: "'Tajawal', sans-serif",
+            }}
+          >
+            {isSaving ? "جارٍ الحفظ..." : "حفظ الفترات"}
+          </button>
+          <button
+            onClick={() => {
+              onReset();
+              onClose();
+            }}
+            disabled={isSaving}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1.5px solid #fecaca",
+              background: "#fef2f2",
+              color: "#dc2626",
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: isSaving ? "not-allowed" : "pointer",
+              fontFamily: "'Tajawal', sans-serif",
+            }}
+          >
+            إعادة تعيين
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1.5px solid #e5e7eb",
+              background: "#fff",
+              color: "#374151",
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: "pointer",
+              fontFamily: "'Tajawal', sans-serif",
+            }}
+          >
+            إلغاء
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const LANG_META: Record<
   string,
@@ -54,11 +416,11 @@ const LANGUAGES = Object.keys(LANG_META);
 
 type GroupedData = Record<number, Record<string, TimetableEntry[]>>;
 
-function groupEntries(entries: TimetableEntry[]): GroupedData {
+function groupEntries(entries: TimetableEntry[], slots: Slot[]): GroupedData {
   const result: GroupedData = {};
   for (const day of DAYS) {
     result[day] = {};
-    for (const s of SLOTS) {
+    for (const s of slots) {
       result[day][s.start] = [];
     }
   }
@@ -66,6 +428,7 @@ function groupEntries(entries: TimetableEntry[]): GroupedData {
     if (result[e.day_of_week]?.[e.start_time]) {
       result[e.day_of_week][e.start_time].push(e);
     } else if (result[e.day_of_week]) {
+      // حصة بوقت خارج الفترات المعرّفة — نضيفها للأقرب
       result[e.day_of_week][e.start_time] = [e];
     }
   }
@@ -462,10 +825,9 @@ export default function TimetablePage() {
   // ── State ──────────────────────────────────────────────────
   const [activeDay, setActiveDay] = useState<number | "all">("all");
   const [filterLang, setFilterLang] = useState<string | null>(null);
-  const [modal, setModal] = useState<{
-    day: number;
-    slot: (typeof SLOTS)[0];
-  } | null>(null);
+  const [modal, setModal] = useState<{ day: number; slot: Slot } | null>(null);
+  const [slots, setSlots] = useState<Slot[]>(DEFAULT_SLOTS);
+  const [slotMgrOpen, setSlotMgrOpen] = useState(false);
 
   // ── Data ───────────────────────────────────────────────────
   const { data, isLoading, isError } = useAdminTimetable(
@@ -474,10 +836,20 @@ export default function TimetablePage() {
 
   const { mutate: createEntry, isPending: isCreating } = useCreateEntry();
   const { mutate: deleteEntry } = useDeleteEntry();
+  const { mutate: saveConfig, isPending: isSaving } = useSaveConfig();
+  const { mutate: resetConfig, isPending: isResetting } = useResetConfig();
 
   const entries = data?.data ?? [];
-  const grouped = groupEntries(entries);
+  const grouped = groupEntries(entries, slots);
   const displayDays = activeDay === "all" ? DAYS : [activeDay];
+
+  // ── جلب الفترات من Backend ─────────────────────────────────
+  const { data: savedSlots } = useTimetableConfig();
+  useEffect(() => {
+    if (savedSlots && savedSlots.length > 0) {
+      setSlots(savedSlots);
+    }
+  }, [savedSlots]);
 
   // ── القاعات عبر hook ───────────────────────────────────────
   const { data: rooms = [] } = useRooms();
@@ -554,17 +926,39 @@ export default function TimetablePage() {
               </div>
             </div>
           </div>
-          <div
-            style={{
-              background: "rgba(255,255,255,0.12)",
-              borderRadius: 8,
-              padding: "6px 14px",
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 600,
-            }}
-          >
-            {isLoading ? "..." : `${entries.length} حصة`}
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {/* زر إدارة الفترات */}
+            <button
+              onClick={() => setSlotMgrOpen(true)}
+              style={{
+                background: "rgba(255,255,255,0.15)",
+                border: "1.5px solid rgba(255,255,255,0.3)",
+                borderRadius: 8,
+                padding: "6px 14px",
+                color: "#fff",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "'Tajawal', sans-serif",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              ⏱ إدارة الفترات ({slots.length})
+            </button>
+            <div
+              style={{
+                background: "rgba(255,255,255,0.12)",
+                borderRadius: 8,
+                padding: "6px 14px",
+                color: "#fff",
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              {isLoading ? "..." : `${entries.length} حصة`}
+            </div>
           </div>
         </div>
 
@@ -744,7 +1138,7 @@ export default function TimetablePage() {
                 </tr>
               </thead>
               <tbody>
-                {SLOTS.map((slot, si) => (
+                {slots.map((slot, si) => (
                   <tr key={slot.start}>
                     <td
                       style={{
@@ -883,6 +1277,17 @@ export default function TimetablePage() {
           onClose={() => setModal(null)}
           onCreate={handleCreate}
           isPending={isCreating}
+        />
+      )}
+
+      {/* ── Slot Manager Modal ────────────────────────────── */}
+      {slotMgrOpen && (
+        <SlotManagerModal
+          slots={slots}
+          onSave={(newSlots) => saveConfig(newSlots)}
+          onReset={() => resetConfig()}
+          onClose={() => setSlotMgrOpen(false)}
+          isSaving={isSaving || isResetting}
         />
       )}
     </>

@@ -421,3 +421,140 @@ export async function getPublicTimetableController(
     return res.status(500).json({ success: false, message: "خطأ في الخادم" });
   }
 }
+
+// أضف هذه الدوال في نهاية:
+// src/controllers/admin/timetable.controller.ts
+
+// ── الفترات الافتراضية ────────────────────────────────────────
+const DEFAULT_SLOTS = [
+  { id: "s1", start: "08:00", end: "09:30" },
+  { id: "s2", start: "09:30", end: "11:00" },
+  { id: "s3", start: "11:00", end: "12:30" },
+  { id: "s4", start: "12:30", end: "14:00" },
+  { id: "s5", start: "14:00", end: "15:30" },
+  { id: "s6", start: "15:30", end: "17:00" },
+  { id: "s7", start: "17:00", end: "19:00" },
+];
+
+// ══════════════════════════════════════════════════════════════
+//  GET /admin/timetable/config
+//  جلب الفترات الزمنية المحفوظة
+// ══════════════════════════════════════════════════════════════
+export async function getConfigController(req: Request, res: Response) {
+  try {
+    const config = await prisma.timetableConfig.findUnique({
+      where: { key: "slots" },
+    });
+
+    const slots = config?.value ?? DEFAULT_SLOTS;
+
+    return res.json({ success: true, slots });
+  } catch (error) {
+    console.error("[timetable] getConfig:", error);
+    return res.status(500).json({ success: false, message: "خطأ في الخادم" });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  PUT /admin/timetable/config
+//  حفظ الفترات الزمنية المخصصة
+//  Body: { slots: [{ id, start, end }, ...] }
+// ══════════════════════════════════════════════════════════════
+export async function saveConfigController(req: Request, res: Response) {
+  try {
+    const { slots } = req.body;
+
+    // ── Validation ────────────────────────────────────────────
+    if (!Array.isArray(slots) || slots.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "slots يجب أن تكون مصفوفة غير فارغة",
+      });
+    }
+
+    function timeToMinutes(t: string): number {
+      const [h, m] = t.split(":").map(Number);
+      return h * 60 + m;
+    }
+
+    function isValidTime(t: string): boolean {
+      return /^\d{2}:\d{2}$/.test(t);
+    }
+
+    for (const s of slots) {
+      if (!s.id || !s.start || !s.end) {
+        return res.status(400).json({
+          success: false,
+          message: "كل فترة يجب أن تحتوي على id, start, end",
+        });
+      }
+      if (!isValidTime(s.start) || !isValidTime(s.end)) {
+        return res.status(400).json({
+          success: false,
+          message: `صيغة الوقت غير صحيحة: ${s.start} - ${s.end}`,
+        });
+      }
+      if (timeToMinutes(s.start) >= timeToMinutes(s.end)) {
+        return res.status(400).json({
+          success: false,
+          message: `الفترة ${s.start} - ${s.end}: البداية يجب أن تكون قبل النهاية`,
+        });
+      }
+    }
+
+    // تحقق من التعارض بين الفترات
+    const sorted = [...slots].sort(
+      (a, b) => timeToMinutes(a.start) - timeToMinutes(b.start)
+    );
+    for (let i = 0; i < sorted.length - 1; i++) {
+      if (timeToMinutes(sorted[i].end) > timeToMinutes(sorted[i + 1].start)) {
+        return res.status(400).json({
+          success: false,
+          message: `تعارض بين الفترتين: ${sorted[i].start}-${sorted[i].end} و ${sorted[i+1].start}-${sorted[i+1].end}`,
+        });
+      }
+    }
+
+    // ── Upsert ────────────────────────────────────────────────
+    const config = await prisma.timetableConfig.upsert({
+      where:  { key: "slots" },
+      update: {
+        value:      sorted,
+        updated_by: (req as any).user?.user_id ?? null,
+      },
+      create: {
+        key:        "slots",
+        value:      sorted,
+        updated_by: (req as any).user?.user_id ?? null,
+      },
+    });
+
+    return res.json({
+      success: true,
+      message: "تم حفظ الفترات الزمنية",
+      slots: config.value,
+    });
+  } catch (error) {
+    console.error("[timetable] saveConfig:", error);
+    return res.status(500).json({ success: false, message: "خطأ في الخادم" });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  DELETE /admin/timetable/config/reset
+//  إعادة الفترات للافتراضية
+// ══════════════════════════════════════════════════════════════
+export async function resetConfigController(req: Request, res: Response) {
+  try {
+    await prisma.timetableConfig.deleteMany({ where: { key: "slots" } });
+
+    return res.json({
+      success: true,
+      message: "تمت إعادة الفترات للافتراضية",
+      slots: DEFAULT_SLOTS,
+    });
+  } catch (error) {
+    console.error("[timetable] resetConfig:", error);
+    return res.status(500).json({ success: false, message: "خطأ في الخادم" });
+  }
+}
