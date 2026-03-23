@@ -476,6 +476,21 @@ function EntryBadge({
         >
           {entry.language}
         </span>
+        {/* 🆕 القاعة */}
+        {entry.room?.name && (
+          <span
+            style={{
+              background: "#111827",
+              color: "#fff",
+              borderRadius: 4,
+              padding: "0 6px",
+              fontSize: 10,
+              fontWeight: 600,
+            }}
+          >
+            {entry.room.name}
+          </span>
+        )}
       </div>
       {/* زر الحذف */}
       <button
