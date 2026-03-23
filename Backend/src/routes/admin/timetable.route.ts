@@ -19,6 +19,7 @@ import {
   deleteEntryController,
   resetConfigController,
   saveConfigController,
+  getConfigController,
 } from "../../controllers/admin/timetable.controller";
 
 const timetableRoutes = Router();
@@ -108,11 +109,21 @@ timetableRoutes.put(
   roleGuard([Permissions.MANAGE_SESSIONS]),
   saveConfigController,
 );
- 
-/**
- * DELETE /admin/timetable/config/reset
- * إعادة الفترات للافتراضية
- */
+
+timetableRoutes.get(
+  "/config",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_SESSIONS]),
+  getConfigController,
+);
+
+timetableRoutes.put(
+  "/config",
+  authMiddleware,
+  roleGuard([Permissions.MANAGE_SESSIONS]),
+  saveConfigController,
+);
+
 timetableRoutes.delete(
   "/config/reset",
   authMiddleware,

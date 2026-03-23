@@ -151,29 +151,24 @@ export async function fetchRooms() {
   return list.filter((r) => r.is_active !== false);
 }
 
-// ══════════════════════════════════════════════════════════════
-// 1) أضف في src/lib/api/admin/timetable.api.ts
-// ══════════════════════════════════════════════════════════════
- 
 export interface SlotConfig {
-  id:    string;
-  start: string; // "HH:MM"
-  end:   string; // "HH:MM"
+  id: string;
+  start: string;
+  end: string;
 }
- 
-/** جلب الفترات الزمنية المحفوظة */
+
 export async function fetchTimetableConfig(): Promise<SlotConfig[]> {
   const { data } = await axiosInstance.get("/admin/timetable/config");
   return data?.slots ?? [];
 }
- 
-/** حفظ الفترات الزمنية */
+
 export async function saveTimetableConfig(slots: SlotConfig[]) {
-  const { data } = await axiosInstance.put("/admin/timetable/config", { slots });
+  const { data } = await axiosInstance.put("/admin/timetable/config", {
+    slots,
+  });
   return data as { success: boolean; message: string; slots: SlotConfig[] };
 }
- 
-/** إعادة الفترات للافتراضية */
+
 export async function resetTimetableConfig() {
   const { data } = await axiosInstance.delete("/admin/timetable/config/reset");
   return data as { success: boolean; message: string; slots: SlotConfig[] };
