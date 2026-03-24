@@ -87,6 +87,7 @@ import ScreenSaver from "./components/Screensaver";
 import NetworkToast from "./components/Networktoast";
 import AdminGroupsPage from "./app/admin/pages/group/AdminGroupsPage";
 import TimetablePage from "./app/admin/pages/TimetablePage";
+import PublicTimetablePage from "./app/Home/PublicTimetablePage";
 
 const App = () => {
   const { isIdle, resetTimer } = useScreenSaver();
@@ -117,6 +118,7 @@ const App = () => {
             <Route path="courses/:id" element={<CourseInfoMorePage />} />
             <Route path="about-us" element={<AboutUs />} />
             <Route path="OurPlatform" element={<OurPlatform />} />
+            <Route path="timetable" element={<PublicTimetablePage />} />
           </Route>
 
           {/* ═══ Auth pages under lang prefix too ═══ */}
