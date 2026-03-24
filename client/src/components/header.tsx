@@ -78,7 +78,7 @@ export function Header() {
     { to: "/announcements", label: t("common.announcements") },
     { to: "/about-us", label: t("common.features") },
     { to: "/OurPlatform", label: t("common.OurPlatform") },
-    { to: "/timetable", label: t("common.contact") },
+    { to: "/timetable", label: t("common.timetable") },
   ];
 
   const dashboardPath =
