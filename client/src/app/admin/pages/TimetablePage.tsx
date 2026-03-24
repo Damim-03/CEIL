@@ -420,6 +420,17 @@ function formatDuration(start: string, end: string) {
 
 // ── Entry Badge ───────────────────────────────────────────────
 
+const LANG_FLAGS: Record<string, string> = {
+  FR: "🇫🇷",
+  EN: "🇬🇧",
+  ES: "🇪🇸",
+  DE: "🇩🇪",
+  TR: "🇹🇷",
+  GR: "🇬🇷",
+  IT: "🇮🇹",
+  AR: "🇩🇿",
+};
+
 function EntryBadge({
   entry,
   onDelete,
@@ -428,84 +439,154 @@ function EntryBadge({
   onDelete: () => void;
 }) {
   const meta = LANG_META[entry.language] ?? LANG_META["FR"];
+  const flag = LANG_FLAGS[entry.language] ?? "🌐";
+  const dur = formatDuration(entry.start_time, entry.end_time);
+
   return (
     <div
       style={{
-        background: meta.bg,
-        border: `1px solid ${meta.border}`,
-        borderRadius: 8,
-        padding: "6px 10px",
+        background: "#fff",
+        border: `1.5px solid ${meta.border}`,
+        borderRight: `4px solid ${meta.color}`,
+        borderRadius: 10,
+        padding: "8px 10px 8px 28px",
         display: "flex",
         flexDirection: "column",
-        gap: 3,
-        fontSize: 11,
+        gap: 5,
         fontFamily: "'Tajawal', sans-serif",
         direction: "rtl",
         position: "relative",
-        minWidth: 110,
+        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+        transition: "box-shadow 0.15s",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = "0 3px 10px rgba(0,0,0,0.12)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)";
       }}
     >
-      {/* وقت الحصة */}
-      <div
-        style={{
-          fontSize: 10,
-          color: "#6b7280",
-          fontWeight: 600,
-          direction: "ltr",
-        }}
-      >
-        {entry.start_time} - {entry.end_time}
-        <span style={{ marginRight: 4, color: "#9ca3af" }}>
-          ({formatDuration(entry.start_time, entry.end_time)})
-        </span>
-      </div>
-      {/* المجموعة واللغة */}
-      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-        <span style={{ color: meta.color, fontWeight: 700 }}>
-          {entry.group_label}
-        </span>
+      {/* ── السطر الأول: اللغة ──────────────────────────────── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{ fontSize: 15, lineHeight: 1 }}>{flag}</span>
         <span
           style={{
             background: meta.color,
             color: "#fff",
-            borderRadius: 3,
-            padding: "0 4px",
-            fontSize: 10,
-            fontWeight: 700,
+            borderRadius: 6,
+            padding: "2px 8px",
+            fontSize: 12,
+            fontWeight: 800,
+            letterSpacing: 0.5,
           }}
         >
           {entry.language}
         </span>
-        {/* 🆕 القاعة */}
+        <span style={{ color: meta.color, fontSize: 12, fontWeight: 700 }}>
+          {meta.label}
+        </span>
+      </div>
+
+      {/* ── السطر الثاني: الفوج + القاعة ────────────────────── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 5,
+          flexWrap: "wrap",
+        }}
+      >
+        <span
+          style={{
+            background: "#f3f4f6",
+            color: "#111827",
+            borderRadius: 6,
+            padding: "2px 8px",
+            fontSize: 12,
+            fontWeight: 700,
+          }}
+        >
+          {entry.group_label}
+        </span>
         {entry.room?.name && (
           <span
             style={{
-              background: "#111827",
-              color: "#fff",
-              borderRadius: 4,
-              padding: "0 6px",
-              fontSize: 10,
+              background: "#264230",
+              color: "#C4A035",
+              borderRadius: 6,
+              padding: "2px 8px",
+              fontSize: 11,
               fontWeight: 600,
             }}
           >
-            {entry.room.name}
+            🚪 {entry.room.name}
           </span>
         )}
       </div>
-      {/* زر الحذف */}
+
+      {/* ── السطر الثالث: الوقت + المدة ─────────────────────── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          direction: "ltr",
+        }}
+      >
+        <span
+          style={{
+            fontSize: 11,
+            color: "#6b7280",
+            fontFamily: "monospace",
+            fontWeight: 600,
+          }}
+        >
+          {entry.start_time} – {entry.end_time}
+        </span>
+        {dur && (
+          <span
+            style={{
+              background: meta.bg,
+              color: meta.color,
+              borderRadius: 4,
+              padding: "1px 6px",
+              fontSize: 10,
+              fontWeight: 700,
+            }}
+          >
+            ⏱ {dur}
+          </span>
+        )}
+      </div>
+
+      {/* ── زر الحذف ─────────────────────────────────────────── */}
       <button
         onClick={onDelete}
+        title="حذف الحصة"
         style={{
           position: "absolute",
-          top: 4,
-          left: 4,
-          background: "none",
+          top: 6,
+          left: 6,
+          background: "#fef2f2",
           border: "none",
+          borderRadius: 6,
+          width: 20,
+          height: 20,
           cursor: "pointer",
-          color: "#9ca3af",
-          padding: 0,
-          fontSize: 13,
+          color: "#ef4444",
+          fontSize: 12,
           lineHeight: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          opacity: 0.6,
+          transition: "opacity 0.15s",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.opacity = "1";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.opacity = "0.6";
         }}
       >
         ×
@@ -1266,27 +1347,76 @@ export default function TimetablePage() {
                       background: "#264230",
                       color: "#fff",
                       padding: "10px 14px",
-                      textAlign: "center",
                       fontWeight: 700,
                       fontSize: 14,
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
                     }}
                   >
-                    <span>{DAYS_AR[day]}</span>
+                    {/* اسم اليوم + عدد الحصص */}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span>{DAYS_AR[day]}</span>
+                      {byDay[day].length > 0 && (
+                        <span
+                          style={{
+                            background: "#C4A035",
+                            color: "#fff",
+                            borderRadius: 10,
+                            padding: "1px 8px",
+                            fontSize: 11,
+                          }}
+                        >
+                          {byDay[day].length} حصة
+                        </span>
+                      )}
+                    </div>
+                    {/* pills اللغات الموجودة في هذا اليوم */}
                     {byDay[day].length > 0 && (
-                      <span
+                      <div
                         style={{
-                          background: "#C4A035",
-                          color: "#fff",
-                          borderRadius: 10,
-                          padding: "1px 8px",
-                          fontSize: 11,
+                          display: "flex",
+                          gap: 4,
+                          flexWrap: "wrap",
+                          marginTop: 8,
                         }}
                       >
-                        {byDay[day].length}
-                      </span>
+                        {Array.from(
+                          new Set(byDay[day].map((e) => e.language)),
+                        ).map((lang) => {
+                          const m = LANG_META[lang];
+                          const flag = LANG_FLAGS[lang] ?? "🌐";
+                          const count = byDay[day].filter(
+                            (e) => e.language === lang,
+                          ).length;
+                          return (
+                            <span
+                              key={lang}
+                              style={{
+                                background: m?.color ?? "#374151",
+                                color: "#fff",
+                                borderRadius: 20,
+                                padding: "2px 8px",
+                                fontSize: 11,
+                                fontWeight: 700,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 3,
+                              }}
+                            >
+                              {flag} {lang}
+                              {count > 1 && (
+                                <span style={{ opacity: 0.8, fontSize: 10 }}>
+                                  ×{count}
+                                </span>
+                              )}
+                            </span>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
 
