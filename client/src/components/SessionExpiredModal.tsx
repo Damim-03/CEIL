@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogIn, Clock, ShieldAlert, Hourglass } from "lucide-react";
+import { LogIn, Clock, ShieldAlert } from "lucide-react";
 
 /* ─── أنيميشن keyframes (CSS-in-JS مدمج) ─── */
 const STYLES = `

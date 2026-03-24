@@ -8,7 +8,7 @@ import { RoleBadge } from "../../components/RoleBadge";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useAdminUsers } from "../../../../hooks/admin/useAdmin";
 import { Search, Users, Eye, Filter } from "lucide-react";
-import { useAuth } from "../../../../context/AuthContext";
+import { useAuth } from "../../../../hooks/useAuth";
 
 // ❌ REMOVED: useChangeUserRole — Role changes are now OWNER-only
 // ❌ REMOVED: DropdownMenu, UserCog, ShieldCheck, Shield, User

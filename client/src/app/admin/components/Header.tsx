@@ -3,7 +3,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "../../../components/ui/avatar";
-import { useAuth } from "../../../context/AuthContext";
+import { useAuth } from "../../../hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { DashboardLanguageSwitcher } from "../../student/components/Dashboardlanguageswitcher";

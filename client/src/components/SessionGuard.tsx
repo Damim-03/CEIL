@@ -13,10 +13,10 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import { useIdleTimer } from "../hooks/useIdleTimer";
 import { SessionExpiredModal } from "./SessionExpiredModal";
 import { SESSION_EXPIRED_EVENT } from "../lib/api/axios"; // ← من axiosInstance
+import { useAuth } from "../hooks/useAuth";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000; // 30 دقيقة
 
@@ -41,7 +41,7 @@ export function SessionGuard({
     shownRef.current = true;
     setReason(r);
     setModalOpen(true);
-    logout?.();
+    logout(false); // ❌ بدون redirect
   }
 
   // ─── 1. خمول ──────────────────────────────────────────────

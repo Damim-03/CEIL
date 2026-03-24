@@ -51,7 +51,7 @@ import {
   type Room,
 } from "../../lib/api/admin/admin.api";
 
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
 import type { Session } from "react-router";
 import type {
   AdminStudent,
