@@ -127,7 +127,7 @@ const Sidebar = ({ collapsed, onExpand }: SidebarProps) => {
             collapsed ? "justify-center px-2.5 py-3" : "gap-3 px-3 py-2.5",
             active
               ? "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80] font-semibold"
-              : "text-[#6B5D4F] dark:text-[#888888] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#2A2A2A] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]",
+              : "text-[#6B5D4F] dark:text-[#888888] hover:bg-brand-beige/10 dark:hover:bg-[#2A2A2A] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]",
           )}
         >
           <div
@@ -135,7 +135,7 @@ const Sidebar = ({ collapsed, onExpand }: SidebarProps) => {
               "w-9 h-9 rounded-lg flex items-center justify-center transition-colors shrink-0",
               active
                 ? "bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/15"
-                : "bg-transparent group-hover:bg-[#D8CDC0]/15 dark:group-hover:bg-[#2A2A2A]",
+                : "bg-transparent group-hover:bg-brand-beige/15 dark:group-hover:bg-[#2A2A2A]",
             )}
           >
             <item.icon
@@ -143,7 +143,7 @@ const Sidebar = ({ collapsed, onExpand }: SidebarProps) => {
                 "h-5 w-5",
                 active
                   ? "text-[#2B6F5E] dark:text-[#4ADE80]"
-                  : "text-[#BEB29E] dark:text-[#666666] group-hover:text-[#6B5D4F] dark:group-hover:text-[#AAAAAA]",
+                  : "text-brand-brown dark:text-[#666666] group-hover:text-[#6B5D4F] dark:group-hover:text-[#AAAAAA]",
               )}
             />
           </div>
@@ -166,13 +166,13 @@ const Sidebar = ({ collapsed, onExpand }: SidebarProps) => {
       className={cn(
         "fixed left-0 top-0 z-40 h-screen flex flex-col transition-all duration-300",
         "bg-white dark:bg-[#1A1A1A] border-r border-brand-beige/40 dark:border-[#2A2A2A]",
-        collapsed ? "w-[72px]" : "w-64",
+        collapsed ? "w-18" : "w-64",
       )}
     >
       {/* ═══════════ HEADER ═══════════ */}
       <div
         className={cn(
-          "flex items-center border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A] shrink-0",
+          "flex items-center border-b border-brand-beige/30 dark:border-[#2A2A2A] shrink-0",
           collapsed ? "justify-center p-3.5" : "justify-between p-4",
         )}
       >
@@ -202,7 +202,7 @@ const Sidebar = ({ collapsed, onExpand }: SidebarProps) => {
               <span className="text-base font-bold text-[#1B1B1B] dark:text-[#E5E5E5] block leading-tight">
                 {t("admin.portal")}
               </span>
-              <span className="text-[10px] font-medium text-[#BEB29E] dark:text-[#666666] uppercase tracking-wider">
+              <span className="text-[10px] font-medium text-brand-brown dark:text-[#666666] uppercase tracking-wider">
                 {t("admin.ceil")}
               </span>
             </Link>
@@ -219,9 +219,9 @@ const Sidebar = ({ collapsed, onExpand }: SidebarProps) => {
         </ul>
 
         {/* Public / Website */}
-        <div className="mt-4 pt-4 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+        <div className="mt-4 pt-4 border-t border-brand-beige/30 dark:border-[#2A2A2A]">
           {!collapsed && (
-            <p className="px-4 mb-2 text-[10px] font-semibold text-[#BEB29E] dark:text-[#555555] uppercase tracking-wider">
+            <p className="px-4 mb-2 text-[10px] font-semibold text-brand-brown dark:text-[#555555] uppercase tracking-wider">
               {t("admin.nav.publicSection")}
             </p>
           )}
@@ -233,7 +233,7 @@ const Sidebar = ({ collapsed, onExpand }: SidebarProps) => {
         </div>
 
         {/* Profile */}
-        <div className="mt-4 pt-4 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+        <div className="mt-4 pt-4 border-t border-brand-beige/30 dark:border-[#2A2A2A]">
           <ul className={cn("space-y-1.5", collapsed ? "px-2" : "px-3")}>
             {bottomNavItems.map((item) => (
               <NavLink key={item.labelKey} item={item} />
@@ -246,7 +246,7 @@ const Sidebar = ({ collapsed, onExpand }: SidebarProps) => {
       {user && (
         <div
           className={cn(
-            "border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A] space-y-3",
+            "border-t border-brand-beige/30 dark:border-[#2A2A2A] space-y-3",
             collapsed ? "p-2" : "p-4",
           )}
         >
@@ -259,7 +259,7 @@ const Sidebar = ({ collapsed, onExpand }: SidebarProps) => {
           >
             <div
               className={cn(
-                "rounded-full overflow-hidden shrink-0 border-2 border-[#D8CDC0]/40 dark:border-[#2A2A2A]",
+                "rounded-full overflow-hidden shrink-0 border-2 border-brand-beige/40 dark:border-[#2A2A2A]",
                 collapsed ? "h-8 w-8" : "h-10 w-10",
               )}
             >
@@ -270,7 +270,7 @@ const Sidebar = ({ collapsed, onExpand }: SidebarProps) => {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="h-full w-full bg-gradient-to-br from-[#8DB896] to-[#2B6F5E] dark:from-[#4ADE80]/30 dark:to-[#2B6F5E] flex items-center justify-center text-white font-semibold text-xs">
+                <div className="h-full w-full bg-linear-to-br from-[#8DB896] to-[#2B6F5E] dark:from-[#4ADE80]/30 dark:to-[#2B6F5E] flex items-center justify-center text-white font-semibold text-xs">
                   {initials}
                 </div>
               )}
@@ -280,7 +280,7 @@ const Sidebar = ({ collapsed, onExpand }: SidebarProps) => {
                 <p className="truncate text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                   {user.email}
                 </p>
-                <p className="text-xs text-[#BEB29E] dark:text-[#666666]">
+                <p className="text-xs text-brand-brown dark:text-[#666666]">
                   {t("admin.role")}
                 </p>
               </div>

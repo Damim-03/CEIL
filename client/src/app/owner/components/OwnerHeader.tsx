@@ -84,7 +84,7 @@ export const OwnerHeader = ({ onMenuClick }: HeaderProps) => {
   const avatarSrc = user?.google_avatar || "";
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center justify-between px-4 sm:px-6 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A] bg-white/80 dark:bg-[#1A1A1A]/80 backdrop-blur-sm transition-colors duration-300">
+    <header className="sticky top-0 z-20 flex h-14 items-center justify-between px-4 sm:px-6 border-b border-brand-beige/30 dark:border-[#2A2A2A] bg-white/80 dark:bg-[#1A1A1A]/80 backdrop-blur-sm transition-colors duration-300">
       {/* Left: Title */}
       <div className="flex items-center gap-3">
         <h1 className="text-base sm:text-lg font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
@@ -100,7 +100,7 @@ export const OwnerHeader = ({ onMenuClick }: HeaderProps) => {
         {/* User Info */}
         {user && (
           <div className="hidden sm:flex flex-col items-end mr-1">
-            <span className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] truncate max-w-[150px]">
+            <span className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] truncate max-w-37.5">
               {user.email.split("@")[0]}
             </span>
             <div className="flex items-center gap-1">
@@ -115,7 +115,7 @@ export const OwnerHeader = ({ onMenuClick }: HeaderProps) => {
         {/* Avatar */}
         <Avatar className="h-9 w-9 border-2 border-[#D4A843]/40 dark:border-[#D4A843]/20">
           <AvatarImage src={avatarSrc} alt={user?.email || "Owner avatar"} />
-          <AvatarFallback className="text-xs font-semibold bg-gradient-to-br from-[#D4A843] to-[#B8912E] text-white">
+          <AvatarFallback className="text-xs font-semibold bg-linear-to-br from-[#D4A843] to-[#B8912E] text-white">
             {initials}
           </AvatarFallback>
         </Avatar>

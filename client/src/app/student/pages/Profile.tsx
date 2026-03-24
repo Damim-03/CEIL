@@ -84,14 +84,14 @@ function SectionHeader({
       <div
         className={`w-8 h-8 rounded-[10px] border flex items-center justify-center shrink-0 ${bg}`}
       >
-        <Icon className={`w-[15px] h-[15px] ${color}`} />
+        <Icon className={`w-3.75 h-3.75 ${color}`} />
       </div>
       <span
         className={`text-[0.65rem] font-bold tracking-[0.14em] uppercase ${color}`}
       >
         {title}
       </span>
-      <div className={`flex-1 h-px bg-gradient-to-r ${line}`} />
+      <div className={`flex-1 h-px bg-linear-to-r ${line}`} />
     </div>
   );
 }
@@ -120,10 +120,10 @@ function InfoTile({
   return (
     <div
       className={`
-        group flex items-start gap-3 p-[14px] rounded-2xl cursor-default
-        bg-white/[0.025] dark:bg-white/[0.025]
-        border border-white/[0.055] dark:border-white/[0.055]
-        hover:bg-white/[0.05] hover:border-white/10
+        group flex items-start gap-3 p-3.5 rounded-2xl cursor-default
+        bg-white/2.5 dark:bg-white/2.5
+        border border-white/5.5 dark:border-white/5.5
+        hover:bg-white/5 hover:border-white/10
         hover:-translate-x-0.5
         transition-all duration-200
         ${full ? "col-span-full" : ""}
@@ -135,18 +135,18 @@ function InfoTile({
         <Icon className={`w-4 h-4 ${iconCol}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[0.6rem] font-bold uppercase tracking-[0.1em] text-white/30 mb-[3px]">
+        <p className="text-[0.6rem] font-bold uppercase tracking-widest text-white/30 mb-0.75">
           {label}
         </p>
         <p
-          className={`text-[0.855rem] font-medium break-words leading-snug ${
+          className={`text-[0.855rem] font-medium wrap-break-wordword leading-snug ${
             value === "—" ? "text-white/20 italic" : "text-white/80"
           }`}
         >
           {value}
         </p>
       </div>
-      <ChevronRight className="w-[13px] h-[13px] text-white/10 shrink-0 mt-0.5 group-hover:text-white/20 transition-colors" />
+      <ChevronRight className="w-3.25 h-3.25 text-white/10 shrink-0 mt-0.5 group-hover:text-white/20 transition-colors" />
     </div>
   );
 }
@@ -173,10 +173,10 @@ function FieldInput({
 }) {
   return (
     <div className={full ? "col-span-full" : ""}>
-      <label className="block text-[0.65rem] font-bold uppercase tracking-[0.09em] text-white/35 mb-[7px]">
+      <label className="block text-[0.65rem] font-bold uppercase tracking-[0.09em] text-white/35 mb-1.75">
         {label}
       </label>
-      <div className="rounded-xl border border-white/[0.09] bg-white/[0.04] focus-within:border-[#C1965A]/45 focus-within:shadow-[0_0_0_3px_rgba(193,150,90,0.07)] transition-all duration-200">
+      <div className="rounded-xl border border-white/9 bg-white/4 focus-within:border-brand-mustard/45 focus-within:shadow-[0_0_0_3px_rgba(193,150,90,0.07)] transition-all duration-200">
         <input
           type={type}
           value={value}
@@ -184,7 +184,7 @@ function FieldInput({
           placeholder={placeholder}
           onChange={(e) => onChange?.(e.target.value)}
           className={`
-            w-full px-3.5 py-[11px] bg-transparent border-none outline-none
+            w-full px-3.5 py-2.75 bg-transparent border-none outline-none
             text-[0.875rem] font-medium font-body
             placeholder:text-white/20
             ${disabled ? "text-white/22 cursor-not-allowed" : "text-white/82"}
@@ -192,7 +192,7 @@ function FieldInput({
         />
       </div>
       {helpText && (
-        <p className="text-[0.62rem] text-white/22 mt-[5px]">{helpText}</p>
+        <p className="text-[0.62rem] text-white/22 mt-1.25">{helpText}</p>
       )}
     </div>
   );
@@ -212,14 +212,14 @@ function FieldSelect({
 }) {
   return (
     <div>
-      <label className="block text-[0.65rem] font-bold uppercase tracking-[0.09em] text-white/35 mb-[7px]">
+      <label className="block text-[0.65rem] font-bold uppercase tracking-[0.09em] text-white/35 mb-1.75">
         {label}
       </label>
-      <div className="rounded-xl border border-white/[0.09] bg-white/[0.04] focus-within:border-[#C1965A]/45 focus-within:shadow-[0_0_0_3px_rgba(193,150,90,0.07)] transition-all duration-200">
+      <div className="rounded-xl border border-white/9 bg-white/4 focus-within:border-brand-mustard/45 focus-within:shadow-[0_0_0_3px_rgba(193,150,90,0.07)] transition-all duration-200">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3.5 py-[11px] bg-transparent border-none outline-none text-[0.875rem] font-medium text-white/82 font-body cursor-pointer [&>option]:bg-[#1a2e25] [&>option]:text-white"
+          className="w-full px-3.5 py-2.75 bg-transparent border-none outline-none text-[0.875rem] font-medium text-white/82 font-body cursor-pointer [&>option]:bg-[#1a2e25] [&>option]:text-white"
         >
           {options.map((o) => (
             <option key={o.value} value={o.value}>
@@ -257,10 +257,10 @@ export default function Profile() {
 
   if (!profile) {
     return (
-      <div className="flex items-center justify-center min-h-[360px]">
+      <div className="flex items-center justify-center min-h-90">
         <div className="text-center">
-          <div className="w-16 h-16 rounded-full bg-[#26423D]/30 flex items-center justify-center mx-auto mb-4">
-            <User className="w-7 h-7 text-[#4A7066]" />
+          <div className="w-16 h-16 rounded-full bg-brand-teal-dark/30 flex items-center justify-center mx-auto mb-4">
+            <User className="w-7 h-7 text-brand-teal" />
           </div>
           <p className="text-white/30 font-body">Profile not found</p>
         </div>
@@ -321,12 +321,12 @@ export default function Profile() {
     : "ST";
 
   return (
-    <div className="max-w-[860px] mx-auto pb-12 space-y-4 font-body">
+    <div className="max-w-215 mx-auto pb-12 space-y-4 font-body">
       {/* ══ HERO CARD ═══════════════════════════════════════════ */}
       <div
         className="animate-fade-up relative overflow-hidden rounded-[28px]
-        bg-gradient-to-br from-[#0c1e17] via-[#122a1f] to-[#0a1710]
-        border border-[#C1965A]/13
+        bg-linear-to-br from-[#0c1e17] via-[#122a1f] to-[#0a1710]
+        border border-brand-mustard/13
         shadow-[0_32px_80px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.04)]"
       >
         {/* Ambient orbs */}
@@ -381,14 +381,14 @@ export default function Profile() {
               <img
                 src={profile.google_avatar}
                 alt="avatar"
-                className="w-full h-full rounded-full object-cover border-[2.5px] border-[#C1965A]/28"
+                className="w-full h-full rounded-full object-cover border-[2.5px] border-brand-mustard/28"
               />
             ) : (
               <div
-                className="w-full h-full rounded-full border-[2.5px] border-[#C1965A]/28
-                  bg-gradient-to-br from-[#1a3028] to-[#26423D]
+                className="w-full h-full rounded-full border-[2.5px] border-brand-mustard/28
+                  bg-linear-to-br from-[#1a3028] to-brand-teal-dark
                   flex items-center justify-center
-                  font-sans text-[1.5rem] font-black text-[#C1965A] tracking-wider"
+                  font-sans text-[1.5rem] font-black text-brand-mustard tracking-wider"
               >
                 {initials}
               </div>
@@ -396,7 +396,7 @@ export default function Profile() {
             {isComplete && (
               <div
                 className="absolute bottom-0.5 right-0.5 w-6 h-6 rounded-full
-                bg-gradient-to-br from-[#C1965A] to-[#d4b07a]
+                bg-linear-to-br from-brand-mustard to-brand-mustard-light
                 border-[2.5px] border-[#0c1e17]
                 flex items-center justify-center
                 shadow-[0_2px_8px_rgba(193,150,90,0.4)]"
@@ -407,8 +407,8 @@ export default function Profile() {
           </div>
 
           {/* Name + badges */}
-          <div className="flex-1 min-w-[180px]">
-            <p className="text-[0.58rem] font-bold tracking-[0.18em] uppercase text-[#4A7066] dark:text-[#5e8a7e] mb-1">
+          <div className="flex-1 min-w-45">
+            <p className="text-[0.58rem] font-bold tracking-[0.18em] uppercase text-brand-teal dark:text-brand-teal-light mb-1">
               CEIL · Student Portal
             </p>
             <h1 className="font-sans text-[clamp(1.55rem,4vw,2.1rem)] font-black text-white leading-[1.12] mb-1.5">
@@ -419,15 +419,15 @@ export default function Profile() {
             </p>
             <div className="flex flex-wrap gap-2">
               <span
-                className="inline-flex items-center gap-1.5 px-3 py-[3px] rounded-full text-[0.65rem] font-bold
-                bg-[#4A7066]/14 text-[#4A7066] dark:text-[#5e8a7e] border border-[#4A7066]/28"
+                className="inline-flex items-center gap-1.5 px-3 py-0.75 rounded-full text-[0.65rem] font-bold
+                bg-brand-teal/14 text-brand-teal dark:text-brand-teal-light border border-brand-teal/28"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#4A7066] animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-teal animate-pulse" />
                 Student
               </span>
               {profile.student_id && (
                 <span
-                  className="px-3 py-[3px] rounded-full text-[0.65rem] font-semibold
+                  className="px-3 py-0.75 rounded-full text-[0.65rem] font-semibold
                   bg-white/5 text-white/40 border border-white/8"
                 >
                   ID: {profile.student_id}
@@ -435,7 +435,7 @@ export default function Profile() {
               )}
               {profile.status === "active" && (
                 <span
-                  className="inline-flex items-center gap-1 px-3 py-[3px] rounded-full text-[0.65rem] font-semibold
+                  className="inline-flex items-center gap-1 px-3 py-0.75 rounded-full text-[0.65rem] font-semibold
                   bg-white/5 text-white/45 border border-white/8"
                 >
                   <CheckCircle className="w-2.5 h-2.5" /> Active
@@ -443,8 +443,8 @@ export default function Profile() {
               )}
               {isComplete && (
                 <span
-                  className="inline-flex items-center gap-1.5 px-3 py-[3px] rounded-full text-[0.65rem] font-bold
-                  bg-[#C1965A]/10 text-[#C1965A] dark:text-[#d4b07a] border border-[#C1965A]/25"
+                  className="inline-flex items-center gap-1.5 px-3 py-0.75 rounded-full text-[0.65rem] font-bold
+                  bg-brand-mustard/10 text-brand-mustard dark:text-brand-mustard-light border border-brand-mustard/25"
                 >
                   <Sparkles className="w-2.5 h-2.5" /> Enrollment Ready
                 </span>
@@ -458,12 +458,12 @@ export default function Profile() {
               <button
                 onClick={handleEdit}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[14px]
-                  border border-[#C1965A]/35 bg-[#C1965A]/8 text-[#C1965A] dark:text-[#d4b07a]
+                  border border-brand-mustard/35 bg-brand-mustard/8 text-brand-mustard dark:text-brand-mustard-light
                   text-[0.82rem] font-bold font-body cursor-pointer
-                  hover:bg-[#C1965A]/18 hover:border-[#C1965A]/55
+                  hover:bg-brand-mustard/18 hover:border-brand-mustard/55
                   transition-all duration-200"
               >
-                <Edit className="w-[15px] h-[15px]" /> Edit Profile
+                <Edit className="w-3.75 h-3.75" /> Edit Profile
               </button>
             ) : (
               <>
@@ -481,13 +481,13 @@ export default function Profile() {
                   onClick={handleSave}
                   disabled={isSaving}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[14px]
-                    bg-gradient-to-r from-[#C1965A] to-[#d4b07a] text-[#0c1e17]
+                    bg-linear-to-r from-brand-mustard to-brand-mustard-light text-[#0c1e17]
                     text-[0.82rem] font-extrabold font-body cursor-pointer border-none
                     shadow-[0_4px_20px_rgba(193,150,90,0.28)]
                     hover:shadow-[0_6px_28px_rgba(193,150,90,0.4)] hover:-translate-y-px
                     transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
                 >
-                  <Save className="w-[15px] h-[15px]" />{" "}
+                  <Save className="w-3.75 h-3.75" />{" "}
                   {isSaving ? "Saving…" : "Save Changes"}
                 </button>
               </>
@@ -553,7 +553,7 @@ export default function Profile() {
                     <s.icon className={`w-3.5 h-3.5 ${iconCol}`} />
                   </div>
                   <div>
-                    <p className="text-[0.57rem] font-bold uppercase tracking-[0.1em] text-white/28 mb-0.5">
+                    <p className="text-[0.57rem] font-bold uppercase tracking-widest text-white/28 mb-0.5">
                       {s.label}
                     </p>
                     <p className="text-[0.76rem] font-semibold text-white/72">
@@ -578,9 +578,9 @@ export default function Profile() {
 
       {/* ══ PERSONAL INFO CARD ══════════════════════════════════ */}
       <div
-        className="animate-fade-up delay-100 relative overflow-hidden rounded-[24px]
-        bg-gradient-to-br from-[#0e1d16] via-[#111e18] to-[#0c1a13]
-        border border-white/[0.065]
+        className="animate-fade-up delay-100 relative overflow-hidden rounded-3xl
+        bg-linear-to-br from-[#0e1d16] via-[#111e18] to-[#0c1a13]
+        border border-white/6.5
         shadow-[0_20px_56px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.04)]"
       >
         <div className="p-7">
@@ -752,14 +752,14 @@ export default function Profile() {
 
       {/* ══ ACCOUNT INFO CARD ═══════════════════════════════════ */}
       <div
-        className="animate-fade-up delay-200 relative overflow-hidden rounded-[24px]
-        bg-gradient-to-br from-[#0e1d16] via-[#111e18] to-[#0c1a13]
-        border border-white/[0.065]
+        className="animate-fade-up delay-200 relative overflow-hidden rounded-3xl
+        bg-linear-to-br from-[#0e1d16] via-[#111e18] to-[#0c1a13]
+        border border-white/6.5
         shadow-[0_20px_56px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.04)]"
       >
         {/* Gold left accent bar */}
         <div
-          className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-[24px]"
+          className="absolute left-0 top-0 bottom-0 w-0.75 rounded-l-3xl"
           style={{
             background: "linear-gradient(180deg,#C1965A,rgba(193,150,90,0.1))",
           }}
@@ -770,14 +770,14 @@ export default function Profile() {
 
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
             {/* Status */}
-            <div className="p-4 rounded-2xl bg-white/[0.025] border border-white/[0.06]">
-              <p className="text-[0.6rem] font-bold uppercase tracking-[0.1em] text-white/28 mb-2.5">
+            <div className="p-4 rounded-2xl bg-white/2.5 border border-white/6">
+              <p className="text-[0.6rem] font-bold uppercase tracking-widest text-white/28 mb-2.5">
                 Account Status
               </p>
               <span
-                className={`px-3 py-[3px] rounded-full text-[0.72rem] font-bold ${
+                className={`px-3 py-0.75 rounded-full text-[0.72rem] font-bold ${
                   profile.status === "active"
-                    ? "bg-[#4A7066]/14 text-[#4A7066] dark:text-[#5e8a7e] border border-[#4A7066]/28"
+                    ? "bg-brand-teal/14 text-brand-teal dark:text-brand-teal-light border border-brand-teal/28"
                     : "bg-white/5 text-white/40 border border-white/8"
                 }`}
               >
@@ -789,8 +789,8 @@ export default function Profile() {
 
             {/* Member Since */}
             {profile.created_at && (
-              <div className="p-4 rounded-2xl bg-white/[0.025] border border-white/[0.06]">
-                <p className="text-[0.6rem] font-bold uppercase tracking-[0.1em] text-white/28 mb-2">
+              <div className="p-4 rounded-2xl bg-white/2.5 border border-white/6">
+                <p className="text-[0.6rem] font-bold uppercase tracking-widest text-white/28 mb-2">
                   Member Since
                 </p>
                 <p className="text-[0.875rem] font-semibold text-white/72">
@@ -807,18 +807,18 @@ export default function Profile() {
             <div
               className={`p-4 rounded-2xl border ${
                 isComplete
-                  ? "bg-[#C1965A]/[0.06] border-[#C1965A]/22"
-                  : "bg-red-500/[0.04] border-red-500/18"
+                  ? "bg-brand-mustard/6 border-brand-mustard/22"
+                  : "bg-red-500/4 border-red-500/18"
               }`}
             >
-              <p className="text-[0.6rem] font-bold uppercase tracking-[0.1em] text-white/28 mb-2.5">
+              <p className="text-[0.6rem] font-bold uppercase tracking-widest text-white/28 mb-2.5">
                 Enrollment Eligibility
               </p>
               <div className="flex items-center gap-1.5">
                 {isComplete ? (
                   <>
-                    <Sparkles className="w-3.5 h-3.5 text-[#C1965A]" />
-                    <span className="text-[0.78rem] font-bold text-[#C1965A] dark:text-[#d4b07a]">
+                    <Sparkles className="w-3.5 h-3.5 text-brand-mustard" />
+                    <span className="text-[0.78rem] font-bold text-brand-mustard dark:text-brand-mustard-light">
                       Eligible to Enroll
                     </span>
                   </>
@@ -836,11 +836,11 @@ export default function Profile() {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-white/[0.05] px-9 py-3.5 flex items-center justify-between">
+        <div className="border-t border-white/5 px-9 py-3.5 flex items-center justify-between">
           <p className="text-[0.6rem] text-white/14 tracking-[0.08em]">
             CEIL · Centre d'Enseignement Intensif des Langues · El Oued
           </p>
-          <Sparkles className="w-3 h-3 text-[#C1965A]/25" />
+          <Sparkles className="w-3 h-3 text-brand-mustard/25" />
         </div>
       </div>
     </div>

@@ -114,7 +114,7 @@ const OwnerSidebar = ({ collapsed, onExpand }: SidebarProps) => {
             collapsed ? "justify-center px-2.5 py-3" : "gap-3 px-3 py-2.5",
             active
               ? "bg-[#D4A843]/8 dark:bg-[#D4A843]/10 text-[#B8912E] dark:text-[#D4A843] font-semibold"
-              : "text-[#6B5D4F] dark:text-[#888888] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#2A2A2A] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]",
+              : "text-[#6B5D4F] dark:text-[#888888] hover:bg-brand-beige/10 dark:hover:bg-[#2A2A2A] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]",
           )}
         >
           <div
@@ -122,7 +122,7 @@ const OwnerSidebar = ({ collapsed, onExpand }: SidebarProps) => {
               "w-9 h-9 rounded-lg flex items-center justify-center transition-colors shrink-0",
               active
                 ? "bg-[#D4A843]/10 dark:bg-[#D4A843]/15"
-                : "bg-transparent group-hover:bg-[#D8CDC0]/15 dark:group-hover:bg-[#2A2A2A]",
+                : "bg-transparent group-hover:bg-brand-beige/15 dark:group-hover:bg-[#2A2A2A]",
             )}
           >
             <item.icon
@@ -130,7 +130,7 @@ const OwnerSidebar = ({ collapsed, onExpand }: SidebarProps) => {
                 "h-5 w-5",
                 active
                   ? "text-[#B8912E] dark:text-[#D4A843]"
-                  : "text-[#BEB29E] dark:text-[#666666] group-hover:text-[#6B5D4F] dark:group-hover:text-[#AAAAAA]",
+                  : "text-brand-brown dark:text-[#666666] group-hover:text-[#6B5D4F] dark:group-hover:text-[#AAAAAA]",
               )}
             />
           </div>
@@ -153,13 +153,13 @@ const OwnerSidebar = ({ collapsed, onExpand }: SidebarProps) => {
       className={cn(
         "fixed left-0 top-0 z-40 h-screen flex flex-col transition-all duration-300",
         "bg-white dark:bg-[#1A1A1A] border-r border-brand-beige/40 dark:border-[#2A2A2A]",
-        collapsed ? "w-[72px]" : "w-64",
+        collapsed ? "w-18" : "w-64",
       )}
     >
       {/* ═══════════ HEADER ═══════════ */}
       <div
         className={cn(
-          "flex items-center border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A] shrink-0",
+          "flex items-center border-b border-brand-beige/30 dark:border-[#2A2A2A] shrink-0",
           collapsed ? "justify-center p-3.5" : "justify-between p-4",
         )}
       >
@@ -194,7 +194,7 @@ const OwnerSidebar = ({ collapsed, onExpand }: SidebarProps) => {
                 </span>
                 <Crown className="h-3.5 w-3.5 text-[#D4A843]" />
               </div>
-              <span className="text-[10px] font-medium text-[#BEB29E] dark:text-[#666666] uppercase tracking-wider">
+              <span className="text-[10px] font-medium text-brand-brown dark:text-[#666666] uppercase tracking-wider">
                 {t("owner.systemControl", "System Control")}
               </span>
             </div>
@@ -211,7 +211,7 @@ const OwnerSidebar = ({ collapsed, onExpand }: SidebarProps) => {
           ))}
         </ul>
         {/* Profile */}
-        <div className="mt-4 pt-4 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+        <div className="mt-4 pt-4 border-t border-brand-beige/30 dark:border-[#2A2A2A]">
           <ul className={cn("space-y-1.5", collapsed ? "px-2" : "px-3")}>
             {bottomNavItems.map((item) => (
               <NavLink key={item.labelKey} item={item} />
@@ -224,7 +224,7 @@ const OwnerSidebar = ({ collapsed, onExpand }: SidebarProps) => {
       {user && (
         <div
           className={cn(
-            "border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A] space-y-3",
+            "border-t border-brand-beige/30 dark:border-[#2A2A2A] space-y-3",
             collapsed ? "p-2" : "p-4",
           )}
         >
@@ -248,7 +248,7 @@ const OwnerSidebar = ({ collapsed, onExpand }: SidebarProps) => {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="h-full w-full bg-gradient-to-br from-[#D4A843] to-[#B8912E] flex items-center justify-center text-white font-semibold text-xs">
+                <div className="h-full w-full bg-linear-to-br from-[#D4A843] to-[#B8912E] flex items-center justify-center text-white font-semibold text-xs">
                   {initials}
                 </div>
               )}

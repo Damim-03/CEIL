@@ -129,7 +129,7 @@ const DesktopMockup = ({
   screen: PlatformScreen;
   isActive: boolean;
 }) => {
-  const { t } = useTranslation();
+  useTranslation();
   const Icon = screen.icon;
 
   return (
@@ -140,7 +140,7 @@ const DesktopMockup = ({
       className={`absolute inset-0 ${isActive ? "pointer-events-auto" : "pointer-events-none"}`}
     >
       {/* Monitor Frame */}
-      <div className="relative mx-auto max-w-[680px]">
+      <div className="relative mx-auto max-w-170">
         {/* Screen bezel */}
         <div className="rounded-2xl border-[6px] border-[#1B1B1B] bg-[#1B1B1B] shadow-2xl shadow-black/30 dark:shadow-black/50 overflow-hidden">
           {/* Browser chrome */}
@@ -159,12 +159,12 @@ const DesktopMockup = ({
 
           {/* Screen content */}
           <div
-            className={`relative bg-gradient-to-br ${screen.desktopGradient} aspect-[16/10] flex`}
+            className={`relative bg-linear-to-br ${screen.desktopGradient} aspect-16/10 flex`}
           >
             {/* Sidebar mock */}
             <div className="w-14 bg-white/10 backdrop-blur-sm border-r border-white/10 flex flex-col items-center py-4 gap-3">
               <div className="w-7 h-7 rounded-lg bg-white/20" />
-              <div className="w-6 h-[1px] bg-white/20 my-1" />
+              <div className="w-6 h-px bg-white/20 my-1" />
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
@@ -235,7 +235,7 @@ const DesktopMockup = ({
 
         {/* Monitor stand */}
         <div className="flex justify-center">
-          <div className="w-24 h-5 bg-gradient-to-b from-[#2a2a2a] to-[#1B1B1B] rounded-b-lg" />
+          <div className="w-24 h-5 bg-linear-to-b from-[#2a2a2a] to-[#1B1B1B] rounded-b-lg" />
         </div>
         <div className="flex justify-center -mt-0.5">
           <div className="w-40 h-2 bg-[#2a2a2a] rounded-b-xl" />
@@ -264,7 +264,7 @@ const MobileMockup = ({
       className={`absolute inset-0 flex justify-center ${isActive ? "pointer-events-auto" : "pointer-events-none"}`}
     >
       {/* Phone Frame */}
-      <div className="relative w-[260px]">
+      <div className="relative w-65">
         <div className="rounded-[2.5rem] border-[5px] border-[#1B1B1B] bg-[#1B1B1B] shadow-2xl shadow-black/40 dark:shadow-black/60 overflow-hidden">
           {/* Notch */}
           <div className="relative bg-[#1B1B1B] flex justify-center py-2">
@@ -273,7 +273,7 @@ const MobileMockup = ({
 
           {/* Screen content */}
           <div
-            className={`relative bg-gradient-to-br ${screen.mobileGradient} aspect-[9/18]`}
+            className={`relative bg-linear-to-br ${screen.mobileGradient} aspect-9/18`}
           >
             {/* Status bar */}
             <div className="flex items-center justify-between px-5 pt-3 pb-2">
@@ -347,7 +347,7 @@ const MobileMockup = ({
         </div>
 
         {/* Phone reflection */}
-        <div className="absolute inset-0 rounded-[2.5rem] bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 rounded-[2.5rem] bg-linear-to-br from-white/5 to-transparent pointer-events-none" />
       </div>
     </motion.div>
   );
@@ -374,9 +374,9 @@ const FeatureCard = ({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: index * 0.1, duration: 0.5 }}
-      className="group relative bg-white dark:bg-[#1A1A1A] rounded-2xl p-6 border border-[#D8CDC0]/30 dark:border-[#2A2A2A] hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 transition-all duration-300 hover:shadow-lg dark:hover:shadow-black/20 hover:shadow-[#2B6F5E]/5"
+      className="group relative bg-white dark:bg-[#1A1A1A] rounded-2xl p-6 border border-brand-beige/30 dark:border-[#2A2A2A] hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 transition-all duration-300 hover:shadow-lg dark:hover:shadow-black/20 hover:shadow-[#2B6F5E]/5"
     >
-      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#2B6F5E]/10 to-[#8DB896]/10 dark:from-[#4ADE80]/10 dark:to-[#4ADE80]/5 flex items-center justify-center mb-4 group-hover:from-[#2B6F5E]/20 group-hover:to-[#8DB896]/20 dark:group-hover:from-[#4ADE80]/20 dark:group-hover:to-[#4ADE80]/10 transition-colors">
+      <div className="w-12 h-12 rounded-xl bg-linear-to-br from-[#2B6F5E]/10 to-[#8DB896]/10 dark:from-[#4ADE80]/10 dark:to-[#4ADE80]/5 flex items-center justify-center mb-4 group-hover:from-[#2B6F5E]/20 group-hover:to-[#8DB896]/20 dark:group-hover:from-[#4ADE80]/20 dark:group-hover:to-[#4ADE80]/10 transition-colors">
         <Icon className="w-6 h-6 text-[#2B6F5E] dark:text-[#4ADE80]" />
       </div>
       <h3 className="text-base font-bold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
@@ -461,8 +461,8 @@ const OurPlatform = () => {
         </div>
 
         {/* Floating decorative elements */}
-        <div className="absolute top-20 left-10 w-64 h-64 bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/[0.03] rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-10 w-80 h-80 bg-[#C8A96E]/5 dark:bg-[#D4A843]/[0.03] rounded-full blur-3xl" />
+        <div className="absolute top-20 left-10 w-64 h-64 bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/3 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 right-10 w-80 h-80 bg-[#C8A96E]/5 dark:bg-[#D4A843]/3 rounded-full blur-3xl" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Badge */}
@@ -532,11 +532,11 @@ const OurPlatform = () => {
       </section>
 
       {/* ═══════════ DEVICE SHOWCASE ═══════════ */}
-      <section className="relative py-16 bg-gradient-to-b from-[#FAF8F5] to-[#f0ece6] dark:from-[#0F0F0F] dark:to-[#121212]">
+      <section className="relative py-16 bg-linear-to-b from-[#FAF8F5] to-[#f0ece6] dark:from-[#0F0F0F] dark:to-[#121212]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* View mode toggle */}
           <div className="flex justify-center mb-10">
-            <div className="inline-flex items-center bg-white dark:bg-[#1A1A1A] rounded-2xl p-1.5 shadow-sm border border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+            <div className="inline-flex items-center bg-white dark:bg-[#1A1A1A] rounded-2xl p-1.5 shadow-sm border border-brand-beige/30 dark:border-[#2A2A2A]">
               <button
                 onClick={() => setViewMode("desktop")}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
@@ -598,20 +598,20 @@ const OurPlatform = () => {
             {/* Navigation arrows */}
             <button
               onClick={isRTL ? nextScreen : prevScreen}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white dark:bg-[#1A1A1A] shadow-lg dark:shadow-black/30 border border-[#D8CDC0]/30 dark:border-[#2A2A2A] flex items-center justify-center text-[#6B5D4F] dark:text-[#888888] hover:text-[#2B6F5E] dark:hover:text-[#4ADE80] hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 transition-colors"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white dark:bg-[#1A1A1A] shadow-lg dark:shadow-black/30 border border-brand-beige/30 dark:border-[#2A2A2A] flex items-center justify-center text-[#6B5D4F] dark:text-[#888888] hover:text-[#2B6F5E] dark:hover:text-[#4ADE80] hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={isRTL ? prevScreen : nextScreen}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white dark:bg-[#1A1A1A] shadow-lg dark:shadow-black/30 border border-[#D8CDC0]/30 dark:border-[#2A2A2A] flex items-center justify-center text-[#6B5D4F] dark:text-[#888888] hover:text-[#2B6F5E] dark:hover:text-[#4ADE80] hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 transition-colors"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white dark:bg-[#1A1A1A] shadow-lg dark:shadow-black/30 border border-brand-beige/30 dark:border-[#2A2A2A] flex items-center justify-center text-[#6B5D4F] dark:text-[#888888] hover:text-[#2B6F5E] dark:hover:text-[#4ADE80] hover:border-[#2B6F5E]/30 dark:hover:border-[#4ADE80]/20 transition-colors"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
 
             {/* Mockup container */}
             <div
-              className={`relative mx-auto ${viewMode === "desktop" ? "max-w-[740px] h-[460px]" : "max-w-[300px] h-[520px]"} transition-all duration-500`}
+              className={`relative mx-auto ${viewMode === "desktop" ? "max-w-185 h-115" : "max-w-75 h-130"} transition-all duration-500`}
             >
               <AnimatePresence>
                 {platformScreens.map((screen, index) =>
@@ -643,7 +643,7 @@ const OurPlatform = () => {
               {currentScreen.features.map((featureKey, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1A1A1A] rounded-xl border border-[#D8CDC0]/30 dark:border-[#2A2A2A] shadow-sm dark:shadow-black/10"
+                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1A1A1A] rounded-xl border border-brand-beige/30 dark:border-[#2A2A2A] shadow-sm dark:shadow-black/10"
                 >
                   <CheckCircle2
                     className="w-4 h-4 shrink-0"
@@ -665,7 +665,7 @@ const OurPlatform = () => {
                   className={`transition-all duration-300 rounded-full ${
                     index === activeScreen
                       ? "w-8 h-2.5 bg-[#2B6F5E] dark:bg-[#4ADE80]"
-                      : "w-2.5 h-2.5 bg-[#D8CDC0] dark:bg-[#333333] hover:bg-[#BEB29E] dark:hover:bg-[#555555]"
+                      : "w-2.5 h-2.5 bg-brand-beige dark:bg-[#333333] hover:bg-brand-brown dark:hover:bg-[#555555]"
                   }`}
                 />
               ))}
@@ -706,7 +706,7 @@ const OurPlatform = () => {
       </section>
 
       {/* ═══════════ ROLES SECTION ═══════════ */}
-      <section className="py-20 bg-gradient-to-b from-[#f0ece6] to-[#FAF8F5] dark:from-[#121212] dark:to-[#0F0F0F]">
+      <section className="py-20 bg-linear-to-b from-[#f0ece6] to-[#FAF8F5] dark:from-[#121212] dark:to-[#0F0F0F]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -770,11 +770,11 @@ const OurPlatform = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.15 }}
-                className="bg-white dark:bg-[#1A1A1A] rounded-2xl overflow-hidden border border-[#D8CDC0]/30 dark:border-[#2A2A2A] hover:shadow-xl dark:hover:shadow-black/30 transition-shadow duration-300"
+                className="bg-white dark:bg-[#1A1A1A] rounded-2xl overflow-hidden border border-brand-beige/30 dark:border-[#2A2A2A] hover:shadow-xl dark:hover:shadow-black/30 transition-shadow duration-300"
               >
                 {/* Card header */}
                 <div
-                  className={`bg-gradient-to-br ${roleData.gradient} p-6 text-white`}
+                  className={`bg-linear-to-br ${roleData.gradient} p-6 text-white`}
                 >
                   <roleData.icon className="w-8 h-8 mb-3 opacity-80" />
                   <h3 className="text-xl font-bold">
@@ -814,7 +814,7 @@ const OurPlatform = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="relative bg-gradient-to-br from-[#2B6F5E] to-[#1a4a3a] dark:from-[#0A1A10] dark:to-[#0F1F15] rounded-3xl p-10 text-center text-white overflow-hidden"
+            className="relative bg-linear-to-br from-[#2B6F5E] to-[#1a4a3a] dark:from-[#0A1A10] dark:to-[#0F1F15] rounded-3xl p-10 text-center text-white overflow-hidden"
           >
             {/* Pattern overlay */}
             <div className="absolute inset-0 opacity-5 dark:opacity-[0.04]">

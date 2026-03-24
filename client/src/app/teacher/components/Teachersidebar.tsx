@@ -125,23 +125,23 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
             collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
             active
               ? "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80] font-semibold"
-              : "text-[#6B5D4F] dark:text-[#888888] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]",
+              : "text-[#6B5D4F] dark:text-[#888888] hover:bg-brand-beige/10 dark:hover:bg-[#222222] hover:text-[#1B1B1B] dark:hover:text-[#E5E5E5]",
           )}
         >
           <div
             className={cn(
               "w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0",
               active
-                ? "bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/[0.08]"
-                : "bg-transparent group-hover:bg-[#D8CDC0]/15 dark:group-hover:bg-[#2A2A2A]",
+                ? "bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/8"
+                : "bg-transparent group-hover:bg-brand-beige/15 dark:group-hover:bg-[#2A2A2A]",
             )}
           >
             <item.icon
               className={cn(
-                "h-[18px] w-[18px]",
+                "h-4.5 w-4.5",
                 active
                   ? "text-[#2B6F5E] dark:text-[#4ADE80]"
-                  : "text-[#BEB29E] dark:text-[#888888] group-hover:text-[#6B5D4F] dark:group-hover:text-[#AAAAAA]",
+                  : "text-brand-brown dark:text-[#888888] group-hover:text-[#6B5D4F] dark:group-hover:text-[#AAAAAA]",
               )}
             />
           </div>
@@ -171,7 +171,7 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
       {/* ═══ HEADER ═══ */}
       <div
         className={cn(
-          "flex items-center border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A] shrink-0",
+          "flex items-center border-b border-brand-beige/30 dark:border-[#2A2A2A] shrink-0",
           collapsed ? "justify-center p-3" : "justify-between p-4",
         )}
       >
@@ -202,7 +202,7 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
               <span className="text-base font-bold text-[#1B1B1B] dark:text-[#E5E5E5] block leading-tight">
                 {t("teacher.sidebar.title")}
               </span>
-              <span className="text-[10px] font-medium text-[#BEB29E] dark:text-[#888888] uppercase tracking-wider">
+              <span className="text-[10px] font-medium text-brand-brown dark:text-[#888888] uppercase tracking-wider">
                 {t("teacher.sidebar.ceil")}
               </span>
             </div>
@@ -218,7 +218,7 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
           ))}
         </ul>
 
-        <div className="mt-4 pt-4 border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
+        <div className="mt-4 pt-4 border-t border-brand-beige/30 dark:border-[#2A2A2A]">
           <ul className={cn("space-y-1", collapsed ? "px-2" : "px-3")}>
             {bottomNavItems.map((item) => (
               <NavLink key={item.labelKey} item={item} />
@@ -231,7 +231,7 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
       {user && (
         <div
           className={cn(
-            "border-t border-[#D8CDC0]/30 dark:border-[#2A2A2A] space-y-3",
+            "border-t border-brand-beige/30 dark:border-[#2A2A2A] space-y-3",
             collapsed ? "p-2" : "p-4",
           )}
         >
@@ -244,7 +244,7 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
           >
             <div
               className={cn(
-                "rounded-full overflow-hidden shrink-0 border-2 border-[#D8CDC0]/40 dark:border-[#2A2A2A]",
+                "rounded-full overflow-hidden shrink-0 border-2 border-brand-beige/40 dark:border-[#2A2A2A]",
                 collapsed ? "h-8 w-8" : "h-10 w-10",
               )}
             >
@@ -255,7 +255,7 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="h-full w-full bg-gradient-to-br from-[#8DB896] to-[#2B6F5E] dark:from-[#4ADE80]/30 dark:to-[#2B6F5E] flex items-center justify-center text-white font-semibold text-xs">
+                <div className="h-full w-full bg-linear-to-br from-[#8DB896] to-[#2B6F5E] dark:from-[#4ADE80]/30 dark:to-[#2B6F5E] flex items-center justify-center text-white font-semibold text-xs">
                   {initials}
                 </div>
               )}
@@ -265,7 +265,7 @@ const TeacherSidebar = ({ collapsed, onExpand }: TeacherSidebarProps) => {
                 <p className="truncate text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                   {user.email}
                 </p>
-                <p className="text-xs text-[#BEB29E] dark:text-[#888888]">
+                <p className="text-xs text-brand-brown dark:text-[#888888]">
                   {t("teacher.sidebar.teacher")}
                 </p>
               </div>

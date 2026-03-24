@@ -56,17 +56,17 @@ const UsersPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
-        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#2B6F5E] to-[#C4A035]"></div>
+      <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige/60 dark:border-[#2A2A2A] p-6 overflow-hidden">
+        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-linear-to-b from-[#2B6F5E] to-[#C4A035]"></div>
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10">
+          <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-[#2B6F5E] to-[#2B6F5E]/80 flex items-center justify-center shadow-lg shadow-[#2B6F5E]/20 dark:shadow-[#2B6F5E]/10">
             <Users className="w-6 h-6 text-white" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
               {t("admin.users.title")}
             </h1>
-            <p className="text-sm text-[#BEB29E] dark:text-[#666666] mt-0.5">
+            <p className="text-sm text-brand-brown dark:text-[#666666] mt-0.5">
               {t("admin.users.subtitle")}
             </p>
           </div>
@@ -75,8 +75,8 @@ const UsersPage = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md hover:shadow-[#D8CDC0]/30 dark:hover:shadow-black/20 transition-all">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#2B6F5E] to-[#2B6F5E]/70 opacity-60 group-hover:opacity-100 transition-opacity"></div>
+        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md hover:shadow-brand-beige/30 dark:hover:shadow-black/20 transition-all">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-linear-to-b from-[#2B6F5E] to-[#2B6F5E]/70 opacity-60 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 flex items-center justify-center">
               <Users className="w-5 h-5 text-[#2B6F5E] dark:text-[#4ADE80]" />
@@ -91,8 +91,8 @@ const UsersPage = () => {
             </div>
           </div>
         </div>
-        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md hover:shadow-[#D8CDC0]/30 dark:hover:shadow-black/20 transition-all">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#8DB896] to-[#8DB896]/70 opacity-60 group-hover:opacity-100 transition-opacity"></div>
+        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md hover:shadow-brand-beige/30 dark:hover:shadow-black/20 transition-all">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-linear-to-b from-[#8DB896] to-[#8DB896]/70 opacity-60 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-[#8DB896]/12 dark:bg-[#8DB896]/10 flex items-center justify-center">
               <Users className="w-5 h-5 text-[#3D7A4A] dark:text-[#8DB896]" />
@@ -107,10 +107,10 @@ const UsersPage = () => {
             </div>
           </div>
         </div>
-        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md hover:shadow-[#D8CDC0]/30 dark:hover:shadow-black/20 transition-all">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#BEB29E] to-[#BEB29E]/70 opacity-60 group-hover:opacity-100 transition-opacity"></div>
+        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md hover:shadow-brand-beige/30 dark:hover:shadow-black/20 transition-all">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-linear-to-b from-brand-brown to-brand-brown/70 opacity-60 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-[#D8CDC0]/20 dark:bg-[#555555]/20 flex items-center justify-center">
+            <div className="w-11 h-11 rounded-xl bg-brand-beige/20 dark:bg-[#555555]/20 flex items-center justify-center">
               <Users className="w-5 h-5 text-[#6B5D4F] dark:text-[#AAAAAA]" />
             </div>
             <div>
@@ -126,23 +126,23 @@ const UsersPage = () => {
       </div>
 
       {/* Search & Filters */}
-      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige/60 dark:border-[#2A2A2A] p-5">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-brown dark:text-[#666666]" />
             <Input
               placeholder={t("admin.users.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
+              className="pl-10 border-brand-beige/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
             />
           </div>
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
+            <Filter className="w-4 h-4 text-brand-brown dark:text-[#666666]" />
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              className="px-3 py-2 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-lg text-sm text-[#1B1B1B] dark:text-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20 focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] bg-white dark:bg-[#222222]"
+              className="px-3 py-2 border border-brand-beige/60 dark:border-[#2A2A2A] rounded-lg text-sm text-[#1B1B1B] dark:text-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20 focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] bg-white dark:bg-[#222222]"
             >
               <option value="all">{t("admin.users.allRoles")}</option>
               <option value="ADMIN">{t("admin.users.admin")}</option>
@@ -153,7 +153,7 @@ const UsersPage = () => {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2 border border-[#D8CDC0]/60 dark:border-[#2A2A2A] rounded-lg text-sm text-[#1B1B1B] dark:text-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20 focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] bg-white dark:bg-[#222222]"
+            className="px-3 py-2 border border-brand-beige/60 dark:border-[#2A2A2A] rounded-lg text-sm text-[#1B1B1B] dark:text-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20 focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] bg-white dark:bg-[#222222]"
           >
             <option value="all">{t("admin.users.allStatus")}</option>
             <option value="active">{t("admin.users.active")}</option>
@@ -174,23 +174,23 @@ const UsersPage = () => {
       </div>
 
       {/* Users List */}
-      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] overflow-hidden">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige/60 dark:border-[#2A2A2A] overflow-hidden">
         {filtered && filtered.length > 0 ? (
-          <div className="divide-y divide-[#D8CDC0]/40 dark:divide-[#2A2A2A]">
+          <div className="divide-y divide-brand-beige/40 dark:divide-[#2A2A2A]">
             {filtered.map((user) => (
               <div
                 key={user.user_id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-[#D8CDC0]/8 dark:hover:bg-[#222222] transition-colors gap-4"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-brand-beige/8 dark:hover:bg-[#222222] transition-colors gap-4"
               >
                 <div className="flex items-center gap-4 flex-1 min-w-0">
                   {user.google_avatar ? (
                     <img
                       src={user.google_avatar}
                       alt={`${user.email} avatar`}
-                      className="w-12 h-12 rounded-full object-cover border-2 border-[#D8CDC0]/60 dark:border-[#2A2A2A] shrink-0"
+                      className="w-12 h-12 rounded-full object-cover border-2 border-brand-beige/60 dark:border-[#2A2A2A] shrink-0"
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#2B6F5E] to-[#2B6F5E]/70 flex items-center justify-center text-white font-semibold text-lg shrink-0 shadow-md shadow-[#2B6F5E]/15 dark:shadow-[#2B6F5E]/10">
+                    <div className="w-12 h-12 rounded-full bg-linear-to-br from-[#2B6F5E] to-[#2B6F5E]/70 flex items-center justify-center text-white font-semibold text-lg shrink-0 shadow-md shadow-[#2B6F5E]/15 dark:shadow-[#2B6F5E]/10">
                       {user.email.charAt(0).toUpperCase()}
                     </div>
                   )}
@@ -223,8 +223,8 @@ const UsersPage = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-[#D8CDC0]/20 dark:bg-[#2A2A2A] flex items-center justify-center mb-4">
-              <Search className="w-8 h-8 text-[#BEB29E] dark:text-[#666666]" />
+            <div className="w-16 h-16 rounded-full bg-brand-beige/20 dark:bg-[#2A2A2A] flex items-center justify-center mb-4">
+              <Search className="w-8 h-8 text-brand-brown dark:text-[#666666]" />
             </div>
             <h3 className="text-lg font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-1">
               {t("admin.users.noUsersFound")}
