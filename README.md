@@ -46,7 +46,7 @@ Built for **Université Echahid Hamma Lakhdar – El Oued**, the platform transf
 ```bash
 CEIL/
 │
-├── Backend/        # Node.js + Prisma API
+├── Backend/        # Node.js + Prisma ORM
 ├── client/         # React + Vite Web App
 ├── mobile/         # Expo Mobile App
 ```
@@ -70,7 +70,7 @@ CEIL/
 * Node.js + Express
 * TypeScript
 * Prisma ORM
-* REST API
+* API
 * JWT Authentication
 
 ### 💻 Frontend (Web)
@@ -131,28 +131,13 @@ CEIL/
 
 ---
 
-## 🔌 API Design
-
-```bash
-/api/auth
-/api/users
-/api/students
-/api/teachers
-/api/courses
-/api/enrollments
-/api/attendance
-/api/groups
-```
-
----
-
 ## ⚡ Getting Started
 
 ### 1️⃣ Clone the repository
 
 ```bash
-git clone https://github.com/your-username/ceil-platform.git
-cd ceil-platform
+git clone https://github.com/Damim-03/CEIL.git
+cd CEIL
 ```
 
 ---
@@ -215,7 +200,7 @@ VITE_API_URL=http://localhost:5000
 * 📈 Track student progress in real-time
 * 📅 Manage course schedules efficiently
 * 🧾 Handle enrollments lifecycle
-* 👥 Multi-role system (Admin / Student / Teacher)
+* 👥 Multi-role system (Owner / Admin / Student / Teacher)
 * 🌐 Multi-language interface
 * 📱 Fully responsive & mobile-ready
 
@@ -226,46 +211,36 @@ VITE_API_URL=http://localhost:5000
 * 🔔 Real-time notifications (WebSocket)
 * 💳 Online payments integration
 * 📊 Advanced analytics dashboard
-* 🎥 E-learning video system
 * 📱 App Store / Play Store deployment
 
-  ## 🧰 Tech Stack
+## 🧰 Technologies & Tools
 
-### 🔧 Backend
+<p align="center">
 
-<p>
-<img src="https://img.shields.io/badge/Node.js-339933?style=flat&logo=node.js&logoColor=white" />
-<img src="https://img.shields.io/badge/Express.js-000000?style=flat&logo=express&logoColor=white" />
+<!-- Backend -->
+
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" height="70" alt="Node.js"/>
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg" height="70" alt="Express"/>
+
+<!-- Frontend -->
+
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vite/vite-original.svg" height="70" alt="Vite"/>
+
+<!-- Mobile -->
+
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" height="70" alt="React Native"/>
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/expo/expo-original.svg" height="70" alt="Expo"/>
+
+<!-- API -->
+
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/axios/axios-plain.svg" height="70" alt="Axios"/>
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/socketio/socketio-original.svg" height="70" alt="Socket.io"/>
+
+<!-- Cloud -->
+
+<img src="https://res.cloudinary.com/cloudinary/image/upload/v1628004866/cloudinary_logo_for_white_bg.svg" height="70" alt="Cloudinary"/>
+
 </p>
-
-### 💻 Frontend
-
-<p>
-<img src="https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB" />
-<img src="https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white" />
-<img src="https://img.shields.io/badge/Axios-5A29E4?style=flat&logo=axios&logoColor=white" />
-</p>
-
-### 📱 Mobile
-
-<p>
-<img src="https://img.shields.io/badge/React_Native-20232A?style=flat&logo=react&logoColor=61DAFB" />
-<img src="https://img.shields.io/badge/Expo-000020?style=flat&logo=expo&logoColor=white" />
-</p>
-
-### ⚡ Realtime & Communication
-
-<p>
-<img src="https://img.shields.io/badge/Socket.IO-010101?style=flat&logo=socket.io&logoColor=white" />
-</p>
-
-### ☁️ Cloud & Deployment
-
-<p>
-<img src="https://img.shields.io/badge/Cloudinary-F38020?style=flat&logo=cloudinary&logoColor=white" />
-<img src="https://img.shields.io/badge/Hostinger-673DE6?style=flat&logo=hostinger&logoColor=white" />
-</p>
-
 
 ---
 
@@ -285,9 +260,16 @@ MIT License
 
 ---
 
-## 👨‍💻 Author
+## 👨‍💻 Authors
 
-Developed by **[Your Name]**
+Developed with ❤️ by:
+
+* 👩‍💻 **Chiraz Kahla**
+  🔗 https://github.com/chirazkahla
+
+* 👨‍💻 **Imad Eddine Kir**
+  🔗 https://github.com/Damim-03
+
 Université Echahid Hamma Lakhdar – El Oued
 
 ---
