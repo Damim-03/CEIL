@@ -1,73 +1,169 @@
-# React + TypeScript + Vite
+# 🌐 CEIL Web App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+### Modern Language Learning Platform – Frontend
 
-Currently, two official plugins are available:
+<p align="center">
+  <strong>React • Vite • TypeScript • Scalable Architecture</strong>
+</p>
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## 🚀 Overview
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The **CEIL Web Application** is the main user interface of the CEIL platform.
 
-## Expanding the ESLint configuration
+It provides a modern and responsive experience for:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+* 🎓 Students
+* 👨‍🏫 Teachers
+* 🛠️ Admins
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Designed with performance, scalability, and user experience in mind.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🧰 Technologies & Tools
+
+<p align="center">
+
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" height="70"/>
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" height="70"/>
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vite/vite-original.svg" height="70"/>
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/axios/axios-plain.svg" height="70"/>
+
+</p>
+
+---
+
+## 🧠 Core Features
+
+* 🌍 Multi-language support (i18n)
+* 🌗 Dark / Light mode
+* 🔐 Authentication system
+* 📊 Dashboards (Admin / Student / Teacher)
+* 📅 Scheduling system
+* 📦 Modular architecture
+* ⚡ Fast performance (Vite)
+
+---
+
+## 📁 Project Structure
+
+```bash id="client2"
+client/
+│
+├── public/
+├── src/
+│   ├── app/            # Pages (admin, student, teacher...)
+│   ├── components/     # UI components
+│   ├── hooks/          # Custom hooks
+│   ├── context/        # Global state
+│   ├── lib/api/        # API integration
+│   ├── i18n/           # Translations
+│   ├── layouts/        # Layout system
+│   ├── types/          # Type definitions
+│
+│   ├── App.tsx
+│   └── main.tsx
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## ⚙️ Getting Started
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 1️⃣ Install dependencies
+
+```bash id="client3"
+npm install
 ```
+
+---
+
+### 2️⃣ Run development server
+
+```bash id="client4"
+npm run dev
+```
+
+---
+
+### 3️⃣ Build for production
+
+```bash id="client5"
+npm run build
+```
+
+---
+
+## 🔌 API Configuration
+
+Set your backend URL in:
+
+```bash id="client6"
+.env
+```
+
+Example:
+
+```env id="client7"
+VITE_API_URL=http://localhost:5000
+```
+
+---
+
+## 🧪 Scripts
+
+```bash id="client8"
+npm run dev      # Start dev server
+npm run build    # Production build
+npm run preview  # Preview build
+```
+
+---
+
+## 🎯 Application Roles
+
+* 👑 Admin Dashboard
+* 🎓 Student Portal
+* 👨‍🏫 Teacher Interface
+
+---
+
+## 🔐 Authentication
+
+* JWT-based authentication
+* Role-based access control
+* Protected routes
+
+---
+
+## 🔮 Future Improvements
+
+* 🔔 Real-time notifications
+* 📊 Advanced analytics
+* 🎥 E-learning modules
+* 🌐 SEO optimization
+
+---
+
+## 👨‍💻 Authors
+
+<p align="center">
+
+<a href="https://github.com/chirazkahla">
+  <img src="https://img.shields.io/badge/Chiraz_Kahla-181717?style=for-the-badge&logo=github&logoColor=white"/>
+</a>
+
+<a href="https://github.com/Damim-03">
+  <img src="https://img.shields.io/badge/Imad_Eddine_Kir-181717?style=for-the-badge&logo=github&logoColor=white"/>
+</a>
+
+</p>
+
+---
+
+## ⭐ Final Note
+
+This frontend is part of a full-stack platform designed to digitize and modernize language learning systems.
+
+If you like it, give it a ⭐ on GitHub!
