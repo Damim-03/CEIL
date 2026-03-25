@@ -328,7 +328,7 @@ export const adminUsersApi = {
 =============================================================== */
 
 export const adminStudentsApi = {
-  getAll: async () => {
+  getAll: async (params: { page?: number; limit?: number; } | undefined) => {
     const { data } = await axiosInstance.get("/admin/students");
     return data;
   },

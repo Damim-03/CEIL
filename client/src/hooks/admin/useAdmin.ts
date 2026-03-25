@@ -283,12 +283,15 @@ export const useDeleteUser = () => {
    STUDENTS — 🟢 NORMAL (30s)
 =============================================================== */
 
-export const useAdminStudents = () =>
-  useQuery<AdminStudent[]>({
-    queryKey: STUDENTS_KEY,
+export const useAdminStudents = (params?: {
+  page?: number;
+  limit?: number;
+}) =>
+  useQuery({
+    queryKey: [STUDENTS_KEY, params],
     queryFn: async () => {
-      const res = await adminStudentsApi.getAll();
-      return res.data ?? res.students ?? [];
+      const res = await adminStudentsApi.getAll(params);
+      return res; // 🔥 مهم
     },
     refetchInterval: NORMAL,
     refetchOnWindowFocus: true,

@@ -23,8 +23,11 @@ import {
   type AdminStudent,
 } from "../../../../hooks/admin/useAdmin";
 import ConfirmDeleteCard from "../../components/ConfirmDeleteCard";
-import { getProfileCompletion, getCompletionColor, getCompletionLabel } from "../../../../lib/utils/profileCompletion";
-
+import {
+  getProfileCompletion,
+  getCompletionColor,
+  getCompletionLabel,
+} from "../../../../lib/utils/profileCompletion";
 
 // ─── Mini Completion Badge (للقائمة) ──────────────────────────
 function CompletionBadge({ student }: { student: AdminStudent }) {
@@ -74,7 +77,12 @@ type CompletionFilter = "all" | "complete" | "incomplete";
 
 const StudentsPage = () => {
   const { t } = useTranslation();
-  const { data: students = [], isLoading } = useAdminStudents();
+  const [page, setPage] = useState(1);
+
+  const { data, isLoading } = useAdminStudents({ page, limit: 20 });
+
+  const students = data?.data ?? [];
+  const meta = data?.meta;
   const deleteStudent = useDeleteStudent();
 
   const [selectedStudent, setSelectedStudent] = useState<AdminStudent | null>(
@@ -117,7 +125,7 @@ const StudentsPage = () => {
   }
 
   const stats = {
-    total: students.length,
+    total: meta?.total ?? students.length,
     active,
     inactive,
     complete,
@@ -293,14 +301,8 @@ const StudentsPage = () => {
           </select>
         </div>
         <div className="mt-3 text-sm text-[#6B5D4F] dark:text-[#888888]">
-          {t("admin.students.showing")}{" "}
-          <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-            {filteredStudents.length}
-          </span>{" "}
-          {t("admin.students.of")}{" "}
-          <span className="font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-            {students.length}
-          </span>{" "}
+          {t("admin.students.showing")} <span>{filteredStudents.length}</span>{" "}
+          {t("admin.students.of")} <span>{meta?.total ?? students.length}</span>
           {t("admin.students.students_label")}
         </div>
       </div>
@@ -423,6 +425,29 @@ const StudentsPage = () => {
             </p>
           </div>
         )}
+      </div>
+
+      {/* ✅ Pagination هنا */}
+      <div className="flex justify-center items-center gap-4 mt-6">
+        <button
+          onClick={() => setPage((p) => p - 1)}
+          disabled={page === 1}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          السابق
+        </button>
+
+        <span className="text-sm">
+          صفحة {meta?.page} من {meta?.pages}
+        </span>
+
+        <button
+          onClick={() => setPage((p) => p + 1)}
+          disabled={page === meta?.pages}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          التالي
+        </button>
       </div>
 
       {selectedStudent && (
