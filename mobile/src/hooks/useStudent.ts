@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { studentApi } from "../api/student.api";
+import { fetchSchedule, studentApi } from "../api/student.api";
 
 // ── Profile ──────────────────────────────────────────────────────
 export const useProfile = () =>
@@ -137,12 +137,13 @@ export const useReuploadDocument = () => {
 };
 
 // ── Schedule ─────────────────────────────────────────────────────
-export const useSchedule = () =>
-  useQuery({
-    queryKey: ["student-schedule"],
-    queryFn: studentApi.getActiveTimetable,
-    staleTime: 1000 * 60 * 30,
+export function useSchedule() {
+  return useQuery({
+    queryKey: ["public-schedule"],
+    queryFn: fetchSchedule,
+    staleTime: 1000 * 60 * 5, // 5 دقائق
   });
+}
 
 // ── Notifications ────────────────────────────────────────────────
 export const useNotifications = (page = 1, unread = false) =>

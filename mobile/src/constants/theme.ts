@@ -1,5 +1,7 @@
 // src/constants/theme.ts
 export interface AppColors {
+  primary: string;
+  textSecondary: ColorValue | undefined;
   isDark: any;
   background: string;
   surface: string;

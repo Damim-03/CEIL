@@ -196,3 +196,46 @@ export const studentApi = {
     return data;
   },
 };
+
+export interface ScheduleSlot {
+  entry_id:    string;
+  day_of_week: number;       // 0=السبت ... 5=الخميس
+  day:         string;       // "SATURDAY" | "SUNDAY" | ... (محوّل للـ Mobile)
+  start_time:  string;       // "08:00"
+  end_time:    string;       // "09:30"
+  level:       string;
+  language:    string;
+  group_label: string;
+  session_name: string | null;
+  room?: { name: string } | null;
+}
+ 
+// خريطة التحويل من رقم إلى مفتاح يوم
+const DAY_INDEX_TO_KEY: Record<number, string> = {
+  0: "SATURDAY",
+  1: "SUNDAY",
+  2: "MONDAY",
+  3: "TUESDAY",
+  4: "WEDNESDAY",
+  5: "THURSDAY",
+};
+ 
+export async function fetchSchedule(): Promise<{ slots: ScheduleSlot[] }> {
+  const { data } = await apiClient.get("/public/timetable");
+ 
+  // تحويل day_of_week → day string للتوافق مع schedule.tsx
+  const slots: ScheduleSlot[] = (data?.data ?? []).map((e: any) => ({
+    entry_id:    e.entry_id,
+    day_of_week: e.day_of_week,
+    day:         DAY_INDEX_TO_KEY[e.day_of_week] ?? "SATURDAY",
+    start_time:  e.start_time,
+    end_time:    e.end_time,
+    level:       e.level,
+    language:    e.language,
+    group_label: e.group_label,
+    session_name: e.session_name ?? null,
+    room:        e.room ?? null,
+  }));
+ 
+  return { slots };
+}
