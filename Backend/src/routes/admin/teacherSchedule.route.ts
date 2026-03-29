@@ -6,7 +6,7 @@ import { roleGuard } from "../../utils/roleGuard";
 import { Permissions } from "../../enums/role.enum";
 import {
   getAllTeacherScheduleController,
-  getTeacherScheduleController,
+  getTeacherScheduleByIdController,
   createTeacherScheduleController,
   updateTeacherScheduleController,
   deleteTeacherScheduleController,
@@ -40,13 +40,13 @@ teacherScheduleRoutes.post(
 
 /**
  * GET /admin/teacher-schedule/teacher/:teacherId
- * جدول أستاذ كامل
+ * جدول أستاذ كامل (للإدارة)
  */
 teacherScheduleRoutes.get(
   "/teacher/:teacherId",
   authMiddleware,
   roleGuard([Permissions.MANAGE_SESSIONS]),
-  getTeacherScheduleController,
+  getTeacherScheduleByIdController,
 );
 
 /**
