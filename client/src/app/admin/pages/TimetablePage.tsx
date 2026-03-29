@@ -49,7 +49,7 @@ const LANG_META: Record<
   TR: { label: "تركية", color: "#be123c", bg: "#fff1f2", border: "#fecdd3" },
   GR: { label: "يونانية", color: "#0e7490", bg: "#ecfeff", border: "#a5f3fc" },
   IT: { label: "إيطالية", color: "#9d174d", bg: "#fdf2f8", border: "#f9a8d4" },
-  AR: { label: "عربية", color: "#064e3b", bg: "#f0fdf4", border: "#86efac" },
+  ZH: { label: "صينية", color: "#991b1b", bg: "#fef2f2", border: "#fecaca" },
 };
 const LANG_FLAGS: Record<string, string> = {
   FR: "🇫🇷",
@@ -59,7 +59,7 @@ const LANG_FLAGS: Record<string, string> = {
   TR: "🇹🇷",
   GR: "🇬🇷",
   IT: "🇮🇹",
-  AR: "🇩🇿",
+  ZH: "🇨🇳",
 };
 const LANGUAGES = Object.keys(LANG_META);
 const LEVELS = ["PRE_A1", "A1", "A1,1", "A2", "B1", "B2", "C1", "قاعدي"];
