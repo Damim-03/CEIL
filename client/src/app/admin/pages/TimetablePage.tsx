@@ -29,7 +29,7 @@ import type {
   SlotConfig,
 } from "../../../lib/api/admin/timetable.api";
 import type { TeacherScheduleEntry } from "../../../lib/api/admin/teacherSchedule.api";
-import { useTheme } from "../../../context/ThemeContext";
+import { useTheme } from "../../../context/Themecontext";
 
 // ══════════════════════════════════════════════════════════════
 // i18n
