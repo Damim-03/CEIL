@@ -30,6 +30,7 @@ import type {
 } from "../../../lib/api/admin/timetable.api";
 import type { TeacherScheduleEntry } from "../../../lib/api/admin/teacherSchedule.api";
 import { useTheme } from "../../../context/Themecontext";
+import { useTranslation } from "react-i18next";
 
 // ══════════════════════════════════════════════════════════════
 // i18n
@@ -37,173 +38,10 @@ import { useTheme } from "../../../context/Themecontext";
 
 type Locale = "ar" | "fr" | "en";
 
-const TRANSLATIONS: Record<Locale, Record<string, string>> = {
-  ar: {
-    title: "التوزيع الزمني",
-    subtitle: "دورة فيفري 2026 · CEIL",
-    tabRooms: "🏫 القاعات",
-    tabTeachers: "👨‍🏫 الأساتذة",
-    all: "الكل",
-    allDays: "كل الأيام",
-    noLessons: "لا توجد حصص",
-    loading: "جارٍ التحميل...",
-    loadingSchedule: "جارٍ تحميل الجدول...",
-    errorLoading: "حدث خطأ في تحميل البيانات.",
-    addLesson: "+ إضافة حصة",
-    lesson: "حصة",
-    filter: "فلترة:",
-    cancelFilter: "إلغاء الفلتر ×",
-    langGuide: "دليل اللغات:",
-    slotBtn: "⏱ الفترات",
-    slotTitle: "إدارة الفترات الزمنية",
-    slotSub: "فترة · تُحفظ في قاعدة البيانات",
-    slotAdd: "+ إضافة فترة جديدة",
-    slotSave: "💾 حفظ الفترات",
-    slotReset: "إعادة تعيين",
-    cancel: "إلغاء",
-    saving: "جارٍ الحفظ...",
-    timeFormat: "تأكد من صيغة الوقت HH:MM",
-    startBeforeEnd: "البداية قبل النهاية",
-    conflict: "تعارض:",
-    addLessonTitle: "إضافة حصة",
-    timePeriod: "الفترة الزمنية",
-    from: "من",
-    to: "إلى",
-    durationLabel: "⏱ مدة الحصة:",
-    room: "القاعة",
-    language: "اللغة",
-    level: "المستوى",
-    groupNum: "رقم الفوج",
-    preview: "معاينة الحصة:",
-    add: "إضافة الحصة",
-    group: "الفوج",
-    noGroups: "⚠️ لا توجد أفواج مرتبطة بهذا الأستاذ",
-    optRoom: "اختياري",
-    noRoom: "— بدون قاعة —",
-    previewLabel: "معاينة:",
-    teachers: "الأساتذة",
-    searchTeacher: "بحث عن أستاذ...",
-    chooseTeacher: "اختر أستاذاً",
-    chooseTeacherSub: "اختر من القائمة لعرض وإنشاء جدوله",
-    groups: "فوج",
-    inSchedule: "حصة في الجدول",
-    deleteLesson: "هل تريد حذف هذه الحصة؟",
-    deleteLessonShort: "حذف الحصة؟",
-    startBeforeEndErr: "وقت البداية يجب أن يكون قبل وقت النهاية",
-  },
-  fr: {
-    title: "Emploi du temps",
-    subtitle: "Session Février 2026 · CEIL",
-    tabRooms: "🏫 Salles",
-    tabTeachers: "👨‍🏫 Enseignants",
-    all: "Tout",
-    allDays: "Tous les jours",
-    noLessons: "Aucune séance",
-    loading: "Chargement...",
-    loadingSchedule: "Chargement du planning...",
-    errorLoading: "Erreur de chargement.",
-    addLesson: "+ Ajouter séance",
-    lesson: "séance",
-    filter: "Filtrer :",
-    cancelFilter: "Annuler ×",
-    langGuide: "Légende des langues :",
-    slotBtn: "⏱ Créneaux",
-    slotTitle: "Gérer les créneaux",
-    slotSub: "créneau(x) enregistré(s)",
-    slotAdd: "+ Ajouter un créneau",
-    slotSave: "💾 Enregistrer",
-    slotReset: "Réinitialiser",
-    cancel: "Annuler",
-    saving: "Enregistrement...",
-    timeFormat: "Format HH:MM requis",
-    startBeforeEnd: "Début avant la fin",
-    conflict: "Conflit :",
-    addLessonTitle: "Ajouter une séance",
-    timePeriod: "Créneau horaire",
-    from: "De",
-    to: "À",
-    durationLabel: "⏱ Durée :",
-    room: "Salle",
-    language: "Langue",
-    level: "Niveau",
-    groupNum: "N° groupe",
-    preview: "Aperçu :",
-    add: "Ajouter la séance",
-    group: "Groupe",
-    noGroups: "⚠️ Aucun groupe lié à cet enseignant",
-    optRoom: "optionnel",
-    noRoom: "— Sans salle —",
-    previewLabel: "Aperçu :",
-    teachers: "Enseignants",
-    searchTeacher: "Rechercher un enseignant...",
-    chooseTeacher: "Choisir un enseignant",
-    chooseTeacherSub: "Sélectionnez dans la liste pour voir son planning",
-    groups: "groupe(s)",
-    inSchedule: "séance(s) planifiée(s)",
-    deleteLesson: "Supprimer cette séance ?",
-    deleteLessonShort: "Supprimer ?",
-    startBeforeEndErr: "L'heure de début doit être avant la fin",
-  },
-  en: {
-    title: "Timetable",
-    subtitle: "February 2026 Session · CEIL",
-    tabRooms: "🏫 Rooms",
-    tabTeachers: "👨‍🏫 Teachers",
-    all: "All",
-    allDays: "All days",
-    noLessons: "No lessons",
-    loading: "Loading...",
-    loadingSchedule: "Loading schedule...",
-    errorLoading: "Failed to load data.",
-    addLesson: "+ Add lesson",
-    lesson: "lesson",
-    filter: "Filter:",
-    cancelFilter: "Clear ×",
-    langGuide: "Language legend:",
-    slotBtn: "⏱ Slots",
-    slotTitle: "Manage time slots",
-    slotSub: "slot(s) saved to database",
-    slotAdd: "+ Add slot",
-    slotSave: "💾 Save slots",
-    slotReset: "Reset",
-    cancel: "Cancel",
-    saving: "Saving...",
-    timeFormat: "Use HH:MM format",
-    startBeforeEnd: "Start must be before end",
-    conflict: "Conflict:",
-    addLessonTitle: "Add lesson",
-    timePeriod: "Time period",
-    from: "From",
-    to: "To",
-    durationLabel: "⏱ Duration:",
-    room: "Room",
-    language: "Language",
-    level: "Level",
-    groupNum: "Group number",
-    preview: "Preview:",
-    add: "Add lesson",
-    group: "Group",
-    noGroups: "⚠️ No groups linked to this teacher",
-    optRoom: "optional",
-    noRoom: "— No room —",
-    previewLabel: "Preview:",
-    teachers: "Teachers",
-    searchTeacher: "Search teacher...",
-    chooseTeacher: "Choose a teacher",
-    chooseTeacherSub: "Select from the list to view their schedule",
-    groups: "group(s)",
-    inSchedule: "lesson(s) scheduled",
-    deleteLesson: "Delete this lesson?",
-    deleteLessonShort: "Delete lesson?",
-    startBeforeEndErr: "Start time must be before end time",
-  },
-};
-
 // ══════════════════════════════════════════════════════════════
 // CONTEXT
 // ══════════════════════════════════════════════════════════════
 
-type Theme = "light" | "dark";
 interface PageCtx {
   dark: boolean;
   locale: Locale;
@@ -218,8 +56,12 @@ interface PageCtx {
 const Ctx = createContext<PageCtx>({} as PageCtx);
 const useCtx = () => useContext(Ctx);
 
-function makeCtx(dark: boolean, locale: Locale): PageCtx {
-  const t = (k: string) => TRANSLATIONS[locale][k] ?? k;
+function makeCtx(
+  dark: boolean,
+  locale: Locale,
+  tFn: (k: string) => string,
+): PageCtx {
+  const t = (k: string) => tFn(`admin.timetable.${k}`);
   const dir: "rtl" | "ltr" = locale === "ar" ? "rtl" : "ltr";
   return {
     dark,
@@ -3017,17 +2859,20 @@ function TeacherTimetableTab() {
 // ══════════════════════════════════════════════════════════════
 
 type Tab = "rooms" | "teachers";
-const LOCALE_FLAGS: Record<Locale, string> = { ar: "🇩🇿", fr: "🇫🇷", en: "🇬🇧" };
-const LOCALE_LABELS: Record<Locale, string> = { ar: "عر", fr: "Fr", en: "En" };
 
 export default function TimetablePage() {
   const [tab, setTab] = useState<Tab>("rooms");
-  const [locale, setLocale] = useState<Locale>("ar");
+  const { t: tFn, i18n } = useTranslation();
+  const locale: Locale = i18n.language.startsWith("fr")
+    ? "fr"
+    : i18n.language.startsWith("en")
+      ? "en"
+      : "ar";
 
   const { resolvedTheme } = useTheme();
   const dark = resolvedTheme === "dark";
-  const ctx = makeCtx(dark, locale);
-  const { t, dir, bg, surface, border, text, muted } = ctx;
+  const ctx = makeCtx(dark, locale, tFn);
+  const { t, dir, bg } = ctx;
 
   return (
     <Ctx.Provider value={ctx}>
@@ -3122,47 +2967,6 @@ export default function TimetablePage() {
                 {tb.label}
               </button>
             ))}
-          </div>
-          {/* Right controls */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              flexShrink: 0,
-            }}
-          >
-            {/* Locale */}
-            <div
-              style={{
-                display: "flex",
-                background: "rgba(255,255,255,0.1)",
-                borderRadius: 8,
-                padding: 3,
-                gap: 2,
-              }}
-            >
-              {(["ar", "fr", "en"] as Locale[]).map((loc) => (
-                <button
-                  key={loc}
-                  onClick={() => setLocale(loc)}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: 6,
-                    border: "none",
-                    background: locale === loc ? "#fff" : "transparent",
-                    color: locale === loc ? "#264230" : "rgba(255,255,255,0.8)",
-                    fontWeight: locale === loc ? 700 : 500,
-                    fontSize: 12,
-                    cursor: "pointer",
-                    fontFamily: "'Tajawal', sans-serif",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  {LOCALE_FLAGS[loc]} {LOCALE_LABELS[loc]}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
         {tab === "rooms" && <RoomsTimetableTab />}
