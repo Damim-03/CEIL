@@ -1,56 +1,56 @@
 // src/lib/api/admin/teacherSchedule.api.ts
 
-import axiosInstance from "../../axios";
+import axiosInstance from "../../../lib/api/axios";
 
 // ── Types ─────────────────────────────────────────────────────
 
 export interface TeacherScheduleEntry {
-  entry_id:    string;
-  teacher_id:  string;
-  group_id:    string | null;
-  room_id:     string | null;
+  entry_id: string;
+  teacher_id: string;
+  group_id: string | null;
+  room_id: string | null;
   day_of_week: number;
-  start_time:  string;
-  end_time:    string;
-  language:    string;
-  level:       string;
+  start_time: string;
+  end_time: string;
+  language: string;
+  level: string;
   group_label: string;
-  notes:       string | null;
-  created_at:  string;
+  notes: string | null;
+  created_at: string;
   teacher?: {
     teacher_id: string;
     first_name: string;
-    last_name:  string;
+    last_name: string;
     user?: { google_avatar?: string | null; email: string } | null;
   };
   group?: {
     group_id: string;
-    name:     string;
-    level:    string;
-    course:   { course_name: string; course_code: string };
+    name: string;
+    level: string;
+    course: { course_name: string; course_code: string };
   } | null;
   room?: { room_id: string; name: string } | null;
 }
 
 export interface TeacherSchedulePayload {
-  teacher_id:  string;
-  group_id?:   string | null;
-  room_id?:    string | null;
+  teacher_id: string;
+  group_id?: string | null;
+  room_id?: string | null;
   day_of_week: number;
-  start_time:  string;
-  end_time:    string;
-  language:    string;
-  level:       string;
+  start_time: string;
+  end_time: string;
+  language: string;
+  level: string;
   group_label: string;
-  notes?:      string;
+  notes?: string;
 }
 
 export interface TeacherScheduleResponse {
   success: boolean;
   teacher: any;
-  weekly:  Record<number, TeacherScheduleEntry[]>;
+  weekly: Record<number, TeacherScheduleEntry[]>;
   entries: TeacherScheduleEntry[];
-  total:   number;
+  total: number;
 }
 
 // ── API Functions ─────────────────────────────────────────────
