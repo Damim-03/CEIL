@@ -1,6 +1,12 @@
 // src/pages/admin/TimetablePage.tsx
 
-import { useState, useCallback, useEffect } from "react";
+import {
+  useState,
+  useCallback,
+  useEffect,
+  createContext,
+  useContext,
+} from "react";
 import { toast } from "sonner";
 import {
   useAdminTimetable,
@@ -23,33 +29,303 @@ import type {
   SlotConfig,
 } from "../../../lib/api/admin/timetable.api";
 import type { TeacherScheduleEntry } from "../../../lib/api/admin/teacherSchedule.api";
+import { useTheme } from "../../../context/ThemeContext";
+
+// ══════════════════════════════════════════════════════════════
+// i18n
+// ══════════════════════════════════════════════════════════════
+
+type Locale = "ar" | "fr" | "en";
+
+const TRANSLATIONS: Record<Locale, Record<string, string>> = {
+  ar: {
+    title: "التوزيع الزمني",
+    subtitle: "دورة فيفري 2026 · CEIL",
+    tabRooms: "🏫 القاعات",
+    tabTeachers: "👨‍🏫 الأساتذة",
+    all: "الكل",
+    allDays: "كل الأيام",
+    noLessons: "لا توجد حصص",
+    loading: "جارٍ التحميل...",
+    loadingSchedule: "جارٍ تحميل الجدول...",
+    errorLoading: "حدث خطأ في تحميل البيانات.",
+    addLesson: "+ إضافة حصة",
+    lesson: "حصة",
+    filter: "فلترة:",
+    cancelFilter: "إلغاء الفلتر ×",
+    langGuide: "دليل اللغات:",
+    slotBtn: "⏱ الفترات",
+    slotTitle: "إدارة الفترات الزمنية",
+    slotSub: "فترة · تُحفظ في قاعدة البيانات",
+    slotAdd: "+ إضافة فترة جديدة",
+    slotSave: "💾 حفظ الفترات",
+    slotReset: "إعادة تعيين",
+    cancel: "إلغاء",
+    saving: "جارٍ الحفظ...",
+    timeFormat: "تأكد من صيغة الوقت HH:MM",
+    startBeforeEnd: "البداية قبل النهاية",
+    conflict: "تعارض:",
+    addLessonTitle: "إضافة حصة",
+    timePeriod: "الفترة الزمنية",
+    from: "من",
+    to: "إلى",
+    durationLabel: "⏱ مدة الحصة:",
+    room: "القاعة",
+    language: "اللغة",
+    level: "المستوى",
+    groupNum: "رقم الفوج",
+    preview: "معاينة الحصة:",
+    add: "إضافة الحصة",
+    group: "الفوج",
+    noGroups: "⚠️ لا توجد أفواج مرتبطة بهذا الأستاذ",
+    optRoom: "اختياري",
+    noRoom: "— بدون قاعة —",
+    previewLabel: "معاينة:",
+    teachers: "الأساتذة",
+    searchTeacher: "بحث عن أستاذ...",
+    chooseTeacher: "اختر أستاذاً",
+    chooseTeacherSub: "اختر من القائمة لعرض وإنشاء جدوله",
+    groups: "فوج",
+    inSchedule: "حصة في الجدول",
+    deleteLesson: "هل تريد حذف هذه الحصة؟",
+    deleteLessonShort: "حذف الحصة؟",
+    startBeforeEndErr: "وقت البداية يجب أن يكون قبل وقت النهاية",
+  },
+  fr: {
+    title: "Emploi du temps",
+    subtitle: "Session Février 2026 · CEIL",
+    tabRooms: "🏫 Salles",
+    tabTeachers: "👨‍🏫 Enseignants",
+    all: "Tout",
+    allDays: "Tous les jours",
+    noLessons: "Aucune séance",
+    loading: "Chargement...",
+    loadingSchedule: "Chargement du planning...",
+    errorLoading: "Erreur de chargement.",
+    addLesson: "+ Ajouter séance",
+    lesson: "séance",
+    filter: "Filtrer :",
+    cancelFilter: "Annuler ×",
+    langGuide: "Légende des langues :",
+    slotBtn: "⏱ Créneaux",
+    slotTitle: "Gérer les créneaux",
+    slotSub: "créneau(x) enregistré(s)",
+    slotAdd: "+ Ajouter un créneau",
+    slotSave: "💾 Enregistrer",
+    slotReset: "Réinitialiser",
+    cancel: "Annuler",
+    saving: "Enregistrement...",
+    timeFormat: "Format HH:MM requis",
+    startBeforeEnd: "Début avant la fin",
+    conflict: "Conflit :",
+    addLessonTitle: "Ajouter une séance",
+    timePeriod: "Créneau horaire",
+    from: "De",
+    to: "À",
+    durationLabel: "⏱ Durée :",
+    room: "Salle",
+    language: "Langue",
+    level: "Niveau",
+    groupNum: "N° groupe",
+    preview: "Aperçu :",
+    add: "Ajouter la séance",
+    group: "Groupe",
+    noGroups: "⚠️ Aucun groupe lié à cet enseignant",
+    optRoom: "optionnel",
+    noRoom: "— Sans salle —",
+    previewLabel: "Aperçu :",
+    teachers: "Enseignants",
+    searchTeacher: "Rechercher un enseignant...",
+    chooseTeacher: "Choisir un enseignant",
+    chooseTeacherSub: "Sélectionnez dans la liste pour voir son planning",
+    groups: "groupe(s)",
+    inSchedule: "séance(s) planifiée(s)",
+    deleteLesson: "Supprimer cette séance ?",
+    deleteLessonShort: "Supprimer ?",
+    startBeforeEndErr: "L'heure de début doit être avant la fin",
+  },
+  en: {
+    title: "Timetable",
+    subtitle: "February 2026 Session · CEIL",
+    tabRooms: "🏫 Rooms",
+    tabTeachers: "👨‍🏫 Teachers",
+    all: "All",
+    allDays: "All days",
+    noLessons: "No lessons",
+    loading: "Loading...",
+    loadingSchedule: "Loading schedule...",
+    errorLoading: "Failed to load data.",
+    addLesson: "+ Add lesson",
+    lesson: "lesson",
+    filter: "Filter:",
+    cancelFilter: "Clear ×",
+    langGuide: "Language legend:",
+    slotBtn: "⏱ Slots",
+    slotTitle: "Manage time slots",
+    slotSub: "slot(s) saved to database",
+    slotAdd: "+ Add slot",
+    slotSave: "💾 Save slots",
+    slotReset: "Reset",
+    cancel: "Cancel",
+    saving: "Saving...",
+    timeFormat: "Use HH:MM format",
+    startBeforeEnd: "Start must be before end",
+    conflict: "Conflict:",
+    addLessonTitle: "Add lesson",
+    timePeriod: "Time period",
+    from: "From",
+    to: "To",
+    durationLabel: "⏱ Duration:",
+    room: "Room",
+    language: "Language",
+    level: "Level",
+    groupNum: "Group number",
+    preview: "Preview:",
+    add: "Add lesson",
+    group: "Group",
+    noGroups: "⚠️ No groups linked to this teacher",
+    optRoom: "optional",
+    noRoom: "— No room —",
+    previewLabel: "Preview:",
+    teachers: "Teachers",
+    searchTeacher: "Search teacher...",
+    chooseTeacher: "Choose a teacher",
+    chooseTeacherSub: "Select from the list to view their schedule",
+    groups: "group(s)",
+    inSchedule: "lesson(s) scheduled",
+    deleteLesson: "Delete this lesson?",
+    deleteLessonShort: "Delete lesson?",
+    startBeforeEndErr: "Start time must be before end time",
+  },
+};
+
+// ══════════════════════════════════════════════════════════════
+// CONTEXT
+// ══════════════════════════════════════════════════════════════
+
+type Theme = "light" | "dark";
+interface PageCtx {
+  dark: boolean;
+  locale: Locale;
+  t: (k: string) => string;
+  dir: "rtl" | "ltr";
+  bg: string;
+  surface: string;
+  border: string;
+  text: string;
+  muted: string;
+}
+const Ctx = createContext<PageCtx>({} as PageCtx);
+const useCtx = () => useContext(Ctx);
+
+function makeCtx(dark: boolean, locale: Locale): PageCtx {
+  const t = (k: string) => TRANSLATIONS[locale][k] ?? k;
+  const dir: "rtl" | "ltr" = locale === "ar" ? "rtl" : "ltr";
+  return {
+    dark,
+    locale,
+    t,
+    dir,
+    bg: dark ? "#0f1a13" : "#f8f9fa",
+    surface: dark ? "#1a2820" : "#ffffff",
+    border: dark ? "#2d4035" : "#e5e7eb",
+    text: dark ? "#e8f0ea" : "#111827",
+    muted: dark ? "#7a9b83" : "#6b7280",
+  };
+}
 
 // ══════════════════════════════════════════════════════════════
 // CONSTANTS
 // ══════════════════════════════════════════════════════════════
 
-const DAYS_AR: Record<number, string> = {
-  0: "السبت",
-  1: "الأحد",
-  2: "الإثنين",
-  3: "الثلاثاء",
-  4: "الأربعاء",
-  5: "الخميس",
+const DAYS_LABELS: Record<Locale, Record<number, string>> = {
+  ar: {
+    0: "السبت",
+    1: "الأحد",
+    2: "الإثنين",
+    3: "الثلاثاء",
+    4: "الأربعاء",
+    5: "الخميس",
+  },
+  fr: {
+    0: "Samedi",
+    1: "Dimanche",
+    2: "Lundi",
+    3: "Mardi",
+    4: "Mercredi",
+    5: "Jeudi",
+  },
+  en: {
+    0: "Saturday",
+    1: "Sunday",
+    2: "Monday",
+    3: "Tuesday",
+    4: "Wednesday",
+    5: "Thursday",
+  },
 };
 const DAYS = [0, 1, 2, 3, 4, 5];
 
 const LANG_META: Record<
   string,
-  { label: string; color: string; bg: string; border: string }
+  { label: string; color: string; bg: string; border: string; darkBg: string }
 > = {
-  FR: { label: "فرنسية", color: "#1a56db", bg: "#eff6ff", border: "#bfdbfe" },
-  EN: { label: "إنجليزية", color: "#047857", bg: "#ecfdf5", border: "#a7f3d0" },
-  ES: { label: "إسبانية", color: "#b45309", bg: "#fffbeb", border: "#fde68a" },
-  DE: { label: "ألمانية", color: "#6d28d9", bg: "#f5f3ff", border: "#ddd6fe" },
-  TR: { label: "تركية", color: "#be123c", bg: "#fff1f2", border: "#fecdd3" },
-  GR: { label: "يونانية", color: "#0e7490", bg: "#ecfeff", border: "#a5f3fc" },
-  IT: { label: "إيطالية", color: "#9d174d", bg: "#fdf2f8", border: "#f9a8d4" },
-  ZH: { label: "صينية", color: "#991b1b", bg: "#fef2f2", border: "#fecaca" },
+  FR: {
+    label: "Français",
+    color: "#1a56db",
+    bg: "#eff6ff",
+    border: "#bfdbfe",
+    darkBg: "#1e2d4a",
+  },
+  EN: {
+    label: "English",
+    color: "#047857",
+    bg: "#ecfdf5",
+    border: "#a7f3d0",
+    darkBg: "#0f2d20",
+  },
+  ES: {
+    label: "Español",
+    color: "#b45309",
+    bg: "#fffbeb",
+    border: "#fde68a",
+    darkBg: "#2d2010",
+  },
+  DE: {
+    label: "Deutsch",
+    color: "#6d28d9",
+    bg: "#f5f3ff",
+    border: "#ddd6fe",
+    darkBg: "#1e1535",
+  },
+  TR: {
+    label: "Türkçe",
+    color: "#be123c",
+    bg: "#fff1f2",
+    border: "#fecdd3",
+    darkBg: "#2d0f18",
+  },
+  GR: {
+    label: "Ελληνικά",
+    color: "#0e7490",
+    bg: "#ecfeff",
+    border: "#a5f3fc",
+    darkBg: "#0a2030",
+  },
+  IT: {
+    label: "Italiano",
+    color: "#9d174d",
+    bg: "#fdf2f8",
+    border: "#f9a8d4",
+    darkBg: "#2d0f20",
+  },
+  ZH: {
+    label: "中文",
+    color: "#991b1b",
+    bg: "#fef2f2",
+    border: "#fecaca",
+    darkBg: "#2d0f0f",
+  },
 };
 const LANG_FLAGS: Record<string, string> = {
   FR: "🇫🇷",
@@ -74,10 +350,6 @@ const DEFAULT_SLOTS: Slot[] = [
   { id: "s7", start: "17:00", end: "19:00" },
 ];
 
-// ══════════════════════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════════════════════
-
 function timeToMinutes(t: string): number {
   const [h, m] = t.split(":").map(Number);
   return h * 60 + m;
@@ -87,11 +359,11 @@ function formatDuration(start: string, end: string) {
   if (diff <= 0) return "";
   const h = Math.floor(diff / 60),
     m = diff % 60;
-  return h > 0 ? `${h}س${m > 0 ? ` ${m}د` : ""}` : `${m}د`;
+  return h > 0 ? `${h}h${m > 0 ? `${m}` : ""}` : `${m}min`;
 }
 
 // ══════════════════════════════════════════════════════════════
-// SHARED — EntryBadge (القاعات)
+// EntryBadge
 // ══════════════════════════════════════════════════════════════
 
 function EntryBadge({
@@ -101,14 +373,15 @@ function EntryBadge({
   entry: TimetableEntry;
   onDelete: () => void;
 }) {
+  const { dark } = useCtx();
   const meta = LANG_META[entry.language] ?? LANG_META["FR"];
   const flag = LANG_FLAGS[entry.language] ?? "🌐";
   const dur = formatDuration(entry.start_time, entry.end_time);
   return (
     <div
       style={{
-        background: "#fff",
-        border: `1.5px solid ${meta.border}`,
+        background: dark ? meta.darkBg : "#fff",
+        border: `1.5px solid ${dark ? meta.color + "55" : meta.border}`,
         borderRight: `4px solid ${meta.color}`,
         borderRadius: 10,
         padding: "8px 10px 8px 28px",
@@ -118,18 +391,13 @@ function EntryBadge({
         fontFamily: "'Tajawal', sans-serif",
         direction: "rtl",
         position: "relative",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-        transition: "box-shadow 0.15s",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "0 3px 10px rgba(0,0,0,0.12)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)";
+        boxShadow: dark
+          ? "0 1px 6px rgba(0,0,0,0.3)"
+          : "0 1px 4px rgba(0,0,0,0.06)",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <span style={{ fontSize: 15, lineHeight: 1 }}>{flag}</span>
+        <span style={{ fontSize: 15 }}>{flag}</span>
         <span
           style={{
             background: meta.color,
@@ -156,8 +424,8 @@ function EntryBadge({
       >
         <span
           style={{
-            background: "#f3f4f6",
-            color: "#111827",
+            background: dark ? "#1f2d22" : "#f3f4f6",
+            color: dark ? "#d1fae5" : "#111827",
             borderRadius: 6,
             padding: "2px 8px",
             fontSize: 12,
@@ -192,7 +460,7 @@ function EntryBadge({
         <span
           style={{
             fontSize: 11,
-            color: "#6b7280",
+            color: dark ? "#7a9b83" : "#6b7280",
             fontFamily: "monospace",
             fontWeight: 600,
           }}
@@ -202,7 +470,7 @@ function EntryBadge({
         {dur && (
           <span
             style={{
-              background: meta.bg,
+              background: dark ? meta.darkBg : meta.bg,
               color: meta.color,
               borderRadius: 4,
               padding: "1px 6px",
@@ -216,12 +484,11 @@ function EntryBadge({
       </div>
       <button
         onClick={onDelete}
-        title="حذف الحصة"
         style={{
           position: "absolute",
           top: 6,
           left: 6,
-          background: "#fef2f2",
+          background: dark ? "#3d1515" : "#fef2f2",
           border: "none",
           borderRadius: 6,
           width: 20,
@@ -229,7 +496,6 @@ function EntryBadge({
           cursor: "pointer",
           color: "#ef4444",
           fontSize: 12,
-          lineHeight: 1,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -249,10 +515,6 @@ function EntryBadge({
   );
 }
 
-// ══════════════════════════════════════════════════════════════
-// SHARED — TeacherEntryBadge (الأساتذة)
-// ══════════════════════════════════════════════════════════════
-
 function TeacherEntryBadge({
   entry,
   onDelete,
@@ -260,14 +522,15 @@ function TeacherEntryBadge({
   entry: TeacherScheduleEntry;
   onDelete: () => void;
 }) {
+  const { dark } = useCtx();
   const meta = LANG_META[entry.language] ?? LANG_META["FR"];
   const flag = LANG_FLAGS[entry.language] ?? "🌐";
   const dur = formatDuration(entry.start_time, entry.end_time);
   return (
     <div
       style={{
-        background: "#fff",
-        border: `1.5px solid ${meta.border}`,
+        background: dark ? meta.darkBg : "#fff",
+        border: `1.5px solid ${dark ? meta.color + "55" : meta.border}`,
         borderRight: `4px solid ${meta.color}`,
         borderRadius: 10,
         padding: "8px 10px 8px 28px",
@@ -277,7 +540,9 @@ function TeacherEntryBadge({
         fontFamily: "'Tajawal', sans-serif",
         direction: "rtl",
         position: "relative",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+        boxShadow: dark
+          ? "0 1px 6px rgba(0,0,0,0.3)"
+          : "0 1px 4px rgba(0,0,0,0.06)",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -308,8 +573,8 @@ function TeacherEntryBadge({
       >
         <span
           style={{
-            background: "#f3f4f6",
-            color: "#111827",
+            background: dark ? "#1f2d22" : "#f3f4f6",
+            color: dark ? "#d1fae5" : "#111827",
             borderRadius: 5,
             padding: "1px 7px",
             fontSize: 12,
@@ -321,7 +586,7 @@ function TeacherEntryBadge({
         {entry.group?.course?.course_name && (
           <span
             style={{
-              background: "#eff6ff",
+              background: dark ? "#1e2d4a" : "#eff6ff",
               color: "#1a56db",
               borderRadius: 5,
               padding: "1px 7px",
@@ -358,7 +623,7 @@ function TeacherEntryBadge({
         <span
           style={{
             fontSize: 10,
-            color: "#6b7280",
+            color: dark ? "#7a9b83" : "#6b7280",
             fontFamily: "monospace",
             fontWeight: 600,
           }}
@@ -368,7 +633,7 @@ function TeacherEntryBadge({
         {dur && (
           <span
             style={{
-              background: meta.bg,
+              background: dark ? meta.darkBg : meta.bg,
               color: meta.color,
               borderRadius: 4,
               padding: "0 5px",
@@ -386,7 +651,7 @@ function TeacherEntryBadge({
           position: "absolute",
           top: 6,
           left: 6,
-          background: "#fef2f2",
+          background: dark ? "#3d1515" : "#fef2f2",
           border: "none",
           borderRadius: 5,
           width: 18,
@@ -430,6 +695,7 @@ function SlotManagerModal({
   onClose: () => void;
   isSaving?: boolean;
 }) {
+  const { t, dark, surface, border, text, muted } = useCtx();
   const [draft, setDraft] = useState<Slot[]>(slots.map((s) => ({ ...s })));
   const [error, setError] = useState<string | null>(null);
 
@@ -461,11 +727,11 @@ function SlotManagerModal({
   function validate(): Slot[] | null {
     for (const s of draft) {
       if (!/^\d{2}:\d{2}$/.test(s.start) || !/^\d{2}:\d{2}$/.test(s.end)) {
-        setError("تأكد من صيغة الوقت HH:MM");
+        setError(t("timeFormat"));
         return null;
       }
       if (timeToMinutes(s.start) >= timeToMinutes(s.end)) {
-        setError(`${s.start} - ${s.end}: البداية قبل النهاية`);
+        setError(`${s.start} - ${s.end}: ${t("startBeforeEnd")}`);
         return null;
       }
     }
@@ -474,7 +740,7 @@ function SlotManagerModal({
     );
     for (let i = 0; i < sorted.length - 1; i++) {
       if (timeToMinutes(sorted[i].end) > timeToMinutes(sorted[i + 1].start)) {
-        setError(`تعارض: ${sorted[i].start}-${sorted[i].end}`);
+        setError(`${t("conflict")} ${sorted[i].start}-${sorted[i].end}`);
         return null;
       }
     }
@@ -493,17 +759,17 @@ function SlotManagerModal({
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.5)",
+        background: "rgba(0,0,0,0.6)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         zIndex: 2000,
-        backdropFilter: "blur(2px)",
+        backdropFilter: "blur(3px)",
       }}
     >
       <div
         style={{
-          background: "#fff",
+          background: surface,
           borderRadius: 16,
           padding: 28,
           width: 460,
@@ -511,7 +777,8 @@ function SlotManagerModal({
           overflowY: "auto",
           direction: "rtl",
           fontFamily: "'Tajawal', sans-serif",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+          border: `1px solid ${border}`,
         }}
       >
         <div
@@ -523,23 +790,23 @@ function SlotManagerModal({
           }}
         >
           <div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "#111827" }}>
-              إدارة الفترات الزمنية
+            <div style={{ fontSize: 17, fontWeight: 700, color: text }}>
+              {t("slotTitle")}
             </div>
-            <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>
-              {draft.length} فترة · تُحفظ في قاعدة البيانات
+            <div style={{ fontSize: 12, color: muted, marginTop: 2 }}>
+              {draft.length} {t("slotSub")}
             </div>
           </div>
           <button
             onClick={onClose}
             style={{
-              background: "#f3f4f6",
+              background: dark ? "#2d4035" : "#f3f4f6",
               border: "none",
               borderRadius: 8,
               padding: "4px 10px",
               cursor: "pointer",
               fontSize: 18,
-              color: "#374151",
+              color: text,
             }}
           >
             ×
@@ -562,10 +829,10 @@ function SlotManagerModal({
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
-                  background: "#f9fafb",
+                  background: dark ? "#132018" : "#f9fafb",
                   borderRadius: 10,
                   padding: "10px 12px",
-                  border: "1.5px solid #e5e7eb",
+                  border: `1.5px solid ${border}`,
                 }}
               >
                 <span
@@ -573,7 +840,7 @@ function SlotManagerModal({
                     fontSize: 11,
                     fontWeight: 700,
                     color: "#264230",
-                    background: "#d1fae5",
+                    background: dark ? "#1a3326" : "#d1fae5",
                     borderRadius: 6,
                     padding: "2px 7px",
                     minWidth: 22,
@@ -590,13 +857,15 @@ function SlotManagerModal({
                     flex: 1,
                     padding: "6px 8px",
                     borderRadius: 8,
-                    border: "1.5px solid #d1d5db",
+                    border: `1.5px solid ${border}`,
                     fontSize: 13,
                     outline: "none",
                     direction: "ltr",
+                    background: dark ? "#1a2820" : "#fff",
+                    color: text,
                   }}
                 />
-                <span style={{ color: "#9ca3af", fontSize: 14 }}>←</span>
+                <span style={{ color: muted, fontSize: 14 }}>←</span>
                 <input
                   type="time"
                   value={slot.end}
@@ -605,17 +874,26 @@ function SlotManagerModal({
                     flex: 1,
                     padding: "6px 8px",
                     borderRadius: 8,
-                    border: "1.5px solid #d1d5db",
+                    border: `1.5px solid ${border}`,
                     fontSize: 13,
                     outline: "none",
                     direction: "ltr",
+                    background: dark ? "#1a2820" : "#fff",
+                    color: text,
                   }}
                 />
                 <span
                   style={{
                     fontSize: 11,
                     color: dur > 0 ? "#264230" : "#ef4444",
-                    background: dur > 0 ? "#f0fdf4" : "#fef2f2",
+                    background:
+                      dur > 0
+                        ? dark
+                          ? "#1a3326"
+                          : "#f0fdf4"
+                        : dark
+                          ? "#3d1515"
+                          : "#fef2f2",
                     borderRadius: 6,
                     padding: "2px 7px",
                     minWidth: 36,
@@ -623,7 +901,7 @@ function SlotManagerModal({
                     fontWeight: 600,
                   }}
                 >
-                  {dur > 0 ? `${dur}د` : "!"}
+                  {dur > 0 ? `${dur}m` : "!"}
                 </span>
                 <button
                   onClick={() => removeSlot(slot.id)}
@@ -632,8 +910,12 @@ function SlotManagerModal({
                     background: "none",
                     border: "none",
                     fontSize: 18,
-                    lineHeight: 1,
-                    color: draft.length > 1 ? "#ef4444" : "#d1d5db",
+                    color:
+                      draft.length > 1
+                        ? "#ef4444"
+                        : dark
+                          ? "#3d4d42"
+                          : "#d1d5db",
                     cursor: draft.length > 1 ? "pointer" : "not-allowed",
                     padding: "0 2px",
                   }}
@@ -647,7 +929,7 @@ function SlotManagerModal({
         {error && (
           <div
             style={{
-              background: "#fef2f2",
+              background: dark ? "#3d1515" : "#fef2f2",
               border: "1px solid #fecaca",
               borderRadius: 8,
               padding: "8px 12px",
@@ -667,15 +949,15 @@ function SlotManagerModal({
             borderRadius: 10,
             marginBottom: 16,
             border: "1.5px dashed #264230",
-            background: "#f0fdf4",
-            color: "#264230",
+            background: dark ? "#1a3326" : "#f0fdf4",
+            color: dark ? "#86efac" : "#264230",
             fontWeight: 600,
             fontSize: 13,
             cursor: "pointer",
             fontFamily: "'Tajawal', sans-serif",
           }}
         >
-          + إضافة فترة جديدة
+          {t("slotAdd")}
         </button>
         <div style={{ display: "flex", gap: 8 }}>
           <button
@@ -694,7 +976,7 @@ function SlotManagerModal({
               fontFamily: "'Tajawal', sans-serif",
             }}
           >
-            {isSaving ? "جارٍ الحفظ..." : "💾 حفظ الفترات"}
+            {isSaving ? t("saving") : t("slotSave")}
           </button>
           <button
             onClick={() => {
@@ -706,7 +988,7 @@ function SlotManagerModal({
               padding: "10px 14px",
               borderRadius: 10,
               border: "1.5px solid #fecaca",
-              background: "#fef2f2",
+              background: dark ? "#3d1515" : "#fef2f2",
               color: "#dc2626",
               fontWeight: 600,
               fontSize: 13,
@@ -714,23 +996,23 @@ function SlotManagerModal({
               fontFamily: "'Tajawal', sans-serif",
             }}
           >
-            إعادة تعيين
+            {t("slotReset")}
           </button>
           <button
             onClick={onClose}
             style={{
               padding: "10px 14px",
               borderRadius: 10,
-              border: "1.5px solid #e5e7eb",
-              background: "#fff",
-              color: "#374151",
+              border: `1.5px solid ${border}`,
+              background: surface,
+              color: text,
               fontWeight: 600,
               fontSize: 13,
               cursor: "pointer",
               fontFamily: "'Tajawal', sans-serif",
             }}
           >
-            إلغاء
+            {t("cancel")}
           </button>
         </div>
       </div>
@@ -739,7 +1021,7 @@ function SlotManagerModal({
 }
 
 // ══════════════════════════════════════════════════════════════
-// ADD MODAL — القاعات
+// ADD MODAL — Rooms
 // ══════════════════════════════════════════════════════════════
 
 function AddModal({
@@ -755,6 +1037,8 @@ function AddModal({
   onCreate: (payload: any) => void;
   isPending: boolean;
 }) {
+  const { t, dark, surface, border, text, muted, locale } = useCtx();
+  const dayLabel = DAYS_LABELS[locale][day];
   const [roomId, setRoomId] = useState(rooms[0]?.room_id ?? "");
   const [start, setStart] = useState("08:00");
   const [end, setEnd] = useState("09:30");
@@ -764,12 +1048,19 @@ function AddModal({
   const [timeErr, setTimeErr] = useState<string | null>(null);
   const meta = LANG_META[lang];
   const duration = formatDuration(start, end);
+  const inputBase = {
+    borderRadius: 8,
+    border: `1.5px solid ${border}`,
+    outline: "none",
+    background: dark ? "#132018" : "#fff",
+    color: text,
+  } as const;
 
   function handleSubmit() {
     setTimeErr(null);
     if (!roomId) return;
     if (timeToMinutes(start) >= timeToMinutes(end)) {
-      setTimeErr("وقت البداية يجب أن يكون قبل وقت النهاية");
+      setTimeErr(t("startBeforeEndErr"));
       return;
     }
     onCreate({
@@ -789,17 +1080,17 @@ function AddModal({
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.45)",
+        background: "rgba(0,0,0,0.55)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         zIndex: 1000,
-        backdropFilter: "blur(2px)",
+        backdropFilter: "blur(3px)",
       }}
     >
       <div
         style={{
-          background: "#fff",
+          background: surface,
           borderRadius: 16,
           padding: 28,
           minWidth: 380,
@@ -807,9 +1098,10 @@ function AddModal({
           width: "90%",
           direction: "rtl",
           fontFamily: "'Tajawal', sans-serif",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
           maxHeight: "90vh",
           overflowY: "auto",
+          border: `1px solid ${border}`,
         }}
       >
         <div
@@ -820,45 +1112,44 @@ function AddModal({
           }}
         >
           <div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "#111827" }}>
-              إضافة حصة
+            <div style={{ fontSize: 17, fontWeight: 700, color: text }}>
+              {t("addLessonTitle")}
             </div>
-            <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>
-              {DAYS_AR[day]}
+            <div style={{ fontSize: 12, color: muted, marginTop: 2 }}>
+              {dayLabel}
             </div>
           </div>
           <button
             onClick={onClose}
             style={{
-              background: "#f3f4f6",
+              background: dark ? "#2d4035" : "#f3f4f6",
               border: "none",
               borderRadius: 8,
               padding: "4px 10px",
               cursor: "pointer",
               fontSize: 16,
-              color: "#374151",
+              color: text,
             }}
           >
             ×
           </button>
         </div>
-        {/* الوقت */}
         <div style={{ marginBottom: 16 }}>
           <label
             style={{
               fontSize: 13,
               fontWeight: 600,
-              color: "#374151",
+              color: text,
               display: "block",
               marginBottom: 8,
             }}
           >
-            الفترة الزمنية
+            {t("timePeriod")}
           </label>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 4 }}>
-                من
+              <div style={{ fontSize: 11, color: muted, marginBottom: 4 }}>
+                {t("from")}
               </div>
               <input
                 type="time"
@@ -870,22 +1161,19 @@ function AddModal({
                 style={{
                   width: "100%",
                   padding: "9px 10px",
-                  borderRadius: 8,
-                  border: `1.5px solid ${timeErr ? "#fca5a5" : "#d1d5db"}`,
                   fontSize: 15,
                   fontFamily: "monospace",
-                  outline: "none",
-                  boxSizing: "border-box",
-                  direction: "ltr",
+                  boxSizing: "border-box" as const,
+                  direction: "ltr" as const,
+                  ...inputBase,
+                  border: `1.5px solid ${timeErr ? "#fca5a5" : border}`,
                 }}
               />
             </div>
-            <div style={{ paddingTop: 18, color: "#9ca3af", fontSize: 18 }}>
-              ←
-            </div>
+            <div style={{ paddingTop: 18, color: muted, fontSize: 18 }}>←</div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 4 }}>
-                إلى
+              <div style={{ fontSize: 11, color: muted, marginBottom: 4 }}>
+                {t("to")}
               </div>
               <input
                 type="time"
@@ -897,13 +1185,12 @@ function AddModal({
                 style={{
                   width: "100%",
                   padding: "9px 10px",
-                  borderRadius: 8,
-                  border: `1.5px solid ${timeErr ? "#fca5a5" : "#d1d5db"}`,
                   fontSize: 15,
                   fontFamily: "monospace",
-                  outline: "none",
-                  boxSizing: "border-box",
-                  direction: "ltr",
+                  boxSizing: "border-box" as const,
+                  direction: "ltr" as const,
+                  ...inputBase,
+                  border: `1.5px solid ${timeErr ? "#fca5a5" : border}`,
                 }}
               />
             </div>
@@ -912,16 +1199,16 @@ function AddModal({
             <div
               style={{
                 marginTop: 8,
-                background: "#f0fdf4",
+                background: dark ? "#1a3326" : "#f0fdf4",
                 borderRadius: 6,
                 padding: "4px 10px",
                 fontSize: 12,
-                color: "#264230",
+                color: dark ? "#86efac" : "#264230",
                 fontWeight: 600,
                 display: "inline-block",
               }}
             >
-              ⏱ مدة الحصة: {duration}
+              {t("durationLabel")} {duration}
             </div>
           )}
           {timeErr && (
@@ -930,7 +1217,7 @@ function AddModal({
                 marginTop: 6,
                 fontSize: 12,
                 color: "#dc2626",
-                background: "#fef2f2",
+                background: dark ? "#3d1515" : "#fef2f2",
                 borderRadius: 6,
                 padding: "4px 10px",
               }}
@@ -939,18 +1226,17 @@ function AddModal({
             </div>
           )}
         </div>
-        {/* القاعة */}
         <div style={{ marginBottom: 16 }}>
           <label
             style={{
               fontSize: 13,
               fontWeight: 600,
-              color: "#374151",
+              color: text,
               display: "block",
               marginBottom: 6,
             }}
           >
-            القاعة
+            {t("room")}
           </label>
           <select
             value={roomId}
@@ -958,14 +1244,10 @@ function AddModal({
             style={{
               width: "100%",
               padding: "8px 12px",
-              borderRadius: 8,
-              border: "1.5px solid #d1d5db",
               fontSize: 13,
               fontFamily: "'Tajawal', sans-serif",
-              background: "#fff",
-              color: "#111827",
-              outline: "none",
-              boxSizing: "border-box",
+              boxSizing: "border-box" as const,
+              ...inputBase,
             }}
           >
             {rooms.map((r) => (
@@ -975,18 +1257,17 @@ function AddModal({
             ))}
           </select>
         </div>
-        {/* اللغة */}
         <div style={{ marginBottom: 16 }}>
           <label
             style={{
               fontSize: 13,
               fontWeight: 600,
-              color: "#374151",
+              color: text,
               display: "block",
               marginBottom: 6,
             }}
           >
-            اللغة
+            {t("language")}
           </label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {LANGUAGES.map((l) => {
@@ -999,9 +1280,15 @@ function AddModal({
                   style={{
                     padding: "5px 12px",
                     borderRadius: 8,
-                    border: `2px solid ${active ? m.color : "#e5e7eb"}`,
-                    background: active ? m.bg : "#f9fafb",
-                    color: active ? m.color : "#374151",
+                    border: `2px solid ${active ? m.color : border}`,
+                    background: active
+                      ? dark
+                        ? m.darkBg
+                        : m.bg
+                      : dark
+                        ? "#1a2820"
+                        : "#f9fafb",
+                    color: active ? m.color : text,
                     fontWeight: active ? 700 : 500,
                     fontSize: 12,
                     cursor: "pointer",
@@ -1014,18 +1301,17 @@ function AddModal({
             })}
           </div>
         </div>
-        {/* المستوى */}
         <div style={{ marginBottom: 16 }}>
           <label
             style={{
               fontSize: 13,
               fontWeight: 600,
-              color: "#374151",
+              color: text,
               display: "block",
               marginBottom: 6,
             }}
           >
-            المستوى
+            {t("level")}
           </label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {LEVELS.map((lv) => (
@@ -1035,9 +1321,10 @@ function AddModal({
                 style={{
                   padding: "5px 12px",
                   borderRadius: 8,
-                  border: `2px solid ${level === lv ? "#264230" : "#e5e7eb"}`,
-                  background: level === lv ? "#264230" : "#f9fafb",
-                  color: level === lv ? "#fff" : "#374151",
+                  border: `2px solid ${level === lv ? "#264230" : border}`,
+                  background:
+                    level === lv ? "#264230" : dark ? "#1a2820" : "#f9fafb",
+                  color: level === lv ? "#fff" : text,
                   fontWeight: level === lv ? 700 : 500,
                   fontSize: 12,
                   cursor: "pointer",
@@ -1049,18 +1336,17 @@ function AddModal({
             ))}
           </div>
         </div>
-        {/* رقم الفوج */}
         <div style={{ marginBottom: 20 }}>
           <label
             style={{
               fontSize: 13,
               fontWeight: 600,
-              color: "#374151",
+              color: text,
               display: "block",
               marginBottom: 6,
             }}
           >
-            رقم الفوج
+            {t("groupNum")}
           </label>
           <input
             value={groupNum}
@@ -1069,29 +1355,26 @@ function AddModal({
             style={{
               width: "100%",
               padding: "8px 12px",
-              borderRadius: 8,
-              border: "1.5px solid #d1d5db",
               fontSize: 14,
               fontFamily: "'Tajawal', sans-serif",
-              outline: "none",
-              boxSizing: "border-box",
-              direction: "ltr",
-              textAlign: "center",
+              boxSizing: "border-box" as const,
+              direction: "ltr" as const,
+              textAlign: "center" as const,
+              ...inputBase,
             }}
           />
         </div>
-        {/* معاينة */}
         <div
           style={{
-            background: meta.bg,
-            border: `1.5px solid ${meta.border}`,
+            background: dark ? meta.darkBg : meta.bg,
+            border: `1.5px solid ${dark ? meta.color + "55" : meta.border}`,
             borderRadius: 10,
             padding: "10px 14px",
             marginBottom: 20,
           }}
         >
-          <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 4 }}>
-            معاينة الحصة:
+          <div style={{ fontSize: 11, color: muted, marginBottom: 4 }}>
+            {t("preview")}
           </div>
           <div
             style={{
@@ -1102,18 +1385,12 @@ function AddModal({
             }}
           >
             <span
-              style={{
-                fontSize: 12,
-                color: "#374151",
-                fontFamily: "monospace",
-              }}
+              style={{ fontSize: 12, color: text, fontFamily: "monospace" }}
             >
               {start} - {end}
             </span>
             {duration && (
-              <span style={{ fontSize: 11, color: "#6b7280" }}>
-                ({duration})
-              </span>
+              <span style={{ fontSize: 11, color: muted }}>({duration})</span>
             )}
             <span style={{ fontWeight: 700, color: meta.color, fontSize: 13 }}>
               {level} {groupNum}
@@ -1149,23 +1426,23 @@ function AddModal({
               fontFamily: "'Tajawal', sans-serif",
             }}
           >
-            {isPending ? "جارٍ الحفظ..." : "إضافة الحصة"}
+            {isPending ? t("saving") : t("add")}
           </button>
           <button
             onClick={onClose}
             style={{
               padding: "10px 16px",
               borderRadius: 10,
-              border: "1.5px solid #e5e7eb",
-              background: "#fff",
-              color: "#374151",
+              border: `1.5px solid ${border}`,
+              background: surface,
+              color: text,
               fontWeight: 600,
               fontSize: 14,
               cursor: "pointer",
               fontFamily: "'Tajawal', sans-serif",
             }}
           >
-            إلغاء
+            {t("cancel")}
           </button>
         </div>
       </div>
@@ -1174,7 +1451,7 @@ function AddModal({
 }
 
 // ══════════════════════════════════════════════════════════════
-// ADD TEACHER MODAL — الأساتذة
+// ADD TEACHER MODAL
 // ══════════════════════════════════════════════════════════════
 
 interface TeacherGroup {
@@ -1201,6 +1478,8 @@ function AddTeacherModal({
   onCreate: (payload: any) => void;
   isPending: boolean;
 }) {
+  const { t, dark, surface, border, text, muted, locale } = useCtx();
+  const dayLabel = DAYS_LABELS[locale][day];
   const [roomId, setRoomId] = useState("");
   const [start, setStart] = useState("08:00");
   const [end, setEnd] = useState("09:30");
@@ -1211,11 +1490,18 @@ function AddTeacherModal({
   const meta = LANG_META[lang];
   const dur = formatDuration(start, end);
   const selectedGroup = teacherGroups.find((g) => g.group_id === groupId);
+  const inputBase = {
+    borderRadius: 8,
+    border: `1.5px solid ${border}`,
+    outline: "none",
+    background: dark ? "#132018" : "#fff",
+    color: text,
+  } as const;
 
   function handleSubmit() {
     setErr(null);
     if (timeToMinutes(start) >= timeToMinutes(end)) {
-      setErr("وقت البداية يجب أن يكون قبل النهاية");
+      setErr(t("startBeforeEndErr"));
       return;
     }
     onCreate({
@@ -1237,17 +1523,17 @@ function AddTeacherModal({
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.5)",
+        background: "rgba(0,0,0,0.6)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         zIndex: 1000,
-        backdropFilter: "blur(2px)",
+        backdropFilter: "blur(3px)",
       }}
     >
       <div
         style={{
-          background: "#fff",
+          background: surface,
           borderRadius: 16,
           padding: 28,
           width: 420,
@@ -1255,7 +1541,8 @@ function AddTeacherModal({
           overflowY: "auto",
           direction: "rtl",
           fontFamily: "'Tajawal', sans-serif",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+          border: `1px solid ${border}`,
         }}
       >
         <div
@@ -1266,40 +1553,39 @@ function AddTeacherModal({
           }}
         >
           <div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#111827" }}>
-              إضافة حصة
+            <div style={{ fontSize: 16, fontWeight: 800, color: text }}>
+              {t("addLessonTitle")}
             </div>
-            <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>
-              {DAYS_AR[day]}
+            <div style={{ fontSize: 12, color: muted, marginTop: 2 }}>
+              {dayLabel}
             </div>
           </div>
           <button
             onClick={onClose}
             style={{
-              background: "#f3f4f6",
+              background: dark ? "#2d4035" : "#f3f4f6",
               border: "none",
               borderRadius: 8,
               padding: "4px 10px",
               cursor: "pointer",
               fontSize: 16,
-              color: "#374151",
+              color: text,
             }}
           >
             ×
           </button>
         </div>
-        {/* الوقت */}
         <div style={{ marginBottom: 14 }}>
           <label
             style={{
               fontSize: 12,
               fontWeight: 700,
-              color: "#374151",
+              color: text,
               display: "block",
               marginBottom: 6,
             }}
           >
-            الفترة الزمنية
+            {t("timePeriod")}
           </label>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <input
@@ -1312,14 +1598,13 @@ function AddTeacherModal({
               style={{
                 flex: 1,
                 padding: "8px 10px",
-                borderRadius: 8,
-                border: `1.5px solid ${err ? "#fca5a5" : "#e5e7eb"}`,
                 fontSize: 14,
-                outline: "none",
-                direction: "ltr",
+                direction: "ltr" as const,
+                ...inputBase,
+                border: `1.5px solid ${err ? "#fca5a5" : border}`,
               }}
             />
-            <span style={{ color: "#9ca3af" }}>←</span>
+            <span style={{ color: muted }}>←</span>
             <input
               type="time"
               value={end}
@@ -1330,11 +1615,10 @@ function AddTeacherModal({
               style={{
                 flex: 1,
                 padding: "8px 10px",
-                borderRadius: 8,
-                border: `1.5px solid ${err ? "#fca5a5" : "#e5e7eb"}`,
                 fontSize: 14,
-                outline: "none",
-                direction: "ltr",
+                direction: "ltr" as const,
+                ...inputBase,
+                border: `1.5px solid ${err ? "#fca5a5" : border}`,
               }}
             />
           </div>
@@ -1343,8 +1627,8 @@ function AddTeacherModal({
               style={{
                 marginTop: 6,
                 fontSize: 11,
-                color: "#264230",
-                background: "#f0fdf4",
+                color: dark ? "#86efac" : "#264230",
+                background: dark ? "#1a3326" : "#f0fdf4",
                 borderRadius: 6,
                 padding: "3px 10px",
                 display: "inline-block",
@@ -1360,7 +1644,7 @@ function AddTeacherModal({
                 marginTop: 6,
                 fontSize: 11,
                 color: "#dc2626",
-                background: "#fef2f2",
+                background: dark ? "#3d1515" : "#fef2f2",
                 borderRadius: 6,
                 padding: "3px 10px",
               }}
@@ -1369,31 +1653,30 @@ function AddTeacherModal({
             </div>
           )}
         </div>
-        {/* الفوج */}
         <div style={{ marginBottom: 14 }}>
           <label
             style={{
               fontSize: 12,
               fontWeight: 700,
-              color: "#374151",
+              color: text,
               display: "block",
               marginBottom: 6,
             }}
           >
-            الفوج
+            {t("group")}
           </label>
           {teacherGroups.length === 0 ? (
             <div
               style={{
                 padding: "10px 12px",
                 borderRadius: 8,
-                background: "#fffbeb",
-                border: "1px solid #fde68a",
+                background: dark ? "#2d2010" : "#fffbeb",
+                border: `1px solid ${dark ? "#5c4010" : "#fde68a"}`,
                 fontSize: 12,
-                color: "#92400e",
+                color: dark ? "#fbbf24" : "#92400e",
               }}
             >
-              ⚠️ لا توجد أفواج مرتبطة بهذا الأستاذ
+              {t("noGroups")}
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -1410,8 +1693,12 @@ function AddTeacherModal({
                       padding: "9px 12px",
                       borderRadius: 10,
                       textAlign: "right",
-                      border: `2px solid ${active ? "#264230" : "#e5e7eb"}`,
-                      background: active ? "#f0fdf4" : "#fff",
+                      border: `2px solid ${active ? "#264230" : border}`,
+                      background: active
+                        ? dark
+                          ? "#1a3326"
+                          : "#f0fdf4"
+                        : surface,
                       cursor: "pointer",
                       fontFamily: "'Tajawal', sans-serif",
                       display: "flex",
@@ -1424,19 +1711,22 @@ function AddTeacherModal({
                         style={{
                           fontSize: 13,
                           fontWeight: 700,
-                          color: active ? "#264230" : "#111827",
+                          color: active ? (dark ? "#86efac" : "#264230") : text,
                         }}
                       >
                         {g.name}
                       </div>
-                      <div
-                        style={{ fontSize: 11, color: "#6b7280", marginTop: 1 }}
-                      >
+                      <div style={{ fontSize: 11, color: muted, marginTop: 1 }}>
                         {g.course.course_name} · {g.level}
                       </div>
                     </div>
                     {active && (
-                      <span style={{ color: "#264230", fontWeight: 700 }}>
+                      <span
+                        style={{
+                          color: dark ? "#86efac" : "#264230",
+                          fontWeight: 700,
+                        }}
+                      >
                         ✓
                       </span>
                     )}
@@ -1446,19 +1736,20 @@ function AddTeacherModal({
             </div>
           )}
         </div>
-        {/* القاعة */}
         <div style={{ marginBottom: 14 }}>
           <label
             style={{
               fontSize: 12,
               fontWeight: 700,
-              color: "#374151",
+              color: text,
               display: "block",
               marginBottom: 6,
             }}
           >
-            القاعة{" "}
-            <span style={{ color: "#9ca3af", fontWeight: 400 }}>(اختياري)</span>
+            {t("room")}{" "}
+            <span style={{ color: muted, fontWeight: 400 }}>
+              ({t("optRoom")})
+            </span>
           </label>
           <select
             value={roomId}
@@ -1466,15 +1757,12 @@ function AddTeacherModal({
             style={{
               width: "100%",
               padding: "8px 12px",
-              borderRadius: 8,
-              border: "1.5px solid #e5e7eb",
               fontSize: 13,
               fontFamily: "'Tajawal', sans-serif",
-              background: "#fff",
-              outline: "none",
+              ...inputBase,
             }}
           >
-            <option value="">— بدون قاعة —</option>
+            <option value="">{t("noRoom")}</option>
             {rooms.map((r) => (
               <option key={r.room_id} value={r.room_id}>
                 {r.name}
@@ -1482,18 +1770,17 @@ function AddTeacherModal({
             ))}
           </select>
         </div>
-        {/* اللغة */}
         <div style={{ marginBottom: 14 }}>
           <label
             style={{
               fontSize: 12,
               fontWeight: 700,
-              color: "#374151",
+              color: text,
               display: "block",
               marginBottom: 6,
             }}
           >
-            اللغة
+            {t("language")}
           </label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
             {LANGUAGES.map((l) => {
@@ -1506,9 +1793,15 @@ function AddTeacherModal({
                   style={{
                     padding: "5px 10px",
                     borderRadius: 8,
-                    border: `2px solid ${active ? m.color : "#e5e7eb"}`,
-                    background: active ? m.bg : "#f9fafb",
-                    color: active ? m.color : "#374151",
+                    border: `2px solid ${active ? m.color : border}`,
+                    background: active
+                      ? dark
+                        ? m.darkBg
+                        : m.bg
+                      : dark
+                        ? "#1a2820"
+                        : "#f9fafb",
+                    color: active ? m.color : text,
                     fontWeight: active ? 700 : 500,
                     fontSize: 11,
                     cursor: "pointer",
@@ -1521,19 +1814,18 @@ function AddTeacherModal({
             })}
           </div>
         </div>
-        {/* المستوى — فقط بدون فوج */}
         {!selectedGroup && (
           <div style={{ marginBottom: 16 }}>
             <label
               style={{
                 fontSize: 12,
                 fontWeight: 700,
-                color: "#374151",
+                color: text,
                 display: "block",
                 marginBottom: 6,
               }}
             >
-              المستوى
+              {t("level")}
             </label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
               {LEVELS.map((lv) => (
@@ -1543,9 +1835,10 @@ function AddTeacherModal({
                   style={{
                     padding: "5px 10px",
                     borderRadius: 8,
-                    border: `2px solid ${level === lv ? "#264230" : "#e5e7eb"}`,
-                    background: level === lv ? "#264230" : "#f9fafb",
-                    color: level === lv ? "#fff" : "#374151",
+                    border: `2px solid ${level === lv ? "#264230" : border}`,
+                    background:
+                      level === lv ? "#264230" : dark ? "#1a2820" : "#f9fafb",
+                    color: level === lv ? "#fff" : text,
                     fontWeight: level === lv ? 700 : 500,
                     fontSize: 11,
                     cursor: "pointer",
@@ -1558,18 +1851,17 @@ function AddTeacherModal({
             </div>
           </div>
         )}
-        {/* معاينة */}
         <div
           style={{
-            background: meta.bg,
-            border: `1.5px solid ${meta.border}`,
+            background: dark ? meta.darkBg : meta.bg,
+            border: `1.5px solid ${dark ? meta.color + "55" : meta.border}`,
             borderRadius: 10,
             padding: "10px 14px",
             marginBottom: 18,
           }}
         >
-          <div style={{ fontSize: 10, color: "#6b7280", marginBottom: 4 }}>
-            معاينة:
+          <div style={{ fontSize: 10, color: muted, marginBottom: 4 }}>
+            {t("previewLabel")}
           </div>
           <div
             style={{
@@ -1580,24 +1872,18 @@ function AddTeacherModal({
             }}
           >
             <span
-              style={{
-                fontSize: 12,
-                fontFamily: "monospace",
-                color: "#374151",
-              }}
+              style={{ fontSize: 12, fontFamily: "monospace", color: text }}
             >
               {start} – {end}
             </span>
-            {dur && (
-              <span style={{ fontSize: 10, color: "#6b7280" }}>({dur})</span>
-            )}
+            {dur && <span style={{ fontSize: 10, color: muted }}>({dur})</span>}
             <span style={{ fontWeight: 700, color: meta.color }}>
               {LANG_FLAGS[lang]} {lang}
             </span>
             <span
               style={{
-                background: "#f3f4f6",
-                color: "#111827",
+                background: dark ? "#1f2d22" : "#f3f4f6",
+                color: dark ? "#d1fae5" : "#111827",
                 borderRadius: 5,
                 padding: "1px 7px",
                 fontSize: 11,
@@ -1625,22 +1911,22 @@ function AddTeacherModal({
               fontFamily: "'Tajawal', sans-serif",
             }}
           >
-            {isPending ? "جارٍ الحفظ..." : "إضافة الحصة"}
+            {isPending ? t("saving") : t("add")}
           </button>
           <button
             onClick={onClose}
             style={{
               padding: "10px 16px",
               borderRadius: 10,
-              border: "1.5px solid #e5e7eb",
-              background: "#fff",
-              color: "#374151",
+              border: `1.5px solid ${border}`,
+              background: surface,
+              color: text,
               fontWeight: 600,
               cursor: "pointer",
               fontFamily: "'Tajawal', sans-serif",
             }}
           >
-            إلغاء
+            {t("cancel")}
           </button>
         </div>
       </div>
@@ -1649,10 +1935,13 @@ function AddTeacherModal({
 }
 
 // ══════════════════════════════════════════════════════════════
-// TAB 1 — ROOMS TIMETABLE
+// TAB 1 — ROOMS
 // ══════════════════════════════════════════════════════════════
 
 function RoomsTimetableTab() {
+  const { t, dark, surface, border, text, muted, bg, locale } = useCtx();
+  const DAYS_AR = DAYS_LABELS[locale];
+
   const [activeDay, setActiveDay] = useState<number | "all">("all");
   const [filterLang, setFilterLang] = useState<string | null>(null);
   const [modal, setModal] = useState<number | null>(null);
@@ -1698,44 +1987,42 @@ function RoomsTimetableTab() {
           const status = err?.response?.status;
           const msg = err?.response?.data?.message ?? "حدث خطأ غير متوقع";
           const conflict = err?.response?.data?.conflict;
-          if (status === 409) {
+          if (status === 409)
             toast.error(
               conflict
-                ? `تعارض في القاعة · ${conflict.day} · ${conflict.slot} · ${conflict.group_label}`
+                ? `تعارض في القاعة · ${conflict.day} · ${conflict.slot}`
                 : "تعارض: القاعة محجوزة في هذا الوقت",
               { duration: 6000 },
             );
-          } else if (status === 404) {
-            toast.error("القاعة أو الفوج غير موجود");
-          } else if (status === 400) {
-            toast.error(`خطأ في البيانات: ${msg}`);
-          } else {
-            toast.error(`خطأ في الخادم: ${msg}`);
-          }
+          else if (status === 404) toast.error("القاعة أو الفوج غير موجود");
+          else if (status === 400) toast.error(`خطأ في البيانات: ${msg}`);
+          else toast.error(`خطأ في الخادم: ${msg}`);
         },
       });
     },
     [createEntry],
   );
+
   const handleDelete = useCallback(
     (id: string) => {
-      if (confirm("هل تريد حذف هذه الحصة؟")) {
+      if (confirm(t("deleteLesson"))) {
         deleteEntry(id, {
           onSuccess: () => toast.success("تم حذف الحصة بنجاح"),
           onError: () => toast.error("فشل حذف الحصة، حاول مرة أخرى"),
         });
       }
     },
-    [deleteEntry],
+    [deleteEntry, t],
   );
+
+  const activeGreen = dark ? "#86efac" : "#264230";
 
   return (
     <>
-      {/* Filter Bar */}
       <div
         style={{
-          background: "#fff",
-          borderBottom: "1px solid #e5e7eb",
+          background: surface,
+          borderBottom: `1px solid ${border}`,
           padding: "10px 28px",
           display: "flex",
           gap: 10,
@@ -1743,8 +2030,8 @@ function RoomsTimetableTab() {
           flexWrap: "wrap",
         }}
       >
-        <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600 }}>
-          فلترة:
+        <span style={{ fontSize: 12, color: muted, fontWeight: 600 }}>
+          {t("filter")}
         </span>
         {Object.entries(langCounts).map(([l, count]) => {
           const m = LANG_META[l];
@@ -1755,8 +2042,8 @@ function RoomsTimetableTab() {
               key={l}
               onClick={() => setFilterLang(active ? null : l)}
               style={{
-                background: active ? m.color : m.bg,
-                border: `1px solid ${m.border}`,
+                background: active ? m.color : dark ? m.darkBg : m.bg,
+                border: `1px solid ${dark ? m.color + "55" : m.border}`,
                 borderRadius: 20,
                 padding: "2px 10px",
                 fontSize: 11,
@@ -1775,8 +2062,8 @@ function RoomsTimetableTab() {
             onClick={() => setFilterLang(null)}
             style={{
               fontSize: 11,
-              color: "#6b7280",
-              background: "#f3f4f6",
+              color: muted,
+              background: dark ? "#2d4035" : "#f3f4f6",
               border: "none",
               borderRadius: 20,
               padding: "2px 10px",
@@ -1784,33 +2071,32 @@ function RoomsTimetableTab() {
               fontFamily: "'Tajawal', sans-serif",
             }}
           >
-            إلغاء الفلتر ×
+            {t("cancelFilter")}
           </button>
         )}
         <div style={{ marginRight: "auto" }}>
           <button
             onClick={() => setSlotMgrOpen(true)}
             style={{
-              background: "#f0fdf4",
-              border: "1.5px solid #264230",
+              background: dark ? "#1a3326" : "#f0fdf4",
+              border: `1.5px solid ${dark ? "#3d6b50" : "#264230"}`,
               borderRadius: 8,
               padding: "5px 14px",
-              color: "#264230",
+              color: activeGreen,
               fontSize: 12,
               fontWeight: 600,
               cursor: "pointer",
               fontFamily: "'Tajawal', sans-serif",
             }}
           >
-            ⏱ الفترات ({slots.length})
+            {t("slotBtn")} ({slots.length})
           </button>
         </div>
       </div>
-      {/* Day Tabs */}
       <div
         style={{
-          background: "#fff",
-          borderBottom: "1px solid #e5e7eb",
+          background: surface,
+          borderBottom: `1px solid ${border}`,
           padding: "0 28px",
           display: "flex",
           overflowX: "auto",
@@ -1825,8 +2111,10 @@ function RoomsTimetableTab() {
               border: "none",
               background: "none",
               borderBottom:
-                activeDay === d ? "3px solid #264230" : "3px solid transparent",
-              color: activeDay === d ? "#264230" : "#6b7280",
+                activeDay === d
+                  ? `3px solid ${activeGreen}`
+                  : "3px solid transparent",
+              color: activeDay === d ? activeGreen : muted,
               fontWeight: activeDay === d ? 700 : 500,
               fontSize: 13,
               cursor: "pointer",
@@ -1834,7 +2122,7 @@ function RoomsTimetableTab() {
               fontFamily: "'Tajawal', sans-serif",
             }}
           >
-            {d === "all" ? "الكل" : DAYS_AR[d]}
+            {d === "all" ? t("all") : DAYS_AR[d]}
             {d !== "all" && byDay[d]?.length > 0 && (
               <span
                 style={{
@@ -1852,11 +2140,10 @@ function RoomsTimetableTab() {
           </button>
         ))}
       </div>
-      {/* Grid */}
       <div style={{ padding: "20px 16px", overflowX: "auto" }}>
         {isLoading && (
-          <div style={{ textAlign: "center", padding: 60, color: "#6b7280" }}>
-            جارٍ التحميل...
+          <div style={{ textAlign: "center", padding: 60, color: muted }}>
+            {t("loading")}
           </div>
         )}
         {isError && (
@@ -1865,11 +2152,11 @@ function RoomsTimetableTab() {
               textAlign: "center",
               padding: 60,
               color: "#ef4444",
-              background: "#fff",
+              background: surface,
               borderRadius: 12,
             }}
           >
-            حدث خطأ في تحميل البيانات.
+            {t("errorLoading")}
           </div>
         )}
         {!isLoading && !isError && (
@@ -1885,9 +2172,9 @@ function RoomsTimetableTab() {
               <div
                 key={day}
                 style={{
-                  background: "#fff",
+                  background: surface,
                   borderRadius: 12,
-                  border: "1px solid #e5e7eb",
+                  border: `1px solid ${border}`,
                   overflow: "hidden",
                 }}
               >
@@ -1918,7 +2205,7 @@ function RoomsTimetableTab() {
                           fontSize: 11,
                         }}
                       >
-                        {byDay[day].length} حصة
+                        {byDay[day].length} {t("lesson")}
                       </span>
                     )}
                   </div>
@@ -1981,12 +2268,12 @@ function RoomsTimetableTab() {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        color: "#d1d5db",
+                        color: dark ? "#3d6b50" : "#d1d5db",
                         fontSize: 12,
                         padding: "20px 0",
                       }}
                     >
-                      لا توجد حصص
+                      {t("noLessons")}
                     </div>
                   ) : (
                     byDay[day].map((e) => (
@@ -2002,10 +2289,10 @@ function RoomsTimetableTab() {
                     style={{
                       width: "100%",
                       padding: "7px",
-                      border: "1.5px dashed #d1d5db",
+                      border: `1.5px dashed ${dark ? "#3d6b50" : "#d1d5db"}`,
                       borderRadius: 8,
                       background: "transparent",
-                      color: "#9ca3af",
+                      color: dark ? "#3d6b50" : "#9ca3af",
                       cursor: "pointer",
                       fontSize: 13,
                       fontFamily: "'Tajawal', sans-serif",
@@ -2013,16 +2300,22 @@ function RoomsTimetableTab() {
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.borderColor = "#264230";
-                      e.currentTarget.style.color = "#264230";
-                      e.currentTarget.style.background = "#f0fdf4";
+                      e.currentTarget.style.color = activeGreen;
+                      e.currentTarget.style.background = dark
+                        ? "#1a3326"
+                        : "#f0fdf4";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "#d1d5db";
-                      e.currentTarget.style.color = "#9ca3af";
+                      e.currentTarget.style.borderColor = dark
+                        ? "#3d6b50"
+                        : "#d1d5db";
+                      e.currentTarget.style.color = dark
+                        ? "#3d6b50"
+                        : "#9ca3af";
                       e.currentTarget.style.background = "transparent";
                     }}
                   >
-                    + إضافة حصة
+                    {t("addLesson")}
                   </button>
                 </div>
               </div>
@@ -2030,12 +2323,11 @@ function RoomsTimetableTab() {
           </div>
         )}
       </div>
-      {/* Legend */}
       <div style={{ padding: "0 28px 40px" }}>
         <div
           style={{
-            background: "#fff",
-            border: "1px solid #e5e7eb",
+            background: surface,
+            border: `1px solid ${border}`,
             borderRadius: 12,
             padding: "14px 20px",
             display: "flex",
@@ -2044,8 +2336,8 @@ function RoomsTimetableTab() {
             alignItems: "center",
           }}
         >
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>
-            دليل اللغات:
+          <span style={{ fontSize: 12, fontWeight: 700, color: text }}>
+            {t("langGuide")}
           </span>
           {Object.entries(LANG_META).map(([l, m]) => (
             <div
@@ -2060,7 +2352,7 @@ function RoomsTimetableTab() {
                   background: m.color,
                 }}
               />
-              <span style={{ fontSize: 11, color: "#374151" }}>
+              <span style={{ fontSize: 11, color: text }}>
                 {m.label} ({l})
               </span>
             </div>
@@ -2094,7 +2386,7 @@ function RoomsTimetableTab() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// TAB 2 — TEACHER SCHEDULES
+// TAB 2 — TEACHERS
 // ══════════════════════════════════════════════════════════════
 
 interface Teacher {
@@ -2106,21 +2398,19 @@ interface Teacher {
 }
 
 function TeacherTimetableTab() {
+  const { t, dark, surface, border, text, muted, bg, locale } = useCtx();
+  const DAYS_AR = DAYS_LABELS[locale];
+  const activeGreen = dark ? "#86efac" : "#264230";
+
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [activeDay, setActiveDay] = useState<number | "all">("all");
   const [modal, setModal] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const { data: rooms = [] } = useRooms();
-
-  // جلب الأساتذة
   const { data: teachers = [], isLoading: loadingTeachers } = useTeachers();
-
-  // جلب مجموعات الأستاذ
   const { data: teacherGroups = [] } = useTeacherGroups(
     selectedTeacher?.teacher_id ?? null,
   );
-
-  // جلب جدول الأستاذ — من useTeacherSchedule hook
   const { data: scheduleData, isLoading: loadingSchedule } = useTeacherSchedule(
     selectedTeacher?.teacher_id ?? null,
   );
@@ -2146,16 +2436,16 @@ function TeacherTimetableTab() {
   const { mutate: deleteEntry } = useDeleteTeacherEntry();
 
   const filteredTeachers = teachers.filter(
-    (t) =>
-      `${t.first_name} ${t.last_name}`
+    (t2) =>
+      `${t2.first_name} ${t2.last_name}`
         .toLowerCase()
         .includes(search.toLowerCase()) ||
-      t.email?.toLowerCase().includes(search.toLowerCase()),
+      t2.email?.toLowerCase().includes(search.toLowerCase()),
   );
-  const tName = (t: Teacher) => `${t.first_name} ${t.last_name}`;
-  const tInit = (t: Teacher) =>
-    `${t.first_name[0] ?? "?"}${t.last_name[0] ?? ""}`.toUpperCase();
-  const tAvatar = (t: Teacher) => t.user?.google_avatar ?? null;
+  const tName = (t2: Teacher) => `${t2.first_name} ${t2.last_name}`;
+  const tInit = (t2: Teacher) =>
+    `${t2.first_name[0] ?? "?"}${t2.last_name[0] ?? ""}`.toUpperCase();
+  const tAvatar = (t2: Teacher) => t2.user?.google_avatar ?? null;
 
   return (
     <div
@@ -2165,13 +2455,12 @@ function TeacherTimetableTab() {
         overflow: "hidden",
       }}
     >
-      {/* Sidebar */}
       <div
         style={{
           width: 268,
           flexShrink: 0,
-          background: "#fff",
-          borderLeft: "1px solid #e5e7eb",
+          background: surface,
+          borderLeft: `1px solid ${border}`,
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
@@ -2183,17 +2472,17 @@ function TeacherTimetableTab() {
               display: "flex",
               alignItems: "center",
               gap: 7,
-              background: "#f9fafb",
+              background: dark ? "#132018" : "#f9fafb",
               borderRadius: 10,
-              border: "1.5px solid #e5e7eb",
+              border: `1.5px solid ${border}`,
               padding: "7px 10px",
             }}
           >
-            <span style={{ color: "#9ca3af", fontSize: 13 }}>🔍</span>
+            <span style={{ color: muted, fontSize: 13 }}>🔍</span>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="بحث عن أستاذ..."
+              placeholder={t("searchTeacher")}
               style={{
                 flex: 1,
                 border: "none",
@@ -2201,7 +2490,7 @@ function TeacherTimetableTab() {
                 background: "transparent",
                 fontSize: 12,
                 fontFamily: "'Tajawal', sans-serif",
-                color: "#111827",
+                color: text,
               }}
             />
           </div>
@@ -2214,14 +2503,14 @@ function TeacherTimetableTab() {
             alignItems: "center",
           }}
         >
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#6b7280" }}>
-            الأساتذة
+          <span style={{ fontSize: 11, fontWeight: 700, color: muted }}>
+            {t("teachers")}
           </span>
           <span
             style={{
               fontSize: 10,
-              background: "#f3f4f6",
-              color: "#6b7280",
+              background: dark ? "#2d4035" : "#f3f4f6",
+              color: muted,
               borderRadius: 6,
               padding: "1px 6px",
               fontWeight: 700,
@@ -2236,20 +2525,21 @@ function TeacherTimetableTab() {
               style={{
                 textAlign: "center",
                 padding: 20,
-                color: "#9ca3af",
+                color: muted,
                 fontSize: 12,
               }}
             >
-              جارٍ التحميل...
+              {t("loading")}
             </div>
           ) : (
-            filteredTeachers.map((t) => {
-              const isSelected = selectedTeacher?.teacher_id === t.teacher_id;
+            filteredTeachers.map((teacher) => {
+              const isSelected =
+                selectedTeacher?.teacher_id === teacher.teacher_id;
               return (
                 <button
-                  key={t.teacher_id}
+                  key={teacher.teacher_id}
                   onClick={() => {
-                    setSelectedTeacher(t);
+                    setSelectedTeacher(teacher);
                     setActiveDay("all");
                   }}
                   style={{
@@ -2258,14 +2548,18 @@ function TeacherTimetableTab() {
                     padding: "9px 10px",
                     marginBottom: 5,
                     borderRadius: 11,
-                    border: `${isSelected ? "2px" : "1.5px"} solid ${isSelected ? "#264230" : "#e5e7eb"}`,
-                    background: isSelected ? "#f0fdf4" : "#fff",
+                    border: `${isSelected ? "2px" : "1.5px"} solid ${isSelected ? "#264230" : border}`,
+                    background: isSelected
+                      ? dark
+                        ? "#1a3326"
+                        : "#f0fdf4"
+                      : surface,
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
                     gap: 9,
                     boxShadow: isSelected
-                      ? "0 1px 8px rgba(38,66,48,0.1)"
+                      ? "0 1px 8px rgba(38,66,48,0.15)"
                       : "none",
                     fontFamily: "'Tajawal', sans-serif",
                     direction: "rtl",
@@ -2276,13 +2570,12 @@ function TeacherTimetableTab() {
                       e.currentTarget.style.borderColor = "#264230";
                   }}
                   onMouseLeave={(e) => {
-                    if (!isSelected)
-                      e.currentTarget.style.borderColor = "#e5e7eb";
+                    if (!isSelected) e.currentTarget.style.borderColor = border;
                   }}
                 >
-                  {tAvatar(t) ? (
+                  {tAvatar(teacher) ? (
                     <img
-                      src={tAvatar(t)!}
+                      src={tAvatar(teacher)!}
                       alt=""
                       style={{
                         width: 36,
@@ -2298,17 +2591,21 @@ function TeacherTimetableTab() {
                         width: 36,
                         height: 36,
                         borderRadius: 9,
-                        background: isSelected ? "#264230" : "#e5e7eb",
+                        background: isSelected
+                          ? "#264230"
+                          : dark
+                            ? "#2d4035"
+                            : "#e5e7eb",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         fontSize: 12,
                         fontWeight: 700,
-                        color: isSelected ? "#C4A035" : "#6b7280",
+                        color: isSelected ? "#C4A035" : muted,
                         flexShrink: 0,
                       }}
                     >
-                      {tInit(t)}
+                      {tInit(teacher)}
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -2316,26 +2613,26 @@ function TeacherTimetableTab() {
                       style={{
                         fontSize: 12,
                         fontWeight: 700,
-                        color: isSelected ? "#264230" : "#111827",
+                        color: isSelected ? activeGreen : text,
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {tName(t)}
+                      {tName(teacher)}
                     </div>
-                    {t.email && (
+                    {teacher.email && (
                       <div
                         style={{
                           fontSize: 10,
-                          color: "#9ca3af",
+                          color: muted,
                           marginTop: 1,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {t.email}
+                        {teacher.email}
                       </div>
                     )}
                   </div>
@@ -2345,7 +2642,7 @@ function TeacherTimetableTab() {
                         width: 7,
                         height: 7,
                         borderRadius: "50%",
-                        background: "#264230",
+                        background: activeGreen,
                         flexShrink: 0,
                       }}
                     />
@@ -2356,9 +2653,7 @@ function TeacherTimetableTab() {
           )}
         </div>
       </div>
-
-      {/* Content */}
-      <div style={{ flex: 1, overflowY: "auto", background: "#f8f9fa" }}>
+      <div style={{ flex: 1, overflowY: "auto", background: bg }}>
         {!selectedTeacher ? (
           <div
             style={{
@@ -2368,7 +2663,6 @@ function TeacherTimetableTab() {
               alignItems: "center",
               justifyContent: "center",
               gap: 12,
-              color: "#9ca3af",
             }}
           >
             <div
@@ -2376,8 +2670,8 @@ function TeacherTimetableTab() {
                 width: 68,
                 height: 68,
                 borderRadius: 16,
-                background: "#fff",
-                border: "2px dashed #e5e7eb",
+                background: surface,
+                border: `2px dashed ${border}`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -2387,21 +2681,20 @@ function TeacherTimetableTab() {
               👨‍🏫
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#374151" }}>
-                اختر أستاذاً
+              <div style={{ fontSize: 14, fontWeight: 700, color: text }}>
+                {t("chooseTeacher")}
               </div>
-              <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 3 }}>
-                اختر من القائمة لعرض وإنشاء جدوله
+              <div style={{ fontSize: 12, color: muted, marginTop: 3 }}>
+                {t("chooseTeacherSub")}
               </div>
             </div>
           </div>
         ) : (
           <>
-            {/* Teacher Header */}
             <div
               style={{
-                background: "#fff",
-                borderBottom: "1px solid #e5e7eb",
+                background: surface,
+                borderBottom: `1px solid ${border}`,
                 padding: "12px 20px",
                 display: "flex",
                 alignItems: "center",
@@ -2438,21 +2731,13 @@ function TeacherTimetableTab() {
                 </div>
               )}
               <div>
-                <div
-                  style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}
-                >
+                <div style={{ fontSize: 15, fontWeight: 800, color: text }}>
                   {tName(selectedTeacher)}
                 </div>
-                <div style={{ fontSize: 11, color: "#6b7280", marginTop: 1 }}>
-                  {teacherGroups.length} فوج ·
-                  <span
-                    style={{
-                      color: "#264230",
-                      fontWeight: 600,
-                      marginRight: 4,
-                    }}
-                  >
-                    {entries.length} حصة في الجدول
+                <div style={{ fontSize: 11, color: muted, marginTop: 1 }}>
+                  {teacherGroups.length} {t("groups")} ·{" "}
+                  <span style={{ color: activeGreen, fontWeight: 600 }}>
+                    {entries.length} {t("inSchedule")}
                   </span>
                 </div>
               </div>
@@ -2469,9 +2754,9 @@ function TeacherTimetableTab() {
                     <span
                       key={g.group_id}
                       style={{
-                        background: "#f0fdf4",
-                        color: "#264230",
-                        border: "1px solid #a7f3d0",
+                        background: dark ? "#1a3326" : "#f0fdf4",
+                        color: activeGreen,
+                        border: `1px solid ${dark ? "#3d6b50" : "#a7f3d0"}`,
                         borderRadius: 20,
                         padding: "2px 9px",
                         fontSize: 10,
@@ -2482,18 +2767,17 @@ function TeacherTimetableTab() {
                     </span>
                   ))}
                   {teacherGroups.length > 4 && (
-                    <span style={{ fontSize: 10, color: "#9ca3af" }}>
+                    <span style={{ fontSize: 10, color: muted }}>
                       +{teacherGroups.length - 4}
                     </span>
                   )}
                 </div>
               )}
             </div>
-            {/* Day Tabs */}
             <div
               style={{
-                background: "#fff",
-                borderBottom: "1px solid #e5e7eb",
+                background: surface,
+                borderBottom: `1px solid ${border}`,
                 padding: "0 20px",
                 display: "flex",
                 overflowX: "auto",
@@ -2509,9 +2793,9 @@ function TeacherTimetableTab() {
                     background: "none",
                     borderBottom:
                       activeDay === d
-                        ? "3px solid #264230"
+                        ? `3px solid ${activeGreen}`
                         : "3px solid transparent",
-                    color: activeDay === d ? "#264230" : "#6b7280",
+                    color: activeDay === d ? activeGreen : muted,
                     fontWeight: activeDay === d ? 700 : 500,
                     fontSize: 12,
                     cursor: "pointer",
@@ -2519,13 +2803,18 @@ function TeacherTimetableTab() {
                     fontFamily: "'Tajawal', sans-serif",
                   }}
                 >
-                  {d === "all" ? "كل الأيام" : DAYS_AR[d]}
+                  {d === "all" ? t("allDays") : DAYS_AR[d]}
                   {d !== "all" && byDay[d]?.length > 0 && (
                     <span
                       style={{
                         marginRight: 4,
-                        background: activeDay === d ? "#264230" : "#f3f4f6",
-                        color: activeDay === d ? "#fff" : "#6b7280",
+                        background:
+                          activeDay === d
+                            ? "#264230"
+                            : dark
+                              ? "#2d4035"
+                              : "#f3f4f6",
+                        color: activeDay === d ? "#fff" : muted,
                         borderRadius: 8,
                         padding: "0 5px",
                         fontSize: 10,
@@ -2538,13 +2827,10 @@ function TeacherTimetableTab() {
                 </button>
               ))}
             </div>
-            {/* Grid */}
             <div style={{ padding: "16px", overflowX: "auto" }}>
               {loadingSchedule ? (
-                <div
-                  style={{ textAlign: "center", padding: 40, color: "#9ca3af" }}
-                >
-                  جارٍ تحميل الجدول...
+                <div style={{ textAlign: "center", padding: 40, color: muted }}>
+                  {t("loadingSchedule")}
                 </div>
               ) : (
                 <div
@@ -2559,9 +2845,9 @@ function TeacherTimetableTab() {
                     <div
                       key={day}
                       style={{
-                        background: "#fff",
+                        background: surface,
                         borderRadius: 12,
-                        border: "1px solid #e5e7eb",
+                        border: `1px solid ${border}`,
                         overflow: "hidden",
                       }}
                     >
@@ -2593,7 +2879,7 @@ function TeacherTimetableTab() {
                                 fontWeight: 700,
                               }}
                             >
-                              {byDay[day].length} حصة
+                              {byDay[day].length} {t("lesson")}
                             </span>
                           )}
                         </div>
@@ -2645,12 +2931,12 @@ function TeacherTimetableTab() {
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              color: "#d1d5db",
+                              color: dark ? "#3d6b50" : "#d1d5db",
                               fontSize: 11,
                               padding: "14px 0",
                             }}
                           >
-                            لا توجد حصص
+                            {t("noLessons")}
                           </div>
                         ) : (
                           byDay[day].map((e) => (
@@ -2658,7 +2944,7 @@ function TeacherTimetableTab() {
                               key={e.entry_id}
                               entry={e}
                               onDelete={() => {
-                                if (confirm("حذف الحصة؟"))
+                                if (confirm(t("deleteLessonShort")))
                                   deleteEntry({
                                     entryId: e.entry_id,
                                     teacherId: e.teacher_id,
@@ -2672,10 +2958,10 @@ function TeacherTimetableTab() {
                           style={{
                             width: "100%",
                             padding: "6px",
-                            border: "1.5px dashed #d1d5db",
+                            border: `1.5px dashed ${dark ? "#3d6b50" : "#d1d5db"}`,
                             borderRadius: 8,
                             background: "transparent",
-                            color: "#9ca3af",
+                            color: dark ? "#3d6b50" : "#9ca3af",
                             cursor: "pointer",
                             fontSize: 11,
                             fontFamily: "'Tajawal', sans-serif",
@@ -2683,16 +2969,22 @@ function TeacherTimetableTab() {
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.borderColor = "#264230";
-                            e.currentTarget.style.color = "#264230";
-                            e.currentTarget.style.background = "#f0fdf4";
+                            e.currentTarget.style.color = activeGreen;
+                            e.currentTarget.style.background = dark
+                              ? "#1a3326"
+                              : "#f0fdf4";
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = "#d1d5db";
-                            e.currentTarget.style.color = "#9ca3af";
+                            e.currentTarget.style.borderColor = dark
+                              ? "#3d6b50"
+                              : "#d1d5db";
+                            e.currentTarget.style.color = dark
+                              ? "#3d6b50"
+                              : "#9ca3af";
                             e.currentTarget.style.background = "transparent";
                           }}
                         >
-                          + إضافة حصة
+                          {t("addLesson")}
                         </button>
                       </div>
                     </div>
@@ -2703,7 +2995,6 @@ function TeacherTimetableTab() {
           </>
         )}
       </div>
-
       {modal !== null && selectedTeacher && (
         <AddTeacherModal
           day={modal}
@@ -2726,12 +3017,20 @@ function TeacherTimetableTab() {
 // ══════════════════════════════════════════════════════════════
 
 type Tab = "rooms" | "teachers";
+const LOCALE_FLAGS: Record<Locale, string> = { ar: "🇩🇿", fr: "🇫🇷", en: "🇬🇧" };
+const LOCALE_LABELS: Record<Locale, string> = { ar: "عر", fr: "Fr", en: "En" };
 
 export default function TimetablePage() {
   const [tab, setTab] = useState<Tab>("rooms");
+  const [locale, setLocale] = useState<Locale>("ar");
+
+  const { resolvedTheme } = useTheme();
+  const dark = resolvedTheme === "dark";
+  const ctx = makeCtx(dark, locale);
+  const { t, dir, bg, surface, border, text, muted } = ctx;
 
   return (
-    <>
+    <Ctx.Provider value={ctx}>
       <link
         href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
@@ -2739,23 +3038,32 @@ export default function TimetablePage() {
       <div
         style={{
           minHeight: "100vh",
-          background: "#f8f9fa",
+          background: bg,
           fontFamily: "'Tajawal', sans-serif",
-          direction: "rtl",
+          direction: dir,
         }}
       >
         {/* Top Bar */}
         <div
           style={{
             background: "#264230",
-            padding: "16px 28px",
+            padding: "14px 24px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.2)",
+            gap: 12,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* Logo */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              flexShrink: 0,
+            }}
+          >
             <div
               style={{
                 width: 38,
@@ -2772,10 +3080,10 @@ export default function TimetablePage() {
             </div>
             <div>
               <div style={{ color: "#fff", fontWeight: 800, fontSize: 17 }}>
-                التوزيع الزمني
+                {t("title")}
               </div>
               <div style={{ color: "#9dc9ad", fontSize: 12 }}>
-                دورة فيفري 2026 · CEIL
+                {t("subtitle")}
               </div>
             </div>
           </div>
@@ -2790,36 +3098,76 @@ export default function TimetablePage() {
             }}
           >
             {[
-              { key: "rooms" as Tab, label: "🏫 القاعات" },
-              { key: "teachers" as Tab, label: "👨‍🏫 الأساتذة" },
-            ].map((t) => (
+              { key: "rooms" as Tab, label: t("tabRooms") },
+              { key: "teachers" as Tab, label: t("tabTeachers") },
+            ].map((tb) => (
               <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
+                key={tb.key}
+                onClick={() => setTab(tb.key)}
                 style={{
-                  padding: "7px 20px",
+                  padding: "7px 18px",
                   borderRadius: 8,
                   border: "none",
-                  background: tab === t.key ? "#fff" : "transparent",
-                  color: tab === t.key ? "#264230" : "rgba(255,255,255,0.8)",
-                  fontWeight: tab === t.key ? 700 : 500,
+                  background: tab === tb.key ? "#fff" : "transparent",
+                  color: tab === tb.key ? "#264230" : "rgba(255,255,255,0.85)",
+                  fontWeight: tab === tb.key ? 700 : 500,
                   fontSize: 13,
                   cursor: "pointer",
                   fontFamily: "'Tajawal', sans-serif",
                   transition: "all 0.15s",
                   boxShadow:
-                    tab === t.key ? "0 1px 4px rgba(0,0,0,0.15)" : "none",
+                    tab === tb.key ? "0 1px 4px rgba(0,0,0,0.15)" : "none",
                 }}
               >
-                {t.label}
+                {tb.label}
               </button>
             ))}
           </div>
+          {/* Right controls */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexShrink: 0,
+            }}
+          >
+            {/* Locale */}
+            <div
+              style={{
+                display: "flex",
+                background: "rgba(255,255,255,0.1)",
+                borderRadius: 8,
+                padding: 3,
+                gap: 2,
+              }}
+            >
+              {(["ar", "fr", "en"] as Locale[]).map((loc) => (
+                <button
+                  key={loc}
+                  onClick={() => setLocale(loc)}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: 6,
+                    border: "none",
+                    background: locale === loc ? "#fff" : "transparent",
+                    color: locale === loc ? "#264230" : "rgba(255,255,255,0.8)",
+                    fontWeight: locale === loc ? 700 : 500,
+                    fontSize: 12,
+                    cursor: "pointer",
+                    fontFamily: "'Tajawal', sans-serif",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {LOCALE_FLAGS[loc]} {LOCALE_LABELS[loc]}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-        {/* Content */}
         {tab === "rooms" && <RoomsTimetableTab />}
         {tab === "teachers" && <TeacherTimetableTab />}
       </div>
-    </>
+    </Ctx.Provider>
   );
 }
