@@ -1,6 +1,7 @@
 // src/pages/admin/TimetablePage.tsx
 
 import { useState, useCallback, useEffect } from "react";
+import { toast } from "sonner";
 import {
   useAdminTimetable,
   useCreateEntry,
@@ -1688,13 +1689,42 @@ function RoomsTimetableTab() {
 
   const handleCreate = useCallback(
     (payload: any) => {
-      createEntry(payload, { onSuccess: () => setModal(null) });
+      createEntry(payload, {
+        onSuccess: () => {
+          setModal(null);
+          toast.success("تمت إضافة الحصة بنجاح");
+        },
+        onError: (err: any) => {
+          const status = err?.response?.status;
+          const msg = err?.response?.data?.message ?? "حدث خطأ غير متوقع";
+          const conflict = err?.response?.data?.conflict;
+          if (status === 409) {
+            toast.error(
+              conflict
+                ? `تعارض في القاعة · ${conflict.day} · ${conflict.slot} · ${conflict.group_label}`
+                : "تعارض: القاعة محجوزة في هذا الوقت",
+              { duration: 6000 },
+            );
+          } else if (status === 404) {
+            toast.error("القاعة أو الفوج غير موجود");
+          } else if (status === 400) {
+            toast.error(`خطأ في البيانات: ${msg}`);
+          } else {
+            toast.error(`خطأ في الخادم: ${msg}`);
+          }
+        },
+      });
     },
     [createEntry],
   );
   const handleDelete = useCallback(
     (id: string) => {
-      if (confirm("هل تريد حذف هذه الحصة؟")) deleteEntry(id);
+      if (confirm("هل تريد حذف هذه الحصة؟")) {
+        deleteEntry(id, {
+          onSuccess: () => toast.success("تم حذف الحصة بنجاح"),
+          onError: () => toast.error("فشل حذف الحصة، حاول مرة أخرى"),
+        });
+      }
     },
     [deleteEntry],
   );

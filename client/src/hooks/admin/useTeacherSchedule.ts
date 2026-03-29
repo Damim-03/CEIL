@@ -33,10 +33,26 @@ export function useCreateTeacherEntry() {
       qc.invalidateQueries({
         queryKey: ["teacher-schedule", variables.teacher_id],
       });
-      toast.success(data.message ?? "تمت إضافة الحصة");
+      toast.success(data.message ?? "تمت إضافة الحصة بنجاح");
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message ?? "حدث خطأ");
+      const status = error?.response?.status;
+      const msg = error?.response?.data?.message ?? "حدث خطأ غير متوقع";
+      const conflict = error?.response?.data?.conflict;
+      if (status === 409) {
+        toast.error(
+          conflict
+            ? `تعارض في جدول الأستاذ · ${conflict.day} · ${conflict.slot}`
+            : "تعارض: الأستاذ لديه حصة في هذا الوقت",
+          { duration: 6000 },
+        );
+      } else if (status === 404) {
+        toast.error("الأستاذ أو الفوج غير موجود");
+      } else if (status === 400) {
+        toast.error(`خطأ في البيانات: ${msg}`);
+      } else {
+        toast.error(`خطأ في الخادم: ${msg}`);
+      }
     },
   });
 }
@@ -50,10 +66,10 @@ export function useDeleteTeacherEntry() {
       deleteTeacherScheduleEntry(entryId),
     onSuccess: (_, { teacherId }) => {
       qc.invalidateQueries({ queryKey: ["teacher-schedule", teacherId] });
-      toast.success("تم حذف الحصة");
+      toast.success("تم حذف الحصة بنجاح");
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message ?? "حدث خطأ");
+      toast.error("فشل حذف الحصة، حاول مرة أخرى");
     },
   });
 }
