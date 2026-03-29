@@ -88,7 +88,6 @@ const LANG_FLAGS: Record<string, string> = {
 };
 
 /* ═══ HELPERS ═══ */
-
 function getLangKey(lang: string): string {
   return lang === "ar" ? "ar" : lang === "fr" ? "fr" : "en";
 }
@@ -377,7 +376,6 @@ function DayView({
   entries: TeacherTimetableEntry[];
   lang: string;
 }) {
-  useLanguage();
   const today = isToday(dayNum);
   const sorted = [...entries].sort((a, b) =>
     a.start_time.localeCompare(b.start_time),
@@ -455,10 +453,9 @@ function isLiveAt(
 }
 
 function RoomsView({ date }: { date: Date }) {
-  useLanguage();
   const dateStr = date.toISOString().split("T")[0];
   const { data, isLoading } = useTeacherRoomsOverview(dateStr);
-  const [now] = useState(() => new Date());
+  const [now, setNow] = useState(() => new Date());
   const [filter, setFilter] = useState<"all" | "free" | "occupied">("all");
 
   const rd = useMemo(() => {
@@ -546,6 +543,7 @@ function RoomsView({ date }: { date: Date }) {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {sorted.map((r) => {
             const occ = r.is_occupied;
+            const active = r.sessions.find((s) => isLiveAt(s, now));
             return (
               <div
                 key={r.room_id}
@@ -693,7 +691,6 @@ export default function TeacherSchedule() {
   const hasAnyLive = entries.some((e) =>
     isNowInSlot(e.day_of_week, e.start_time, e.end_time),
   );
-
 
   if (isLoading)
     return (
