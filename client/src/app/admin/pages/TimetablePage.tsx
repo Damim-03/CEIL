@@ -205,6 +205,65 @@ function formatDuration(start: string, end: string) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// ANIMATED MODAL WRAPPER
+// ══════════════════════════════════════════════════════════════
+
+function AnimatedModal({
+  onClose,
+  renderContent,
+  wide = false,
+}: {
+  onClose: () => void;
+  renderContent: (handleClose: () => void) => React.ReactNode;
+  wide?: boolean;
+}) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    // mount → trigger open animation on next frame
+    const raf = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  function handleClose() {
+    setVisible(false);
+    setTimeout(onClose, 220);
+  }
+
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && handleClose()}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: visible ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        backdropFilter: visible ? "blur(4px)" : "blur(0px)",
+        transition: "background 0.22s ease, backdrop-filter 0.22s ease",
+      }}
+    >
+      <div
+        style={{
+          width: wide ? "min(900px, 95vw)" : "min(460px, 92vw)",
+          maxHeight: "90vh",
+          opacity: visible ? 1 : 0,
+          transform: visible
+            ? "translateY(0) scale(1)"
+            : "translateY(24px) scale(0.96)",
+          transition:
+            "opacity 0.22s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+        }}
+      >
+        {renderContent(handleClose)}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
 // EntryBadge
 // ══════════════════════════════════════════════════════════════
 
@@ -596,269 +655,261 @@ function SlotManagerModal({
   }
 
   return (
-    <div
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.6)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 2000,
-        backdropFilter: "blur(3px)",
-      }}
-    >
-      <div
-        style={{
-          background: surface,
-          borderRadius: 16,
-          padding: 28,
-          width: 460,
-          maxHeight: "88vh",
-          overflowY: "auto",
-          direction: "rtl",
-          fontFamily: "'Tajawal', sans-serif",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-          border: `1px solid ${border}`,
-        }}
-      >
+    <AnimatedModal
+      onClose={onClose}
+      renderContent={(handleClose) => (
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 20,
+            background: surface,
+            borderRadius: 16,
+            padding: 28,
+            maxHeight: "88vh",
+            overflowY: "auto",
+            direction: "rtl",
+            fontFamily: "'Tajawal', sans-serif",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+            border: `1px solid ${border}`,
           }}
         >
-          <div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: text }}>
-              {t("slotTitle")}
-            </div>
-            <div style={{ fontSize: 12, color: muted, marginTop: 2 }}>
-              {draft.length} {t("slotSub")}
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: dark ? "#2d4035" : "#f3f4f6",
-              border: "none",
-              borderRadius: 8,
-              padding: "4px 10px",
-              cursor: "pointer",
-              fontSize: 18,
-              color: text,
-            }}
-          >
-            ×
-          </button>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-            marginBottom: 14,
-          }}
-        >
-          {draft.map((slot, i) => {
-            const dur = timeToMinutes(slot.end) - timeToMinutes(slot.start);
-            return (
-              <div
-                key={slot.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  background: dark ? "#132018" : "#f9fafb",
-                  borderRadius: 10,
-                  padding: "10px 12px",
-                  border: `1.5px solid ${border}`,
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: "#264230",
-                    background: dark ? "#1a3326" : "#d1fae5",
-                    borderRadius: 6,
-                    padding: "2px 7px",
-                    minWidth: 22,
-                    textAlign: "center",
-                  }}
-                >
-                  {i + 1}
-                </span>
-                <input
-                  type="time"
-                  value={slot.start}
-                  onChange={(e) => updateSlot(slot.id, "start", e.target.value)}
-                  style={{
-                    flex: 1,
-                    padding: "6px 8px",
-                    borderRadius: 8,
-                    border: `1.5px solid ${border}`,
-                    fontSize: 13,
-                    outline: "none",
-                    direction: "ltr",
-                    background: dark ? "#1a2820" : "#fff",
-                    color: text,
-                  }}
-                />
-                <span style={{ color: muted, fontSize: 14 }}>←</span>
-                <input
-                  type="time"
-                  value={slot.end}
-                  onChange={(e) => updateSlot(slot.id, "end", e.target.value)}
-                  style={{
-                    flex: 1,
-                    padding: "6px 8px",
-                    borderRadius: 8,
-                    border: `1.5px solid ${border}`,
-                    fontSize: 13,
-                    outline: "none",
-                    direction: "ltr",
-                    background: dark ? "#1a2820" : "#fff",
-                    color: text,
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: 11,
-                    color: dur > 0 ? "#264230" : "#ef4444",
-                    background:
-                      dur > 0
-                        ? dark
-                          ? "#1a3326"
-                          : "#f0fdf4"
-                        : dark
-                          ? "#3d1515"
-                          : "#fef2f2",
-                    borderRadius: 6,
-                    padding: "2px 7px",
-                    minWidth: 36,
-                    textAlign: "center",
-                    fontWeight: 600,
-                  }}
-                >
-                  {dur > 0 ? `${dur}m` : "!"}
-                </span>
-                <button
-                  onClick={() => removeSlot(slot.id)}
-                  disabled={draft.length <= 1}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    fontSize: 18,
-                    color:
-                      draft.length > 1
-                        ? "#ef4444"
-                        : dark
-                          ? "#3d4d42"
-                          : "#d1d5db",
-                    cursor: draft.length > 1 ? "pointer" : "not-allowed",
-                    padding: "0 2px",
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-            );
-          })}
-        </div>
-        {error && (
           <div
             style={{
-              background: dark ? "#3d1515" : "#fef2f2",
-              border: "1px solid #fecaca",
-              borderRadius: 8,
-              padding: "8px 12px",
-              marginBottom: 12,
-              fontSize: 12,
-              color: "#dc2626",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 20,
             }}
           >
-            ⚠️ {error}
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: text }}>
+                {t("slotTitle")}
+              </div>
+              <div style={{ fontSize: 12, color: muted, marginTop: 2 }}>
+                {draft.length} {t("slotSub")}
+              </div>
+            </div>
+            <button
+              onClick={handleClose}
+              style={{
+                background: dark ? "#2d4035" : "#f3f4f6",
+                border: "none",
+                borderRadius: 8,
+                padding: "4px 10px",
+                cursor: "pointer",
+                fontSize: 18,
+                color: text,
+              }}
+            >
+              ×
+            </button>
           </div>
-        )}
-        <button
-          onClick={addSlot}
-          style={{
-            width: "100%",
-            padding: "8px",
-            borderRadius: 10,
-            marginBottom: 16,
-            border: "1.5px dashed #264230",
-            background: dark ? "#1a3326" : "#f0fdf4",
-            color: dark ? "#86efac" : "#264230",
-            fontWeight: 600,
-            fontSize: 13,
-            cursor: "pointer",
-            fontFamily: "'Tajawal', sans-serif",
-          }}
-        >
-          {t("slotAdd")}
-        </button>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
+          <div
             style={{
-              flex: 1,
-              padding: "10px",
-              borderRadius: 10,
-              border: "none",
-              background: isSaving ? "#9ca3af" : "#264230",
-              color: "#fff",
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: isSaving ? "not-allowed" : "pointer",
-              fontFamily: "'Tajawal', sans-serif",
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              marginBottom: 14,
             }}
           >
-            {isSaving ? t("saving") : t("slotSave")}
-          </button>
+            {draft.map((slot, i) => {
+              const dur = timeToMinutes(slot.end) - timeToMinutes(slot.start);
+              return (
+                <div
+                  key={slot.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    background: dark ? "#132018" : "#f9fafb",
+                    borderRadius: 10,
+                    padding: "10px 12px",
+                    border: `1.5px solid ${border}`,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: "#264230",
+                      background: dark ? "#1a3326" : "#d1fae5",
+                      borderRadius: 6,
+                      padding: "2px 7px",
+                      minWidth: 22,
+                      textAlign: "center",
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                  <input
+                    type="time"
+                    value={slot.start}
+                    onChange={(e) =>
+                      updateSlot(slot.id, "start", e.target.value)
+                    }
+                    style={{
+                      flex: 1,
+                      padding: "6px 8px",
+                      borderRadius: 8,
+                      border: `1.5px solid ${border}`,
+                      fontSize: 13,
+                      outline: "none",
+                      direction: "ltr",
+                      background: dark ? "#1a2820" : "#fff",
+                      color: text,
+                    }}
+                  />
+                  <span style={{ color: muted, fontSize: 14 }}>←</span>
+                  <input
+                    type="time"
+                    value={slot.end}
+                    onChange={(e) => updateSlot(slot.id, "end", e.target.value)}
+                    style={{
+                      flex: 1,
+                      padding: "6px 8px",
+                      borderRadius: 8,
+                      border: `1.5px solid ${border}`,
+                      fontSize: 13,
+                      outline: "none",
+                      direction: "ltr",
+                      background: dark ? "#1a2820" : "#fff",
+                      color: text,
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: dur > 0 ? "#264230" : "#ef4444",
+                      background:
+                        dur > 0
+                          ? dark
+                            ? "#1a3326"
+                            : "#f0fdf4"
+                          : dark
+                            ? "#3d1515"
+                            : "#fef2f2",
+                      borderRadius: 6,
+                      padding: "2px 7px",
+                      minWidth: 36,
+                      textAlign: "center",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {dur > 0 ? `${dur}m` : "!"}
+                  </span>
+                  <button
+                    onClick={() => removeSlot(slot.id)}
+                    disabled={draft.length <= 1}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      fontSize: 18,
+                      color:
+                        draft.length > 1
+                          ? "#ef4444"
+                          : dark
+                            ? "#3d4d42"
+                            : "#d1d5db",
+                      cursor: draft.length > 1 ? "pointer" : "not-allowed",
+                      padding: "0 2px",
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          {error && (
+            <div
+              style={{
+                background: dark ? "#3d1515" : "#fef2f2",
+                border: "1px solid #fecaca",
+                borderRadius: 8,
+                padding: "8px 12px",
+                marginBottom: 12,
+                fontSize: 12,
+                color: "#dc2626",
+              }}
+            >
+              ⚠️ {error}
+            </div>
+          )}
           <button
-            onClick={() => {
-              onReset();
-              onClose();
-            }}
-            disabled={isSaving}
+            onClick={addSlot}
             style={{
-              padding: "10px 14px",
+              width: "100%",
+              padding: "8px",
               borderRadius: 10,
-              border: "1.5px solid #fecaca",
-              background: dark ? "#3d1515" : "#fef2f2",
-              color: "#dc2626",
-              fontWeight: 600,
-              fontSize: 13,
-              cursor: isSaving ? "not-allowed" : "pointer",
-              fontFamily: "'Tajawal', sans-serif",
-            }}
-          >
-            {t("slotReset")}
-          </button>
-          <button
-            onClick={onClose}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 10,
-              border: `1.5px solid ${border}`,
-              background: surface,
-              color: text,
+              marginBottom: 16,
+              border: "1.5px dashed #264230",
+              background: dark ? "#1a3326" : "#f0fdf4",
+              color: dark ? "#86efac" : "#264230",
               fontWeight: 600,
               fontSize: 13,
               cursor: "pointer",
               fontFamily: "'Tajawal', sans-serif",
             }}
           >
-            {t("cancel")}
+            {t("slotAdd")}
           </button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              style={{
+                flex: 1,
+                padding: "10px",
+                borderRadius: 10,
+                border: "none",
+                background: isSaving ? "#9ca3af" : "#264230",
+                color: "#fff",
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: isSaving ? "not-allowed" : "pointer",
+                fontFamily: "'Tajawal', sans-serif",
+              }}
+            >
+              {isSaving ? t("saving") : t("slotSave")}
+            </button>
+            <button
+              onClick={() => {
+                onReset();
+                handleClose();
+              }}
+              disabled={isSaving}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 10,
+                border: "1.5px solid #fecaca",
+                background: dark ? "#3d1515" : "#fef2f2",
+                color: "#dc2626",
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: isSaving ? "not-allowed" : "pointer",
+                fontFamily: "'Tajawal', sans-serif",
+              }}
+            >
+              {t("slotReset")}
+            </button>
+            <button
+              onClick={handleClose}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 10,
+                border: `1.5px solid ${border}`,
+                background: surface,
+                color: text,
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: "pointer",
+                fontFamily: "'Tajawal', sans-serif",
+              }}
+            >
+              {t("cancel")}
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    />
   );
 }
 
@@ -917,383 +968,375 @@ function AddModal({
   }
 
   return (
-    <div
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.55)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-        backdropFilter: "blur(3px)",
-      }}
-    >
-      <div
-        style={{
-          background: surface,
-          borderRadius: 16,
-          padding: 28,
-          minWidth: 380,
-          maxWidth: 440,
-          width: "90%",
-          direction: "rtl",
-          fontFamily: "'Tajawal', sans-serif",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          border: `1px solid ${border}`,
-        }}
-      >
+    <AnimatedModal
+      onClose={onClose}
+      renderContent={(handleClose) => (
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: 20,
+            background: surface,
+            borderRadius: 16,
+            padding: 28,
+            direction: "rtl",
+            fontFamily: "'Tajawal', sans-serif",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+            maxHeight: "90vh",
+            overflowY: "auto",
+            border: `1px solid ${border}`,
           }}
         >
-          <div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: text }}>
-              {t("addLessonTitle")}
-            </div>
-            <div style={{ fontSize: 12, color: muted, marginTop: 2 }}>
-              {dayLabel}
-            </div>
-          </div>
-          <button
-            onClick={onClose}
+          <div
             style={{
-              background: dark ? "#2d4035" : "#f3f4f6",
-              border: "none",
-              borderRadius: 8,
-              padding: "4px 10px",
-              cursor: "pointer",
-              fontSize: 16,
-              color: text,
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: 20,
             }}
           >
-            ×
-          </button>
-        </div>
-        <div style={{ marginBottom: 16 }}>
-          <label
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: text,
-              display: "block",
-              marginBottom: 8,
-            }}
-          >
-            {t("timePeriod")}
-          </label>
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: muted, marginBottom: 4 }}>
-                {t("from")}
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: text }}>
+                {t("addLessonTitle")}
               </div>
-              <input
-                type="time"
-                value={start}
-                onChange={(e) => {
-                  setStart(e.target.value);
-                  setTimeErr(null);
-                }}
-                style={{
-                  width: "100%",
-                  padding: "9px 10px",
-                  fontSize: 15,
-                  fontFamily: "monospace",
-                  boxSizing: "border-box" as const,
-                  direction: "ltr" as const,
-                  ...inputBase,
-                  border: `1.5px solid ${timeErr ? "#fca5a5" : border}`,
-                }}
-              />
-            </div>
-            <div style={{ paddingTop: 18, color: muted, fontSize: 18 }}>←</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: muted, marginBottom: 4 }}>
-                {t("to")}
+              <div style={{ fontSize: 12, color: muted, marginTop: 2 }}>
+                {dayLabel}
               </div>
-              <input
-                type="time"
-                value={end}
-                onChange={(e) => {
-                  setEnd(e.target.value);
-                  setTimeErr(null);
-                }}
-                style={{
-                  width: "100%",
-                  padding: "9px 10px",
-                  fontSize: 15,
-                  fontFamily: "monospace",
-                  boxSizing: "border-box" as const,
-                  direction: "ltr" as const,
-                  ...inputBase,
-                  border: `1.5px solid ${timeErr ? "#fca5a5" : border}`,
-                }}
-              />
             </div>
-          </div>
-          {duration && !timeErr && (
-            <div
+            <button
+              onClick={handleClose}
               style={{
-                marginTop: 8,
-                background: dark ? "#1a3326" : "#f0fdf4",
-                borderRadius: 6,
+                background: dark ? "#2d4035" : "#f3f4f6",
+                border: "none",
+                borderRadius: 8,
                 padding: "4px 10px",
-                fontSize: 12,
-                color: dark ? "#86efac" : "#264230",
+                cursor: "pointer",
+                fontSize: 16,
+                color: text,
+              }}
+            >
+              ×
+            </button>
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label
+              style={{
+                fontSize: 13,
                 fontWeight: 600,
-                display: "inline-block",
+                color: text,
+                display: "block",
+                marginBottom: 8,
               }}
             >
-              {t("durationLabel")} {duration}
+              {t("timePeriod")}
+            </label>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: muted, marginBottom: 4 }}>
+                  {t("from")}
+                </div>
+                <input
+                  type="time"
+                  value={start}
+                  onChange={(e) => {
+                    setStart(e.target.value);
+                    setTimeErr(null);
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "9px 10px",
+                    fontSize: 15,
+                    fontFamily: "monospace",
+                    boxSizing: "border-box" as const,
+                    direction: "ltr" as const,
+                    ...inputBase,
+                    border: `1.5px solid ${timeErr ? "#fca5a5" : border}`,
+                  }}
+                />
+              </div>
+              <div style={{ paddingTop: 18, color: muted, fontSize: 18 }}>
+                ←
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: muted, marginBottom: 4 }}>
+                  {t("to")}
+                </div>
+                <input
+                  type="time"
+                  value={end}
+                  onChange={(e) => {
+                    setEnd(e.target.value);
+                    setTimeErr(null);
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "9px 10px",
+                    fontSize: 15,
+                    fontFamily: "monospace",
+                    boxSizing: "border-box" as const,
+                    direction: "ltr" as const,
+                    ...inputBase,
+                    border: `1.5px solid ${timeErr ? "#fca5a5" : border}`,
+                  }}
+                />
+              </div>
             </div>
-          )}
-          {timeErr && (
-            <div
+            {duration && !timeErr && (
+              <div
+                style={{
+                  marginTop: 8,
+                  background: dark ? "#1a3326" : "#f0fdf4",
+                  borderRadius: 6,
+                  padding: "4px 10px",
+                  fontSize: 12,
+                  color: dark ? "#86efac" : "#264230",
+                  fontWeight: 600,
+                  display: "inline-block",
+                }}
+              >
+                {t("durationLabel")} {duration}
+              </div>
+            )}
+            {timeErr && (
+              <div
+                style={{
+                  marginTop: 6,
+                  fontSize: 12,
+                  color: "#dc2626",
+                  background: dark ? "#3d1515" : "#fef2f2",
+                  borderRadius: 6,
+                  padding: "4px 10px",
+                }}
+              >
+                ⚠️ {timeErr}
+              </div>
+            )}
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label
               style={{
-                marginTop: 6,
-                fontSize: 12,
-                color: "#dc2626",
-                background: dark ? "#3d1515" : "#fef2f2",
-                borderRadius: 6,
-                padding: "4px 10px",
+                fontSize: 13,
+                fontWeight: 600,
+                color: text,
+                display: "block",
+                marginBottom: 6,
               }}
             >
-              ⚠️ {timeErr}
+              {t("room")}
+            </label>
+            <select
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                fontSize: 13,
+                fontFamily: "'Tajawal', sans-serif",
+                boxSizing: "border-box" as const,
+                ...inputBase,
+              }}
+            >
+              {rooms.map((r) => (
+                <option key={r.room_id} value={r.room_id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: text,
+                display: "block",
+                marginBottom: 6,
+              }}
+            >
+              {t("language")}
+            </label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {LANGUAGES.map((l) => {
+                const m = LANG_META[l];
+                const active = lang === l;
+                return (
+                  <button
+                    key={l}
+                    onClick={() => setLang(l)}
+                    style={{
+                      padding: "5px 12px",
+                      borderRadius: 8,
+                      border: `2px solid ${active ? m.color : border}`,
+                      background: active
+                        ? dark
+                          ? m.darkBg
+                          : m.bg
+                        : dark
+                          ? "#1a2820"
+                          : "#f9fafb",
+                      color: active ? m.color : text,
+                      fontWeight: active ? 700 : 500,
+                      fontSize: 12,
+                      cursor: "pointer",
+                      fontFamily: "'Tajawal', sans-serif",
+                    }}
+                  >
+                    {m.label}
+                  </button>
+                );
+              })}
             </div>
-          )}
-        </div>
-        <div style={{ marginBottom: 16 }}>
-          <label
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: text,
-              display: "block",
-              marginBottom: 6,
-            }}
-          >
-            {t("room")}
-          </label>
-          <select
-            value={roomId}
-            onChange={(e) => setRoomId(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "8px 12px",
-              fontSize: 13,
-              fontFamily: "'Tajawal', sans-serif",
-              boxSizing: "border-box" as const,
-              ...inputBase,
-            }}
-          >
-            {rooms.map((r) => (
-              <option key={r.room_id} value={r.room_id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div style={{ marginBottom: 16 }}>
-          <label
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: text,
-              display: "block",
-              marginBottom: 6,
-            }}
-          >
-            {t("language")}
-          </label>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {LANGUAGES.map((l) => {
-              const m = LANG_META[l];
-              const active = lang === l;
-              return (
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: text,
+                display: "block",
+                marginBottom: 6,
+              }}
+            >
+              {t("level")}
+            </label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {LEVELS.map((lv) => (
                 <button
-                  key={l}
-                  onClick={() => setLang(l)}
+                  key={lv}
+                  onClick={() => setLevel(lv)}
                   style={{
                     padding: "5px 12px",
                     borderRadius: 8,
-                    border: `2px solid ${active ? m.color : border}`,
-                    background: active
-                      ? dark
-                        ? m.darkBg
-                        : m.bg
-                      : dark
-                        ? "#1a2820"
-                        : "#f9fafb",
-                    color: active ? m.color : text,
-                    fontWeight: active ? 700 : 500,
+                    border: `2px solid ${level === lv ? "#264230" : border}`,
+                    background:
+                      level === lv ? "#264230" : dark ? "#1a2820" : "#f9fafb",
+                    color: level === lv ? "#fff" : text,
+                    fontWeight: level === lv ? 700 : 500,
                     fontSize: 12,
                     cursor: "pointer",
                     fontFamily: "'Tajawal', sans-serif",
                   }}
                 >
-                  {m.label}
+                  {lv}
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
-        <div style={{ marginBottom: 16 }}>
-          <label
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: text,
-              display: "block",
-              marginBottom: 6,
-            }}
-          >
-            {t("level")}
-          </label>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {LEVELS.map((lv) => (
-              <button
-                key={lv}
-                onClick={() => setLevel(lv)}
-                style={{
-                  padding: "5px 12px",
-                  borderRadius: 8,
-                  border: `2px solid ${level === lv ? "#264230" : border}`,
-                  background:
-                    level === lv ? "#264230" : dark ? "#1a2820" : "#f9fafb",
-                  color: level === lv ? "#fff" : text,
-                  fontWeight: level === lv ? 700 : 500,
-                  fontSize: 12,
-                  cursor: "pointer",
-                  fontFamily: "'Tajawal', sans-serif",
-                }}
-              >
-                {lv}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div style={{ marginBottom: 20 }}>
-          <label
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: text,
-              display: "block",
-              marginBottom: 6,
-            }}
-          >
-            {t("groupNum")}
-          </label>
-          <input
-            value={groupNum}
-            onChange={(e) => setGroupNum(e.target.value)}
-            placeholder="01"
-            style={{
-              width: "100%",
-              padding: "8px 12px",
-              fontSize: 14,
-              fontFamily: "'Tajawal', sans-serif",
-              boxSizing: "border-box" as const,
-              direction: "ltr" as const,
-              textAlign: "center" as const,
-              ...inputBase,
-            }}
-          />
-        </div>
-        <div
-          style={{
-            background: dark ? meta.darkBg : meta.bg,
-            border: `1.5px solid ${dark ? meta.color + "55" : meta.border}`,
-            borderRadius: 10,
-            padding: "10px 14px",
-            marginBottom: 20,
-          }}
-        >
-          <div style={{ fontSize: 11, color: muted, marginBottom: 4 }}>
-            {t("preview")}
+          <div style={{ marginBottom: 20 }}>
+            <label
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: text,
+                display: "block",
+                marginBottom: 6,
+              }}
+            >
+              {t("groupNum")}
+            </label>
+            <input
+              value={groupNum}
+              onChange={(e) => setGroupNum(e.target.value)}
+              placeholder="01"
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                fontSize: 14,
+                fontFamily: "'Tajawal', sans-serif",
+                boxSizing: "border-box" as const,
+                direction: "ltr" as const,
+                textAlign: "center" as const,
+                ...inputBase,
+              }}
+            />
           </div>
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              flexWrap: "wrap",
+              background: dark ? meta.darkBg : meta.bg,
+              border: `1.5px solid ${dark ? meta.color + "55" : meta.border}`,
+              borderRadius: 10,
+              padding: "10px 14px",
+              marginBottom: 20,
             }}
           >
-            <span
-              style={{ fontSize: 12, color: text, fontFamily: "monospace" }}
-            >
-              {start} - {end}
-            </span>
-            {duration && (
-              <span style={{ fontSize: 11, color: muted }}>({duration})</span>
-            )}
-            <span style={{ fontWeight: 700, color: meta.color, fontSize: 13 }}>
-              {level} {groupNum}
-            </span>
-            <span
+            <div style={{ fontSize: 11, color: muted, marginBottom: 4 }}>
+              {t("preview")}
+            </div>
+            <div
               style={{
-                background: meta.color,
-                color: "#fff",
-                borderRadius: 4,
-                padding: "1px 6px",
-                fontSize: 11,
-                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                flexWrap: "wrap",
               }}
             >
-              {lang}
-            </span>
+              <span
+                style={{ fontSize: 12, color: text, fontFamily: "monospace" }}
+              >
+                {start} - {end}
+              </span>
+              {duration && (
+                <span style={{ fontSize: 11, color: muted }}>({duration})</span>
+              )}
+              <span
+                style={{ fontWeight: 700, color: meta.color, fontSize: 13 }}
+              >
+                {level} {groupNum}
+              </span>
+              <span
+                style={{
+                  background: meta.color,
+                  color: "#fff",
+                  borderRadius: 4,
+                  padding: "1px 6px",
+                  fontSize: 11,
+                  fontWeight: 700,
+                }}
+              >
+                {lang}
+              </span>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              onClick={handleSubmit}
+              disabled={isPending || !roomId}
+              style={{
+                flex: 1,
+                padding: "10px",
+                borderRadius: 10,
+                border: "none",
+                background: isPending ? "#9ca3af" : "#264230",
+                color: "#fff",
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: isPending ? "not-allowed" : "pointer",
+                fontFamily: "'Tajawal', sans-serif",
+              }}
+            >
+              {isPending ? t("saving") : t("add")}
+            </button>
+            <button
+              onClick={handleClose}
+              style={{
+                padding: "10px 16px",
+                borderRadius: 10,
+                border: `1.5px solid ${border}`,
+                background: surface,
+                color: text,
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: "pointer",
+                fontFamily: "'Tajawal', sans-serif",
+              }}
+            >
+              {t("cancel")}
+            </button>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button
-            onClick={handleSubmit}
-            disabled={isPending || !roomId}
-            style={{
-              flex: 1,
-              padding: "10px",
-              borderRadius: 10,
-              border: "none",
-              background: isPending ? "#9ca3af" : "#264230",
-              color: "#fff",
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: isPending ? "not-allowed" : "pointer",
-              fontFamily: "'Tajawal', sans-serif",
-            }}
-          >
-            {isPending ? t("saving") : t("add")}
-          </button>
-          <button
-            onClick={onClose}
-            style={{
-              padding: "10px 16px",
-              borderRadius: 10,
-              border: `1.5px solid ${border}`,
-              background: surface,
-              color: text,
-              fontWeight: 600,
-              fontSize: 14,
-              cursor: "pointer",
-              fontFamily: "'Tajawal', sans-serif",
-            }}
-          >
-            {t("cancel")}
-          </button>
-        </div>
-      </div>
-    </div>
+      )}
+    />
   );
 }
 
 // ══════════════════════════════════════════════════════════════
-// ADD TEACHER MODAL
+// ADD TEACHER MODAL — Wide rectangular with group list
 // ══════════════════════════════════════════════════════════════
 
 interface TeacherGroup {
@@ -1328,6 +1371,7 @@ function AddTeacherModal({
   const [lang, setLang] = useState("FR");
   const [level, setLevel] = useState("A1");
   const [groupId, setGroupId] = useState("");
+  const [search, setSearch] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const meta = LANG_META[lang];
   const dur = formatDuration(start, end);
@@ -1339,6 +1383,13 @@ function AddTeacherModal({
     background: dark ? "#132018" : "#fff",
     color: text,
   } as const;
+
+  const filteredGroups = teacherGroups.filter(
+    (g) =>
+      g.name.toLowerCase().includes(search.toLowerCase()) ||
+      g.course.course_name.toLowerCase().includes(search.toLowerCase()) ||
+      g.level.toLowerCase().includes(search.toLowerCase()),
+  );
 
   function handleSubmit() {
     setErr(null);
@@ -1360,419 +1411,649 @@ function AddTeacherModal({
   }
 
   return (
-    <div
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.6)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-        backdropFilter: "blur(3px)",
-      }}
-    >
-      <div
-        style={{
-          background: surface,
-          borderRadius: 16,
-          padding: 28,
-          width: 420,
-          maxHeight: "90vh",
-          overflowY: "auto",
-          direction: "rtl",
-          fontFamily: "'Tajawal', sans-serif",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
-          border: `1px solid ${border}`,
-        }}
-      >
+    <AnimatedModal
+      onClose={onClose}
+      wide
+      renderContent={(handleClose) => (
         <div
           style={{
+            background: surface,
+            borderRadius: 18,
+            direction: "rtl",
+            fontFamily: "'Tajawal', sans-serif",
+            boxShadow: "0 24px 80px rgba(0,0,0,0.35)",
+            border: `1px solid ${border}`,
+            overflow: "hidden",
             display: "flex",
-            justifyContent: "space-between",
-            marginBottom: 20,
+            flexDirection: "column",
+            maxHeight: "90vh",
           }}
         >
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: text }}>
-              {t("addLessonTitle")}
-            </div>
-            <div style={{ fontSize: 12, color: muted, marginTop: 2 }}>
-              {dayLabel}
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: dark ? "#2d4035" : "#f3f4f6",
-              border: "none",
-              borderRadius: 8,
-              padding: "4px 10px",
-              cursor: "pointer",
-              fontSize: 16,
-              color: text,
-            }}
-          >
-            ×
-          </button>
-        </div>
-        <div style={{ marginBottom: 14 }}>
-          <label
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: text,
-              display: "block",
-              marginBottom: 6,
-            }}
-          >
-            {t("timePeriod")}
-          </label>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <input
-              type="time"
-              value={start}
-              onChange={(e) => {
-                setStart(e.target.value);
-                setErr(null);
-              }}
-              style={{
-                flex: 1,
-                padding: "8px 10px",
-                fontSize: 14,
-                direction: "ltr" as const,
-                ...inputBase,
-                border: `1.5px solid ${err ? "#fca5a5" : border}`,
-              }}
-            />
-            <span style={{ color: muted }}>←</span>
-            <input
-              type="time"
-              value={end}
-              onChange={(e) => {
-                setEnd(e.target.value);
-                setErr(null);
-              }}
-              style={{
-                flex: 1,
-                padding: "8px 10px",
-                fontSize: 14,
-                direction: "ltr" as const,
-                ...inputBase,
-                border: `1.5px solid ${err ? "#fca5a5" : border}`,
-              }}
-            />
-          </div>
-          {dur && !err && (
-            <div
-              style={{
-                marginTop: 6,
-                fontSize: 11,
-                color: dark ? "#86efac" : "#264230",
-                background: dark ? "#1a3326" : "#f0fdf4",
-                borderRadius: 6,
-                padding: "3px 10px",
-                display: "inline-block",
-                fontWeight: 600,
-              }}
-            >
-              ⏱ {dur}
-            </div>
-          )}
-          {err && (
-            <div
-              style={{
-                marginTop: 6,
-                fontSize: 11,
-                color: "#dc2626",
-                background: dark ? "#3d1515" : "#fef2f2",
-                borderRadius: 6,
-                padding: "3px 10px",
-              }}
-            >
-              ⚠️ {err}
-            </div>
-          )}
-        </div>
-        <div style={{ marginBottom: 14 }}>
-          <label
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: text,
-              display: "block",
-              marginBottom: 6,
-            }}
-          >
-            {t("group")}
-          </label>
-          {teacherGroups.length === 0 ? (
-            <div
-              style={{
-                padding: "10px 12px",
-                borderRadius: 8,
-                background: dark ? "#2d2010" : "#fffbeb",
-                border: `1px solid ${dark ? "#5c4010" : "#fde68a"}`,
-                fontSize: 12,
-                color: dark ? "#fbbf24" : "#92400e",
-              }}
-            >
-              {t("noGroups")}
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {teacherGroups.map((g) => {
-                const active = groupId === g.group_id;
-                return (
-                  <button
-                    key={g.group_id}
-                    onClick={() => {
-                      setGroupId(active ? "" : g.group_id);
-                      setLevel(g.level);
-                    }}
-                    style={{
-                      padding: "9px 12px",
-                      borderRadius: 10,
-                      textAlign: "right",
-                      border: `2px solid ${active ? "#264230" : border}`,
-                      background: active
-                        ? dark
-                          ? "#1a3326"
-                          : "#f0fdf4"
-                        : surface,
-                      cursor: "pointer",
-                      fontFamily: "'Tajawal', sans-serif",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <div>
-                      <div
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 700,
-                          color: active ? (dark ? "#86efac" : "#264230") : text,
-                        }}
-                      >
-                        {g.name}
-                      </div>
-                      <div style={{ fontSize: 11, color: muted, marginTop: 1 }}>
-                        {g.course.course_name} · {g.level}
-                      </div>
-                    </div>
-                    {active && (
-                      <span
-                        style={{
-                          color: dark ? "#86efac" : "#264230",
-                          fontWeight: 700,
-                        }}
-                      >
-                        ✓
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-        <div style={{ marginBottom: 14 }}>
-          <label
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: text,
-              display: "block",
-              marginBottom: 6,
-            }}
-          >
-            {t("room")}{" "}
-            <span style={{ color: muted, fontWeight: 400 }}>
-              ({t("optRoom")})
-            </span>
-          </label>
-          <select
-            value={roomId}
-            onChange={(e) => setRoomId(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "8px 12px",
-              fontSize: 13,
-              fontFamily: "'Tajawal', sans-serif",
-              ...inputBase,
-            }}
-          >
-            <option value="">{t("noRoom")}</option>
-            {rooms.map((r) => (
-              <option key={r.room_id} value={r.room_id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div style={{ marginBottom: 14 }}>
-          <label
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: text,
-              display: "block",
-              marginBottom: 6,
-            }}
-          >
-            {t("language")}
-          </label>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-            {LANGUAGES.map((l) => {
-              const m = LANG_META[l];
-              const active = lang === l;
-              return (
-                <button
-                  key={l}
-                  onClick={() => setLang(l)}
-                  style={{
-                    padding: "5px 10px",
-                    borderRadius: 8,
-                    border: `2px solid ${active ? m.color : border}`,
-                    background: active
-                      ? dark
-                        ? m.darkBg
-                        : m.bg
-                      : dark
-                        ? "#1a2820"
-                        : "#f9fafb",
-                    color: active ? m.color : text,
-                    fontWeight: active ? 700 : 500,
-                    fontSize: 11,
-                    cursor: "pointer",
-                    fontFamily: "'Tajawal', sans-serif",
-                  }}
-                >
-                  {LANG_FLAGS[l]} {m.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        {!selectedGroup && (
-          <div style={{ marginBottom: 16 }}>
-            <label
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: text,
-                display: "block",
-                marginBottom: 6,
-              }}
-            >
-              {t("level")}
-            </label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-              {LEVELS.map((lv) => (
-                <button
-                  key={lv}
-                  onClick={() => setLevel(lv)}
-                  style={{
-                    padding: "5px 10px",
-                    borderRadius: 8,
-                    border: `2px solid ${level === lv ? "#264230" : border}`,
-                    background:
-                      level === lv ? "#264230" : dark ? "#1a2820" : "#f9fafb",
-                    color: level === lv ? "#fff" : text,
-                    fontWeight: level === lv ? 700 : 500,
-                    fontSize: 11,
-                    cursor: "pointer",
-                    fontFamily: "'Tajawal', sans-serif",
-                  }}
-                >
-                  {lv}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        <div
-          style={{
-            background: dark ? meta.darkBg : meta.bg,
-            border: `1.5px solid ${dark ? meta.color + "55" : meta.border}`,
-            borderRadius: 10,
-            padding: "10px 14px",
-            marginBottom: 18,
-          }}
-        >
-          <div style={{ fontSize: 10, color: muted, marginBottom: 4 }}>
-            {t("previewLabel")}
-          </div>
+          {/* ── Header ── */}
           <div
             style={{
+              background: "#264230",
+              padding: "16px 24px",
               display: "flex",
+              justifyContent: "space-between",
               alignItems: "center",
-              gap: 8,
-              flexWrap: "wrap",
+              flexShrink: 0,
             }}
           >
-            <span
-              style={{ fontSize: 12, fontFamily: "monospace", color: text }}
-            >
-              {start} – {end}
-            </span>
-            {dur && <span style={{ fontSize: 10, color: muted }}>({dur})</span>}
-            <span style={{ fontWeight: 700, color: meta.color }}>
-              {LANG_FLAGS[lang]} {lang}
-            </span>
-            <span
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>
+                {t("addLessonTitle")}
+              </div>
+              <div style={{ fontSize: 12, color: "#9dc9ad", marginTop: 2 }}>
+                {dayLabel}
+              </div>
+            </div>
+            <button
+              onClick={handleClose}
               style={{
-                background: dark ? "#1f2d22" : "#f3f4f6",
-                color: dark ? "#d1fae5" : "#111827",
-                borderRadius: 5,
-                padding: "1px 7px",
-                fontSize: 11,
-                fontWeight: 700,
+                background: "rgba(255,255,255,0.15)",
+                border: "none",
+                borderRadius: 8,
+                padding: "5px 12px",
+                cursor: "pointer",
+                fontSize: 18,
+                color: "#fff",
               }}
             >
-              {selectedGroup?.name ?? `${level} 01`}
-            </span>
+              ×
+            </button>
+          </div>
+
+          {/* ── Body: two columns ── */}
+          <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+            {/* LEFT — Group list */}
+            <div
+              style={{
+                width: 320,
+                flexShrink: 0,
+                borderLeft: `1px solid ${border}`,
+                display: "flex",
+                flexDirection: "column",
+                background: dark ? "#132018" : "#f9fafb",
+              }}
+            >
+              <div
+                style={{
+                  padding: "14px 14px 8px",
+                  borderBottom: `1px solid ${border}`,
+                  flexShrink: 0,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: text,
+                    marginBottom: 8,
+                  }}
+                >
+                  {t("group")}
+                  <span
+                    style={{
+                      marginRight: 6,
+                      background: dark ? "#2d4035" : "#e5e7eb",
+                      color: muted,
+                      borderRadius: 10,
+                      padding: "1px 7px",
+                      fontSize: 10,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {filteredGroups.length}
+                  </span>
+                </div>
+                {/* Search */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    background: dark ? "#1a2820" : "#fff",
+                    borderRadius: 8,
+                    border: `1.5px solid ${border}`,
+                    padding: "6px 10px",
+                  }}
+                >
+                  <span style={{ fontSize: 12, color: muted }}>🔍</span>
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder={t("searchTeacher")}
+                    style={{
+                      flex: 1,
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      fontSize: 12,
+                      fontFamily: "'Tajawal', sans-serif",
+                      color: text,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Group items */}
+              <div style={{ flex: 1, overflowY: "auto", padding: "8px" }}>
+                {teacherGroups.length === 0 ? (
+                  <div
+                    style={{
+                      padding: "16px 12px",
+                      borderRadius: 8,
+                      background: dark ? "#2d2010" : "#fffbeb",
+                      border: `1px solid ${dark ? "#5c4010" : "#fde68a"}`,
+                      fontSize: 12,
+                      color: dark ? "#fbbf24" : "#92400e",
+                      marginTop: 4,
+                    }}
+                  >
+                    {t("noGroups")}
+                  </div>
+                ) : filteredGroups.length === 0 ? (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: 20,
+                      color: muted,
+                      fontSize: 12,
+                    }}
+                  >
+                    —
+                  </div>
+                ) : (
+                  filteredGroups.map((g) => {
+                    const active = groupId === g.group_id;
+                    return (
+                      <button
+                        key={g.group_id}
+                        onClick={() => {
+                          setGroupId(active ? "" : g.group_id);
+                          setLevel(g.level);
+                        }}
+                        style={{
+                          width: "100%",
+                          textAlign: "right",
+                          padding: "10px 12px",
+                          marginBottom: 5,
+                          borderRadius: 10,
+                          border: `2px solid ${active ? "#264230" : border}`,
+                          background: active
+                            ? dark
+                              ? "#1a3326"
+                              : "#f0fdf4"
+                            : surface,
+                          cursor: "pointer",
+                          fontFamily: "'Tajawal', sans-serif",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          transition: "border-color 0.15s, background 0.15s",
+                          boxShadow: active
+                            ? "0 1px 8px rgba(38,66,48,0.18)"
+                            : "none",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!active)
+                            e.currentTarget.style.borderColor = "#264230";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!active)
+                            e.currentTarget.style.borderColor = border;
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontSize: 13,
+                              fontWeight: 700,
+                              color: active
+                                ? dark
+                                  ? "#86efac"
+                                  : "#264230"
+                                : text,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {g.name}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: 11,
+                              color: muted,
+                              marginTop: 2,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {g.course.course_name}
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "flex-start",
+                            gap: 3,
+                            marginRight: 8,
+                            flexShrink: 0,
+                          }}
+                        >
+                          <span
+                            style={{
+                              background: active
+                                ? "#264230"
+                                : dark
+                                  ? "#2d4035"
+                                  : "#f3f4f6",
+                              color: active ? "#C4A035" : muted,
+                              borderRadius: 6,
+                              padding: "1px 7px",
+                              fontSize: 10,
+                              fontWeight: 700,
+                            }}
+                          >
+                            {g.level}
+                          </span>
+                        </div>
+                        {active && (
+                          <span
+                            style={{
+                              color: dark ? "#86efac" : "#264230",
+                              fontWeight: 900,
+                              fontSize: 16,
+                              flexShrink: 0,
+                            }}
+                          >
+                            ✓
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Selected group preview */}
+              {selectedGroup && (
+                <div
+                  style={{
+                    padding: "12px 14px",
+                    borderTop: `1px solid ${border}`,
+                    background: dark ? "#1a3326" : "#f0fdf4",
+                    flexShrink: 0,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: dark ? "#86efac" : "#264230",
+                      fontWeight: 700,
+                      marginBottom: 4,
+                    }}
+                  >
+                    ✓ {t("group")} مختار
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: dark ? "#86efac" : "#264230",
+                    }}
+                  >
+                    {selectedGroup.name}
+                  </div>
+                  <div style={{ fontSize: 11, color: muted }}>
+                    {selectedGroup.course.course_name} · {selectedGroup.level}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT — Settings */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+              {/* Time */}
+              <div style={{ marginBottom: 18 }}>
+                <label
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: text,
+                    display: "block",
+                    marginBottom: 8,
+                  }}
+                >
+                  {t("timePeriod")}
+                </label>
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <div style={{ flex: 1 }}>
+                    <div
+                      style={{ fontSize: 11, color: muted, marginBottom: 4 }}
+                    >
+                      {t("from")}
+                    </div>
+                    <input
+                      type="time"
+                      value={start}
+                      onChange={(e) => {
+                        setStart(e.target.value);
+                        setErr(null);
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "9px 10px",
+                        fontSize: 14,
+                        direction: "ltr" as const,
+                        boxSizing: "border-box" as const,
+                        ...inputBase,
+                        border: `1.5px solid ${err ? "#fca5a5" : border}`,
+                      }}
+                    />
+                  </div>
+                  <div style={{ paddingTop: 18, color: muted, fontSize: 20 }}>
+                    ←
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div
+                      style={{ fontSize: 11, color: muted, marginBottom: 4 }}
+                    >
+                      {t("to")}
+                    </div>
+                    <input
+                      type="time"
+                      value={end}
+                      onChange={(e) => {
+                        setEnd(e.target.value);
+                        setErr(null);
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "9px 10px",
+                        fontSize: 14,
+                        direction: "ltr" as const,
+                        boxSizing: "border-box" as const,
+                        ...inputBase,
+                        border: `1.5px solid ${err ? "#fca5a5" : border}`,
+                      }}
+                    />
+                  </div>
+                  {dur && !err && (
+                    <div style={{ paddingTop: 18 }}>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          color: dark ? "#86efac" : "#264230",
+                          background: dark ? "#1a3326" : "#f0fdf4",
+                          borderRadius: 6,
+                          padding: "4px 10px",
+                          fontWeight: 700,
+                        }}
+                      >
+                        ⏱ {dur}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {err && (
+                  <div
+                    style={{
+                      marginTop: 6,
+                      fontSize: 12,
+                      color: "#dc2626",
+                      background: dark ? "#3d1515" : "#fef2f2",
+                      borderRadius: 6,
+                      padding: "4px 10px",
+                    }}
+                  >
+                    ⚠️ {err}
+                  </div>
+                )}
+              </div>
+
+              {/* Room (optional) */}
+              <div style={{ marginBottom: 18 }}>
+                <label
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: text,
+                    display: "block",
+                    marginBottom: 6,
+                  }}
+                >
+                  {t("room")}{" "}
+                  <span style={{ color: muted, fontWeight: 400, fontSize: 11 }}>
+                    ({t("optRoom")})
+                  </span>
+                </label>
+                <select
+                  value={roomId}
+                  onChange={(e) => setRoomId(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    fontSize: 13,
+                    fontFamily: "'Tajawal', sans-serif",
+                    boxSizing: "border-box" as const,
+                    ...inputBase,
+                  }}
+                >
+                  <option value="">{t("noRoom")}</option>
+                  {rooms.map((r) => (
+                    <option key={r.room_id} value={r.room_id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Language */}
+              <div style={{ marginBottom: 18 }}>
+                <label
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: text,
+                    display: "block",
+                    marginBottom: 8,
+                  }}
+                >
+                  {t("language")}
+                </label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {LANGUAGES.map((l) => {
+                    const m = LANG_META[l];
+                    const active = lang === l;
+                    return (
+                      <button
+                        key={l}
+                        onClick={() => setLang(l)}
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: 8,
+                          border: `2px solid ${active ? m.color : border}`,
+                          background: active
+                            ? dark
+                              ? m.darkBg
+                              : m.bg
+                            : dark
+                              ? "#1a2820"
+                              : "#f9fafb",
+                          color: active ? m.color : text,
+                          fontWeight: active ? 700 : 500,
+                          fontSize: 12,
+                          cursor: "pointer",
+                          fontFamily: "'Tajawal', sans-serif",
+                          transition: "all 0.12s",
+                        }}
+                      >
+                        {LANG_FLAGS[l]} {m.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Level (only if no group selected) */}
+              {!selectedGroup && (
+                <div style={{ marginBottom: 18 }}>
+                  <label
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: text,
+                      display: "block",
+                      marginBottom: 8,
+                    }}
+                  >
+                    {t("level")}
+                  </label>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {LEVELS.map((lv) => (
+                      <button
+                        key={lv}
+                        onClick={() => setLevel(lv)}
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: 8,
+                          border: `2px solid ${level === lv ? "#264230" : border}`,
+                          background:
+                            level === lv
+                              ? "#264230"
+                              : dark
+                                ? "#1a2820"
+                                : "#f9fafb",
+                          color: level === lv ? "#fff" : text,
+                          fontWeight: level === lv ? 700 : 500,
+                          fontSize: 12,
+                          cursor: "pointer",
+                          fontFamily: "'Tajawal', sans-serif",
+                        }}
+                      >
+                        {lv}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Preview */}
+              <div
+                style={{
+                  background: dark ? meta.darkBg : meta.bg,
+                  border: `1.5px solid ${dark ? meta.color + "55" : meta.border}`,
+                  borderRadius: 12,
+                  padding: "12px 16px",
+                  marginBottom: 22,
+                }}
+              >
+                <div style={{ fontSize: 10, color: muted, marginBottom: 6 }}>
+                  {t("previewLabel")}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 13,
+                      fontFamily: "monospace",
+                      color: text,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {start} – {end}
+                  </span>
+                  {dur && (
+                    <span style={{ fontSize: 11, color: muted }}>({dur})</span>
+                  )}
+                  <span
+                    style={{ fontWeight: 800, color: meta.color, fontSize: 14 }}
+                  >
+                    {LANG_FLAGS[lang]} {lang}
+                  </span>
+                  <span
+                    style={{
+                      background: dark ? "#1f2d22" : "#f3f4f6",
+                      color: dark ? "#d1fae5" : "#111827",
+                      borderRadius: 6,
+                      padding: "2px 9px",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {selectedGroup?.name ?? `${level} 01`}
+                  </span>
+                  {selectedGroup?.level && (
+                    <span
+                      style={{
+                        background: "#264230",
+                        color: "#C4A035",
+                        borderRadius: 6,
+                        padding: "2px 9px",
+                        fontSize: 11,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {selectedGroup.level}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  onClick={handleSubmit}
+                  disabled={isPending}
+                  style={{
+                    flex: 1,
+                    padding: "11px",
+                    borderRadius: 10,
+                    border: "none",
+                    background: isPending ? "#9ca3af" : "#264230",
+                    color: "#fff",
+                    fontWeight: 700,
+                    fontSize: 15,
+                    cursor: isPending ? "not-allowed" : "pointer",
+                    fontFamily: "'Tajawal', sans-serif",
+                    transition: "background 0.15s",
+                  }}
+                >
+                  {isPending ? t("saving") : t("add")}
+                </button>
+                <button
+                  onClick={handleClose}
+                  style={{
+                    padding: "11px 20px",
+                    borderRadius: 10,
+                    border: `1.5px solid ${border}`,
+                    background: surface,
+                    color: text,
+                    fontWeight: 600,
+                    fontSize: 14,
+                    cursor: "pointer",
+                    fontFamily: "'Tajawal', sans-serif",
+                  }}
+                >
+                  {t("cancel")}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button
-            onClick={handleSubmit}
-            disabled={isPending}
-            style={{
-              flex: 1,
-              padding: "10px",
-              borderRadius: 10,
-              border: "none",
-              background: isPending ? "#9ca3af" : "#264230",
-              color: "#fff",
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: isPending ? "not-allowed" : "pointer",
-              fontFamily: "'Tajawal', sans-serif",
-            }}
-          >
-            {isPending ? t("saving") : t("add")}
-          </button>
-          <button
-            onClick={onClose}
-            style={{
-              padding: "10px 16px",
-              borderRadius: 10,
-              border: `1.5px solid ${border}`,
-              background: surface,
-              color: text,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: "'Tajawal', sans-serif",
-            }}
-          >
-            {t("cancel")}
-          </button>
-        </div>
-      </div>
-    </div>
+      )}
+    />
   );
 }
 
@@ -1783,7 +2064,6 @@ function AddTeacherModal({
 function RoomsTimetableTab() {
   const { t, dark, surface, border, text, muted, bg, locale } = useCtx();
   const DAYS_AR = DAYS_LABELS[locale];
-
   const [activeDay, setActiveDay] = useState<number | "all">("all");
   const [filterLang, setFilterLang] = useState<string | null>(null);
   const [modal, setModal] = useState<number | null>(null);
@@ -1861,6 +2141,7 @@ function RoomsTimetableTab() {
 
   return (
     <>
+      {/* Filter bar */}
       <div
         style={{
           background: surface,
@@ -1935,6 +2216,8 @@ function RoomsTimetableTab() {
           </button>
         </div>
       </div>
+
+      {/* Day tabs */}
       <div
         style={{
           background: surface,
@@ -1982,6 +2265,8 @@ function RoomsTimetableTab() {
           </button>
         ))}
       </div>
+
+      {/* Grid */}
       <div style={{ padding: "20px 16px", overflowX: "auto" }}>
         {isLoading && (
           <div style={{ textAlign: "center", padding: 60, color: muted }}>
@@ -2165,6 +2450,8 @@ function RoomsTimetableTab() {
           </div>
         )}
       </div>
+
+      {/* Lang guide */}
       <div style={{ padding: "0 28px 40px" }}>
         <div
           style={{
@@ -2201,6 +2488,7 @@ function RoomsTimetableTab() {
           ))}
         </div>
       </div>
+
       {modal !== null && (
         <AddModal
           day={modal}
@@ -2248,6 +2536,7 @@ function TeacherTimetableTab() {
   const [activeDay, setActiveDay] = useState<number | "all">("all");
   const [modal, setModal] = useState<number | null>(null);
   const [search, setSearch] = useState("");
+
   const { data: rooms = [] } = useRooms();
   const { data: teachers = [], isLoading: loadingTeachers } = useTeachers();
   const { data: teacherGroups = [] } = useTeacherGroups(
@@ -2256,6 +2545,9 @@ function TeacherTimetableTab() {
   const { data: scheduleData, isLoading: loadingSchedule } = useTeacherSchedule(
     selectedTeacher?.teacher_id ?? null,
   );
+  const { mutate: createEntry, isPending: isCreating } =
+    useCreateTeacherEntry();
+  const { mutate: deleteEntry } = useDeleteTeacherEntry();
 
   const entries = scheduleData?.entries ?? [];
   const byDay: Record<number, TeacherScheduleEntry[]> = {
@@ -2272,10 +2564,6 @@ function TeacherTimetableTab() {
       (a, b) => timeToMinutes(a.start_time) - timeToMinutes(b.start_time),
     );
   const displayDays = activeDay === "all" ? DAYS : [activeDay];
-
-  const { mutate: createEntry, isPending: isCreating } =
-    useCreateTeacherEntry();
-  const { mutate: deleteEntry } = useDeleteTeacherEntry();
 
   const filteredTeachers = teachers.filter(
     (t2) =>
@@ -2297,6 +2585,7 @@ function TeacherTimetableTab() {
         overflow: "hidden",
       }}
     >
+      {/* Sidebar */}
       <div
         style={{
           width: 268,
@@ -2495,6 +2784,8 @@ function TeacherTimetableTab() {
           )}
         </div>
       </div>
+
+      {/* Main area */}
       <div style={{ flex: 1, overflowY: "auto", background: bg }}>
         {!selectedTeacher ? (
           <div
@@ -2533,6 +2824,7 @@ function TeacherTimetableTab() {
           </div>
         ) : (
           <>
+            {/* Teacher header */}
             <div
               style={{
                 background: surface,
@@ -2616,6 +2908,8 @@ function TeacherTimetableTab() {
                 </div>
               )}
             </div>
+
+            {/* Day tabs */}
             <div
               style={{
                 background: surface,
@@ -2669,6 +2963,8 @@ function TeacherTimetableTab() {
                 </button>
               ))}
             </div>
+
+            {/* Schedule grid */}
             <div style={{ padding: "16px", overflowX: "auto" }}>
               {loadingSchedule ? (
                 <div style={{ textAlign: "center", padding: 40, color: muted }}>
@@ -2837,6 +3133,7 @@ function TeacherTimetableTab() {
           </>
         )}
       </div>
+
       {modal !== null && selectedTeacher && (
         <AddTeacherModal
           day={modal}
@@ -2868,7 +3165,6 @@ export default function TimetablePage() {
     : i18n.language.startsWith("en")
       ? "en"
       : "ar";
-
   const { resolvedTheme } = useTheme();
   const dark = resolvedTheme === "dark";
   const ctx = makeCtx(dark, locale, tFn);
@@ -2900,7 +3196,6 @@ export default function TimetablePage() {
             gap: 12,
           }}
         >
-          {/* Logo */}
           <div
             style={{
               display: "flex",
@@ -2932,7 +3227,6 @@ export default function TimetablePage() {
               </div>
             </div>
           </div>
-          {/* Tab Switcher */}
           <div
             style={{
               display: "flex",
