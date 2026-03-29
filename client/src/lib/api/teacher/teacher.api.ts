@@ -20,6 +20,13 @@ export const teacherApi = {
     return data;
   },
 
+  // ======================== TIMETABLE (جدول ثابت) ========================
+
+  getMyTimetable: async () => {
+    const { data } = await axiosInstance.get("/teachers/me/timetable");
+    return data;
+  },
+
   // ======================== DASHBOARD ========================
 
   getDashboard: async () => {
@@ -27,12 +34,11 @@ export const teacherApi = {
     return data;
   },
 
-  // ======================== SCHEDULE ========================
+  // ======================== SCHEDULE (حصص يومية) ========================
 
   getSchedule: async (days?: number) => {
-    const params = days ? { days } : {};
     const { data } = await axiosInstance.get("/teachers/me/schedule", {
-      params,
+      params: days ? { days } : {},
     });
     return data;
   },
@@ -66,10 +72,9 @@ export const teacherApi = {
   // ======================== STUDENTS ========================
 
   getStudentAttendance: async (studentId: string, groupId?: string) => {
-    const params = groupId ? { groupId } : {};
     const { data } = await axiosInstance.get(
       `/teachers/me/students/${studentId}/attendance`,
-      { params },
+      { params: groupId ? { groupId } : {} },
     );
     return data;
   },
@@ -84,9 +89,8 @@ export const teacherApi = {
   // ======================== SESSIONS ========================
 
   getSessions: async (groupId?: string) => {
-    const params = groupId ? { group_id: groupId } : {};
     const { data } = await axiosInstance.get("/teachers/me/sessions", {
-      params,
+      params: groupId ? { group_id: groupId } : {},
     });
     return data;
   },
@@ -94,7 +98,7 @@ export const teacherApi = {
   createSession: async (payload: {
     group_id: string;
     session_date: string;
-    end_time?: string; // ← جديد
+    end_time?: string;
     topic?: string;
   }) => {
     const { data } = await axiosInstance.post("/teachers/me/sessions", payload);
@@ -105,7 +109,7 @@ export const teacherApi = {
     sessionId: string,
     payload: {
       session_date?: string;
-      end_time?: string | null; // ← جديد
+      end_time?: string | null;
       topic?: string;
     },
   ) => {
@@ -123,10 +127,13 @@ export const teacherApi = {
     return data;
   },
 
+  // ======================== ROOMS ========================
+
   getRoomsOverview: async (date?: string) => {
-    const params = date ? `?date=${date}` : "";
-    const res = await axiosInstance.get(`/teachers/rooms/overview${params}`);
-    return res.data;
+    const { data } = await axiosInstance.get("/teachers/rooms/overview", {
+      params: date ? { date } : {},
+    });
+    return data;
   },
 
   // ======================== ATTENDANCE ========================

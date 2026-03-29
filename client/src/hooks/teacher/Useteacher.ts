@@ -8,18 +8,12 @@ import { useMe } from "../auth/auth.hooks";
 
 export const teacherKeys = {
   all: ["teacher"] as const,
-
-  // Profile
   profile: () => [...teacherKeys.all, "profile"] as const,
-
-  // Dashboard
   dashboard: () => [...teacherKeys.all, "dashboard"] as const,
-
-  // Schedule
   schedule: (days?: number) =>
     [...teacherKeys.all, "schedule", days ?? 30] as const,
-
-  // Groups
+  myTimetable: () => [...teacherKeys.all, "my-timetable"] as const,
+  rooms: (date: string) => [...teacherKeys.all, "rooms", date] as const,
   groups: () => [...teacherKeys.all, "groups"] as const,
   groupDetails: (groupId: string) =>
     [...teacherKeys.all, "groups", groupId] as const,
@@ -27,8 +21,6 @@ export const teacherKeys = {
     [...teacherKeys.all, "groups", groupId, "students"] as const,
   groupStats: (groupId: string) =>
     [...teacherKeys.all, "groups", groupId, "stats"] as const,
-
-  // Students
   studentAttendance: (studentId: string, groupId?: string) =>
     [
       ...teacherKeys.all,
@@ -39,29 +31,49 @@ export const teacherKeys = {
     ] as const,
   studentResults: (studentId: string) =>
     [...teacherKeys.all, "students", studentId, "results"] as const,
-
-  // Sessions
   sessions: (groupId?: string) =>
     [...teacherKeys.all, "sessions", groupId ?? "all"] as const,
   sessionAttendance: (sessionId: string) =>
     [...teacherKeys.all, "sessions", sessionId, "attendance"] as const,
-
-  // Exams & Results
   exams: () => [...teacherKeys.all, "exams"] as const,
   examResults: (examId: string) =>
     [...teacherKeys.all, "exams", examId, "results"] as const,
-
-  // Announcements
   announcements: (params?: { page?: number; category?: string }) =>
     [...teacherKeys.all, "announcements", params ?? {}] as const,
   announcementById: (id: string) =>
     [...teacherKeys.all, "announcements", id] as const,
-
-  // Notifications
   notifications: () => [...teacherKeys.all, "notifications"] as const,
   unreadCount: () =>
     [...teacherKeys.all, "notifications", "unread-count"] as const,
 };
+
+/* ═══════════════════════════════════════════════════════
+   TYPES — Timetable (TeacherScheduleEntry)
+═══════════════════════════════════════════════════════ */
+
+export interface TeacherTimetableEntry {
+  entry_id: string;
+  day_of_week: number; // 0=السبت … 5=الخميس
+  start_time: string; // "08:00"
+  end_time: string; // "09:30"
+  language: string; // "FR" | "EN" | ...
+  level: string;
+  group_label: string;
+  notes?: string | null;
+  group?: {
+    group_id: string;
+    name: string;
+    level: string;
+    course: { course_id: string; course_name: string; course_code: string };
+  } | null;
+  room?: { room_id: string; name: string } | null;
+}
+
+export interface TeacherTimetableResponse {
+  teacher_id: string;
+  teacher_name: string;
+  entries: TeacherTimetableEntry[];
+}
 
 /* ═══════════════════════════════════════════════════════
    PROFILE
@@ -85,19 +97,6 @@ export const useUpdateTeacherProfile = () => {
   });
 };
 
-export const useTeacherRoomsOverview = (date?: string) => {
-  return useQuery({
-    queryKey: ["teacher", "rooms-overview", date],
-    queryFn: () => teacherApi.getRoomsOverview(date),
-    // ✅ تحديث تلقائي كل 30 ثانية عند عرض صفحة القاعات
-    refetchInterval: 30_000,
-    // ✅ يعيد التحميل فوراً عند عودة المستخدم للتبويب
-    refetchOnWindowFocus: true,
-    // ✅ يحتفظ بالبيانات القديمة أثناء إعادة التحميل (لا flicker)
-    placeholderData: (prev: any) => prev,
-  });
-};
-
 export const useUploadTeacherAvatar = () => {
   const qc = useQueryClient();
   return useMutation({
@@ -113,24 +112,46 @@ export const useUploadTeacherAvatar = () => {
    DASHBOARD
 ═══════════════════════════════════════════════════════ */
 
-// في Useteacher.ts
 export const useTeacherDashboard = () => {
   const { data: me } = useMe();
   return useQuery({
     queryKey: teacherKeys.dashboard(),
     queryFn: teacherApi.getDashboard,
-    enabled: me?.role === "TEACHER", // ← ما يشتغل إلا للـ Teacher
+    enabled: me?.role === "TEACHER",
   });
 };
 
 /* ═══════════════════════════════════════════════════════
-   SCHEDULE
+   SCHEDULE — حصص يومية فعلية (Session-based)
 ═══════════════════════════════════════════════════════ */
 
 export const useTeacherSchedule = (days?: number) =>
   useQuery({
     queryKey: teacherKeys.schedule(days),
     queryFn: () => teacherApi.getSchedule(days),
+  });
+
+/* ═══════════════════════════════════════════════════════
+   TIMETABLE — الجدول الزمني الثابت (TeacherScheduleEntry)
+═══════════════════════════════════════════════════════ */
+
+export const useMyTimetable = () =>
+  useQuery<TeacherTimetableResponse>({
+    queryKey: teacherKeys.myTimetable(),
+    queryFn: teacherApi.getMyTimetable,
+    staleTime: 5 * 60 * 1000,
+  });
+
+/* ═══════════════════════════════════════════════════════
+   ROOMS OVERVIEW
+═══════════════════════════════════════════════════════ */
+
+export const useTeacherRoomsOverview = (date: string) =>
+  useQuery({
+    queryKey: teacherKeys.rooms(date),
+    queryFn: () => teacherApi.getRoomsOverview(date),
+    staleTime: 30 * 1000,
+    enabled: !!date,
   });
 
 /* ═══════════════════════════════════════════════════════
@@ -165,7 +186,7 @@ export const useGroupStats = (groupId: string) =>
   });
 
 /* ═══════════════════════════════════════════════════════
-   STUDENTS (per-student data)
+   STUDENTS
 ═══════════════════════════════════════════════════════ */
 
 export const useStudentAttendance = (studentId: string, groupId?: string) =>
@@ -198,7 +219,7 @@ export const useCreateSession = () => {
     mutationFn: (payload: {
       group_id: string;
       session_date: string;
-      end_time?: string; // ← جديد
+      end_time?: string;
       topic?: string;
     }) => teacherApi.createSession(payload),
     onSuccess: () => {
@@ -218,7 +239,7 @@ export const useUpdateSession = () => {
     }: {
       sessionId: string;
       session_date?: string;
-      end_time?: string | null; // ← جديد
+      end_time?: string | null;
       topic?: string;
     }) => teacherApi.updateSession(sessionId, payload),
     onSuccess: () => {
