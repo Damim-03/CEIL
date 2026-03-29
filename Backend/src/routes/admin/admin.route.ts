@@ -169,12 +169,15 @@ import {
   getTransferRequests as getTransferRequestsController,
 } from "../../controllers/admin/group.controller";
 import timetableRoutes from "./timetable.route";
+import teacherScheduleRoutes from "./teacherSchedule.route";
 
 const adminRoutes = Router();
 
 /* ======================================================
     admin
   ====================================================== */
+
+adminRoutes.use("/teacher-schedule", teacherScheduleRoutes);
 
 adminRoutes.use("/timetable", timetableRoutes);
 

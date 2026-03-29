@@ -47,8 +47,11 @@ model Teacher {
   created_at   DateTime @default(now())
   groups       Group[]
   user         User?
-
+  schedule TeacherScheduleEntry[]
+  
   @@map("Teacher")
+
+  
 }
 
 model Course {
@@ -139,6 +142,8 @@ model Group {
   sessions      Session[]
   timetable TimetableEntry[]
 
+  teacherSchedule TeacherScheduleEntry[] @relation("TeacherScheduleGroup")
+
   @@map("Group")
 }
 
@@ -187,6 +192,8 @@ model Room {
   created_at DateTime  @default(now())
   sessions   Session[]
   timetable TimetableEntry[]
+
+  teacherSchedule TeacherScheduleEntry[] @relation("TeacherScheduleRoom")
 
   @@map("Room")
 }
@@ -449,6 +456,32 @@ model TimetableConfig {
   updated_by String?  @db.Uuid
   updated_at DateTime @updatedAt
   @@map("TimetableConfig")
+}
+
+model TeacherScheduleEntry {
+  entry_id    String   @id @default(uuid()) @db.Uuid
+  teacher_id  String   @db.Uuid
+  group_id    String?  @db.Uuid
+  room_id     String?  @db.Uuid
+  day_of_week Int
+  start_time  String   @db.VarChar(5)
+  end_time    String   @db.VarChar(5)
+  language    String   @db.VarChar(5)
+  level       String   @db.VarChar(20)
+  group_label String   @db.VarChar(50)
+  notes       String?
+  created_by  String?  @db.Uuid
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  teacher Teacher  @relation(fields: [teacher_id], references: [teacher_id], onDelete: Cascade)
+  group   Group?   @relation("TeacherScheduleGroup", fields: [group_id],  references: [group_id])
+  room    Room?    @relation("TeacherScheduleRoom",  fields: [room_id],   references: [room_id])
+
+  @@unique([teacher_id, day_of_week, start_time])
+  @@index([teacher_id])
+  @@index([day_of_week])
+  @@map("TeacherScheduleEntry")
 }
 
 enum NotificationTarget {

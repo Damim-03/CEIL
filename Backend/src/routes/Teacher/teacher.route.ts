@@ -48,8 +48,7 @@ import {
   // Announcements
   getTeacherAnnouncementsController, // ✅ NEW
   getTeacherAnnouncementByIdController, // ✅ NEW
-
-  getTeacherRoomsOverviewController 
+  getTeacherRoomsOverviewController,
 } from "../../controllers/Teachers/teacher.controller";
 import {
   getMyNotificationsController,
@@ -57,6 +56,7 @@ import {
   markAllNotificationsReadController,
   markNotificationReadController,
 } from "../../controllers/admin/Notification.controller";
+import { getMyScheduleController } from "../../controllers/admin/teacherSchedule.controller";
 
 const teacherRoutes: Router = Router();
 
@@ -195,10 +195,11 @@ teacherRoutes.delete(
 );
 
 teacherRoutes.get(
-  "/rooms/overview", 
-  authMiddleware, 
+  "/rooms/overview",
+  authMiddleware,
   roleGuard([Permissions.VIEW_ROOMS]),
-  getTeacherRoomsOverviewController);
+  getTeacherRoomsOverviewController,
+);
 
 /* ======================================================
    ATTENDANCE
@@ -326,6 +327,13 @@ teacherRoutes.patch(
   "/notifications/:recipientId/read",
   authMiddleware,
   markNotificationReadController,
+);
+
+teacherRoutes.get(
+  "/me/timetable",
+  authMiddleware,
+  roleGuard([Permissions.VIEW_ASSIGNED_COURSES]),
+  getMyScheduleController,
 );
 
 export default teacherRoutes;
