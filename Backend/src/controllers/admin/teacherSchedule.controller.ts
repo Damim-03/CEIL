@@ -199,29 +199,29 @@ export async function getTeacherScheduleByIdController(
 // ══════════════════════════════════════════════════════════════
 export async function getMyScheduleController(req: Request, res: Response) {
   try {
-    const teacherId = (req as any).user?.teacher_id;
+    // auth middleware يضع user_id وليس teacher_id مباشرة
+    // نجلب Teacher record عبر user_id
+    const userId = (req as any).user?.user_id;
 
-    if (!teacherId) {
-      return res
-        .status(403)
-        .json({ message: "غير مصرح — حساب الأستاذ غير مرتبط" });
+    if (!userId) {
+      return res.status(403).json({ message: "غير مصرح" });
     }
 
-    const [teacher, entries] = await Promise.all([
-      prisma.teacher.findUnique({
-        where: { teacher_id: teacherId },
-        select: { teacher_id: true, first_name: true, last_name: true },
-      }),
-      prisma.teacherScheduleEntry.findMany({
-        where: { teacher_id: teacherId },
-        include: INCLUDE_TEACHER,
-        orderBy: [{ day_of_week: "asc" }, { start_time: "asc" }],
-      }),
-    ]);
+    // جلب Teacher من user_id
+    const teacher = await prisma.teacher.findFirst({
+      where: { user: { user_id: userId } },
+      select: { teacher_id: true, first_name: true, last_name: true },
+    });
 
     if (!teacher) {
       return res.status(404).json({ message: "ملف الأستاذ غير موجود" });
     }
+
+    const entries = await prisma.teacherScheduleEntry.findMany({
+      where: { teacher_id: teacher.teacher_id },
+      include: INCLUDE_TEACHER,
+      orderBy: [{ day_of_week: "asc" }, { start_time: "asc" }],
+    });
 
     // يطابق TeacherTimetableResponse في useMyTimetable hook
     return res.json({
