@@ -63,70 +63,51 @@ async function verifyTeacherOwnsCourse(teacherId: string, courseId: string) {
 // ══════════════════════════════════════════════
 
 export async function getProfile(user: JwtUser) {
-  // 1. نجلب User للحصول على teacher_id + google_avatar + role
   const dbUser = await prisma.user.findUnique({
     where: { user_id: user.user_id },
   });
 
   if (!dbUser?.teacher_id) return null;
 
-  // 2. نجلب Teacher بالـ teacher_id
   const teacher = await prisma.teacher.findUnique({
     where: { teacher_id: dbUser.teacher_id },
   });
 
   if (!teacher) return null;
 
-  // 3. حساب _count
   const [groupCount, sessionCount, examCount] = await Promise.all([
-    prisma.group.count({
-      where: { teacher_id: teacher.teacher_id },
-    }),
+    prisma.group.count({ where: { teacher_id: teacher.teacher_id } }),
     prisma.session.count({
       where: { group: { teacher_id: teacher.teacher_id } },
     }),
     prisma.exam.count({
       where: {
-        course: {
-          groups: { some: { teacher_id: teacher.teacher_id } },
-        },
+        course: { groups: { some: { teacher_id: teacher.teacher_id } } },
       },
     }),
   ]);
 
-  // 4. flat shape يطابق ProfileData في الـ frontend
   return {
     user_id: dbUser.user_id,
     first_name: teacher.first_name,
     last_name: teacher.last_name,
     email: teacher.email ?? dbUser.email,
     phone: teacher.phone_number ?? null,
-    avatar_url: null, // لا يوجد في User
+    avatar_url: null,
     google_avatar: dbUser.google_avatar ?? null,
     created_at: dbUser.created_at,
     role: { role_id: dbUser.role, role_name: dbUser.role },
-    teacher: {
-      teacher_id: teacher.teacher_id,
-    },
-    _count: {
-      groups: groupCount,
-      sessions: sessionCount,
-      exams: examCount,
-    },
+    teacher: { teacher_id: teacher.teacher_id },
+    _count: { groups: groupCount, sessions: sessionCount, exams: examCount },
   };
 }
 
 export async function updateProfile(
   user: JwtUser,
-  body: {
-    first_name?: string;
-    last_name?: string;
-    phone?: string | null;
-  },
+  body: { first_name?: string; last_name?: string; phone?: string | null },
 ) {
   const { first_name, last_name, phone } = body;
 
-  // نجلب teacher_id من User مباشرة
   const dbUser = await prisma.user.findUnique({
     where: { user_id: user.user_id },
     select: { teacher_id: true },
@@ -139,7 +120,6 @@ export async function updateProfile(
     };
   }
 
-  // نبني data object صريح لتجنب Prisma type errors
   const teacherUpdateData: {
     first_name?: string;
     last_name?: string;
@@ -173,7 +153,7 @@ export async function updateAvatar(user: JwtUser, file: Express.Multer.File) {
 }
 
 // ══════════════════════════════════════════════
-// 2. DASHBOARD (read-only — no socket needed)
+// 2. DASHBOARD
 // ══════════════════════════════════════════════
 
 export async function getDashboard(user: JwtUser) {
@@ -205,11 +185,20 @@ export async function getDashboard(user: JwtUser) {
   const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+  // ✅ بداية اليوم الحالي (00:00:00) لإظهار كل حصص اليوم
+  const dayStart = new Date(now);
+  dayStart.setHours(0, 0, 0, 0);
+
+  // ✅ نهاية أمس (لتجنب تكرار حصص اليوم في recent)
+  const yesterday = new Date(dayStart);
+  yesterday.setSeconds(-1);
+
   const [upcomingSessions, recentSessions] = await Promise.all([
+    // upcoming = من بداية اليوم → نهاية الأسبوع (يشمل كل حصص اليوم)
     prisma.session.findMany({
       where: {
         group: { teacher_id: teacher.teacher_id },
-        session_date: { gte: now, lte: nextWeek },
+        session_date: { gte: dayStart, lte: nextWeek },
       },
       include: {
         group: { include: { course: true } },
@@ -217,12 +206,13 @@ export async function getDashboard(user: JwtUser) {
         _count: { select: { attendance: true } },
       },
       orderBy: { session_date: "asc" },
-      take: 10,
+      take: 20,
     }),
+    // recent = الأسبوع الماضي حتى أمس (لا تكرار حصص اليوم)
     prisma.session.findMany({
       where: {
         group: { teacher_id: teacher.teacher_id },
-        session_date: { gte: lastWeek, lte: now },
+        session_date: { gte: lastWeek, lte: yesterday },
       },
       include: {
         group: { include: { course: true } },
@@ -262,9 +252,8 @@ export async function getDashboard(user: JwtUser) {
     take: 5,
   });
 
-  // Live session detection
-  const allTodaySessions = [...upcomingSessions, ...recentSessions];
-  const liveSession = allTodaySessions.find((s) => {
+  // Live session detection — يفحص في upcomingSessions (يشمل اليوم)
+  const liveSession = upcomingSessions.find((s) => {
     const start = new Date(s.session_date);
     const end = s.end_time
       ? new Date(s.end_time)
@@ -302,7 +291,7 @@ export async function getDashboard(user: JwtUser) {
 }
 
 // ══════════════════════════════════════════════
-// 3. ASSIGNED GROUPS (read-only)
+// 3. ASSIGNED GROUPS
 // ══════════════════════════════════════════════
 
 export async function getAssignedGroups(user: JwtUser) {
@@ -585,7 +574,6 @@ export async function createSession(
     include: { group: { include: { course: true } }, room: true },
   });
 
-  // 🔌 Socket — notify group students and admin
   emitToAdminLevel("session:created", {
     session_id: session.session_id,
     group_id: data.group_id,
@@ -648,7 +636,6 @@ export async function updateSession(
     include: { group: { include: { course: true } }, room: true },
   });
 
-  // 🔌 Socket — notify group about session update
   emitToGroup(session.group_id!, "session:updated", {
     session_id: sessionId,
     session_date: updated.session_date,
@@ -685,7 +672,6 @@ export async function deleteSession(user: JwtUser, sessionId: string) {
 
   await prisma.session.delete({ where: { session_id: sessionId } });
 
-  // 🔌 Socket — notify group about deleted session
   emitToGroup(session.group_id!, "session:deleted", {
     session_id: sessionId,
     session_date: session.session_date,
@@ -816,18 +802,16 @@ export async function markAttendance(
     create: { session_id: sessionId, student_id: studentId, status },
   });
 
-  // 🔌 Socket — notify student about their attendance
   const student = await prisma.student.findUnique({
     where: { student_id: studentId },
   });
-  if (student?.user_id) {
+  if (student?.user_id)
     emitToUser(student.user_id, "attendance:marked", {
       session_id: sessionId,
       status,
       session_date: session.session_date,
       group_name: session.group?.name,
     });
-  }
   emitToAdminLevel("attendance:marked", {
     session_id: sessionId,
     student_id: studentId,
@@ -891,7 +875,6 @@ export async function markBulkAttendance(
     ),
   );
 
-  // 🔌 Socket — notify each student + admin + group
   const studentUsers = await prisma.student.findMany({
     where: { student_id: { in: records.map((r) => r.student_id) } },
     select: { student_id: true, user_id: true },
@@ -899,14 +882,13 @@ export async function markBulkAttendance(
   const userMap = new Map(studentUsers.map((s) => [s.student_id, s.user_id]));
   for (const r of records) {
     const uid = userMap.get(r.student_id);
-    if (uid) {
+    if (uid)
       emitToUser(uid, "attendance:marked", {
         session_id: sessionId,
         status: r.status,
         session_date: session.session_date,
         group_name: session.group?.name,
       });
-    }
   }
   emitToAdminLevel("attendance:bulkMarked", {
     session_id: sessionId,
@@ -995,7 +977,6 @@ export async function createExam(
     include: { course: true },
   });
 
-  // 🔌 Socket — notify admin about new exam
   emitToAdminLevel("exam:created", {
     exam_id: exam.exam_id,
     exam_name: exam.exam_name,
@@ -1043,13 +1024,12 @@ export async function updateExam(
   const updated = await prisma.exam.update({
     where: { exam_id: examId },
     data: {
-      exam_name: data.exam_name !== undefined ? data.exam_name : undefined,
+      exam_name: data.exam_name ?? undefined,
       exam_date: data.exam_date ? new Date(data.exam_date) : undefined,
-      max_marks: data.max_marks !== undefined ? data.max_marks : undefined,
+      max_marks: data.max_marks ?? undefined,
     },
   });
 
-  // 🔌 Socket
   emitToAdminLevel("exam:updated", {
     exam_id: examId,
     exam_name: updated.exam_name,
@@ -1090,7 +1070,6 @@ export async function deleteExam(user: JwtUser, examId: string) {
 
   await prisma.exam.delete({ where: { exam_id: examId } });
 
-  // 🔌 Socket
   emitToAdminLevel("exam:deleted", {
     exam_id: examId,
     exam_name: exam.exam_name,
@@ -1151,6 +1130,7 @@ export async function getExamResults(user: JwtUser, examId: string) {
             100,
         ) / 100
       : 0;
+
   return {
     data: {
       exam,
@@ -1228,11 +1208,10 @@ export async function addExamResult(
     },
   });
 
-  // 🔌 Socket — notify student about their result
   const student = await prisma.student.findUnique({
     where: { student_id: data.student_id },
   });
-  if (student?.user_id) {
+  if (student?.user_id)
     emitToUser(student.user_id, "result:added", {
       exam_id: examId,
       exam_name: exam.exam_name,
@@ -1241,7 +1220,6 @@ export async function addExamResult(
       max_marks: exam.max_marks,
       grade: data.grade,
     });
-  }
 
   return { data: result };
 }
@@ -1306,7 +1284,6 @@ export async function addBulkExamResults(
     ),
   );
 
-  // 🔌 Socket — notify each student about their result
   const studentUsers = await prisma.student.findMany({
     where: { student_id: { in: records.map((r) => r.student_id) } },
     select: { student_id: true, user_id: true },
@@ -1314,7 +1291,7 @@ export async function addBulkExamResults(
   const userMap = new Map(studentUsers.map((s) => [s.student_id, s.user_id]));
   for (const r of records) {
     const uid = userMap.get(r.student_id);
-    if (uid) {
+    if (uid)
       emitToUser(uid, "result:added", {
         exam_id: examId,
         exam_name: exam.exam_name,
@@ -1323,7 +1300,6 @@ export async function addBulkExamResults(
         max_marks: exam.max_marks,
         grade: r.grade,
       });
-    }
   }
   emitToAdminLevel("result:bulkAdded", {
     exam_id: examId,
@@ -1341,7 +1317,7 @@ export async function addBulkExamResults(
 }
 
 // ══════════════════════════════════════════════
-// 8. STUDENT VIEWS (read-only)
+// 8. STUDENT VIEWS
 // ══════════════════════════════════════════════
 
 export async function getStudentAttendance(
@@ -1433,7 +1409,6 @@ export async function getStudentAttendance(
     group: s.group,
     status: attendanceMap.get(s.session_id) || "NOT_RECORDED",
   }));
-
   const recorded = history.filter((h) => h.status !== "NOT_RECORDED");
   const present = recorded.filter((h) => h.status === "PRESENT").length;
   const absent = recorded.filter((h) => h.status === "ABSENT").length;
@@ -1551,7 +1526,7 @@ export async function getStudentResults(user: JwtUser, studentId: string) {
 }
 
 // ══════════════════════════════════════════════
-// 9. GROUP STATS (read-only)
+// 9. GROUP STATS
 // ══════════════════════════════════════════════
 
 export async function getGroupStats(user: JwtUser, groupId: string) {
@@ -1617,7 +1592,6 @@ export async function getGroupStats(user: JwtUser, groupId: string) {
       };
     });
 
-  // Exam stats
   const exams = await prisma.exam.findMany({
     where: { course_id: group.course_id },
     include: {
@@ -1660,7 +1634,6 @@ export async function getGroupStats(user: JwtUser, groupId: string) {
     };
   });
 
-  // Most absent students
   const studentAbsences = await prisma.attendance.groupBy({
     by: ["student_id"],
     where: { status: "ABSENT", session: { group_id: groupId } },
@@ -1668,7 +1641,6 @@ export async function getGroupStats(user: JwtUser, groupId: string) {
     orderBy: { _count: { student_id: "desc" } },
     take: 5,
   });
-
   const absentStudentIds = studentAbsences.map((s) => s.student_id);
   const absentStudents =
     absentStudentIds.length > 0
@@ -1722,7 +1694,7 @@ export async function getGroupStats(user: JwtUser, groupId: string) {
 }
 
 // ══════════════════════════════════════════════
-// 10. ANNOUNCEMENTS (read-only)
+// 10. ANNOUNCEMENTS
 // ══════════════════════════════════════════════
 
 export async function getAnnouncements(opts: {
@@ -1768,7 +1740,7 @@ export async function getAnnouncementById(announcementId: string) {
 }
 
 // ══════════════════════════════════════════════
-// 11. SCHEDULE (read-only)
+// 11. SCHEDULE
 // ══════════════════════════════════════════════
 
 export async function getSchedule(user: JwtUser, days?: number) {
@@ -1808,7 +1780,7 @@ export async function getSchedule(user: JwtUser, days?: number) {
 }
 
 // ══════════════════════════════════════════════
-// 12. ROOMS OVERVIEW (read-only)
+// 12. ROOMS OVERVIEW
 // ══════════════════════════════════════════════
 
 export async function getRoomsOverview(user: JwtUser, date?: string) {

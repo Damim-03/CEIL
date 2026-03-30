@@ -60,15 +60,17 @@ interface DashboardData {
   live_session: DashboardSession | null;
 }
 
-/* ═══ i18n HELPERS ═══ */
+/* ═══ HELPERS ═══ */
 const getLocale = (lang: string) =>
   lang === "ar" ? "ar-DZ" : lang === "fr" ? "fr-FR" : "en-US";
+
 const fmtDate = (d: string, lang: string) =>
   new Date(d).toLocaleDateString(getLocale(lang), {
     weekday: "short",
     month: "short",
     day: "numeric",
   });
+
 const fmtTime = (d: string, lang: string) =>
   new Date(d).toLocaleTimeString(getLocale(lang), {
     hour: "2-digit",
@@ -93,6 +95,17 @@ const isLive = (s: { session_date: string; end_time: string | null }) => {
   return (
     now >= start &&
     now <= (s.end_time ? new Date(s.end_time).getTime() : start + 5400000)
+  );
+};
+
+// ✅ هل الحصة في نفس اليوم الحالي؟
+const isToday = (dateStr: string) => {
+  const d = new Date(dateStr),
+    now = new Date();
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
   );
 };
 
@@ -138,16 +151,16 @@ const useStatusLabels = () => {
 /* ═══ SKELETON ═══ */
 const Skeleton = ({ rtl }: { rtl: boolean }) => (
   <div className="space-y-6 animate-pulse" dir={rtl ? "rtl" : "ltr"}>
-    <div className="h-8 w-64 bg-[#D8CDC0]/3 dark:bg-[#2A2A2A]/30 dark:bg-[#2A2A2A]/30 rounded-lg" />
-    <div className="h-4 w-48 bg-[#D8CDC0]/2 dark:bg-[#2A2A2A]/20 dark:bg-[#2A2A2A]/20 rounded-lg" />
+    <div className="h-8 w-64 bg-[#D8CDC0]/30 dark:bg-[#2A2A2A]/30 rounded-lg" />
+    <div className="h-4 w-48 bg-[#D8CDC0]/20 dark:bg-[#2A2A2A]/20 rounded-lg" />
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/4 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] p-5 h-[100px]"
+          className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] p-5 h-[100px]"
         >
-          <div className="h-3 w-20 bg-[#D8CDC0]/3 dark:bg-[#2A2A2A]/30 dark:bg-[#2A2A2A]/30 rounded mb-3" />
-          <div className="h-7 w-14 bg-[#D8CDC0]/3 dark:bg-[#2A2A2A]/30 dark:bg-[#2A2A2A]/30 rounded" />
+          <div className="h-3 w-20 bg-[#D8CDC0]/30 dark:bg-[#2A2A2A]/30 rounded mb-3" />
+          <div className="h-7 w-14 bg-[#D8CDC0]/30 dark:bg-[#2A2A2A]/30 rounded" />
         </div>
       ))}
     </div>
@@ -163,10 +176,10 @@ const cMap = {
     val: "text-[#2B6F5E] dark:text-[#4ADE80]",
   },
   gold: {
-    bar: "from-[#C4A035] to-[#C4A035] dark:to-[#C4A035]/60",
+    bar: "from-[#C4A035] to-[#C4A035]/60",
     bg: "bg-[#C4A035]/8 dark:bg-[#C4A035]/8",
-    icon: "text-[#C4A035] dark:text-[#C4A035]",
-    val: "text-[#C4A035] dark:text-[#C4A035]",
+    icon: "text-[#C4A035]",
+    val: "text-[#C4A035]",
   },
   green: {
     bar: "from-[#8DB896] to-[#8DB896]/60",
@@ -200,13 +213,13 @@ const Stat = ({
   const c = cMap[color];
   const { isRTL } = useLanguage();
   const el = (
-    <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-lg hover:border-[#D8CDC0]/80 dark:border-[#2A2A2A] transition-all duration-300 cursor-pointer">
+    <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-lg transition-all duration-300 cursor-pointer">
       <div
         className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-gradient-to-b ${c.bar} opacity-50 group-hover:opacity-100 transition-opacity`}
       />
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-[#6B5D4F]/8 dark:text-[#AAAAAA]/80 dark:text-[#AAAAAA] uppercase tracking-wider mb-1.5">
+          <p className="text-xs font-medium text-[#6B5D4F]/80 dark:text-[#AAAAAA] uppercase tracking-wider mb-1.5">
             {label}
           </p>
           <p className={`text-2xl font-bold ${c.val}`}>
@@ -273,7 +286,7 @@ const Ring = ({ rate, label }: { rate: number; label: string }) => {
 /* ═══ EMPTY ═══ */
 const Empty = ({ icon: I, msg }: { icon: React.ElementType; msg: string }) => (
   <div className="flex flex-col items-center justify-center py-10 text-center">
-    <div className="w-14 h-14 rounded-2xl bg-[#D8CDC0]/2 dark:bg-[#2A2A2A]/20 dark:bg-[#2A2A2A]/20 flex items-center justify-center mb-3">
+    <div className="w-14 h-14 rounded-2xl bg-[#D8CDC0]/20 dark:bg-[#2A2A2A]/20 flex items-center justify-center mb-3">
       <I className="w-6 h-6 text-[#BEB29E] dark:text-[#888888]" />
     </div>
     <p className="text-sm text-[#6B5D4F]/70 dark:text-[#AAAAAA]/70">{msg}</p>
@@ -285,19 +298,19 @@ const LiveBanner = ({ s }: { s: DashboardSession }) => {
   const { t, currentLang } = useLanguage();
   const rem = remaining(s.end_time, s.session_date, t);
   return (
-    <div className="relative bg-gradient-to-r from-[#2B6F5E] dark:from-[#4ADE80] via-[#2B6F5E]/95 to-[#1a5446] rounded-2xl p-5 text-white overflow-hidden">
+    <div className="relative bg-gradient-to-r from-[#2B6F5E] via-[#2B6F5E]/95 to-[#1a5446] rounded-2xl p-5 text-white overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
       <div className="relative flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
             <span className="relative flex h-4 w-4">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 dark:bg-red-500 opacity-75" />
-              <span className="relative inline-flex rounded-full h-4 w-4 bg-red-50 dark:bg-red-950/200" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500" />
             </span>
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[11px] font-bold bg-red-50 dark:bg-red-950/200/90 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              <span className="text-[11px] font-bold bg-red-500/90 text-white px-2 py-0.5 rounded-full uppercase tracking-wide">
                 {t("teacher.dashboard.liveNow")}
               </span>
               {rem && <span className="text-[11px] text-white/60">{rem}</span>}
@@ -339,6 +352,133 @@ const LiveBanner = ({ s }: { s: DashboardSession }) => {
   );
 };
 
+/* ═══ SESSION ROW ═══ */
+const SessionRow = ({
+  session,
+  isRTL,
+  locale,
+  currentLang,
+  t,
+  showTodayBadge,
+}: {
+  session: DashboardSession;
+  isRTL: boolean;
+  locale: string;
+  currentLang: string;
+  t: (k: string, o?: any) => string;
+  showTodayBadge: boolean;
+}) => {
+  const live = isLive(session);
+  const today = isToday(session.session_date);
+  const isPast = new Date(session.session_date) < new Date() && !live;
+
+  return (
+    <div
+      className={`flex items-center gap-4 p-3.5 rounded-xl border transition-all group
+      ${
+        live
+          ? "bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 border-[#2B6F5E]/20 dark:border-[#4ADE80]/20 ring-1 ring-[#2B6F5E] dark:ring-[#4ADE80]/20"
+          : today && !isPast
+            ? "bg-[#2B6F5E]/[0.03] dark:bg-[#4ADE80]/[0.03] border-[#2B6F5E]/10 dark:border-[#4ADE80]/10"
+            : isPast
+              ? "bg-[#FAFAF8] dark:bg-[#111111] border-transparent opacity-60"
+              : "bg-[#FAFAF8] dark:bg-[#111111] hover:bg-[#F5F3EF] dark:hover:bg-[#222222] border-transparent hover:border-[#D8CDC0]/40 dark:border-[#2A2A2A]"
+      }`}
+    >
+      {/* Date box */}
+      <div
+        className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl shrink-0
+        ${
+          live
+            ? "bg-[#2B6F5E]/15 dark:bg-[#4ADE80]/15 ring-2 ring-[#2B6F5E] dark:ring-[#4ADE80]/20"
+            : today
+              ? "bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10"
+              : "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8"
+        }`}
+      >
+        <span className="text-[10px] font-medium text-[#2B6F5E]/70 dark:text-[#4ADE80]/70 leading-tight">
+          {new Date(session.session_date).toLocaleDateString(locale, {
+            weekday: "short",
+          })}
+        </span>
+        <span className="text-lg font-bold text-[#2B6F5E] dark:text-[#4ADE80] leading-tight">
+          {new Date(session.session_date).getDate()}
+        </span>
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+          <h3 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
+            {session.group.course.course_name}
+          </h3>
+          {live && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-[#2B6F5E] dark:bg-[#4ADE80] px-2 py-0.5 rounded-full shrink-0">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
+              </span>
+              {t("teacher.dashboard.live")}
+            </span>
+          )}
+          {/* ✅ شارة "اليوم" للحصص القادمة في نفس اليوم */}
+          {showTodayBadge && !live && today && !isPast && (
+            <span className="text-[10px] font-bold text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 px-2 py-0.5 rounded-full shrink-0">
+              {t("teacher.dashboard.today")}
+            </span>
+          )}
+          {isPast && today && (
+            <span className="text-[10px] font-medium text-[#BEB29E] dark:text-[#888888] px-2 py-0.5 rounded-full bg-[#D8CDC0]/20 dark:bg-[#2A2A2A]/30 shrink-0">
+              انتهت
+            </span>
+          )}
+          {!live && !today && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#C4A035]/10 dark:bg-[#C4A035]/15 text-[#C4A035] font-medium shrink-0">
+              {relTime(session.session_date, t)}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 text-xs text-[#6B5D4F]/70 dark:text-[#999999] flex-wrap">
+          <span>{session.group.name}</span>
+          {session.room && (
+            <>
+              <span className="text-[#BEB29E] dark:text-[#888888]">•</span>
+              <span className="flex items-center gap-0.5">
+                <DoorOpen className="w-3 h-3" />
+                {session.room.name}
+              </span>
+            </>
+          )}
+          {session.topic && (
+            <>
+              <span className="text-[#BEB29E] dark:text-[#888888]">•</span>
+              <span className="truncate max-w-[140px]">{session.topic}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Time */}
+      <div className={`${isRTL ? "text-left" : "text-right"} shrink-0`}>
+        <p className="text-xs font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
+          {fmtTime(session.session_date, currentLang)}
+        </p>
+        {session.end_time && (
+          <p className="text-[10px] text-[#6B5D4F]/50 dark:text-[#AAAAAA]/50">
+            — {fmtTime(session.end_time, currentLang)}
+          </p>
+        )}
+        {session._count.attendance > 0 && (
+          <p className="text-[10px] text-[#2B6F5E] dark:text-[#4ADE80] mt-0.5 flex items-center gap-0.5 justify-end">
+            <ClipboardCheck className="w-2.5 h-2.5" />
+            {session._count.attendance}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
 /* ═══════════════════════════════════════════════════════════
    MAIN
 ═══════════════════════════════════════════════════════════ */
@@ -350,7 +490,6 @@ export default function TeacherDashboard() {
   const locale = getLocale(currentLang);
 
   if (isLoading) return <Skeleton rtl={isRTL} />;
-
   if (isError || !data)
     return (
       <div
@@ -382,6 +521,18 @@ export default function TeacherDashboard() {
     live_session ||
     [...upcoming_sessions, ...recent_sessions].find(isLive) ||
     null;
+
+  // ✅ فصل حصص اليوم عن الحصص القادمة
+  const todaySessions = upcoming_sessions.filter((s) =>
+    isToday(s.session_date),
+  );
+  const futureSessions = upcoming_sessions.filter(
+    (s) => !isToday(s.session_date),
+  );
+  // اليوم أولاً ثم المستقبل
+  const displaySessions = [...todaySessions, ...futureSessions].slice(0, 6);
+  const hasTodaySessions = todaySessions.length > 0;
+
   const hour = new Date().getHours();
   const greeting =
     hour < 12
@@ -398,7 +549,7 @@ export default function TeacherDashboard() {
           <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
             {greeting}، {teacher.first_name} 👋
           </h1>
-          <p className="text-sm text-[#6B5D4F]/7 dark:text-[#AAAAAA]/70 dark:text-[#999999] mt-0.5">
+          <p className="text-sm text-[#6B5D4F]/70 dark:text-[#999999] mt-0.5">
             {t("teacher.dashboard.overview")}
           </p>
         </div>
@@ -449,16 +600,22 @@ export default function TeacherDashboard() {
 
       {/* Sessions + Attendance */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Upcoming Sessions */}
-        <div className="lg:col-span-2 bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] overflow-hidden">
+        {/* ✅ Upcoming Sessions — اليوم أولاً */}
+        <div className="lg:col-span-2 bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-lg bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8 flex items-center justify-center">
-                <Clock className="w-4.5 h-4.5 text-[#2B6F5E] dark:text-[#4ADE80]" />
+                <Clock className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                <h2 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] flex items-center gap-2">
                   {t("teacher.dashboard.upcomingSessions")}
+                  {/* ✅ عداد حصص اليوم */}
+                  {hasTodaySessions && (
+                    <span className="text-[10px] font-bold text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 px-2 py-0.5 rounded-full">
+                      {todaySessions.length} {t("teacher.dashboard.today")}
+                    </span>
+                  )}
                 </h2>
                 <p className="text-[11px] text-[#6B5D4F]/60 dark:text-[#AAAAAA]/60">
                   {t("teacher.dashboard.nextSevenDays")}
@@ -467,98 +624,58 @@ export default function TeacherDashboard() {
             </div>
             <Link
               to="/teacher/schedule"
-              className="text-xs font-medium text-[#2B6F5E] dark:text-[#4ADE80] hover:text-[#2B6F5E] dark:hover:text-[#4ADE80]/80 dark:text-[#4ADE80]/80 flex items-center gap-1"
+              className="text-xs font-medium text-[#2B6F5E] dark:text-[#4ADE80] flex items-center gap-1"
             >
               {t("teacher.dashboard.viewSchedule")}{" "}
               <Chev className="w-3.5 h-3.5" />
             </Link>
           </div>
+
           <div className="p-4">
-            {upcoming_sessions.length === 0 ? (
+            {displaySessions.length === 0 ? (
               <Empty
                 icon={CalendarDays}
                 msg={t("teacher.dashboard.noUpcoming")}
               />
             ) : (
               <div className="space-y-2.5">
-                {upcoming_sessions.slice(0, 5).map((session) => {
-                  const live = isLive(session);
+                {/* ✅ فاصل "حصص اليوم" */}
+                {hasTodaySessions && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex-1 h-px bg-[#2B6F5E]/15 dark:bg-[#4ADE80]/15" />
+                    <span className="text-[10px] font-bold text-[#2B6F5E] dark:text-[#4ADE80] px-2.5 py-1 bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8 rounded-full">
+                      📅 {t("teacher.dashboard.today")}
+                    </span>
+                    <div className="flex-1 h-px bg-[#2B6F5E]/15 dark:bg-[#4ADE80]/15" />
+                  </div>
+                )}
+
+                {displaySessions.map((session, idx) => {
+                  // أضف فاصل "الأيام القادمة" عند الانتقال من اليوم إلى المستقبل
+                  const isFirstFuture =
+                    !isToday(session.session_date) &&
+                    idx > 0 &&
+                    isToday(displaySessions[idx - 1].session_date);
+
                   return (
-                    <div
-                      key={session.session_id}
-                      className={`flex items-center gap-4 p-3.5 rounded-xl border transition-all group ${live ? "bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 border-[#2B6F5E]/20 dark:border-[#4ADE80]/20 ring-1 ring-[#2B6F5E] dark:ring-[#4ADE80]/10" : "bg-[#FAFAF8] dark:bg-[#111111] hover:bg-[#F5F3EF] dark:hover:bg-[#222222] border-transparent hover:border-[#D8CDC0]/40 dark:border-[#2A2A2A]"}`}
-                    >
-                      <div
-                        className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl shrink-0 ${live ? "bg-[#2B6F5E]/15 dark:bg-[#4ADE80]/15 ring-2 ring-[#2B6F5E] dark:ring-[#4ADE80]/20" : "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8"}`}
-                      >
-                        <span
-                          className={`text-[11px] font-medium leading-tight ${live ? "text-[#2B6F5E] dark:text-[#4ADE80]" : "text-[#2B6F5E]/70 dark:text-[#4ADE80]/70"}`}
-                        >
-                          {new Date(session.session_date).toLocaleDateString(
-                            locale,
-                            { weekday: "short" },
-                          )}
-                        </span>
-                        <span className="text-lg font-bold leading-tight text-[#2B6F5E] dark:text-[#4ADE80]">
-                          {new Date(session.session_date).getDate()}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                          <h3 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate">
-                            {session.group.course.course_name}
-                          </h3>
-                          {live ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-[#2B6F5E] dark:bg-[#4ADE80] px-2 py-0.5 rounded-full">
-                              <span className="relative flex h-1.5 w-1.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white dark:bg-[#1A1A1A] opacity-75" />
-                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white dark:bg-[#1A1A1A]" />
-                              </span>
-                              {t("teacher.dashboard.live")}
-                            </span>
-                          ) : (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#C4A035]/1 dark:bg-[#C4A035]/10 dark:bg-[#C4A035]/15 dark:bg-[#C4A035]/15 text-[#C4A035] dark:text-[#C4A035] dark:text-[#C4A035] font-medium shrink-0">
-                              {relTime(session.session_date, t)}
-                            </span>
-                          )}
+                    <div key={session.session_id}>
+                      {isFirstFuture && futureSessions.length > 0 && (
+                        <div className="flex items-center gap-2 my-3">
+                          <div className="flex-1 h-px bg-[#D8CDC0]/40 dark:bg-[#2A2A2A]" />
+                          <span className="text-[10px] font-medium text-[#BEB29E] dark:text-[#888888] px-2">
+                            {t("teacher.dashboard.nextSevenDays")}
+                          </span>
+                          <div className="flex-1 h-px bg-[#D8CDC0]/40 dark:bg-[#2A2A2A]" />
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-[#6B5D4F]/7 dark:text-[#AAAAAA]/70 dark:text-[#999999] flex-wrap">
-                          <span>{session.group.name}</span>
-                          {session.room && (
-                            <>
-                              <span className="text-[#BEB29E] dark:text-[#888888]">
-                                •
-                              </span>
-                              <span className="flex items-center gap-0.5">
-                                <DoorOpen className="w-3 h-3" />
-                                {session.room.name}
-                              </span>
-                            </>
-                          )}
-                          {session.topic && (
-                            <>
-                              <span className="text-[#BEB29E] dark:text-[#888888]">
-                                •
-                              </span>
-                              <span className="truncate max-w-[140px]">
-                                {session.topic}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div
-                        className={`${isRTL ? "text-left" : "text-right"} shrink-0`}
-                      >
-                        <p className="text-xs font-medium text-[#1B1B1B] dark:text-[#E5E5E5]">
-                          {fmtTime(session.session_date, currentLang)}
-                        </p>
-                        {session.end_time && (
-                          <p className="text-[10px] text-[#6B5D4F]/50 dark:text-[#AAAAAA]/50">
-                            — {fmtTime(session.end_time, currentLang)}
-                          </p>
-                        )}
-                      </div>
+                      )}
+                      <SessionRow
+                        session={session}
+                        isRTL={isRTL}
+                        locale={locale}
+                        currentLang={currentLang}
+                        t={t}
+                        showTodayBadge={hasTodaySessions}
+                      />
                     </div>
                   );
                 })}
@@ -568,10 +685,10 @@ export default function TeacherDashboard() {
         </div>
 
         {/* Attendance Ring */}
-        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] overflow-hidden">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] overflow-hidden">
           <div className="flex items-center gap-2.5 px-5 py-4 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
-            <div className="w-9 h-9 rounded-lg bg-[#8DB896]/1 dark:bg-[#4ADE80]/12 dark:bg-[#4ADE80]/10 flex items-center justify-center">
-              <TrendingUp className="w-4.5 h-4.5 text-[#3D7A4A] dark:text-[#4ADE80]" />
+            <div className="w-9 h-9 rounded-lg bg-[#8DB896]/10 dark:bg-[#4ADE80]/10 flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-[#3D7A4A] dark:text-[#4ADE80]" />
             </div>
             <div>
               <h2 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
@@ -616,11 +733,11 @@ export default function TeacherDashboard() {
       {/* Groups + Exams */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* My Groups */}
-        <div className="lg:col-span-2 bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] overflow-hidden">
+        <div className="lg:col-span-2 bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-[#C4A035]/8 dark:bg-[#C4A035]/10 dark:bg-[#C4A035]/10 flex items-center justify-center">
-                <BookOpen className="w-4.5 h-4.5 text-[#C4A035] dark:text-[#C4A035]" />
+              <div className="w-9 h-9 rounded-lg bg-[#C4A035]/8 dark:bg-[#C4A035]/10 flex items-center justify-center">
+                <BookOpen className="w-4 h-4 text-[#C4A035]" />
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
@@ -635,7 +752,7 @@ export default function TeacherDashboard() {
             </div>
             <Link
               to="/teacher/groups"
-              className="text-xs font-medium text-[#2B6F5E] dark:text-[#4ADE80] hover:text-[#2B6F5E] dark:hover:text-[#4ADE80]/80 dark:text-[#4ADE80]/80 flex items-center gap-1"
+              className="text-xs font-medium text-[#2B6F5E] dark:text-[#4ADE80] flex items-center gap-1"
             >
               {t("teacher.dashboard.viewAll")} <Chev className="w-3.5 h-3.5" />
             </Link>
@@ -651,14 +768,14 @@ export default function TeacherDashboard() {
                     <Link
                       key={g.group_id}
                       to={`/teacher/groups/${g.group_id}`}
-                      className="p-4 rounded-xl border border-[#D8CDC0]/4 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] hover:border-[#2B6F5E]/30 dark:border-[#4ADE80]/30 hover:shadow-md transition-all group bg-[#FAFAF8] dark:bg-[#111111] hover:bg-white dark:bg-[#1A1A1A]"
+                      className="p-4 rounded-xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] hover:border-[#2B6F5E]/30 hover:shadow-md transition-all group bg-[#FAFAF8] dark:bg-[#111111] hover:bg-white dark:hover:bg-[#1A1A1A]"
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="min-w-0 flex-1">
-                          <h3 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate group-hover:text-[#2B6F5E] dark:text-[#4ADE80] transition-colors">
+                          <h3 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] truncate group-hover:text-[#2B6F5E] dark:group-hover:text-[#4ADE80] transition-colors">
                             {g.name}
                           </h3>
-                          <p className="text-xs text-[#6B5D4F]/7 dark:text-[#AAAAAA]/70 dark:text-[#999999] truncate mt-0.5">
+                          <p className="text-xs text-[#6B5D4F]/70 dark:text-[#999999] truncate mt-0.5">
                             {g.course_name}
                           </p>
                         </div>
@@ -693,11 +810,11 @@ export default function TeacherDashboard() {
         </div>
 
         {/* Exams */}
-        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] overflow-hidden">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-[#D8CDC0]/2 dark:bg-[#2A2A2A]/20 dark:bg-[#2A2A2A]/20 flex items-center justify-center">
-                <FileText className="w-4.5 h-4.5 text-[#6B5D4F] dark:text-[#AAAAAA]" />
+              <div className="w-9 h-9 rounded-lg bg-[#D8CDC0]/20 dark:bg-[#2A2A2A]/20 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-[#6B5D4F] dark:text-[#AAAAAA]" />
               </div>
               <h2 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
                 {t("teacher.dashboard.upcomingExams")}
@@ -705,7 +822,7 @@ export default function TeacherDashboard() {
             </div>
             <Link
               to="/teacher/exams"
-              className="text-xs font-medium text-[#2B6F5E] dark:text-[#4ADE80] hover:text-[#2B6F5E] dark:hover:text-[#4ADE80]/80 dark:text-[#4ADE80]/80 flex items-center gap-1"
+              className="text-xs font-medium text-[#2B6F5E] dark:text-[#4ADE80] flex items-center gap-1"
             >
               {t("teacher.dashboard.all")} <Chev className="w-3.5 h-3.5" />
             </Link>
@@ -727,7 +844,7 @@ export default function TeacherDashboard() {
                       <h3 className="text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] truncate flex-1">
                         {e.exam_name || e.course.course_name}
                       </h3>
-                      <span className="text-[10px] font-bold text-[#C4A035] dark:text-[#C4A035] dark:text-[#C4A035] bg-[#C4A035]/1 dark:bg-[#C4A035]/10 dark:bg-[#C4A035]/15 dark:bg-[#C4A035]/15 px-2 py-0.5 rounded-full shrink-0 ms-2">
+                      <span className="text-[10px] font-bold text-[#C4A035] bg-[#C4A035]/10 px-2 py-0.5 rounded-full shrink-0 ms-2">
                         /{e.max_marks}
                       </span>
                     </div>
@@ -750,11 +867,11 @@ export default function TeacherDashboard() {
 
       {/* Recent Sessions Table */}
       {recent_sessions.length > 0 && (
-        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] overflow-hidden">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[#D8CDC0]/30 dark:border-[#2A2A2A]">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-[#BEB29E]/1 dark:bg-[#888888]/12 dark:bg-[#888888]/10 flex items-center justify-center">
-                <ClipboardCheck className="w-4.5 h-4.5 text-[#6B5D4F] dark:text-[#AAAAAA]" />
+              <div className="w-9 h-9 rounded-lg bg-[#BEB29E]/10 dark:bg-[#888888]/10 flex items-center justify-center">
+                <ClipboardCheck className="w-4 h-4 text-[#6B5D4F] dark:text-[#AAAAAA]" />
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
@@ -767,7 +884,7 @@ export default function TeacherDashboard() {
             </div>
             <Link
               to="/teacher/sessions"
-              className="text-xs font-medium text-[#2B6F5E] dark:text-[#4ADE80] hover:text-[#2B6F5E] dark:hover:text-[#4ADE80]/80 dark:text-[#4ADE80]/80 flex items-center gap-1"
+              className="text-xs font-medium text-[#2B6F5E] dark:text-[#4ADE80] flex items-center gap-1"
             >
               {t("teacher.dashboard.allSessions")}{" "}
               <Chev className="w-3.5 h-3.5" />
@@ -787,7 +904,7 @@ export default function TeacherDashboard() {
                   ].map((k) => (
                     <th
                       key={k}
-                      className={`${isRTL ? "text-right" : "text-left"} text-[11px] font-medium text-[#6B5D4F]/6 dark:text-[#AAAAAA]/60 dark:text-[#888888] uppercase tracking-wider px-5 py-3`}
+                      className={`${isRTL ? "text-right" : "text-left"} text-[11px] font-medium text-[#6B5D4F]/60 dark:text-[#888888] uppercase tracking-wider px-5 py-3`}
                     >
                       {t(`teacher.dashboard.${k}`)}
                     </th>
@@ -798,7 +915,7 @@ export default function TeacherDashboard() {
                 {recent_sessions.map((s) => (
                   <tr
                     key={s.session_id}
-                    className="border-b border-[#D8CDC0]/1 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A]/40 hover:bg-[#FAFAF8] dark:hover:bg-[#222222] transition-colors"
+                    className="border-b border-[#D8CDC0]/10 dark:border-[#2A2A2A]/40 hover:bg-[#FAFAF8] dark:hover:bg-[#222222] transition-colors"
                   >
                     <td className="px-5 py-3.5 text-xs text-[#1B1B1B] dark:text-[#E5E5E5] whitespace-nowrap">
                       {fmtDate(s.session_date, currentLang)}
@@ -818,7 +935,7 @@ export default function TeacherDashboard() {
                     <td className="px-5 py-3.5 text-xs text-[#6B5D4F]/70 dark:text-[#AAAAAA]/70">
                       {s.group.name}
                     </td>
-                    <td className="px-5 py-3.5 text-xs text-[#6B5D4F]/7 dark:text-[#AAAAAA]/70 dark:text-[#999999] max-w-[200px] truncate">
+                    <td className="px-5 py-3.5 text-xs text-[#6B5D4F]/70 dark:text-[#999999] max-w-[200px] truncate">
                       {s.topic || "—"}
                     </td>
                     <td className="px-5 py-3.5">
@@ -830,7 +947,7 @@ export default function TeacherDashboard() {
                           })}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#C4A035] dark:text-[#C4A035] dark:text-[#C4A035] bg-[#C4A035]/8 dark:bg-[#C4A035]/10 dark:bg-[#C4A035]/10 px-2.5 py-1 rounded-full">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#C4A035] bg-[#C4A035]/8 px-2.5 py-1 rounded-full">
                           <AlertCircle className="w-3 h-3" />
                           {t("teacher.dashboard.notRecorded")}
                         </span>
