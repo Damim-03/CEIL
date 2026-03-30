@@ -151,16 +151,16 @@ const useStatusLabels = () => {
 /* ═══ SKELETON ═══ */
 const Skeleton = ({ rtl }: { rtl: boolean }) => (
   <div className="space-y-6 animate-pulse" dir={rtl ? "rtl" : "ltr"}>
-    <div className="h-8 w-64 bg-[#D8CDC0]/30 dark:bg-[#2A2A2A]/30 rounded-lg" />
-    <div className="h-4 w-48 bg-[#D8CDC0]/20 dark:bg-[#2A2A2A]/20 rounded-lg" />
+    <div className="h-8 w-64 bg-brand-beige/30 dark:bg-[#2A2A2A]/30 rounded-lg" />
+    <div className="h-4 w-48 bg-brand-beige/20 dark:bg-[#2A2A2A]/20 rounded-lg" />
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] p-5 h-[100px]"
+          className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige/40 dark:border-[#2A2A2A] p-5 h-25"
         >
-          <div className="h-3 w-20 bg-[#D8CDC0]/30 dark:bg-[#2A2A2A]/30 rounded mb-3" />
-          <div className="h-7 w-14 bg-[#D8CDC0]/30 dark:bg-[#2A2A2A]/30 rounded" />
+          <div className="h-3 w-20 bg-brand-beige/30 dark:bg-[#2A2A2A]/30 rounded mb-3" />
+          <div className="h-7 w-14 bg-brand-beige/30 dark:bg-[#2A2A2A]/30 rounded" />
         </div>
       ))}
     </div>
@@ -213,9 +213,9 @@ const Stat = ({
   const c = cMap[color];
   const { isRTL } = useLanguage();
   const el = (
-    <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/50 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-lg transition-all duration-300 cursor-pointer">
+    <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige/50 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-lg transition-all duration-300 cursor-pointer">
       <div
-        className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-gradient-to-b ${c.bar} opacity-50 group-hover:opacity-100 transition-opacity`}
+        className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-linear-to-b ${c.bar} opacity-50 group-hover:opacity-100 transition-opacity`}
       />
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
@@ -286,8 +286,8 @@ const Ring = ({ rate, label }: { rate: number; label: string }) => {
 /* ═══ EMPTY ═══ */
 const Empty = ({ icon: I, msg }: { icon: React.ElementType; msg: string }) => (
   <div className="flex flex-col items-center justify-center py-10 text-center">
-    <div className="w-14 h-14 rounded-2xl bg-[#D8CDC0]/20 dark:bg-[#2A2A2A]/20 flex items-center justify-center mb-3">
-      <I className="w-6 h-6 text-[#BEB29E] dark:text-[#888888]" />
+    <div className="w-14 h-14 rounded-2xl bg-brand-beige/20 dark:bg-[#2A2A2A]/20 flex items-center justify-center mb-3">
+      <I className="w-6 h-6 text-brand-brown dark:text-[#888888]" />
     </div>
     <p className="text-sm text-[#6B5D4F]/70 dark:text-[#AAAAAA]/70">{msg}</p>
   </div>
@@ -298,8 +298,8 @@ const LiveBanner = ({ s }: { s: DashboardSession }) => {
   const { t, currentLang } = useLanguage();
   const rem = remaining(s.end_time, s.session_date, t);
   return (
-    <div className="relative bg-gradient-to-r from-[#2B6F5E] via-[#2B6F5E]/95 to-[#1a5446] rounded-2xl p-5 text-white overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
+    <div className="relative bg-linear-to-r from-[#2B6F5E] via-[#2B6F5E]/95 to-[#1a5446] rounded-2xl p-5 text-white overflow-hidden">
+      <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/5 to-transparent animate-pulse" />
       <div className="relative flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
@@ -379,7 +379,7 @@ const SessionRow = ({
         live
           ? "bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 border-[#2B6F5E]/20 dark:border-[#4ADE80]/20 ring-1 ring-[#2B6F5E] dark:ring-[#4ADE80]/20"
           : today && !isPast
-            ? "bg-[#2B6F5E]/[0.03] dark:bg-[#4ADE80]/[0.03] border-[#2B6F5E]/10 dark:border-[#4ADE80]/10"
+            ? "bg-[#2B6F5E]/3 dark:bg-[#4ADE80]/3 border-[#2B6F5E]/10 dark:border-[#4ADE80]/10"
             : isPast
               ? "bg-[#FAFAF8] dark:bg-[#111111] border-transparent opacity-60"
               : "bg-[#FAFAF8] dark:bg-[#111111] hover:bg-[#F5F3EF] dark:hover:bg-[#222222] border-transparent hover:border-[#D8CDC0]/40 dark:border-[#2A2A2A]"
