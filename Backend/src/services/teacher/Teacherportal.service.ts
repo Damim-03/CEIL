@@ -63,68 +63,101 @@ async function verifyTeacherOwnsCourse(teacherId: string, courseId: string) {
 // ══════════════════════════════════════════════
 
 export async function getProfile(user: JwtUser) {
-  const teacher = await getTeacherFromUser(user);
+  // 1. نجلب User للحصول على teacher_id + google_avatar + role
+  const dbUser = await prisma.user.findUnique({
+    where: { user_id: user.user_id },
+  });
+
+  if (!dbUser?.teacher_id) return null;
+
+  // 2. نجلب Teacher بالـ teacher_id
+  const teacher = await prisma.teacher.findUnique({
+    where: { teacher_id: dbUser.teacher_id },
+  });
+
   if (!teacher) return null;
 
-  return prisma.teacher.findUnique({
-    where: { teacher_id: teacher.teacher_id },
-    include: {
-      user: {
-        select: {
-          email: true,
-          role: true,
-          google_avatar: true,
-          created_at: true,
+  // 3. حساب _count
+  const [groupCount, sessionCount, examCount] = await Promise.all([
+    prisma.group.count({
+      where: { teacher_id: teacher.teacher_id },
+    }),
+    prisma.session.count({
+      where: { group: { teacher_id: teacher.teacher_id } },
+    }),
+    prisma.exam.count({
+      where: {
+        course: {
+          groups: { some: { teacher_id: teacher.teacher_id } },
         },
       },
-      groups: {
-        include: {
-          course: true,
-          _count: {
-            select: {
-              enrollments: {
-                where: {
-                  registration_status: {
-                    in: ["VALIDATED", "PAID", "FINISHED"],
-                  },
-                },
-              },
-              sessions: true,
-            },
-          },
-        },
-      },
+    }),
+  ]);
+
+  // 4. flat shape يطابق ProfileData في الـ frontend
+  return {
+    user_id: dbUser.user_id,
+    first_name: teacher.first_name,
+    last_name: teacher.last_name,
+    email: teacher.email ?? dbUser.email,
+    phone: teacher.phone_number ?? null,
+    avatar_url: null, // لا يوجد في User
+    google_avatar: dbUser.google_avatar ?? null,
+    created_at: dbUser.created_at,
+    role: { role_id: dbUser.role, role_name: dbUser.role },
+    teacher: {
+      teacher_id: teacher.teacher_id,
     },
-  });
+    _count: {
+      groups: groupCount,
+      sessions: sessionCount,
+      exams: examCount,
+    },
+  };
 }
 
 export async function updateProfile(
   user: JwtUser,
-  data: { first_name?: string; last_name?: string; phone_number?: string },
+  body: {
+    first_name?: string;
+    last_name?: string;
+    phone?: string | null;
+  },
 ) {
-  const teacher = await getTeacherFromUser(user);
-  if (!teacher)
+  const { first_name, last_name, phone } = body;
+
+  // نجلب teacher_id من User مباشرة
+  const dbUser = await prisma.user.findUnique({
+    where: { user_id: user.user_id },
+    select: { teacher_id: true },
+  });
+
+  if (!dbUser?.teacher_id) {
     return {
       error: "not_found" as const,
       message: "Teacher profile not found",
     };
+  }
 
-  const updated = await prisma.teacher.update({
-    where: { teacher_id: teacher.teacher_id },
-    data: {
-      first_name: data.first_name?.trim() || undefined,
-      last_name: data.last_name?.trim() || undefined,
-      phone_number: data.phone_number || undefined,
-    },
-  });
+  // نبني data object صريح لتجنب Prisma type errors
+  const teacherUpdateData: {
+    first_name?: string;
+    last_name?: string;
+    phone_number?: string | null;
+  } = {};
 
-  // 🔌 Socket
-  emitToAdminLevel("teacher:profileUpdated", {
-    teacher_id: updated.teacher_id,
-    name: `${updated.first_name} ${updated.last_name}`,
-  });
+  if (first_name !== undefined) teacherUpdateData.first_name = first_name;
+  if (last_name !== undefined) teacherUpdateData.last_name = last_name;
+  if (phone !== undefined) teacherUpdateData.phone_number = phone;
 
-  return { data: updated };
+  if (Object.keys(teacherUpdateData).length > 0) {
+    await prisma.teacher.update({
+      where: { teacher_id: dbUser.teacher_id },
+      data: teacherUpdateData,
+    });
+  }
+
+  return getProfile(user);
 }
 
 export async function updateAvatar(user: JwtUser, file: Express.Multer.File) {

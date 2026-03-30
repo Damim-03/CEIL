@@ -8,7 +8,13 @@ export const teacherApi = {
     return data;
   },
 
-  updateProfile: async (payload: Record<string, any>) => {
+  updateProfile: async (payload: {
+    first_name?: string;
+    last_name?: string;
+    phone?: string | null;
+    specialization?: string | null;
+    bio?: string | null;
+  }) => {
     const { data } = await axiosInstance.put("/teachers/me/profile", payload);
     return data;
   },

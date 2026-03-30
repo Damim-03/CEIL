@@ -30,16 +30,12 @@ interface ProfileData {
   user_id: string;
   first_name: string;
   last_name: string;
-  email: string;
+  email: string | null;
   phone: string | null;
   avatar_url: string | null;
   google_avatar: string | null;
   role: { role_id: string; role_name: string };
-  teacher: {
-    teacher_id: string;
-    specialization: string | null;
-    bio: string | null;
-  } | null;
+  teacher: { teacher_id: string } | null;
   created_at: string;
   _count?: { groups?: number; sessions?: number; exams?: number };
 }
@@ -123,11 +119,12 @@ export default function TeacherProfile() {
     first_name: "",
     last_name: "",
     phone: "",
-    specialization: "",
-    bio: "",
   });
 
-  const profile: ProfileData | undefined = data?.user ?? data;
+  // getProfile يرجع flat shape مباشرة:
+  // { user_id, first_name, last_name, email, phone,
+  //   google_avatar, avatar_url, role, teacher, _count, created_at }
+  const profile: ProfileData | undefined = data ?? undefined;
 
   useEffect(() => {
     if (profile)
@@ -135,8 +132,6 @@ export default function TeacherProfile() {
         first_name: profile.first_name || "",
         last_name: profile.last_name || "",
         phone: profile.phone || "",
-        specialization: profile.teacher?.specialization || "",
-        bio: profile.teacher?.bio || "",
       });
   }, [profile]);
 
@@ -146,16 +141,18 @@ export default function TeacherProfile() {
   };
 
   const handleSave = async () => {
-    await updateMut.mutateAsync({
-      first_name: formData.first_name,
-      last_name: formData.last_name,
-      phone: formData.phone || null,
-      specialization: formData.specialization || null,
-      bio: formData.bio || null,
-    });
-    setIsEditing(false);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+    try {
+      await updateMut.mutateAsync({
+        first_name: formData.first_name || undefined,
+        last_name: formData.last_name || undefined,
+        phone: formData.phone || null,
+      });
+      setIsEditing(false);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (err) {
+      console.error("[TeacherProfile] save error:", err);
+    }
   };
 
   const cancelEdit = () => {
@@ -164,8 +161,6 @@ export default function TeacherProfile() {
         first_name: profile.first_name || "",
         last_name: profile.last_name || "",
         phone: profile.phone || "",
-        specialization: profile.teacher?.specialization || "",
-        bio: profile.teacher?.bio || "",
       });
     setIsEditing(false);
   };
@@ -196,12 +191,13 @@ export default function TeacherProfile() {
       </div>
     );
 
-  const avatarSrc = profile.avatar_url || profile.google_avatar;
-  const fullName = `${profile.first_name} ${profile.last_name}`.trim();
+  const avatarSrc = profile.avatar_url || profile.google_avatar || null;
+  const fullName =
+    `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
 
   const idCardProfile = {
     user_id: profile.user_id,
-    email: profile.email,
+    email: profile.email ?? "",
     first_name: profile.first_name,
     last_name: profile.last_name,
     google_avatar: avatarSrc,
@@ -271,14 +267,16 @@ export default function TeacherProfile() {
           {/* Name + meta */}
           <div className="flex-1 text-center sm:text-start">
             <h1 className="text-2xl font-bold text-white leading-tight">
-              {fullName || profile.email.split("@")[0]}
+              {fullName || profile.email?.split("@")[0] || ""}
             </h1>
             <div className="flex items-center gap-3 mt-2 flex-wrap justify-center sm:justify-start">
               <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white/90 bg-white/15 backdrop-blur px-3 py-1 rounded-full border border-white/20">
                 <Shield className="w-3 h-3" />
                 {profile.role?.role_name || "TEACHER"}
               </span>
-              <span className="text-sm text-white/70">{profile.email}</span>
+              <span className="text-sm text-white/70">
+                {profile.email ?? ""}
+              </span>
             </div>
           </div>
 
@@ -353,7 +351,7 @@ export default function TeacherProfile() {
               iconBg="bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8"
             >
               <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                {profile.email}
+                {profile.email ?? "—"}
               </p>
             </DetailRow>
 
@@ -387,67 +385,10 @@ export default function TeacherProfile() {
                 </p>
               )}
             </DetailRow>
-
-            <DetailRow
-              icon={Award}
-              label={t("teacher.profile.specialization")}
-              iconColor="text-purple-500"
-              iconBg="bg-purple-500/8"
-            >
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={formData.specialization}
-                  onChange={(e) =>
-                    setFormData((p) => ({
-                      ...p,
-                      specialization: e.target.value,
-                    }))
-                  }
-                  placeholder={t("teacher.profile.specPlaceholder")}
-                  className={inputCls}
-                />
-              ) : (
-                <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                  {profile.teacher?.specialization || (
-                    <span className="text-[#BEB29E] dark:text-[#888888] font-normal">
-                      —
-                    </span>
-                  )}
-                </p>
-              )}
-            </DetailRow>
-
-            <DetailRow
-              icon={BookOpen}
-              label={t("teacher.profile.bio")}
-              iconColor="text-blue-500"
-              iconBg="bg-blue-500/8"
-            >
-              {isEditing ? (
-                <textarea
-                  value={formData.bio}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, bio: e.target.value }))
-                  }
-                  placeholder={t("teacher.profile.bioPlaceholder")}
-                  rows={3}
-                  className="w-full px-4 py-3 bg-[#F5F5F3] dark:bg-[#111111] border border-[#D8CDC0]/50 dark:border-[#2A2A2A] rounded-xl text-sm text-[#1B1B1B] dark:text-[#E5E5E5] focus:outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/40 focus:ring-2 focus:ring-[#2B6F5E]/10 resize-none"
-                />
-              ) : (
-                <p className="text-sm text-[#1B1B1B] dark:text-[#E5E5E5] leading-relaxed">
-                  {profile.teacher?.bio || (
-                    <span className="text-[#BEB29E] dark:text-[#888888]">
-                      {t("teacher.profile.noBio")}
-                    </span>
-                  )}
-                </p>
-              )}
-            </DetailRow>
           </div>
 
           {/* نظرة عامة */}
-          {profile._count && (
+          {
             <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] overflow-hidden">
               <div className="flex items-center gap-3 px-5 py-4 border-b border-[#D8CDC0]/20 dark:border-[#2A2A2A]">
                 <div className="w-8 h-8 rounded-lg bg-[#C4A035]/8 flex items-center justify-center">
@@ -461,7 +402,7 @@ export default function TeacherProfile() {
                 {[
                   {
                     label: t("teacher.profile.group"),
-                    value: profile._count.groups ?? 0,
+                    value: profile._count?.groups ?? 0,
                     icon: Layers,
                     color: "text-[#2B6F5E] dark:text-[#4ADE80]",
                     bg: "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8",
@@ -469,7 +410,7 @@ export default function TeacherProfile() {
                   },
                   {
                     label: t("teacher.profile.session"),
-                    value: profile._count.sessions ?? 0,
+                    value: profile._count?.sessions ?? 0,
                     icon: BookOpen,
                     color: "text-[#C4A035]",
                     bg: "bg-[#C4A035]/8",
@@ -477,7 +418,7 @@ export default function TeacherProfile() {
                   },
                   {
                     label: t("teacher.profile.exam"),
-                    value: profile._count.exams ?? 0,
+                    value: profile._count?.exams ?? 0,
                     icon: Award,
                     color: "text-purple-500",
                     bg: "bg-purple-500/8",
@@ -501,7 +442,7 @@ export default function TeacherProfile() {
                 ))}
               </div>
             </div>
-          )}
+          }
 
           {/* معلومات الحساب */}
           <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] overflow-hidden">
