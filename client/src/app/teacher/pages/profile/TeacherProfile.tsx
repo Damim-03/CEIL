@@ -22,6 +22,7 @@ import {
   useUploadTeacherAvatar,
 } from "../../../../hooks/teacher/Useteacher";
 import { useLanguage } from "../../../../hooks/useLanguage";
+import { UserIDCardFlip } from "../../../admin/components/UserIDCardFlip";
 
 /* ═══ TYPES ═══ */
 interface ProfileData {
@@ -47,17 +48,19 @@ const getLocale = (lang: string) =>
 const getInitials = (f: string, l: string) =>
   `${f?.charAt(0) || ""}${l?.charAt(0) || ""}`.toUpperCase();
 
+/* ═══ SKELETON ═══ */
 const ProfileSkeleton = ({ rtl }: { rtl: boolean }) => (
   <div className="space-y-6 animate-pulse" dir={rtl ? "rtl" : "ltr"}>
     <div>
-      <div className="h-7 w-36 bg-[#D8CDC0]/3 dark:bg-[#2A2A2A]/30 dark:bg-[#2A2A2A]/30 rounded-lg" />
-      <div className="h-4 w-52 bg-[#D8CDC0]/2 dark:bg-[#2A2A2A]/20 dark:bg-[#2A2A2A]/20 rounded-lg mt-2" />
+      <div className="h-7 w-36 bg-[#D8CDC0]/30 dark:bg-[#2A2A2A]/30 rounded-lg" />
+      <div className="h-4 w-52 bg-[#D8CDC0]/20 dark:bg-[#2A2A2A]/20 rounded-lg mt-2" />
     </div>
-    <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/4 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] h-[200px]" />
-    <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/4 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] h-[350px]" />
+    <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] h-[200px]" />
+    <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] h-[350px]" />
   </div>
 );
 
+/* ═══ FIELD ROW ═══ */
 const FieldRow = ({
   label,
   icon: Icon,
@@ -67,7 +70,7 @@ const FieldRow = ({
   icon: React.ElementType;
   children: React.ReactNode;
 }) => (
-  <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-0 py-4 border-b border-[#D8CDC0]/1 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A]/40 last:border-b-0">
+  <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-0 py-4 border-b border-[#D8CDC0]/10 dark:border-[#2A2A2A]/40 last:border-b-0">
     <div className="flex items-center gap-2 sm:w-40 shrink-0">
       <Icon className="w-4 h-4 text-[#BEB29E] dark:text-[#888888]" />
       <span className="text-xs font-medium text-[#6B5D4F]/70 dark:text-[#AAAAAA]/70">
@@ -78,6 +81,7 @@ const FieldRow = ({
   </div>
 );
 
+/* ═══ MAIN ═══ */
 export default function TeacherProfile() {
   const { t, dir, isRTL, currentLang } = useLanguage();
   const locale = getLocale(currentLang);
@@ -86,6 +90,7 @@ export default function TeacherProfile() {
   const avatarMut = useUploadTeacherAvatar();
   const fileRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -93,7 +98,7 @@ export default function TeacherProfile() {
     specialization: "",
     bio: "",
   });
-  const [showSuccess, setShowSuccess] = useState(false);
+
   const profile: ProfileData | undefined = data?.user ?? data;
 
   useEffect(() => {
@@ -111,6 +116,7 @@ export default function TeacherProfile() {
     const f = e.target.files?.[0];
     if (f) await avatarMut.mutateAsync(f);
   };
+
   const handleSave = async () => {
     await updateMut.mutateAsync({
       first_name: formData.first_name,
@@ -123,6 +129,7 @@ export default function TeacherProfile() {
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
   };
+
   const cancelEdit = () => {
     if (profile)
       setFormData({
@@ -141,6 +148,7 @@ export default function TeacherProfile() {
       month: "long",
       day: "numeric",
     });
+
   const gradientDir = isRTL ? "bg-gradient-to-l" : "bg-gradient-to-r";
 
   if (isLoading) return <ProfileSkeleton rtl={isRTL} />;
@@ -163,21 +171,37 @@ export default function TeacherProfile() {
     );
 
   const avatarSrc = profile.avatar_url || profile.google_avatar;
+
+  // بناء كائن البطاقة من بيانات البروفايل
+  const idCardProfile = {
+    user_id: profile.user_id,
+    email: profile.email,
+    first_name: profile.first_name,
+    last_name: profile.last_name,
+    google_avatar: avatarSrc,
+    role: "TEACHER" as const,
+    is_active: true,
+  };
+
+  const inputCls =
+    "w-full h-10 px-4 bg-[#FAFAF8] dark:bg-[#111111] border border-[#D8CDC0]/50 dark:border-[#2A2A2A] rounded-xl text-sm text-[#1B1B1B] dark:text-[#E5E5E5] focus:outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/40 focus:ring-2 focus:ring-[#2B6F5E]/10 dark:focus:ring-[#4ADE80]/10";
+
   return (
     <div dir={dir} className="space-y-6 pb-8 max-w-3xl">
+      {/* ── Title + actions ── */}
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
             {t("teacher.profile.title")}
           </h1>
-          <p className="text-sm text-[#6B5D4F]/7 dark:text-[#AAAAAA]/70 dark:text-[#999999] mt-0.5">
+          <p className="text-sm text-[#6B5D4F]/70 dark:text-[#999999] mt-0.5">
             {t("teacher.profile.subtitle")}
           </p>
         </div>
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
-            className="h-10 px-5 text-sm font-medium text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8 hover:bg-[#2B6F5E]/1 dark:bg-[#4ADE80]/15 dark:hover:bg-[#4ADE80]/15 rounded-xl transition-colors flex items-center gap-2"
+            className="h-10 px-5 text-sm font-medium text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8 hover:bg-[#2B6F5E]/15 dark:hover:bg-[#4ADE80]/15 rounded-xl transition-colors flex items-center gap-2"
           >
             <Pencil className="w-4 h-4" />
             {t("teacher.profile.edit")}
@@ -186,7 +210,7 @@ export default function TeacherProfile() {
           <div className="flex items-center gap-2">
             <button
               onClick={cancelEdit}
-              className="h-10 px-4 text-sm font-medium text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/2 dark:bg-[#2A2A2A]/20 dark:hover:bg-[#222222] rounded-xl transition-colors flex items-center gap-1.5"
+              className="h-10 px-4 text-sm font-medium text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/20 dark:hover:bg-[#222222] rounded-xl transition-colors flex items-center gap-1.5"
             >
               <X className="w-4 h-4" />
               {t("teacher.profile.cancel")}
@@ -194,7 +218,7 @@ export default function TeacherProfile() {
             <button
               onClick={handleSave}
               disabled={updateMut.isPending}
-              className="h-10 px-5 text-sm font-medium text-white bg-[#2B6F5E] dark:bg-[#4ADE80] hover:bg-[#2B6F5E]/9 dark:bg-[#4ADE80]/90 dark:hover:bg-[#4ADE80]/90 disabled:opacity-40 rounded-xl transition-colors flex items-center gap-2"
+              className="h-10 px-5 text-sm font-medium text-white bg-[#2B6F5E] dark:bg-[#2B6F5E] hover:bg-[#2B6F5E]/90 disabled:opacity-40 rounded-xl transition-colors flex items-center gap-2"
             >
               {updateMut.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -207,8 +231,9 @@ export default function TeacherProfile() {
         )}
       </div>
 
+      {/* ── Success toast ── */}
       {showSuccess && (
-        <div className="flex items-center gap-2 bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 border border-[#2B6F5E]/1 dark:border-[#4ADE80]/15 dark:border-[#4ADE80]/15 rounded-xl px-4 py-3 animate-in fade-in">
+        <div className="flex items-center gap-2 bg-[#2B6F5E]/5 dark:bg-[#4ADE80]/5 border border-[#2B6F5E]/10 dark:border-[#4ADE80]/15 rounded-xl px-4 py-3 animate-in fade-in">
           <CheckCircle className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
           <span className="text-sm font-medium text-[#2B6F5E] dark:text-[#4ADE80]">
             {t("teacher.profile.savedSuccess")}
@@ -216,119 +241,139 @@ export default function TeacherProfile() {
         </div>
       )}
 
-      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/4 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] overflow-hidden">
-        <div
-          className={`h-1.5 ${gradientDir} from-[#2B6F5E] dark:from-[#4ADE80] via-[#2B6F5E]/50 to-transparent`}
-        />
-        <div className="p-6 flex flex-col sm:flex-row items-center gap-6">
-          <div className="relative group">
-            {avatarSrc ? (
-              <img
-                src={avatarSrc}
-                alt={`${profile.first_name} ${profile.last_name}`}
-                className="w-24 h-24 rounded-2xl object-cover border-2 border-[#D8CDC0]/30 dark:border-[#2A2A2A]"
+      {/* ══════════════════════════════════════
+          بطاقة الهوية + معلومات الحساب جنباً
+      ══════════════════════════════════════ */}
+      <div className="flex flex-col lg:flex-row gap-5 items-start">
+        {/* ── بطاقة الهوية ── */}
+        <div className="w-full lg:w-auto lg:shrink-0">
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] p-5">
+            <p className="text-xs font-semibold text-[#6B5D4F]/60 dark:text-[#AAAAAA]/60 mb-4 flex items-center gap-2">
+              <Shield className="w-3.5 h-3.5" />
+              {t("teacher.profile.idCard") || "بطاقة التعريف"}
+            </p>
+            <UserIDCardFlip profile={idCardProfile} />
+          </div>
+        </div>
+
+        {/* ── Header card (avatar + stats) ── */}
+        <div className="flex-1 bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] overflow-hidden">
+          <div
+            className={`h-1.5 ${gradientDir} from-[#2B6F5E] dark:from-[#4ADE80] via-[#2B6F5E]/50 to-transparent`}
+          />
+          <div className="p-6 flex flex-col sm:flex-row items-center gap-6">
+            {/* Avatar */}
+            <div className="relative group shrink-0">
+              {avatarSrc ? (
+                <img
+                  src={avatarSrc}
+                  alt={`${profile.first_name} ${profile.last_name}`}
+                  className="w-20 h-20 rounded-2xl object-cover border-2 border-[#D8CDC0]/30 dark:border-[#2A2A2A]"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-2xl bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 border-2 border-[#D8CDC0]/30 dark:border-[#2A2A2A]/80 flex items-center justify-center">
+                  <span className="text-xl font-bold text-[#2B6F5E] dark:text-[#4ADE80]">
+                    {getInitials(profile.first_name, profile.last_name)}
+                  </span>
+                </div>
+              )}
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={avatarMut.isPending}
+                className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
+              >
+                {avatarMut.isPending ? (
+                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                ) : (
+                  <Camera className="w-5 h-5 text-white" />
+                )}
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="hidden"
               />
-            ) : (
-              <div className="w-24 h-24 rounded-2xl bg-[#2B6F5E]/1 dark:bg-[#4ADE80]/10 dark:bg-[#4ADE80]/10 border-2 border-[#D8CDC0]/3 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A]/80 flex items-center justify-center">
-                <span className="text-2xl font-bold text-[#2B6F5E] dark:text-[#4ADE80]">
-                  {getInitials(profile.first_name, profile.last_name)}
+              <div
+                className={`absolute -bottom-1 ${isRTL ? "-right-1" : "-left-1"} w-6 h-6 rounded-full bg-[#2B6F5E] dark:bg-[#4ADE80] border-2 border-white flex items-center justify-center shadow-sm`}
+              >
+                <Camera className="w-2.5 h-2.5 text-white" />
+              </div>
+            </div>
+
+            {/* Name + role */}
+            <div
+              className={`${isRTL ? "text-center sm:text-right" : "text-center sm:text-left"} flex-1`}
+            >
+              <h2 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                {profile.first_name} {profile.last_name}
+              </h2>
+              <p className="text-sm text-[#6B5D4F]/60 dark:text-[#888888] mt-0.5">
+                {profile.email}
+              </p>
+              <div
+                className={`flex items-center gap-2 mt-3 flex-wrap justify-center ${isRTL ? "sm:justify-start" : "sm:justify-start"}`}
+              >
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8 px-3 py-1.5 rounded-full">
+                  <Shield className="w-3 h-3" />
+                  {profile.role?.role_name || t("teacher.profile.teacher")}
+                </span>
+                {profile.teacher?.specialization && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#C4A035] bg-[#C4A035]/8 dark:bg-[#C4A035]/10 px-3 py-1.5 rounded-full">
+                    <Award className="w-3 h-3" />
+                    {profile.teacher.specialization}
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-1.5 text-[11px] text-[#6B5D4F]/50 dark:text-[#AAAAAA]/50">
+                  <Calendar className="w-3 h-3" />
+                  {t("teacher.profile.memberSince")} {fJoin(profile.created_at)}
                 </span>
               </div>
+            </div>
+
+            {/* Stats */}
+            {profile._count && (
+              <div className="flex sm:flex-col gap-4 sm:gap-3 shrink-0">
+                {[
+                  {
+                    label: t("teacher.profile.group"),
+                    value: profile._count.groups ?? 0,
+                    icon: Layers,
+                  },
+                  {
+                    label: t("teacher.profile.session"),
+                    value: profile._count.sessions ?? 0,
+                    icon: BookOpen,
+                  },
+                  {
+                    label: t("teacher.profile.exam"),
+                    value: profile._count.exams ?? 0,
+                    icon: Award,
+                  },
+                ].map((s) => (
+                  <div key={s.label} className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-[#D8CDC0]/10 dark:bg-[#2A2A2A]/20 flex items-center justify-center">
+                      <s.icon className="w-3.5 h-3.5 text-[#6B5D4F]/50 dark:text-[#AAAAAA]/50" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-[#1B1B1B] dark:text-[#E5E5E5] leading-tight">
+                        {s.value}
+                      </p>
+                      <p className="text-[10px] text-[#6B5D4F]/40 dark:text-[#AAAAAA]/40">
+                        {s.label}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={avatarMut.isPending}
-              className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
-            >
-              {avatarMut.isPending ? (
-                <Loader2 className="w-6 h-6 text-white animate-spin" />
-              ) : (
-                <Camera className="w-6 h-6 text-white" />
-              )}
-            </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarChange}
-              className="hidden"
-            />
-            <div
-              className={`absolute -bottom-1 ${isRTL ? "-right-1" : "-left-1"} w-7 h-7 rounded-full bg-[#2B6F5E] dark:bg-[#4ADE80] border-2 border-white flex items-center justify-center shadow-sm`}
-            >
-              <Camera className="w-3 h-3 text-white" />
-            </div>
           </div>
-          <div
-            className={`${isRTL ? "text-center sm:text-right" : "text-center sm:text-left"} flex-1`}
-          >
-            <h2 className="text-xl font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
-              {profile.first_name} {profile.last_name}
-            </h2>
-            <p className="text-sm text-[#6B5D4F]/6 dark:text-[#AAAAAA]/60 dark:text-[#888888] mt-0.5">
-              {profile.email}
-            </p>
-            <div
-              className={`flex items-center gap-3 mt-3 justify-center ${isRTL ? "sm:justify-start" : "sm:justify-start"} flex-wrap`}
-            >
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8 px-3 py-1.5 rounded-full">
-                <Shield className="w-3 h-3" />
-                {profile.role?.role_name || t("teacher.profile.teacher")}
-              </span>
-              {profile.teacher?.specialization && (
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#C4A035] dark:text-[#C4A035] dark:text-[#C4A035] bg-[#C4A035]/8 dark:bg-[#C4A035]/10 dark:bg-[#C4A035]/10 px-3 py-1.5 rounded-full">
-                  <Award className="w-3 h-3" />
-                  {profile.teacher.specialization}
-                </span>
-              )}
-              <span className="inline-flex items-center gap-1.5 text-[11px] text-[#6B5D4F]/50 dark:text-[#AAAAAA]/50">
-                <Calendar className="w-3 h-3" />
-                {t("teacher.profile.memberSince")} {fJoin(profile.created_at)}
-              </span>
-            </div>
-          </div>
-          {profile._count && (
-            <div className="flex sm:flex-col gap-4 sm:gap-2 shrink-0">
-              {[
-                {
-                  label: t("teacher.profile.group"),
-                  value: profile._count.groups ?? 0,
-                  icon: Layers,
-                },
-                {
-                  label: t("teacher.profile.session"),
-                  value: profile._count.sessions ?? 0,
-                  icon: BookOpen,
-                },
-                {
-                  label: t("teacher.profile.exam"),
-                  value: profile._count.exams ?? 0,
-                  icon: Award,
-                },
-              ].map((s) => (
-                <div
-                  key={s.label}
-                  className={`flex items-center gap-2 text-center ${isRTL ? "sm:text-right" : "sm:text-left"}`}
-                >
-                  <div className="w-8 h-8 rounded-lg bg-[#D8CDC0]/1 dark:bg-[#2A2A2A]/12 dark:bg-[#2A2A2A]/20 flex items-center justify-center">
-                    <s.icon className="w-3.5 h-3.5 text-[#6B5D4F]/50 dark:text-[#AAAAAA]/50" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-[#1B1B1B] dark:text-[#E5E5E5] leading-tight">
-                      {s.value}
-                    </p>
-                    <p className="text-[10px] text-[#6B5D4F]/40 dark:text-[#AAAAAA]/40">
-                      {s.label}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/4 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] overflow-hidden">
+      {/* ── Personal info form ── */}
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] overflow-hidden">
         <div className="flex items-center gap-2.5 px-6 py-4 border-b border-[#D8CDC0]/25 dark:border-[#2A2A2A]">
           <div className="w-9 h-9 rounded-lg bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8 flex items-center justify-center">
             <User className="w-[18px] h-[18px] text-[#2B6F5E] dark:text-[#4ADE80]" />
@@ -346,7 +391,7 @@ export default function TeacherProfile() {
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, first_name: e.target.value }))
                 }
-                className="w-full h-10 px-4 bg-[#FAFAF8] dark:bg-[#111111] border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] rounded-xl text-sm text-[#1B1B1B] dark:text-[#E5E5E5] focus:outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/40 dark:border-[#4ADE80]/40 focus:ring-2 focus:ring-[#2B6F5E] dark:ring-[#4ADE80]/10"
+                className={inputCls}
               />
             ) : (
               <span className="text-sm text-[#1B1B1B] dark:text-[#E5E5E5]">
@@ -362,7 +407,7 @@ export default function TeacherProfile() {
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, last_name: e.target.value }))
                 }
-                className="w-full h-10 px-4 bg-[#FAFAF8] dark:bg-[#111111] border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] rounded-xl text-sm text-[#1B1B1B] dark:text-[#E5E5E5] focus:outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/40 dark:border-[#4ADE80]/40 focus:ring-2 focus:ring-[#2B6F5E] dark:ring-[#4ADE80]/10"
+                className={inputCls}
               />
             ) : (
               <span className="text-sm text-[#1B1B1B] dark:text-[#E5E5E5]">
@@ -389,7 +434,7 @@ export default function TeacherProfile() {
                   setFormData((p) => ({ ...p, phone: e.target.value }))
                 }
                 placeholder={t("teacher.profile.phonePlaceholder")}
-                className="w-full h-10 px-4 bg-[#FAFAF8] dark:bg-[#111111] border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] rounded-xl text-sm text-[#1B1B1B] dark:text-[#E5E5E5] placeholder:text-[#BEB29E] dark:text-[#888888] focus:outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/40 dark:border-[#4ADE80]/40 focus:ring-2 focus:ring-[#2B6F5E] dark:ring-[#4ADE80]/10"
+                className={inputCls}
                 dir="ltr"
               />
             ) : (
@@ -412,7 +457,7 @@ export default function TeacherProfile() {
                   setFormData((p) => ({ ...p, specialization: e.target.value }))
                 }
                 placeholder={t("teacher.profile.specPlaceholder")}
-                className="w-full h-10 px-4 bg-[#FAFAF8] dark:bg-[#111111] border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] rounded-xl text-sm text-[#1B1B1B] dark:text-[#E5E5E5] placeholder:text-[#BEB29E] dark:text-[#888888] focus:outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/40 dark:border-[#4ADE80]/40 focus:ring-2 focus:ring-[#2B6F5E] dark:ring-[#4ADE80]/10"
+                className={inputCls}
               />
             ) : (
               <span className="text-sm text-[#1B1B1B] dark:text-[#E5E5E5]">
@@ -431,7 +476,7 @@ export default function TeacherProfile() {
                 }
                 placeholder={t("teacher.profile.bioPlaceholder")}
                 rows={3}
-                className="w-full px-4 py-3 bg-[#FAFAF8] dark:bg-[#111111] border border-[#D8CDC0]/5 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] rounded-xl text-sm text-[#1B1B1B] dark:text-[#E5E5E5] placeholder:text-[#BEB29E] dark:text-[#888888] focus:outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/40 dark:border-[#4ADE80]/40 focus:ring-2 focus:ring-[#2B6F5E] dark:ring-[#4ADE80]/10 resize-none"
+                className="w-full px-4 py-3 bg-[#FAFAF8] dark:bg-[#111111] border border-[#D8CDC0]/50 dark:border-[#2A2A2A] rounded-xl text-sm text-[#1B1B1B] dark:text-[#E5E5E5] focus:outline-none focus:border-[#2B6F5E] dark:focus:border-[#4ADE80]/40 focus:ring-2 focus:ring-[#2B6F5E]/10 resize-none"
               />
             ) : (
               <span className="text-sm text-[#1B1B1B] dark:text-[#E5E5E5] leading-relaxed">
@@ -446,9 +491,10 @@ export default function TeacherProfile() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/4 dark:border-[#2A2A2A]0 dark:border-[#2A2A2A] overflow-hidden">
+      {/* ── Account info ── */}
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] overflow-hidden">
         <div className="flex items-center gap-2.5 px-6 py-4 border-b border-[#D8CDC0]/25 dark:border-[#2A2A2A]">
-          <div className="w-9 h-9 rounded-lg bg-[#D8CDC0]/1 dark:bg-[#2A2A2A]/15 dark:bg-[#2A2A2A]/30 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-lg bg-[#D8CDC0]/10 dark:bg-[#2A2A2A]/30 flex items-center justify-center">
             <Shield className="w-[18px] h-[18px] text-[#6B5D4F] dark:text-[#AAAAAA]" />
           </div>
           <h3 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
@@ -467,7 +513,7 @@ export default function TeacherProfile() {
             </span>
           </FieldRow>
           <FieldRow label={t("teacher.profile.userId")} icon={User}>
-            <span className="text-xs font-mono text-[#BEB29E] dark:text-[#888888] bg-[#D8CDC0]/1 dark:bg-[#2A2A2A]/10 dark:bg-[#2A2A2A]/15 px-2.5 py-1 rounded-lg">
+            <span className="text-xs font-mono text-[#BEB29E] dark:text-[#888888] bg-[#D8CDC0]/10 dark:bg-[#2A2A2A]/15 px-2.5 py-1 rounded-lg">
               {profile.user_id}
             </span>
           </FieldRow>
