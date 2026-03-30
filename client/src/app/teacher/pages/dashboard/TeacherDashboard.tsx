@@ -609,8 +609,9 @@ export default function TeacherDashboard() {
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] flex items-center gap-2">
-                  {t("teacher.dashboard.upcomingSessions")}
-                  {/* ✅ عداد حصص اليوم */}
+                  {displaySessions.length > 0
+                    ? t("teacher.dashboard.upcomingSessions")
+                    : "الحصص"}
                   {hasTodaySessions && (
                     <span className="text-[10px] font-bold text-[#2B6F5E] dark:text-[#4ADE80] bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 px-2 py-0.5 rounded-full">
                       {todaySessions.length} {t("teacher.dashboard.today")}
@@ -618,7 +619,9 @@ export default function TeacherDashboard() {
                   )}
                 </h2>
                 <p className="text-[11px] text-[#6B5D4F]/60 dark:text-[#AAAAAA]/60">
-                  {t("teacher.dashboard.nextSevenDays")}
+                  {displaySessions.length > 0
+                    ? t("teacher.dashboard.nextSevenDays")
+                    : "آخر الحصص المسجلة"}
                 </p>
               </div>
             </div>
@@ -633,10 +636,34 @@ export default function TeacherDashboard() {
 
           <div className="p-4">
             {displaySessions.length === 0 ? (
-              <Empty
-                icon={CalendarDays}
-                msg={t("teacher.dashboard.noUpcoming")}
-              />
+              // ✅ لا توجد حصص قادمة — اعرض الحصص الأخيرة إن وجدت
+              recent_sessions.length > 0 ? (
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex-1 h-px bg-[#BEB29E]/30 dark:bg-[#888888]/20" />
+                    <span className="text-[10px] font-medium text-[#BEB29E] dark:text-[#888888] px-2">
+                      آخر الحصص
+                    </span>
+                    <div className="flex-1 h-px bg-[#BEB29E]/30 dark:bg-[#888888]/20" />
+                  </div>
+                  {recent_sessions.slice(0, 3).map((session) => (
+                    <SessionRow
+                      key={session.session_id}
+                      session={session}
+                      isRTL={isRTL}
+                      locale={locale}
+                      currentLang={currentLang}
+                      t={t}
+                      showTodayBadge={false}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <Empty
+                  icon={CalendarDays}
+                  msg={t("teacher.dashboard.noUpcoming")}
+                />
+              )
             ) : (
               <div className="space-y-2.5">
                 {/* ✅ فاصل "حصص اليوم" */}
