@@ -12,6 +12,8 @@ import {
   Phone,
   X,
   Loader2,
+  Lock,
+  EyeOff,
 } from "lucide-react";
 import PageLoader from "../../../../components/PageLoader";
 import { Button } from "../../../../components/ui/button";
@@ -23,7 +25,7 @@ import {
 } from "../../../../hooks/admin/useAdmin";
 
 /* ═══════════════════════════════════════════════════════
-   ADD TEACHER DIALOG — ✅ DARK MODE
+   ADD TEACHER DIALOG
 ═══════════════════════════════════════════════════════ */
 interface AddTeacherDialogProps {
   open: boolean;
@@ -38,7 +40,9 @@ const AddTeacherDialog = ({ open, onClose }: AddTeacherDialogProps) => {
     last_name: "",
     email: "",
     phone_number: "",
+    password: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,9 +56,23 @@ const AddTeacherDialog = ({ open, onClose }: AddTeacherDialogProps) => {
       setError(t("admin.teachers.nameRequired"));
       return;
     }
+    if (!form.email.trim()) {
+      setError("البريد الإلكتروني مطلوب لإنشاء الحساب");
+      return;
+    }
+    if (form.password && form.password.length < 6) {
+      setError("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+      return;
+    }
     createTeacher.mutate(form, {
       onSuccess: () => {
-        setForm({ first_name: "", last_name: "", email: "", phone_number: "" });
+        setForm({
+          first_name: "",
+          last_name: "",
+          email: "",
+          phone_number: "",
+          password: "",
+        });
         setError("");
         onClose();
       },
@@ -75,6 +93,7 @@ const AddTeacherDialog = ({ open, onClose }: AddTeacherDialogProps) => {
         onClick={onClose}
       />
       <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-2xl dark:shadow-black/50 w-full max-w-md mx-4 p-6 border border-[#D8CDC0]/60 dark:border-[#2A2A2A]">
+        {/* Dialog Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 flex items-center justify-center">
@@ -98,6 +117,7 @@ const AddTeacherDialog = ({ open, onClose }: AddTeacherDialogProps) => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* الاسم الأول والأخير */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-1.5">
@@ -126,9 +146,12 @@ const AddTeacherDialog = ({ open, onClose }: AddTeacherDialogProps) => {
               />
             </div>
           </div>
+
+          {/* الإيميل */}
           <div>
             <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-1.5">
-              {t("admin.teachers.email")}
+              {t("admin.teachers.email")}{" "}
+              <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
@@ -142,6 +165,80 @@ const AddTeacherDialog = ({ open, onClose }: AddTeacherDialogProps) => {
               />
             </div>
           </div>
+
+          {/* كلمة المرور ✅ */}
+          <div>
+            <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-1.5">
+              كلمة المرور
+              <span className="text-[#BEB29E] dark:text-[#555555] font-normal text-xs mr-2">
+                (اختياري — للدخول للحساب)
+              </span>
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
+              <Input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={handleChange}
+                placeholder="6 أحرف على الأقل"
+                className="pl-10 pr-10 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((p) => !p)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#BEB29E] dark:text-[#666666] hover:text-[#6B5D4F] dark:hover:text-[#AAAAAA] transition-colors"
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+            {/* مؤشر قوة كلمة المرور */}
+            {form.password.length > 0 && (
+              <div className="mt-2 space-y-1">
+                <div className="flex gap-1">
+                  {[1, 2, 3].map((level) => (
+                    <div
+                      key={level}
+                      className="h-1 flex-1 rounded-full transition-all duration-300"
+                      style={{
+                        background:
+                          form.password.length >= level * 3
+                            ? level === 1
+                              ? "#ef4444"
+                              : level === 2
+                                ? "#C4A035"
+                                : "#2B6F5E"
+                            : "#D8CDC0",
+                      }}
+                    />
+                  ))}
+                </div>
+                <p
+                  className="text-xs"
+                  style={{
+                    color:
+                      form.password.length < 4
+                        ? "#ef4444"
+                        : form.password.length < 7
+                          ? "#C4A035"
+                          : "#2B6F5E",
+                  }}
+                >
+                  {form.password.length < 4
+                    ? "ضعيفة"
+                    : form.password.length < 7
+                      ? "متوسطة"
+                      : "قوية"}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* رقم الهاتف */}
           <div>
             <label className="block text-sm font-medium text-[#1B1B1B] dark:text-[#E5E5E5] mb-1.5">
               {t("admin.teachers.phoneNumber")}
@@ -157,11 +254,15 @@ const AddTeacherDialog = ({ open, onClose }: AddTeacherDialogProps) => {
               />
             </div>
           </div>
+
+          {/* رسالة الخطأ */}
           {error && (
             <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40">
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             </div>
           )}
+
+          {/* الأزرار */}
           <div className="flex items-center gap-3 pt-2">
             <Button
               type="button"
@@ -197,7 +298,7 @@ const AddTeacherDialog = ({ open, onClose }: AddTeacherDialogProps) => {
 };
 
 /* ═══════════════════════════════════════════════════════
-   TEACHERS PAGE — ✅ DARK MODE
+   TEACHERS PAGE
 ═══════════════════════════════════════════════════════ */
 const TeachersPage = () => {
   const { t } = useTranslation();
@@ -252,7 +353,7 @@ const TeachersPage = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md hover:shadow-[#D8CDC0]/30 dark:hover:shadow-black/20 transition-all">
+        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md transition-all">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#2B6F5E] to-[#2B6F5E]/70 opacity-60 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/10 flex items-center justify-center">
@@ -268,7 +369,7 @@ const TeachersPage = () => {
             </div>
           </div>
         </div>
-        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md hover:shadow-[#D8CDC0]/30 dark:hover:shadow-black/20 transition-all">
+        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md transition-all">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#8DB896] to-[#8DB896]/70 opacity-60 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-[#8DB896]/12 dark:bg-[#8DB896]/10 flex items-center justify-center">
@@ -284,7 +385,7 @@ const TeachersPage = () => {
             </div>
           </div>
         </div>
-        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md hover:shadow-[#D8CDC0]/30 dark:hover:shadow-black/20 transition-all">
+        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md transition-all">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#BEB29E] to-[#BEB29E]/70 opacity-60 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-[#D8CDC0]/20 dark:bg-[#555555]/20 flex items-center justify-center">
@@ -358,13 +459,24 @@ const TeachersPage = () => {
                         </div>
                       )}
                     </div>
-                    {teacher.specialization && (
-                      <div className="mt-2">
+                    {/* ✅ badge إذا كان عنده حساب */}
+                    <div className="mt-2 flex items-center gap-2 flex-wrap">
+                      {teacher.user ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[#2B6F5E]/10 dark:bg-[#4ADE80]/10 text-[#2B6F5E] dark:text-[#4ADE80]">
+                          <Lock className="w-3 h-3" />
+                          لديه حساب
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[#D8CDC0]/30 dark:bg-[#555555]/20 text-[#6B5D4F] dark:text-[#AAAAAA]">
+                          بدون حساب
+                        </span>
+                      )}
+                      {teacher.specialization && (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#C4A035]/10 dark:bg-[#D4A843]/10 text-[#C4A035] dark:text-[#D4A843] border border-[#C4A035]/20 dark:border-[#D4A843]/15">
                           {teacher.specialization}
                         </span>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 lg:shrink-0">
