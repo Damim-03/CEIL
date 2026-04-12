@@ -18,6 +18,9 @@ import {
   BookOpen,
   TrendingUp,
   Award,
+  X,
+  FolderOpen,
+  Sparkles,
 } from "lucide-react";
 import { useMe } from "../../../hooks/auth/auth.hooks";
 import type {
@@ -25,12 +28,210 @@ import type {
   DonutChartProps,
 } from "../../../types/Types";
 import { StudentIDCardFlip } from "../components/StudentIDCardFlip";
+import { useState, useEffect } from "react";
 
+/* ═══════ NEW STUDENT MODAL ═══════ */
+function NewStudentModal({ onClose }: { onClose: () => void }) {
+  const [visible, setVisible] = useState(false);
+
+  // animation on mount
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 50);
+    return () => clearTimeout(t);
+  }, []);
+
+  const handleClose = () => {
+    setVisible(false);
+    setTimeout(onClose, 300);
+  };
+
+  return (
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center px-4 transition-all duration-300 ${
+        visible ? "opacity-100" : "opacity-0"
+      }`}
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
+        onClick={handleClose}
+      />
+
+      {/* Modal */}
+      <div
+        className={`relative w-full max-w-md transition-all duration-300 ${
+          visible ? "scale-100 translate-y-0" : "scale-95 translate-y-4"
+        }`}
+      >
+        {/* Glow */}
+        <div className="absolute -inset-1 bg-gradient-to-br from-[#C4A035]/30 via-[#2B6F5E]/20 to-[#C4A035]/10 rounded-3xl blur-xl opacity-60" />
+
+        <div className="relative bg-white dark:bg-[#111111] rounded-2xl border border-[#E8DDD4]/70 dark:border-[#1E1E1E] overflow-hidden shadow-2xl">
+          {/* Header gradient */}
+          <div className="relative bg-gradient-to-br from-[#111111] to-[#1a1a1a] px-6 pt-8 pb-6 overflow-hidden">
+            <div
+              className="absolute inset-0 opacity-[0.06]"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 1px 1px, #C4A035 1px, transparent 0)",
+                backgroundSize: "20px 20px",
+              }}
+            />
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#C4A035]/20 rounded-full blur-3xl" />
+            <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-[#2B6F5E]/20 rounded-full blur-3xl" />
+
+            {/* Close button */}
+            <button
+              onClick={handleClose}
+              className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            >
+              <X className="w-4 h-4 text-white/70" />
+            </button>
+
+            {/* Icon */}
+            <div className="relative flex justify-center mb-4">
+              <div className="relative">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#C4A035] to-[#a07a20] flex items-center justify-center shadow-xl shadow-[#C4A035]/30">
+                  <FolderOpen className="w-8 h-8 text-white" />
+                </div>
+                {/* pulse */}
+                <div className="absolute inset-0 rounded-2xl bg-[#C4A035]/40 animate-ping" />
+                {/* sparkle */}
+                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#4ADE80] border-2 border-[#111111] flex items-center justify-center">
+                  <Sparkles className="w-2.5 h-2.5 text-white" />
+                </div>
+              </div>
+            </div>
+
+            <div className="relative text-center">
+              <p className="text-[#C4A035]/70 text-[10px] font-bold uppercase tracking-widest mb-1">
+                مرحباً بك 👋
+              </p>
+              <h2 className="text-xl font-bold text-white leading-tight">
+                أهلاً بك في منصتنا!
+              </h2>
+              <p className="text-white/50 text-xs mt-1.5">
+                خطوة واحدة تفصلك عن اكتمال تسجيلك
+              </p>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="px-6 py-5 space-y-4">
+            {/* Info box */}
+            <div className="bg-[#C4A035]/[0.06] dark:bg-[#C4A035]/[0.04] border border-[#C4A035]/20 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#C4A035]/15 flex items-center justify-center shrink-0 mt-0.5">
+                  <AlertTriangle className="w-4 h-4 text-[#C4A035]" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E8E8E8] mb-1">
+                    يجب عليك رفع الوثائق المطلوبة
+                  </p>
+                  <p className="text-xs text-[#9B8E82] dark:text-[#666666] leading-relaxed">
+                    لإتمام عملية التسجيل والاستفادة من جميع خدمات المنصة، يرجى
+                    رفع وثائقك الرسمية في أقرب وقت ممكن.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Steps */}
+            <div className="space-y-2.5">
+              {[
+                {
+                  step: "01",
+                  text: "اذهب إلى صفحة الوثائق",
+                  color: "text-[#2B6F5E] dark:text-[#4ADE80]",
+                  bg: "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8",
+                },
+                {
+                  step: "02",
+                  text: "ارفع الوثائق المطلوبة",
+                  color: "text-[#C4A035] dark:text-[#D4A843]",
+                  bg: "bg-[#C4A035]/8 dark:bg-[#D4A843]/8",
+                },
+                {
+                  step: "03",
+                  text: "انتظر موافقة الإدارة",
+                  color: "text-purple-500",
+                  bg: "bg-purple-500/8",
+                },
+              ].map((item) => (
+                <div
+                  key={item.step}
+                  className="flex items-center gap-3 px-3.5 py-2.5 bg-[#F8F4F0]/60 dark:bg-[#1A1A1A] rounded-xl border border-[#E8DDD4]/50 dark:border-[#2A2A2A]"
+                >
+                  <span
+                    className={`text-[11px] font-black tabular-nums ${item.color} ${item.bg} w-7 h-7 rounded-lg flex items-center justify-center shrink-0`}
+                  >
+                    {item.step}
+                  </span>
+                  <span className="text-xs font-medium text-[#4A4A4A] dark:text-[#AAAAAA]">
+                    {item.text}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={handleClose}
+                className="flex-1 h-10 rounded-xl border border-[#E8DDD4]/70 dark:border-[#2A2A2A] text-sm font-medium text-[#9B8E82] dark:text-[#666666] hover:bg-[#F8F4F0] dark:hover:bg-[#1A1A1A] transition-colors"
+              >
+                لاحقاً
+              </button>
+              <Link
+                to="/student/documents"
+                className="flex-1"
+                onClick={handleClose}
+              >
+                <Button className="w-full h-10 gap-2 bg-gradient-to-r from-[#C4A035] to-[#a07a20] hover:opacity-90 text-white rounded-xl text-sm font-semibold shadow-lg shadow-[#C4A035]/20">
+                  <Upload className="w-4 h-4" />
+                  رفع الوثائق الآن
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════ DASHBOARD ═══════ */
 export default function Dashboard() {
   const { t } = useTranslation();
   const { data, isLoading } = useStudentDashboard();
   const { data: me } = useMe();
   const { data: fullProfile } = useStudentProfile();
+
+  // ✅ منطق إظهار الـ modal للطالب الجديد
+  const [showNewStudentModal, setShowNewStudentModal] = useState(false);
+
+  useEffect(() => {
+    if (!data) return;
+
+    const { documents, enrollment } = data;
+    const isNewStudent = documents.total === 0 && !enrollment.isReady;
+
+    if (!isNewStudent) return;
+
+    // نتحقق إذا كان المستخدم شاهد الـ modal من قبل
+    const modalKey = `new_student_modal_shown_${me?.user_id ?? "unknown"}`;
+    const alreadyShown = sessionStorage.getItem(modalKey);
+
+    if (!alreadyShown) {
+      // نأخر الظهور قليلاً حتى تتحمل الصفحة
+      const timer = setTimeout(() => {
+        setShowNewStudentModal(true);
+        sessionStorage.setItem(modalKey, "true");
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [data, me]);
 
   if (isLoading) return <PageLoader />;
 
@@ -65,9 +266,13 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-5">
+      {/* ✅ Modal الطالب الجديد */}
+      {showNewStudentModal && (
+        <NewStudentModal onClose={() => setShowNewStudentModal(false)} />
+      )}
+
       {/* ── Welcome Banner ── */}
       <div className="relative rounded-2xl overflow-hidden bg-[#111111] dark:bg-[#0A0A0A]">
-        {/* dot grid */}
         <div
           className="absolute inset-0 opacity-[0.06]"
           style={{
@@ -75,10 +280,8 @@ export default function Dashboard() {
             backgroundSize: "28px 28px",
           }}
         />
-        {/* glow blobs */}
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#2B6F5E]/30 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-[#C4A035]/20 rounded-full blur-3xl pointer-events-none" />
-        {/* top shimmer */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#4ADE80]/30 to-transparent" />
 
         <div className="relative p-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -96,7 +299,6 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* status pill */}
           <div
             className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-semibold ${
               isEnrollmentReady
@@ -508,7 +710,6 @@ export default function Dashboard() {
 }
 
 /* ═══════ CIRCULAR PROGRESS ═══════ */
-
 function CircularProgress({ percentage, color }: CircularProgressProps) {
   const { t } = useTranslation();
   const radius = 68;
@@ -539,7 +740,6 @@ function CircularProgress({ percentage, color }: CircularProgressProps) {
             <stop offset="100%" stopColor={c.to} />
           </linearGradient>
         </defs>
-        {/* track */}
         <circle
           cx="88"
           cy="88"
@@ -550,7 +750,6 @@ function CircularProgress({ percentage, color }: CircularProgressProps) {
           fill="none"
           className="dark:[stroke-opacity:0.08] dark:[stroke:#FFFFFF]"
         />
-        {/* progress */}
         <circle
           cx="88"
           cy="88"
@@ -577,7 +776,6 @@ function CircularProgress({ percentage, color }: CircularProgressProps) {
 }
 
 /* ═══════ DONUT CHART ═══════ */
-
 function DonutChart({ approved, pending, rejected, total }: DonutChartProps) {
   const { t } = useTranslation();
 
@@ -616,7 +814,6 @@ function DonutChart({ approved, pending, rejected, total }: DonutChartProps) {
   return (
     <div className="relative w-44 h-44">
       <svg className="w-full h-full -rotate-90">
-        {/* track */}
         <circle
           cx={cx}
           cy={cy}
