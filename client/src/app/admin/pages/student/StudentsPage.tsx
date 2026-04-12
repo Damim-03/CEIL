@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   GraduationCap,
@@ -29,7 +29,7 @@ import {
   getCompletionLabel,
 } from "../../../../lib/utils/profileCompletion";
 
-// ─── Mini Completion Badge (للقائمة) ──────────────────────────
+// ─── Mini Completion Badge ──────────────────────────
 function CompletionBadge({ student }: { student: AdminStudent }) {
   const { percentage, isComplete, steps } = getProfileCompletion(student);
   const color = getCompletionColor(percentage);
@@ -41,18 +41,15 @@ function CompletionBadge({ student }: { student: AdminStudent }) {
       className="flex items-center gap-2"
       title={missing.map((m) => m.labelAr).join(" · ")}
     >
-      {/* شريط صغير */}
       <div className="w-20 h-1.5 rounded-full bg-brand-beige/40 dark:bg-[#2A2A2A] overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-500"
           style={{ width: `${percentage}%`, background: color }}
         />
       </div>
-      {/* نسبة */}
       <span className="text-[11px] font-bold tabular-nums" style={{ color }}>
         {percentage}%
       </span>
-      {/* أيقونة */}
       {isComplete ? (
         <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color }} />
       ) : (
@@ -61,7 +58,6 @@ function CompletionBadge({ student }: { student: AdminStudent }) {
           style={{ borderColor: color }}
         />
       )}
-      {/* تسمية */}
       <span
         className="text-[11px] font-semibold px-1.5 py-0.5 rounded-md hidden sm:inline-block"
         style={{ background: color + "15", color }}
@@ -77,29 +73,50 @@ type CompletionFilter = "all" | "complete" | "incomplete";
 
 const StudentsPage = () => {
   const { t } = useTranslation();
+
+  // ─── State ───────────────────────────────────────────────────
   const [page, setPage] = useState(1);
-
-  const { data, isLoading } = useAdminStudents({ page, limit: 20 });
-
-  const students = data?.data ?? [];
-  const meta = data?.meta;
-  const deleteStudent = useDeleteStudent();
-
-  const [selectedStudent, setSelectedStudent] = useState<AdminStudent | null>(
-    null,
-  );
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "ACTIVE" | "INACTIVE"
   >("all");
   const [completionFilter, setCompletionFilter] =
     useState<CompletionFilter>("all");
+  const [selectedStudent, setSelectedStudent] = useState<AdminStudent | null>(
+    null,
+  );
+
+  // ─── Debounce البحث 500ms ─────────────────────────────────────
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1); // ✅ نرجع للصفحة 1 عند كل بحث جديد
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // ─── عند تغيير الفلتر نرجع للصفحة 1 ──────────────────────────
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, completionFilter]);
+
+  // ─── جلب البيانات من الـ API مع البحث ────────────────────────
+  const { data, isLoading } = useAdminStudents({
+    page,
+    limit: 20,
+    search: debouncedSearch || undefined,
+  });
+
+  const students = data?.data ?? [];
+  const meta = data?.meta;
+  const deleteStudent = useDeleteStudent();
 
   if (isLoading) return <PageLoader />;
 
-  const filteredStudents = students.filter((s) => {
-    const fullName = `${s.first_name || ""} ${s.last_name || ""}`.trim();
-    const matchesSearch = fullName.toLowerCase().includes(search.toLowerCase());
+  // ─── الفلترة المحلية (status + completion فقط) ────────────────
+  // البحث يتم server-side، هنا نفلتر فقط status و completion
+  const filteredStudents = students.filter((s: AdminStudent) => {
     const matchesStatus = statusFilter === "all" || s.status === statusFilter;
 
     let matchesCompletion = true;
@@ -109,9 +126,10 @@ const StudentsPage = () => {
         completionFilter === "complete" ? isComplete : !isComplete;
     }
 
-    return matchesSearch && matchesStatus && matchesCompletion;
+    return matchesStatus && matchesCompletion;
   });
 
+  // ─── إحصائيات الصفحة الحالية ──────────────────────────────────
   let active = 0;
   let inactive = 0;
   let complete = 0;
@@ -171,6 +189,7 @@ const StudentsPage = () => {
             </div>
           </div>
         </div>
+
         {/* Active */}
         <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md transition-all">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#8DB896] to-[#8DB896]/70 opacity-60 group-hover:opacity-100 transition-opacity"></div>
@@ -188,6 +207,7 @@ const StudentsPage = () => {
             </div>
           </div>
         </div>
+
         {/* Inactive */}
         <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md transition-all">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#BEB29E] to-[#BEB29E]/70 opacity-60 group-hover:opacity-100 transition-opacity"></div>
@@ -205,6 +225,7 @@ const StudentsPage = () => {
             </div>
           </div>
         </div>
+
         {/* Complete */}
         <div
           className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md transition-all cursor-pointer"
@@ -233,6 +254,7 @@ const StudentsPage = () => {
             </div>
           </div>
         </div>
+
         {/* Incomplete */}
         <div
           className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] p-5 overflow-hidden group hover:shadow-md transition-all cursor-pointer"
@@ -271,7 +293,7 @@ const StudentsPage = () => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
             <Input
-              placeholder={t("admin.students.searchPlaceholder")}
+              placeholder="ابحث بالاسم أو الإيميل..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
@@ -300,10 +322,24 @@ const StudentsPage = () => {
             <option value="incomplete">غير مكتمل</option>
           </select>
         </div>
-        <div className="mt-3 text-sm text-[#6B5D4F] dark:text-[#888888]">
-          {t("admin.students.showing")} <span>{filteredStudents.length}</span>{" "}
-          {t("admin.students.of")} <span>{meta?.total ?? students.length}</span>
-          {t("admin.students.students_label")}
+
+        {/* ✅ مؤشر حالة البحث */}
+        <div className="mt-3 flex items-center justify-between flex-wrap gap-2">
+          <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
+            {t("admin.students.showing")}{" "}
+            <span className="font-semibold">{filteredStudents.length}</span>{" "}
+            {t("admin.students.of")}{" "}
+            <span className="font-semibold">
+              {meta?.total ?? students.length}
+            </span>
+            {t("admin.students.students_label")}
+          </p>
+          {/* ✅ badge يظهر عند وجود بحث نشط */}
+          {debouncedSearch && (
+            <span className="text-xs bg-[#2B6F5E]/10 text-[#2B6F5E] dark:bg-[#4ADE80]/10 dark:text-[#4ADE80] px-2.5 py-1 rounded-full font-medium">
+              🔍 نتائج البحث عن: "{debouncedSearch}"
+            </span>
+          )}
         </div>
       </div>
 
@@ -341,7 +377,6 @@ const StudentsPage = () => {
                           {student.last_name?.charAt(0) || ""}
                         </div>
                       )}
-                      {/* نقطة الاكتمال */}
                       {isComplete && (
                         <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-white dark:bg-[#1A1A1A] flex items-center justify-center">
                           <CheckCircle2 className="w-4 h-4 text-[#2B6F5E]" />
@@ -368,8 +403,6 @@ const StudentsPage = () => {
                           </div>
                         )}
                       </div>
-
-                      {/* ✅ مؤشر الاكتمال */}
                       <div className="mt-2 flex items-center gap-3 flex-wrap">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -427,7 +460,7 @@ const StudentsPage = () => {
         )}
       </div>
 
-      {/* ✅ Pagination هنا */}
+      {/* Pagination */}
       <div className="flex justify-center items-center gap-4 mt-6">
         <button
           onClick={() => setPage((p) => p - 1)}
@@ -436,11 +469,9 @@ const StudentsPage = () => {
         >
           السابق
         </button>
-
         <span className="text-sm">
           صفحة {meta?.page} من {meta?.pages}
         </span>
-
         <button
           onClick={() => setPage((p) => p + 1)}
           disabled={page === meta?.pages}

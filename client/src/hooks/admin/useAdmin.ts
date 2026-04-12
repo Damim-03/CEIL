@@ -286,6 +286,7 @@ export const useDeleteUser = () => {
 export const useAdminStudents = (params?: {
   page?: number;
   limit?: number;
+  search?: string;
 }) =>
   useQuery({
     queryKey: [STUDENTS_KEY, params],
