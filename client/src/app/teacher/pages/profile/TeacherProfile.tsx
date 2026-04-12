@@ -16,6 +16,7 @@ import {
   Loader2,
   Hash,
   Activity,
+  LogOut,
 } from "lucide-react";
 import {
   useTeacherProfile,
@@ -24,6 +25,8 @@ import {
 } from "../../../../hooks/teacher/Useteacher";
 import { useLanguage } from "../../../../hooks/useLanguage";
 import { UserIDCardFlip } from "../../../admin/components/UserIDCardFlip";
+import { useAuth } from "../../../../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 /* ═══ TYPES ═══ */
 interface ProfileData {
@@ -112,18 +115,18 @@ export default function TeacherProfile() {
   const { data, isLoading, isError } = useTeacherProfile();
   const updateMut = useUpdateTeacherProfile();
   const avatarMut = useUploadTeacherAvatar();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
     phone: "",
   });
 
-  // getProfile يرجع flat shape مباشرة:
-  // { user_id, first_name, last_name, email, phone,
-  //   google_avatar, avatar_url, role, teacher, _count, created_at }
   const profile: ProfileData | undefined = data ?? undefined;
 
   useEffect(() => {
@@ -163,6 +166,11 @@ export default function TeacherProfile() {
         phone: profile.phone || "",
       });
     setIsEditing(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
   };
 
   const fDate = (d: string) =>
@@ -211,10 +219,9 @@ export default function TeacherProfile() {
   return (
     <div dir={dir} className="space-y-5 pb-10">
       {/* ══════════════════════════════════════════
-          HERO HEADER — خلفية خضراء كالأدمن
+          HERO HEADER
       ══════════════════════════════════════════ */}
       <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#2B6F5E] via-[#264230] to-[#1a3326] dark:from-[#1a3326] dark:via-[#132018] dark:to-[#0f1a13]">
-        {/* dot pattern */}
         <div
           className="absolute inset-0 opacity-[0.07]"
           style={{
@@ -223,7 +230,6 @@ export default function TeacherProfile() {
             backgroundSize: "20px 20px",
           }}
         />
-        {/* gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
 
         <div className="relative px-8 py-8 flex flex-col sm:flex-row items-center sm:items-end gap-6">
@@ -260,7 +266,6 @@ export default function TeacherProfile() {
               onChange={handleAvatarChange}
               className="hidden"
             />
-            {/* online dot */}
             <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#4ADE80] border-2 border-[#1a3326]" />
           </div>
 
@@ -280,16 +285,26 @@ export default function TeacherProfile() {
             </div>
           </div>
 
-          {/* Edit / Save buttons */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* ✅ أزرار التحرير + تسجيل الخروج */}
+          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-center">
             {!isEditing ? (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="h-9 px-4 text-sm font-medium text-white bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl transition-all flex items-center gap-2 backdrop-blur"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-                {t("teacher.profile.edit")}
-              </button>
+              <>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="h-9 px-4 text-sm font-medium text-white bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl transition-all flex items-center gap-2 backdrop-blur"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  {t("teacher.profile.edit")}
+                </button>
+                {/* ✅ زر تسجيل الخروج */}
+                <button
+                  onClick={() => setShowLogoutConfirm(true)}
+                  className="h-9 px-4 text-sm font-medium text-red-300 bg-red-500/15 hover:bg-red-500/25 border border-red-400/30 rounded-xl transition-all flex items-center gap-2 backdrop-blur"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  تسجيل الخروج
+                </button>
+              </>
             ) : (
               <>
                 <button
@@ -317,6 +332,46 @@ export default function TeacherProfile() {
         </div>
       </div>
 
+      {/* ✅ Logout Confirm Dialog */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowLogoutConfirm(false)}
+          />
+          <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 border border-[#D8CDC0]/60 dark:border-[#2A2A2A]">
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-950/30 flex items-center justify-center">
+                <LogOut className="w-7 h-7 text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                  تسجيل الخروج
+                </h3>
+                <p className="text-sm text-[#6B5D4F] dark:text-[#888888] mt-1">
+                  هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟
+                </p>
+              </div>
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 h-10 rounded-xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-sm font-medium text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222] transition-colors"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex-1 h-10 rounded-xl bg-red-500 hover:bg-red-600 text-sm font-semibold text-white transition-colors flex items-center justify-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  تسجيل الخروج
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Success toast ── */}
       {showSuccess && (
         <div className="flex items-center gap-2 bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8 border border-[#2B6F5E]/15 dark:border-[#4ADE80]/15 rounded-xl px-4 py-3 animate-in fade-in">
@@ -328,7 +383,7 @@ export default function TeacherProfile() {
       )}
 
       {/* ══════════════════════════════════════════
-          BODY — عمودان: تفاصيل | بطاقة الهوية
+          BODY
       ══════════════════════════════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* ── Left/Main column ── */}
@@ -388,61 +443,59 @@ export default function TeacherProfile() {
           </div>
 
           {/* نظرة عامة */}
-          {
-            <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] overflow-hidden">
-              <div className="flex items-center gap-3 px-5 py-4 border-b border-[#D8CDC0]/20 dark:border-[#2A2A2A]">
-                <div className="w-8 h-8 rounded-lg bg-[#C4A035]/8 flex items-center justify-center">
-                  <Activity className="w-4 h-4 text-[#C4A035]" />
-                </div>
-                <h3 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
-                  نظرة عامة على الحساب
-                </h3>
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] overflow-hidden">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-[#D8CDC0]/20 dark:border-[#2A2A2A]">
+              <div className="w-8 h-8 rounded-lg bg-[#C4A035]/8 flex items-center justify-center">
+                <Activity className="w-4 h-4 text-[#C4A035]" />
               </div>
-              <div className="grid grid-cols-3 divide-x dark:divide-[#2A2A2A] divide-[#D8CDC0]/20 rtl:divide-x-reverse">
-                {[
-                  {
-                    label: t("teacher.profile.group"),
-                    value: profile._count?.groups ?? 0,
-                    icon: Layers,
-                    color: "text-[#2B6F5E] dark:text-[#4ADE80]",
-                    bg: "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8",
-                    sub: "المجموعات",
-                  },
-                  {
-                    label: t("teacher.profile.session"),
-                    value: profile._count?.sessions ?? 0,
-                    icon: BookOpen,
-                    color: "text-[#C4A035]",
-                    bg: "bg-[#C4A035]/8",
-                    sub: "الحصص",
-                  },
-                  {
-                    label: t("teacher.profile.exam"),
-                    value: profile._count?.exams ?? 0,
-                    icon: Award,
-                    color: "text-purple-500",
-                    bg: "bg-purple-500/8",
-                    sub: "الاختبارات",
-                  },
-                ].map((s) => (
-                  <div
-                    key={s.label}
-                    className="flex flex-col items-center justify-center py-6 gap-2"
-                  >
-                    <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center ${s.bg}`}
-                    >
-                      <s.icon className={`w-5 h-5 ${s.color}`} />
-                    </div>
-                    <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-                    <p className="text-[11px] text-[#6B5D4F]/50 dark:text-[#AAAAAA]/50">
-                      {s.sub}
-                    </p>
-                  </div>
-                ))}
-              </div>
+              <h3 className="text-sm font-semibold text-[#1B1B1B] dark:text-[#E5E5E5]">
+                نظرة عامة على الحساب
+              </h3>
             </div>
-          }
+            <div className="grid grid-cols-3 divide-x dark:divide-[#2A2A2A] divide-[#D8CDC0]/20 rtl:divide-x-reverse">
+              {[
+                {
+                  label: t("teacher.profile.group"),
+                  value: profile._count?.groups ?? 0,
+                  icon: Layers,
+                  color: "text-[#2B6F5E] dark:text-[#4ADE80]",
+                  bg: "bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8",
+                  sub: "المجموعات",
+                },
+                {
+                  label: t("teacher.profile.session"),
+                  value: profile._count?.sessions ?? 0,
+                  icon: BookOpen,
+                  color: "text-[#C4A035]",
+                  bg: "bg-[#C4A035]/8",
+                  sub: "الحصص",
+                },
+                {
+                  label: t("teacher.profile.exam"),
+                  value: profile._count?.exams ?? 0,
+                  icon: Award,
+                  color: "text-purple-500",
+                  bg: "bg-purple-500/8",
+                  sub: "الاختبارات",
+                },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="flex flex-col items-center justify-center py-6 gap-2"
+                >
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${s.bg}`}
+                  >
+                    <s.icon className={`w-5 h-5 ${s.color}`} />
+                  </div>
+                  <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                  <p className="text-[11px] text-[#6B5D4F]/50 dark:text-[#AAAAAA]/50">
+                    {s.sub}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* معلومات الحساب */}
           <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-[#D8CDC0]/40 dark:border-[#2A2A2A] overflow-hidden">
@@ -481,6 +534,17 @@ export default function TeacherProfile() {
               iconBg="bg-blue-500/8"
               value={fDate(profile.created_at)}
             />
+
+            {/* ✅ زر تسجيل الخروج في أسفل معلومات الحساب */}
+            <div className="px-5 py-4">
+              <button
+                onClick={() => setShowLogoutConfirm(true)}
+                className="w-full h-10 rounded-xl border border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                تسجيل الخروج من الحساب
+              </button>
+            </div>
           </div>
         </div>
 
@@ -525,7 +589,10 @@ export default function TeacherProfile() {
                     type="text"
                     value={formData.first_name}
                     onChange={(e) =>
-                      setFormData((p) => ({ ...p, first_name: e.target.value }))
+                      setFormData((p) => ({
+                        ...p,
+                        first_name: e.target.value,
+                      }))
                     }
                     className={inputCls}
                   />
