@@ -25,7 +25,7 @@ import {
 } from "../../../../hooks/teacher/Useteacher";
 import { useLanguage } from "../../../../hooks/useLanguage";
 import { UserIDCardFlip } from "../../../admin/components/UserIDCardFlip";
-import { useLogout } from "../../../../hooks/auth/useAuth";
+import { useLogout } from "../../../../hooks/auth/auth.hooks";
 
 /* ═══ TYPES ═══ */
 interface ProfileData {
