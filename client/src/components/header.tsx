@@ -10,6 +10,8 @@ import {
   LayoutDashboard,
   LogOut,
   Globe,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useMe, useLogout } from "../hooks/auth/auth.hooks";
@@ -20,8 +22,121 @@ import ThemeToggle from "../components/Themetoggle";
 import ThemeToggleHeader from "../components/ThemetoggleHeader";
 import { TermsModal } from "../app/auth/Authpage";
 
-// ✅ 1. Import TermsModal
+/* ═══════════════════════════════════════════════════════
+   DASHBOARD SPOTLIGHT TOOLTIP
+═══════════════════════════════════════════════════════ */
+function DashboardSpotlight({
+  dashboardPath,
+  userName,
+  onDismiss,
+}: {
+  dashboardPath: string;
+  userName: string;
+  onDismiss: () => void;
+}) {
+  const [visible, setVisible] = useState(false);
 
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 600);
+    return () => clearTimeout(t);
+  }, []);
+
+  const handleDismiss = () => {
+    setVisible(false);
+    setTimeout(onDismiss, 300);
+  };
+
+  return (
+    <>
+      {/* Backdrop شفاف يغطي الشاشة عند الضغط خارجها */}
+      <div className="fixed inset-0 z-40" onClick={handleDismiss} />
+
+      {/* Spotlight حول زر Dashboard */}
+      <div
+        className={`absolute top-full mt-3 z-50 transition-all duration-300 ${
+          // RTL/LTR positioning
+          "right-0"
+        } ${
+          visible
+            ? "opacity-100 translate-y-0 scale-100"
+            : "opacity-0 -translate-y-2 scale-95"
+        }`}
+        style={{ minWidth: "280px" }}
+      >
+        {/* السهم للأعلى */}
+        <div className="absolute -top-2 right-6 w-4 h-4 bg-white dark:bg-[#1A1A1A] rotate-45 border-l border-t border-brand-beige/40 dark:border-[#2A2A2A] z-10" />
+
+        {/* البطاقة */}
+        <div className="relative bg-white dark:bg-[#1A1A1A] rounded-2xl border border-brand-beige/60 dark:border-[#2A2A2A] shadow-[0_20px_60px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden">
+          {/* شريط علوي ملوّن */}
+          <div className="h-1 bg-gradient-to-r from-[#2B6F5E] via-[#C4A035] to-[#2B6F5E]" />
+
+          <div className="p-5">
+            {/* أيقونة + عنوان */}
+            <div className="flex items-start gap-3 mb-3">
+              <div className="relative shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2B6F5E] to-[#1a4a3a] flex items-center justify-center shadow-lg shadow-[#2B6F5E]/25">
+                  <LayoutDashboard className="w-5 h-5 text-white" />
+                </div>
+                {/* نبضة */}
+                <div className="absolute inset-0 rounded-xl bg-[#2B6F5E]/40 animate-ping" />
+                {/* نجمة */}
+                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#C4A035] border-2 border-white dark:border-[#1A1A1A] flex items-center justify-center">
+                  <Sparkles className="w-2 h-2 text-white" />
+                </div>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="text-[10px] font-bold text-[#C4A035] uppercase tracking-widest">
+                    مرحباً بك 🎉
+                  </span>
+                </div>
+                <h3 className="text-sm font-bold text-[#1B1B1B] dark:text-[#E5E5E5] leading-snug">
+                  أهلاً {userName}! حسابك جاهز
+                </h3>
+              </div>
+            </div>
+
+            {/* النص */}
+            <p className="text-xs text-[#6B5D4F] dark:text-[#888888] leading-relaxed mb-4">
+              انقر على{" "}
+              <span className="font-semibold text-[#2B6F5E] dark:text-[#4ADE80]">
+                لوحة التحكم
+              </span>{" "}
+              للوصول إلى حسابك ورفع وثائقك واستكشاف كل الخدمات المتاحة لك.
+            </p>
+
+            {/* أزرار */}
+            <div className="flex gap-2">
+              <button
+                onClick={handleDismiss}
+                className="flex-1 h-8 rounded-xl border border-[#E8DDD4]/70 dark:border-[#2A2A2A] text-xs font-medium text-[#9B8E82] dark:text-[#666666] hover:bg-[#F8F4F0] dark:hover:bg-[#222222] transition-colors"
+              >
+                لاحقاً
+              </button>
+              <Link
+                to={dashboardPath}
+                onClick={handleDismiss}
+                className="flex-1"
+              >
+                <button className="w-full h-8 rounded-xl bg-gradient-to-r from-[#2B6F5E] to-[#1a4a3a] text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity shadow-md shadow-[#2B6F5E]/20">
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  انتقل الآن
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════════════════ */
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
@@ -35,13 +150,31 @@ export function Header() {
   const logoutMutation = useLogout();
   const { t, dir, isRTL, currentLang } = useLanguage();
 
-  // ✅ 2. Terms modal state
   const [termsOpen, setTermsOpen] = useState(false);
 
-  // ✅ 3. Handler: open terms first, then navigate to register after accept
+  // ✅ Spotlight state
+  const [showSpotlight, setShowSpotlight] = useState(false);
+
   const handleRegisterWithTerms = () => {
     setTermsOpen(true);
   };
+
+  // ✅ منطق ظهور الـ Spotlight — مرة واحدة فقط في الحياة
+  useEffect(() => {
+    if (!user) return;
+
+    // فقط للطالب الجديد — يمكنك تغيير الشرط حسب احتياجك
+    const spotlightKey = `dashboard_spotlight_shown_${user.user_id}`;
+    const alreadyShown = localStorage.getItem(spotlightKey);
+
+    if (!alreadyShown) {
+      const timer = setTimeout(() => {
+        setShowSpotlight(true);
+        localStorage.setItem(spotlightKey, "true");
+      }, 1200); // تأخير 1.2 ثانية بعد الدخول
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -98,7 +231,6 @@ export function Header() {
 
   return (
     <>
-      {/* ✅ 4. TermsModal — يظهر قبل الانتقال لصفحة التسجيل */}
       <TermsModal
         open={termsOpen}
         onAccept={() => {
@@ -254,7 +386,6 @@ export function Header() {
 
               {!showUser && !isLoading && (
                 <div className="flex items-center gap-1.5">
-                  {/* ✅ زر S'inscrire — Desktop — يفتح TermsModal */}
                   <Button
                     size="sm"
                     onClick={handleRegisterWithTerms}
@@ -279,13 +410,23 @@ export function Header() {
               )}
 
               {showUser && (
+                // ✅ relative container للـ Spotlight
                 <div className="relative" data-user-menu>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setUserMenuOpen((o) => !o);
+                      // أغلق الـ spotlight عند فتح الـ dropdown
+                      if (showSpotlight) setShowSpotlight(false);
                     }}
-                    className={`flex items-center gap-2 rounded-md border py-0.75 transition-all duration-200 ${isRTL ? "pl-2 pr-0.75" : "pr-2 pl-0.75"} ${userMenuOpen ? "bg-white/10 border-white/20" : "border-white/10 hover:bg-white/[0.07] hover:border-white/16"}`}
+                    className={`flex items-center gap-2 rounded-md border py-0.75 transition-all duration-200 ${isRTL ? "pl-2 pr-0.75" : "pr-2 pl-0.75"} ${
+                      // ✅ إضافة حلقة ضوئية حول الزر عند ظهور الـ Spotlight
+                      showSpotlight
+                        ? "border-[#C4A035]/60 shadow-[0_0_0_3px_rgba(196,160,53,0.2),0_0_20px_rgba(196,160,53,0.15)] bg-white/15"
+                        : userMenuOpen
+                          ? "bg-white/10 border-white/20"
+                          : "border-white/10 hover:bg-white/[0.07] hover:border-white/16"
+                    }`}
                   >
                     <div className="relative">
                       {user.google_avatar && !avatarError ? (
@@ -309,6 +450,15 @@ export function Header() {
                       className={`w-3 h-3 text-white/30 transition-transform duration-300 ${userMenuOpen ? "rotate-180" : ""}`}
                     />
                   </button>
+
+                  {/* ✅ Spotlight Tooltip */}
+                  {showSpotlight && !userMenuOpen && (
+                    <DashboardSpotlight
+                      dashboardPath={dashboardPath}
+                      userName={user.first_name || ""}
+                      onDismiss={() => setShowSpotlight(false)}
+                    />
+                  )}
 
                   {/* Dropdown */}
                   <div
@@ -375,7 +525,6 @@ export function Header() {
             <div className="flex md:hidden items-center gap-2 w-full justify-between">
               <div className="flex items-center gap-1.5">
                 {!showUser && !isLoading && (
-                  // ✅ زر S'inscrire — Mobile header — يفتح TermsModal
                   <Button
                     size="sm"
                     onClick={handleRegisterWithTerms}
@@ -386,15 +535,54 @@ export function Header() {
                   </Button>
                 )}
                 {showUser && (
-                  <Link
-                    to={dashboardPath}
-                    className="flex items-center gap-1.5 rounded-md border border-white/10 px-2 py-0.75 hover:bg-white/6 transition-colors"
-                  >
-                    <User className="h-3 w-3 text-white/50" />
-                    <span className="text-[10px] font-medium text-white/55">
-                      {t("common.dashboard")}
-                    </span>
-                  </Link>
+                  // ✅ Mobile — relative container للـ Spotlight
+                  <div className="relative">
+                    <Link
+                      to={dashboardPath}
+                      onClick={() => setShowSpotlight(false)}
+                      className={`flex items-center gap-1.5 rounded-md border px-2 py-0.75 hover:bg-white/6 transition-all ${
+                        showSpotlight
+                          ? "border-[#C4A035]/60 shadow-[0_0_0_2px_rgba(196,160,53,0.25)] bg-white/10"
+                          : "border-white/10"
+                      }`}
+                    >
+                      <User className="h-3 w-3 text-white/50" />
+                      <span className="text-[10px] font-medium text-white/55">
+                        {t("common.dashboard")}
+                      </span>
+                      {/* ✅ نقطة نبضية على الموبايل */}
+                      {showSpotlight && (
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C4A035] opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-[#C4A035]" />
+                        </span>
+                      )}
+                    </Link>
+
+                    {/* ✅ Tooltip مصغر للموبايل */}
+                    {showSpotlight && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setShowSpotlight(false)}
+                        />
+                        <div className="absolute top-full mt-2 left-0 z-50 w-64 bg-white dark:bg-[#1A1A1A] rounded-xl border border-brand-beige/60 dark:border-[#2A2A2A] shadow-xl overflow-hidden">
+                          <div className="h-0.5 bg-gradient-to-r from-[#2B6F5E] via-[#C4A035] to-[#2B6F5E]" />
+                          <div className="p-4">
+                            <p className="text-[10px] font-bold text-[#C4A035] uppercase tracking-widest mb-1">
+                              مرحباً بك 🎉
+                            </p>
+                            <p className="text-xs font-semibold text-[#1B1B1B] dark:text-[#E5E5E5] mb-2">
+                              حسابك جاهز! انقر هنا للدخول
+                            </p>
+                            <p className="text-[11px] text-[#6B5D4F] dark:text-[#888888] leading-relaxed">
+                              ادخل للوحة التحكم لرفع وثائقك واستكشاف الخدمات.
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
               <button
@@ -516,8 +704,6 @@ export function Header() {
                       <LogIn className="w-3.5 h-3.5" />
                       {t("common.login")}
                     </LocaleLink>
-
-                    {/* ✅ زر S'inscrire — Mobile Menu — يفتح TermsModal */}
                     <button
                       onClick={() => {
                         setMobileMenuOpen(false);
