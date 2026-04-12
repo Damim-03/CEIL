@@ -25,8 +25,7 @@ import {
 } from "../../../../hooks/teacher/Useteacher";
 import { useLanguage } from "../../../../hooks/useLanguage";
 import { UserIDCardFlip } from "../../../admin/components/UserIDCardFlip";
-import { useAuth } from "../../../../hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useLogout } from "../../../../hooks/auth/useAuth";
 
 /* ═══ TYPES ═══ */
 interface ProfileData {
@@ -115,8 +114,7 @@ export default function TeacherProfile() {
   const { data, isLoading, isError } = useTeacherProfile();
   const updateMut = useUpdateTeacherProfile();
   const avatarMut = useUploadTeacherAvatar();
-  const { logout } = useAuth();
-  const navigate = useNavigate();
+  const logoutMut = useLogout(); // ✅ الصحيح
   const fileRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -168,9 +166,9 @@ export default function TeacherProfile() {
     setIsEditing(false);
   };
 
+  // ✅ تسجيل الخروج الصحيح — useLogout يتكفل بكل شيء
   const handleLogout = () => {
-    logout();
-    navigate("/login");
+    logoutMut.mutate();
   };
 
   const fDate = (d: string) =>
@@ -285,7 +283,7 @@ export default function TeacherProfile() {
             </div>
           </div>
 
-          {/* ✅ أزرار التحرير + تسجيل الخروج */}
+          {/* أزرار التحرير + تسجيل الخروج */}
           <div className="flex items-center gap-2 shrink-0 flex-wrap justify-center">
             {!isEditing ? (
               <>
@@ -296,7 +294,6 @@ export default function TeacherProfile() {
                   <Pencil className="w-3.5 h-3.5" />
                   {t("teacher.profile.edit")}
                 </button>
-                {/* ✅ زر تسجيل الخروج */}
                 <button
                   onClick={() => setShowLogoutConfirm(true)}
                   className="h-9 px-4 text-sm font-medium text-red-300 bg-red-500/15 hover:bg-red-500/25 border border-red-400/30 rounded-xl transition-all flex items-center gap-2 backdrop-blur"
@@ -355,15 +352,21 @@ export default function TeacherProfile() {
               <div className="flex gap-3 w-full">
                 <button
                   onClick={() => setShowLogoutConfirm(false)}
-                  className="flex-1 h-10 rounded-xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-sm font-medium text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222] transition-colors"
+                  disabled={logoutMut.isPending}
+                  className="flex-1 h-10 rounded-xl border border-[#D8CDC0]/60 dark:border-[#2A2A2A] text-sm font-medium text-[#6B5D4F] dark:text-[#AAAAAA] hover:bg-[#D8CDC0]/10 dark:hover:bg-[#222222] transition-colors disabled:opacity-50"
                 >
                   إلغاء
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="flex-1 h-10 rounded-xl bg-red-500 hover:bg-red-600 text-sm font-semibold text-white transition-colors flex items-center justify-center gap-2"
+                  disabled={logoutMut.isPending}
+                  className="flex-1 h-10 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-50 text-sm font-semibold text-white transition-colors flex items-center justify-center gap-2"
                 >
-                  <LogOut className="w-4 h-4" />
+                  {logoutMut.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <LogOut className="w-4 h-4" />
+                  )}
                   تسجيل الخروج
                 </button>
               </div>
@@ -372,7 +375,7 @@ export default function TeacherProfile() {
         </div>
       )}
 
-      {/* ── Success toast ── */}
+      {/* Success toast */}
       {showSuccess && (
         <div className="flex items-center gap-2 bg-[#2B6F5E]/8 dark:bg-[#4ADE80]/8 border border-[#2B6F5E]/15 dark:border-[#4ADE80]/15 rounded-xl px-4 py-3 animate-in fade-in">
           <CheckCircle className="w-4 h-4 text-[#2B6F5E] dark:text-[#4ADE80]" />
@@ -535,13 +538,18 @@ export default function TeacherProfile() {
               value={fDate(profile.created_at)}
             />
 
-            {/* ✅ زر تسجيل الخروج في أسفل معلومات الحساب */}
+            {/* زر تسجيل الخروج */}
             <div className="px-5 py-4">
               <button
                 onClick={() => setShowLogoutConfirm(true)}
-                className="w-full h-10 rounded-xl border border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                disabled={logoutMut.isPending}
+                className="w-full h-10 rounded-xl border border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 disabled:opacity-50 transition-colors text-sm font-medium flex items-center justify-center gap-2"
               >
-                <LogOut className="w-4 h-4" />
+                {logoutMut.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <LogOut className="w-4 h-4" />
+                )}
                 تسجيل الخروج من الحساب
               </button>
             </div>
