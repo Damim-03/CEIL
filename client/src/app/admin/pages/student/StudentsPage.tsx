@@ -68,16 +68,13 @@ function CompletionBadge({ student }: { student: AdminStudent }) {
   );
 }
 
-// ─── Filter للاكتمال ──────────────────────────────────────────
 type CompletionFilter = "all" | "complete" | "incomplete";
 
 const StudentsPage = () => {
   const { t } = useTranslation();
 
-  // ─── State ───────────────────────────────────────────────────
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "ACTIVE" | "INACTIVE"
   >("all");
@@ -87,36 +84,40 @@ const StudentsPage = () => {
     null,
   );
 
-  // ─── Debounce البحث 500ms ─────────────────────────────────────
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-      setPage(1); // ✅ نرجع للصفحة 1 عند كل بحث جديد
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [search]);
-
   // ─── عند تغيير الفلتر نرجع للصفحة 1 ──────────────────────────
   useEffect(() => {
     setPage(1);
   }, [statusFilter, completionFilter]);
 
-  // ─── جلب البيانات من الـ API مع البحث ────────────────────────
-  const { data, isLoading } = useAdminStudents({
-    page,
-    limit: 20,
-    search: debouncedSearch || undefined,
+  // ─── جلب الصفحة الحالية (للعرض العادي بدون بحث) ──────────────
+  const { data, isLoading } = useAdminStudents({ page, limit: 20 });
+
+  // ─── جلب كل الطلاب (للبحث عبر كل الصفحات) ────────────────────
+  const { data: allData, isLoading: isLoadingAll } = useAdminStudents({
+    page: 1,
+    limit: 9999,
   });
 
-  const students = data?.data ?? [];
-  const meta = data?.meta;
+  const isSearching = search.trim().length > 0;
+
+  // ─── اختيار المصدر: كل الطلاب عند البحث، الصفحة الحالية عند عدمه
+  const students = isSearching ? (allData?.data ?? []) : (data?.data ?? []);
+
+  const meta = isSearching ? undefined : data?.meta;
   const deleteStudent = useDeleteStudent();
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading || (isSearching && isLoadingAll)) return <PageLoader />;
 
-  // ─── الفلترة المحلية (status + completion فقط) ────────────────
-  // البحث يتم server-side، هنا نفلتر فقط status و completion
+  // ─── الفلترة الكاملة (اسم + إيميل + status + completion) ───────
   const filteredStudents = students.filter((s: AdminStudent) => {
+    const fullName = `${s.first_name || ""} ${s.last_name || ""}`.trim();
+    const email = s.email || "";
+
+    const matchesSearch =
+      !isSearching ||
+      fullName.toLowerCase().includes(search.toLowerCase()) ||
+      email.toLowerCase().includes(search.toLowerCase());
+
     const matchesStatus = statusFilter === "all" || s.status === statusFilter;
 
     let matchesCompletion = true;
@@ -126,15 +127,17 @@ const StudentsPage = () => {
         completionFilter === "complete" ? isComplete : !isComplete;
     }
 
-    return matchesStatus && matchesCompletion;
+    return matchesSearch && matchesStatus && matchesCompletion;
   });
 
-  // ─── إحصائيات الصفحة الحالية ──────────────────────────────────
-  let active = 0;
-  let inactive = 0;
-  let complete = 0;
-  let incomplete = 0;
-  for (const s of students) {
+  // ─── إحصائيات ─────────────────────────────────────────────────
+  // نحسب الإحصائيات من كل الطلاب دائماً للدقة
+  const allStudents = allData?.data ?? [];
+  let active = 0,
+    inactive = 0,
+    complete = 0,
+    incomplete = 0;
+  for (const s of allStudents) {
     if (s.status === "ACTIVE") active++;
     else if (s.status === "INACTIVE") inactive++;
     const { isComplete } = getProfileCompletion(s);
@@ -143,7 +146,7 @@ const StudentsPage = () => {
   }
 
   const stats = {
-    total: meta?.total ?? students.length,
+    total: allData?.meta?.total ?? allStudents.length,
     active,
     inactive,
     complete,
@@ -293,7 +296,7 @@ const StudentsPage = () => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BEB29E] dark:text-[#666666]" />
             <Input
-              placeholder="ابحث بالاسم أو الإيميل..."
+              placeholder="ابحث بالاسم الكامل أو جزء منه أو الإيميل..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10 border-[#D8CDC0]/60 dark:border-[#2A2A2A] dark:bg-[#222222] dark:text-[#E5E5E5] dark:placeholder:text-[#555555] focus:border-[#2B6F5E] dark:focus:border-[#4ADE80] focus:ring-[#2B6F5E]/20 dark:focus:ring-[#4ADE80]/20"
@@ -323,21 +326,18 @@ const StudentsPage = () => {
           </select>
         </div>
 
-        {/* ✅ مؤشر حالة البحث */}
         <div className="mt-3 flex items-center justify-between flex-wrap gap-2">
           <p className="text-sm text-[#6B5D4F] dark:text-[#888888]">
             {t("admin.students.showing")}{" "}
             <span className="font-semibold">{filteredStudents.length}</span>{" "}
             {t("admin.students.of")}{" "}
-            <span className="font-semibold">
-              {meta?.total ?? students.length}
-            </span>
+            <span className="font-semibold">{stats.total}</span>
             {t("admin.students.students_label")}
           </p>
-          {/* ✅ badge يظهر عند وجود بحث نشط */}
-          {debouncedSearch && (
+          {/* badge البحث النشط */}
+          {isSearching && (
             <span className="text-xs bg-[#2B6F5E]/10 text-[#2B6F5E] dark:bg-[#4ADE80]/10 dark:text-[#4ADE80] px-2.5 py-1 rounded-full font-medium">
-              🔍 نتائج البحث عن: "{debouncedSearch}"
+              🔍 نتائج البحث عن: "{search}"
             </span>
           )}
         </div>
@@ -363,7 +363,6 @@ const StudentsPage = () => {
                   className={`flex flex-col lg:flex-row lg:items-center justify-between p-5 hover:bg-[#D8CDC0]/8 dark:hover:bg-[#222222] transition-colors gap-4 border-l-4 ${borderColor}`}
                 >
                   <div className="flex items-center gap-4 flex-1 min-w-0">
-                    {/* Avatar */}
                     <div className="relative shrink-0">
                       {student.user?.google_avatar ? (
                         <img
@@ -460,26 +459,28 @@ const StudentsPage = () => {
         )}
       </div>
 
-      {/* Pagination */}
-      <div className="flex justify-center items-center gap-4 mt-6">
-        <button
-          onClick={() => setPage((p) => p - 1)}
-          disabled={page === 1}
-          className="px-3 py-1 border rounded disabled:opacity-50"
-        >
-          السابق
-        </button>
-        <span className="text-sm">
-          صفحة {meta?.page} من {meta?.pages}
-        </span>
-        <button
-          onClick={() => setPage((p) => p + 1)}
-          disabled={page === meta?.pages}
-          className="px-3 py-1 border rounded disabled:opacity-50"
-        >
-          التالي
-        </button>
-      </div>
+      {/* ✅ Pagination — تختفي عند البحث */}
+      {!isSearching && (
+        <div className="flex justify-center items-center gap-4 mt-6">
+          <button
+            onClick={() => setPage((p) => p - 1)}
+            disabled={page === 1}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            السابق
+          </button>
+          <span className="text-sm">
+            صفحة {meta?.page} من {meta?.pages}
+          </span>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page === meta?.pages}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            التالي
+          </button>
+        </div>
+      )}
 
       {selectedStudent && (
         <ConfirmDeleteCard
